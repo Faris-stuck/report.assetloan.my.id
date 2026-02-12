@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/page-guard.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KI || Admin Approval</title>
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+</head>
+
+<body>
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="../../admin/dashboard.html" class="b-brand">
+                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption">
+                        <label>Navigation</label>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboard</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Dashboard /
+                                    Informasi</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Item / Inventory</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item
+                                    Data</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item
+                                    Detail</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-send"></i></span>
+                            <span class="nxl-mtext">Item Loan</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a></li>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a></li>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/admin-approval.html">Approval</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-corner-down-left"></i></span>
+                            <span class="nxl-mtext">Item Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-shield"></i></span>
+                            <span class="nxl-mtext">Administrator</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User
+                                    List</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/pengaturan.html">Role List</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <div class="header-left d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button"><i class="feather-align-left"></i></a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none"><i
+                            class="feather-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="header-right ms-auto">
+                <a href="../../auth/login.html" class="btn btn-outline-secondary btn-sm"><i
+                        class="feather-log-out me-1"></i>Logout</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Admin Approval</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item"><a href="#">Borrowing</a></li>
+                        <li class="breadcrumb-item">Admin Approval</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Menunggu Approval Admin</h5>
+                                <small class="text-muted">Permintaan peminjaman yang sudah disetujui Approver, menunggu
+                                    approval Admin</small>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table class="table table-bordered align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Kode Peminjaman</th>
+                                            <th>Nama</th>
+                                            <th>NRP</th>
+                                            <th>Barang</th>
+                                            <th>Tanggal</th>
+                                            <th>Status</th>
+                                            <th>Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabelMenunggu"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modalProses" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Proses Peminjaman (Approval Admin)</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <p><strong>Kode:</strong> <span id="modalKode"></span></p>
+                                </div>
+                                <div class="col-6">
+                                    <p><strong>Nama:</strong> <span id="modalNama"></span></p>
+                                </div>
+                                <div class="col-6">
+                                    <p><strong>NRP:</strong> <span id="modalNrp"></span></p>
+                                </div>
+                                <div class="col-6">
+                                    <p><strong>Tanggal Pinjam:</strong> <span id="modalTanggal"></span></p>
+                                </div>
+                                <div class="col-12">
+                                    <p><strong>Rencana Kembali:</strong> <span id="modalRencana"></span></p>
+                                </div>
+                                <div class="col-12">
+                                    <p><strong>Lokasi Peminjaman:</strong> <span id="modalLokasiUmum"></span></p>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6 class="mb-3"><strong>Daftar Barang Dipinjam</strong></h6>
+                            <div id="modalBarangList" class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Barang</th>
+                                            <th>Jumlah</th>
+                                            <th>Lokasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="barangTableBody"></tbody>
+                                </table>
+                            </div>
+                            <hr>
+                            <div id="reasonDiv" style="display: none;" class="mt-3">
+                                <label class="form-label"><strong>Alasan Penolakan</strong></label>
+                                <textarea id="reasonTextarea" class="form-control" rows="3"
+                                    placeholder="Masukkan alasan penolakan..."></textarea>
+                            </div>
+                            <div id="catatanDiv" class="mt-3">
+                                <p><strong>Catatan:</strong> <span id="modalCatatan"></span></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="button" class="btn btn-danger me-2"
+                                onclick="setStatus('Ditolak'); toggleReasonField(true);">Tolak</button>
+                            <button type="button" class="btn btn-success me-2"
+                                onclick="setStatus('Sedang Dipinjam'); toggleReasonField(false);">Setujui</button>
+                            <button type="button" class="btn btn-primary" onclick="saveProcess()">Simpan</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="footer">
+                <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
+                    <span>Copyright ©</span>
+                    <script>document.write(new Date().getFullYear());</script>
+                </p>
+            </footer>
+        </div>
+    </main>
+
+    <script src="../../assets/vendors/js/vendors.min.js"></script>
+    <script src="../../assets/js/common-init.min.js"></script>
+    <script>
+        const STATUS_FETCH = 'Disetujui';
+        let selectedPeminjaman = null;
+        let selectedStatus = null;
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        function loadDataPeminjaman() {
+            fetch("../../api/approver/list-by-status.php?status=" + encodeURIComponent(STATUS_FETCH), { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status) {
+                        renderTable(res.data);
+                    } else {
+                        document.getElementById("tabelMenunggu").innerHTML =
+                            '<tr><td colspan="8" class="text-center">Gagal memuat data</td></tr>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById("tabelMenunggu").innerHTML =
+                        '<tr><td colspan="8" class="text-center">Error koneksi</td></tr>';
+                });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById("tabelMenunggu");
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada peminjaman yang menunggu approval admin</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map((item, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${escapeHtml(item.kode)}</td>
+                    <td>${escapeHtml(item.nama)}</td>
+                    <td>${escapeHtml(item.nrp)}</td>
+                    <td>${escapeHtml(item.barang)}</td>
+                    <td>${escapeHtml(item.tanggal)}</td>
+                    <td><span class="badge bg-info">Pending Admin</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" onclick="openModal(${item.id})">Proses</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openModal(id) {
+            fetch("../../api/approver/list-by-status.php?status=" + encodeURIComponent(STATUS_FETCH), { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status) {
+                        selectedPeminjaman = res.data.find(p => p.id == id);
+                        selectedStatus = null;
+
+                        // Reset form
+                        document.getElementById("reasonTextarea").value = '';
+                        document.getElementById("reasonDiv").style.display = 'none';
+
+                        // Isi data peminjaman
+                        document.getElementById("modalKode").textContent = escapeHtml(selectedPeminjaman.kode);
+                        document.getElementById("modalNama").textContent = escapeHtml(selectedPeminjaman.nama);
+                        document.getElementById("modalNrp").textContent = escapeHtml(selectedPeminjaman.nrp);
+                        document.getElementById("modalTanggal").textContent = escapeHtml(selectedPeminjaman.tanggal);
+                        document.getElementById("modalRencana").textContent = escapeHtml(selectedPeminjaman.rencana_kembali);
+                        document.getElementById("modalLokasiUmum").textContent = escapeHtml(selectedPeminjaman.lokasi_umum || '-');
+                        document.getElementById("modalCatatan").textContent = escapeHtml(selectedPeminjaman.catatan) || '-';
+
+                        // Tampilkan barang dalam tabel
+                        displayBarangList(selectedPeminjaman);
+
+                        new bootstrap.Modal(document.getElementById("modalProses")).show();
+                    }
+                });
+        }
+
+        function displayBarangList(peminjaman) {
+            const tbody = document.getElementById("barangTableBody");
+            if (peminjaman.detail_barang && Array.isArray(peminjaman.detail_barang)) {
+                tbody.innerHTML = peminjaman.detail_barang.map((item, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${escapeHtml(item.nama_barang || item.barang)}</td>
+                        <td class="text-center">${escapeHtml(item.jumlah)}</td>
+                        <td>${escapeHtml(item.lokasi || '-')}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center">${escapeHtml(peminjaman.barang || '-')}</td></tr>`;
+            }
+        }
+
+        function toggleReasonField(show) {
+            document.getElementById("reasonDiv").style.display = show ? 'block' : 'none';
+        }
+
+        function setStatus(status) {
+            selectedStatus = status;
+            if (status === 'Ditolak') {
+                toggleReasonField(true);
+            } else {
+                toggleReasonField(false);
+            }
+        }
+
+        function saveProcess() {
+            if (!selectedStatus) {
+                alert("Silakan pilih Setujui atau Tolak terlebih dahulu");
+                return;
+            }
+            if (!selectedPeminjaman) {
+                alert("Data peminjaman tidak ditemukan");
+                return;
+            }
+
+            // Jika ditolak, wajib ada alasan
+            if (selectedStatus === 'Ditolak') {
+                const reason = document.getElementById("reasonTextarea").value.trim();
+                if (!reason) {
+                    alert("Alasan penolakan wajib diisi");
+                    return;
+                }
+            }
+
+            const formData = new FormData();
+            formData.append('id', selectedPeminjaman.id);
+
+            // Map button click to API status
+            let apiStatus = selectedStatus;
+
+            formData.append('status', apiStatus);
+            if (selectedStatus === 'Ditolak') {
+                formData.append('rejection_reason', document.getElementById("reasonTextarea").value);
+            }
+
+            const endpoint = "../../api/admin/approve.php";
+
+            fetch(endpoint, { method: "POST", body: formData, credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status) {
+                        alert("Status berhasil disimpan: " + res.message);
+                        bootstrap.Modal.getInstance(document.getElementById("modalProses")).hide();
+                        loadDataPeminjaman();
+                    } else {
+                        alert("Error: " + (res.message || 'Gagal menyimpan'));
+                    }
+                })
+                .catch(() => alert("Terjadi kesalahan saat menyimpan data"));
+        }
+
+        document.addEventListener("DOMContentLoaded", loadDataPeminjaman);
+    </script>
+</body>
+
+</html>

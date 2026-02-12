@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/page-guard.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Detail Peminjaman</title>
+    <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+</head>
+
+<body>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Detail Peminjaman</h3>
+            <a class="btn btn-secondary" href="../riwayat.html">Kembali</a>
+        </div>
+
+        <div id="alert" style="display:none" class="alert alert-danger"></div>
+
+        <div id="meta" class="mb-3">
+            <p><strong>Kode:</strong> <span id="kode"></span></p>
+            <p><strong>Tanggal Pinjam:</strong> <span id="tanggal_pinjam"></span></p>
+            <p><strong>Rencana Kembali:</strong> <span id="rencana_kembali"></span></p>
+            <p><strong>Status:</strong> <span id="status" class="badge bg-primary"></span></p>
+        </div>
+
+        <h5>Daftar Barang</h5>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Nama Barang</th>
+                    <th>Jumlah</th>
+                    <th>Lokasi</th>
+                    <th>Kondisi Pinjam</th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script src="../../assets/js/auth/role-validator.js"></script>
+    <script>
+        if (typeof RoleValidator !== 'undefined') {
+            RoleValidator.requireUser();
+        }
+
+        function getParam(name) {
+            const url = new URL(window.location.href);
+            return url.searchParams.get(name);
+        }
+
+        const id = getParam('id') || getParam('peminjaman_id');
+        if (!id) {
+            document.getElementById('alert').style.display = 'block';
+            document.getElementById('alert').innerText = 'ID peminjaman tidak ditemukan di query string.';
+        } else {
+            fetch(`/PROJECT/api/user/get-detail.php?id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = '/PROJECT/auth/login.html';
+                        throw new Error('unauthorized');
+                    }
+                    return r.json();
+                })
+                .then(data => {
+                    if (!data.status) {
+                        document.getElementById('alert').style.display = 'block';
+                        document.getElementById('alert').innerText = data.message || 'Gagal mengambil data.';
+                        return;
+                    }
+                    const d = data.data;
+                    document.getElementById('kode').innerText = d.kode_peminjaman || d.kode || '';
+                    document.getElementById('tanggal_pinjam').innerText = d.tanggal_pinjam || d.tanggal || '';
+                    document.getElementById('rencana_kembali').innerText = d.rencana_kembali || d.rencana || '';
+                    const rawStatus = (d.status || '').toString();
+                    const rawStatus_en = (d.status_en || '').toString();
+                    let displayStatus = rawStatus_en || rawStatus || '-';
+                    if (rawStatus.toLowerCase().includes('dicek') || rawStatus.toLowerCase().includes('diproses') || rawStatus.toLowerCase().includes('proses')) {
+                        displayStatus = 'Sedang Diproses';
+                    }
+                    if (rawStatus.toLowerCase().includes('sebagian') || rawStatus.toLowerCase().includes('seb') || rawStatus_en.toLowerCase().includes('partially')) {
+                        displayStatus = 'Partially Damaged';
+                    }
+                    if ((rawStatus.toLowerCase().includes('semua') && rawStatus.toLowerCase().includes('rusak')) || rawStatus_en.toLowerCase().includes('fully')) {
+                        displayStatus = 'Fully Damaged';
+                    }
+                    const statusEl = document.getElementById('status');
+                    statusEl.innerText = displayStatus;
+                    // set badge classes
+                    statusEl.className = 'badge bg-secondary';
+                    const s = displayStatus.toLowerCase();
+                    if (s.includes('menunggu')) statusEl.className = 'badge bg-warning text-dark';
+                    else if (s.includes('disetujui')) statusEl.className = 'badge bg-success';
+                    else if (s.includes('ditolak')) statusEl.className = 'badge bg-danger';
+                    else if (s.includes('dipinjam')) statusEl.className = 'badge bg-info text-dark';
+                    else if (s.includes('diproses') || s.includes('sedang')) statusEl.className = 'badge bg-warning text-dark';
+                    else if (s.includes('partially')) statusEl.className = 'badge bg-warning text-dark';
+                    else if (s.includes('fully') && s.includes('damaged')) statusEl.className = 'badge bg-danger';
+                    const tbody = document.getElementById('items-body');
+                    tbody.innerHTML = '';
+                    (d.detail_barang || []).forEach(it => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${it.nama || it.nama_barang || ''}</td>
+                            <td>${it.jumlah || it.qty || ''}</td>
+                            <td>${it.lokasi || it.lokasi_item || ''}</td>
+                            <td>${it.kondisi_pinjam || it.kondisi || ''}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(err => console.error(err));
+        }
+    </script>
+</body>
+
+</html>

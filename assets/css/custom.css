@@ -1,0 +1,425 @@
+/* ============================= */
+
+
+/* SIDEBAR BACKGROUND */
+
+
+/* ============================= */
+
+.nxl-navigation,
+.nxl-navigation .navbar-wrapper,
+.nxl-navigation .navbar-content {
+    background-color: #021b6e;
+    /* Biru Komatsu */
+}
+
+
+/* ============================= */
+
+
+/* TEKS & ICON SIDEBAR */
+
+
+/* ============================= */
+
+.nxl-navigation .nxl-link,
+.nxl-navigation .nxl-link span,
+.nxl-navigation .nxl-micon i,
+.nxl-navigation .nxl-arrow i,
+.nxl-navigation .nxl-caption label {
+    color: #ffffff !important;
+}
+
+
+/* ============================= */
+
+
+/* MENU SUB ITEM */
+
+
+/* ============================= */
+
+.nxl-navigation .nxl-submenu .nxl-link {
+    color: #ffffff !important;
+    opacity: 0.85;
+}
+
+
+/* ============================= */
+
+
+/* HOVER MENU */
+
+
+/* ============================= */
+
+.nxl-navigation .nxl-item:hover>.nxl-link {
+    background-color: #ffc107;
+    /* kuning */
+    color: #000000 !important;
+}
+
+.nxl-navigation .nxl-item:hover>.nxl-link i {
+    color: #000000 !important;
+}
+
+
+/* ============================= */
+
+
+/* MENU AKTIF - TANPA PUTIH */
+
+.nxl-navigation .nxl-item.active>.nxl-link,
+.nxl-navigation .nxl-submenu .nxl-item.active>.nxl-link {
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+.nxl-navigation .nxl-item.active>.nxl-link {
+    border-left: 4px solid #ffc107;
+    /* kuning Komatsu */
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+
+/* ============================= */
+
+
+/* MINI MENU (HOVER) */
+
+
+/* ============================= */
+
+html.minimenu .nxl-navigation:hover .navbar-content {
+    background-color: #0b2ea3;
+}
+
+
+/* ============================= */
+
+
+/* GARIS BORDER KANAN */
+
+
+/* ============================= */
+
+.nxl-navigation {
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+
+/* HEADER SIDEBAR */
+
+.nxl-navigation .m-header {
+    height: 80px;
+    /* bisa kamu ubah (70–100px) */
+    padding: 0;
+    background-color: #0b2a8f;
+    /* biru Komatsu */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* LINK LOGO */
+
+.nxl-navigation .b-brand {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* LOGO BESAR */
+
+.nxl-navigation .logo.logo-lg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* penuh, tapi bisa terpotong sedikit */
+}
+
+/* FIX MODAL BLUR DURALUX */
+body:not(.modal-open) .nxl-container {
+    filter: none !important;
+    pointer-events: auto !important;
+}
+
+
+/* ===== FORCE REMOVE DURALUX OVERLAY & BLUR ===== */
+.nxl-container {
+    filter: none !important;
+    pointer-events: auto !important;
+}
+
+.nxl-overlay {
+    display: none !important;
+}
+
+body {
+    overflow: auto !important;
+}
+
+
+/* ================================================= */
+/* GLOBAL OVERRIDE WARNA BIRU → SAMA DENGAN SIDEBAR */
+/* ================================================= */
+
+/* WARNA DASAR KOMATSU */
+:root {
+    --komatsu-blue: #021b6e;
+    --komatsu-blue-dark: #0b2a8f;
+    --komatsu-yellow: #ffc107;
+    --komatsu-red: #FF0000;
+}
+
+
+/* ================= BUTTON ================= */
+
+.btn-primary {
+    background-color: var(--komatsu-blue) !important;
+    border-color: var(--komatsu-blue) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--komatsu-blue-dark) !important;
+    border-color: var(--komatsu-blue-dark) !important;
+}
+
+/* OUTLINE BUTTON */
+.btn-outline-primary {
+    color: var(--komatsu-blue) !important;
+    border-color: var(--komatsu-blue) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--komatsu-blue) !important;
+    color: #ffffff !important;
+}
+
+/* ================= BADGE ================= */
+
+.badge.bg-primary {
+    background-color: var(--komatsu-blue) !important;
+    color: #ffffff !important;
+}
+
+/* ================= TEXT ================= */
+
+.text-primary {
+    color: var(--komatsu-blue) !important;
+}
+
+/* ================= BORDER ================= */
+
+.border-primary {
+    border-color: var(--komatsu-blue) !important;
+}
+
+/* ================= PAGINATION / LINK ================= */
+
+.page-link {
+    color: var(--komatsu-blue) !important;
+}
+
+.page-item.active .page-link {
+    background-color: var(--komatsu-blue) !important;
+    border-color: var(--komatsu-blue) !important;
+    color: #ffffff !important;
+}
+
+
+
+
+/* ================= BUTTON ================= */
+
+.btn-danger,
+.btn-soft-danger {
+    background-color: var(--komatsu-red) !important;
+    border-color: var(--komatsu-red) !important;
+    color: #ffffff !important;
+}
+
+.btn-danger:hover,
+.btn-danger:focus,
+.btn-soft-danger:hover {
+    background-color: #bb2d3b !important;
+    border-color: #bb2d3b !important;
+    color: #ffffff !important;
+}
+
+/* OUTLINE DANGER */
+.btn-outline-danger {
+    color: var(--komatsu-red) !important;
+    border-color: var(--komatsu-red) !important;
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--komatsu-red) !important;
+    color: #ffffff !important;
+}
+
+/* ================= BADGE ================= */
+
+.badge.bg-danger,
+.badge.bg-soft-danger {
+    background-color: var(--komatsu-red) !important;
+    color: #ffffff !important;
+}
+
+/* ================= TEXT ================= */
+
+.text-danger {
+    color: var(--komatsu-red) !important;
+    font-weight: 600;
+}
+
+/* ================= BORDER ================= */
+
+.border-danger {
+    border-color: var(--komatsu-red) !important;
+}
+
+/* =============================== */
+/* STANDAR STATUS KOMATSU (FINAL) */
+/* =============================== */
+
+.badge.status-rusak,
+.badge.status-ditolak {
+    background-color: var(--komatsu-red) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.badge.status-dipinjam {
+    background-color: var(--komatsu-blue) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.badge.status-menunggu {
+    background-color: var(--komatsu-yellow) !important;
+    color: #000000 !important;
+    font-weight: 600;
+}
+
+.badge.status-tersedia {
+    background-color: #198754 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.badge.status-dikembalikan {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.btn-danger,
+.btn-delete {
+    background-color: var(--komatsu-red) !important;
+    border-color: var(--komatsu-red) !important;
+    color: #ffffff !important;
+}
+
+.btn-danger:hover,
+.btn-delete:hover {
+    background-color: #cc0000 !important;
+    border-color: #cc0000 !important;
+}
+
+/* ============================= */
+/* TABLE PEMINJAMAN RESPONSIVE */
+/* ============================= */
+
+#tabelBarang {
+    width: 100%;
+    min-width: 600px;
+    /* Minimum width untuk scroll horizontal */
+}
+
+#tabelBarang .col-nama {
+    min-width: 250px;
+    width: 40%;
+}
+
+#tabelBarang .col-stok {
+    min-width: 120px;
+    width: 20%;
+}
+
+#tabelBarang .col-jumlah {
+    min-width: 150px;
+    width: 20%;
+}
+
+/* Responsive untuk mobile */
+@media (max-width: 768px) {
+    #tabelBarang .col-nama {
+        min-width: 200px;
+        width: 50%;
+    }
+
+    #tabelBarang .col-stok {
+        min-width: 100px;
+        width: 25%;
+    }
+
+    #tabelBarang .col-jumlah {
+        min-width: 120px;
+        width: 25%;
+    }
+}
+
+/* Pastikan table responsive container mengisi lebar penuh */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* =============TES AI GITHUB================ */
+
+/* UBAH HEADER TABEL PILIH BARANG: BIRU SIDEBAR + TEKS PUTIH */
+#tabelBarang thead,
+#tabelBarang thead th {
+    background-color: var(--komatsu-blue) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+#tabelBarang thead th {
+    vertical-align: middle;
+}
+
+/* ================= APPROVE & REJECT BUTTON CLICK ANIMATION ================= */
+/* Animation for both Approve and Reject buttons: scale up and darken on click */
+
+.btn-action-clicked {
+    animation: komatsu-action-click 520ms cubic-bezier(.34, .69, .56, 1);
+}
+
+@keyframes komatsu-action-click {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: none;
+    }
+
+    35% {
+        transform: scale(1.08);
+        filter: brightness(0.85);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    }
+
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+        box-shadow: none;
+    }
+}

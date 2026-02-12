@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/page-guard.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="keyword" content="" />
+    <meta name="author" content="flexilecode" />
+    <!--! The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags !-->
+    <!--! BEGIN: Apps Title-->
+    <title>Requester || Borrowing Status</title>
+    <!--! END:  Apps Title-->
+    <!--! BEGIN: Favicon-->
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <!--! END: Favicon-->
+    <!--! END: Favicon-->
+    <!--! BEGIN: Bootstrap CSS-->
+    <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
+    <!--! END: Bootstrap CSS-->
+    <!--! BEGIN: Vendors CSS-->
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/daterangepicker.min.css" />
+    <!--! END: Vendors CSS-->
+    <!--! BEGIN: Custom CSS-->
+    <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <style>
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .badge {
+            font-size: 0.75em;
+            padding: 0.375em 0.75em;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    </style>
+    <!--! END: Custom CSS-->
+    <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
+    <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
+    <!--[if lt IE 9]>    <script src="../../assets/js/auth/auth-manager.js"></script>
+    <script src="../../assets/js/auth/role-validator.js"></script>
+    <script src="../../assets/js/auth/logout.js"></script>
+    <script>
+        // Page protection
+        if (typeof RoleValidator !== 'undefined') {
+            RoleValidator.requireUser();
+        }
+    </script>
+
+			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+		<![endif]-->
+</head>
+
+<body>
+    <!--! ================================================================ !-->
+    <!--! [Start] Navigation Manu !-->
+    <!--! ================================================================ !-->
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="#" class="b-brand">
+                    <!-- ========   change your logo hear   ============ -->
+                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption">
+                        <label>Navigation</label>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="#">Analytics</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Borrowing</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../peminjaman/ajukan-peminjaman.html">Request
+                                    Borrowing</a></li>
+                            <li class="nxl-item">
+                                <a class="nxl-link" href="../peminjaman/status-peminjaman.html">Borrowing Status</a>
+                            </li>
+
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-send"></i></span>
+                            <span class="nxl-mtext">Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../pengembalian/ajukan-pengembalian.html">Submit return</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-at-sign"></i></span>
+                            <span class="nxl-mtext">History</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../riwayat.html">Borrowing History</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
+                            <span class="nxl-mtext">Profile</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../profil.html">Profile</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+            </div>
+        </div>
+        </div>
+    </nav>
+    <!--! ================================================================ !-->
+    <!--! [End]  Navigation Manu !-->
+    <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
+    <!--! [Start] Header !-->
+    <!--! ================================================================ !-->
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <!--! [Start] Header Left !-->
+            <div class="header-left d-flex align-items-center gap-4">
+                <!--! [Start] nxl-head-mobile-toggler !-->
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <!--! [Start] nxl-head-mobile-toggler !-->
+                <!--! [Start] nxl-navigation-toggle !-->
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button">
+                        <i class="feather-align-left"></i>
+                    </a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none">
+                        <i class="feather-arrow-right"></i>
+                    </a>
+                </div>
+                <!--! [End] nxl-navigation-toggle !-->
+
+            </div>
+            <!--! [End] Header Left !-->
+            <!--! [Start] Header Right !-->
+            <div class="header-right ms-auto">
+                <div class="d-flex align-items-center">
+                    <div class="nxl-h-item d-none d-sm-flex">
+                        <div class="full-screen-switcher">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
+                                <i class="feather-maximize maximize"></i>
+                                <i class="feather-minimize minimize"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <div class="dropdown nxl-h-item">
+                        <a href="javascript:void(0);" data-bs-toggle="dropdown" role="button"
+                            data-bs-auto-close="outside">
+                            <img src="../../assets/images/avatar/1.png" alt="user-image"
+                                class="img-fluid user-avtar me-0" />
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown nxl-user-dropdown">
+                            <div class="dropdown-header">
+                                <div class="d-flex align-items-center">
+                                    <img src="../../assets/images/avatar/1.png" alt="user-image"
+                                        class="img-fluid user-avtar" />
+                                    <div>
+                                        <h6 class="text-dark mb-0">Alexandra Della <span
+                                                class="badge bg-soft-success text-success ms-1">PRO</span></h6>
+                                        <span class="fs-12 fw-medium text-muted">alex@example.com</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dropdown">
+                                <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="dropdown">
+                                    <span class="hstack">
+                                        <i
+                                            class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
+                                        <span>Active</span>
+                                    </span>
+                                    <i class="feather-chevron-right ms-auto me-0"></i>
+                                </a>
+                                <div class="dropdown-menu">
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-warning rounded-circle me-2"></i>
+                                            <span>Always</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
+                                            <span>Active</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-danger rounded-circle me-2"></i>
+                                            <span>Bussy</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-info rounded-circle me-2"></i>
+                                            <span>Inactive</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-dark rounded-circle me-2"></i>
+                                            <span>Disabled</span>
+                                        </span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-primary rounded-circle me-2"></i>
+                                            <span>Cutomization</span>
+                                        </span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown">
+                                <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="dropdown">
+                                    <span class="hstack">
+                                        <i class="feather-dollar-sign me-2"></i>
+                                        <span>Subscriptions</span>
+                                    </span>
+                                    <i class="feather-chevron-right ms-auto me-0"></i>
+                                </a>
+                                <div class="dropdown-menu">
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i class="wd-5 ht-5 bg-gray-500 rounded-circle me-3"></i>
+                                            <span>Plan</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i class="wd-5 ht-5 bg-gray-500 rounded-circle me-3"></i>
+                                            <span>Billings</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i class="wd-5 ht-5 bg-gray-500 rounded-circle me-3"></i>
+                                            <span>Referrals</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i class="wd-5 ht-5 bg-gray-500 rounded-circle me-3"></i>
+                                            <span>Payments</span>
+                                        </span>
+                                    </a>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i class="wd-5 ht-5 bg-gray-500 rounded-circle me-3"></i>
+                                            <span>Statements</span>
+                                        </span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a href="javascript:void(0);" class="dropdown-item">
+                                        <span class="hstack">
+                                            <i class="wd-5 ht-5 bg-gray-500 rounded-circle me-3"></i>
+                                            <span>Subscriptions</span>
+                                        </span>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                <i class="feather-user"></i>
+                                <span>Profile Details</span>
+                            </a>
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                <i class="feather-activity"></i>
+                                <span>Activity Feed</span>
+                            </a>
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                <i class="feather-dollar-sign"></i>
+                                <span>Billing Details</span>
+                            </a>
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                <i class="feather-bell"></i>
+                                <span>Notifications</span>
+                            </a>
+                            <a href="javascript:void(0);" class="dropdown-item">
+                                <i class="feather-settings"></i>
+                                <span>Account Settings</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="javascript:void(0);" data-logout class="dropdown-item">
+                                <i class="feather-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--! [End] Header Right !-->
+        </div>
+    </header>
+    <!--! ================================================================ !-->
+    <!--! [End] Header !-->
+    <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
+    <!--! [Start] Main Content !-->
+    <!--! ================================================================ !-->
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Borrowing Status</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../dashboard.html">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="#">Borrowing</a></li>
+                        <li class="breadcrumb-item">Borrowing Status</li>
+                    </ul>
+                </div>
+                <div class="page-header-right ms-auto">
+                    <div class="page-header-right-items">
+                        <div class="d-flex d-md-none">
+                            <a href="javascript:void(0)" class="page-header-right-close-toggle">
+                                <i class="feather-arrow-left me-2"></i>
+                                <span>Back</span>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- [ page-header ] end -->
+            <!-- [ Main Content ] start -->
+            <div class="main-content">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Borrowing Status</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Nav tabs -->
+                                <ul class="nav nav-tabs" id="statusTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="semua-tab" data-bs-toggle="tab"
+                                            data-bs-target="#semua" type="button" role="tab" aria-controls="semua"
+                                            aria-selected="true">
+                                            All
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="menunggu-tab" data-bs-toggle="tab"
+                                            data-bs-target="#menunggu" type="button" role="tab" aria-controls="menunggu"
+                                            aria-selected="false">
+                                            Pending Approval (Approver / Admin)
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="dipinjam-tab" data-bs-toggle="tab"
+                                            data-bs-target="#dipinjam" type="button" role="tab" aria-controls="dipinjam"
+                                            aria-selected="false">
+                                            Borrowed
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="dikembalikan-tab" data-bs-toggle="tab"
+                                            data-bs-target="#dikembalikan" type="button" role="tab"
+                                            aria-controls="dikembalikan" aria-selected="false">
+                                            Returned
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="ditolak-tab" data-bs-toggle="tab"
+                                            data-bs-target="#ditolak" type="button" role="tab" aria-controls="ditolak"
+                                            aria-selected="false">
+                                            Rejected
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <!-- Tab content -->
+                                <div class="tab-content mt-3" id="statusTabContent">
+                                    <div class="tab-pane fade show active" id="semua" role="tabpanel"
+                                        aria-labelledby="semua-tab">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Borrowing Code</th>
+                                                        <th>Borrow Date</th>
+                                                        <th>Due Date</th>
+                                                        <th>Status</th>
+                                                        <th>Detail</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tableSemua"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="menunggu" role="tabpanel"
+                                        aria-labelledby="menunggu-tab">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Loan Code</th>
+                                                        <th>Borrow Date</th>
+                                                        <th>Expected Return</th>
+                                                        <th>Status</th>
+                                                        <th>Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tableMenunggu"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="dipinjam" role="tabpanel"
+                                        aria-labelledby="dipinjam-tab">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Loan Code</th>
+                                                        <th>Borrow Date</th>
+                                                        <th>Expected Return</th>
+                                                        <th>Status</th>
+                                                        <th>Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tableDipinjam"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="dikembalikan" role="tabpanel"
+                                        aria-labelledby="dikembalikan-tab">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Loan Code</th>
+                                                        <th>Borrow Date</th>
+                                                        <th>Return Date</th>
+                                                        <th>Expected Return</th>
+                                                        <th>Status</th>
+                                                        <th>Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tableDikembalikan"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="tab-pane fade" id="ditolak" role="tabpanel"
+                                        aria-labelledby="ditolak-tab">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Loan Code</th>
+                                                        <th>Borrow Date</th>
+                                                        <th>Expected Return</th>
+                                                        <th>Status</th>
+                                                        <th>Details</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tableDitolak"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+
+
+
+            </div>
+        </div>
+        <!-- [ Main Content ] end -->
+        </div>
+        <!-- [ Footer ] start -->
+        <footer class="footer">
+            <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
+                <span>Copyright ©</span>
+                <script>
+                    document.write(new Date().getFullYear());
+                </script>
+            </p>
+            <p><span>By: <a target="_blank" href="https://wrapbootstrap.com/user/theme_ocean"
+                        target="_blank">theme_ocean</a></span> • <span>Distributed by: <a target="_blank"
+                        href="https://themewagon.com" target="_blank">ThemeWagon</a></span></p>
+            <div class="d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Help</a>
+                <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Terms</a>
+                <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Privacy</a>
+            </div>
+        </footer>
+        <!-- [ Footer ] end -->
+    </main>
+    <!--! ================================================================ !-->
+    <!--! [End] Main Content !-->
+    <!--! ================================================================ !-->
+
+    <!-- Modal Detail Peminjaman -->
+    <div class="modal fade" id="modalDetail" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Borrowing Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <p><strong>Code:</strong> <span id="detailKode"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Name:</strong> <span id="detailNama"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>NRP:</strong> <span id="detailNrp"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+                        </div>
+                        <div class="col-12">
+                            <p><strong>Borrow Date:</strong> <span id="detailTanggalPinjam"></span></p>
+                        </div>
+                        <div class="col-12">
+                            <p><strong>Expected Return:</strong> <span id="detailRencanaKembali"></span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3"><strong>Borrowed Items</strong></h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailBarangTable"></tbody>
+                        </table>
+                    </div>
+                    <hr>
+                    <div id="detailCatatanDiv" style="display: none;">
+                        <h6 class="text-danger mb-2"><strong>Rejection Reason</strong></h6>
+                        <div class="alert alert-danger" id="detailCatatan"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--! ================================================================ !-->
+    <!--! Footer Script !-->
+    <!--! ================================================================ !-->
+    <!--! BEGIN: Vendors JS !-->
+    <script src="../../assets/vendors/js/vendors.min.js"></script>
+    <!-- vendors.min.js {always must need to be top} -->
+    <script src="../../assets/vendors/js/apexcharts.min.js"></script>
+    <script src="../../assets/vendors/js/circle-progress.min.js"></script>
+    <!--! END: Vendors JS !-->
+    <!--! BEGIN: Apps Init  !-->
+    <script src="../../assets/js/common-init.min.js"></script>
+    <script src="../../assets/js/dashboard-init.min.js"></script>
+    <!--! END: Apps Init !-->
+
+
+
+    <script>
+        // Ambil user ID dari localStorage (hasil login)
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        const USER_ID = parseInt(userData.id);
+
+
+        // If no user is logged in, redirect to login page
+        if (!USER_ID) {
+            alert("Please login first");
+            window.location.href = "../../auth/login.html";
+        }
+
+        // Cek role - hanya user yang boleh akses halaman ini
+        if (userData.role && userData.role !== "user") {
+            if (userData.role === "admin") {
+                window.location.href = "../../admin/dashboard.html";
+            } else if (userData.role === "manager") {
+                window.location.href = "../../manager/dashboard.html";
+            }
+        }
+
+        // Fungsi untuk translate status database ke display status untuk user
+        function getDisplayStatus(dbStatus, statusEn) {
+            if (statusEn) {
+                const en_lower = statusEn.toLowerCase();
+                if (en_lower.includes('partially')) return 'Partially Damaged';
+                if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
+            }
+            switch (dbStatus) {
+                case 'Menunggu Persetujuan':
+                case 'Disetujui': // Both are "pending approval" from user perspective
+                    return 'Menunggu Persetujuan';
+                case 'Sebagian Rusak':
+                    return 'Partially Damaged';
+                case 'Semua Rusak':
+                    return 'Fully Damaged';
+                case 'Sedang Dipinjam':
+                    return 'Sedang Dipinjam';
+                case 'Dikembalikan':
+                    return 'Dikembalikan';
+                case 'Ditolak':
+                    return 'Ditolak';
+                default:
+                    return dbStatus;
+            }
+        }
+
+        // Fungsi untuk mendapatkan badge class berdasarkan status
+        function getStatusBadge(status, statusEn) {
+            // Translate status dulu
+            const displayStatus = getDisplayStatus(status, statusEn);
+
+            switch (displayStatus) {
+                case 'Menunggu Persetujuan':
+                    return 'badge bg-warning';
+                case 'Partially Damaged':
+                    return 'badge bg-warning text-dark';
+                case 'Sebagian Rusak':
+                    return 'badge bg-warning text-dark';
+                case 'Fully Damaged':
+                    return 'badge bg-danger';
+                case 'Semua Rusak':
+                    return 'badge bg-danger';
+                case 'Sedang Dipinjam':
+                    return 'badge bg-primary';
+                case 'Dikembalikan':
+                    return 'badge bg-success';
+                case 'Ditolak':
+                    return 'badge bg-danger';
+                default:
+                    return 'badge bg-secondary';
+            }
+        }
+
+        // Fungsi untuk membuat baris tabel
+        function createTableRow(peminjaman) {
+            const dbStatus = peminjaman.status;
+            const statusEn = peminjaman.status_en;
+            //const displayStatus = getDisplayStatus(dbStatus, statusEn);
+            let displayStatus;
+            let statusBadge;
+            // If there is an active pengembalian in Diajukan/Dicek, treat as "Proses Return"
+            if (peminjaman.pengembalian_status && ['Diajukan', 'Dicek'].includes(peminjaman.pengembalian_status)) {
+                displayStatus = 'Proses Return';
+                statusBadge = 'badge bg-warning text-dark';
+            } else {
+                displayStatus = getDisplayStatus(dbStatus, statusEn);
+                statusBadge = getStatusBadge(dbStatus, statusEn);
+            }
+            // Hitung total jumlah barang
+            const totalBarang = peminjaman.detail_barang.reduce((sum, item) => sum + parseInt(item.jumlah), 0);
+
+            let actionBtn = '';
+            if (displayStatus === 'Sedang Dipinjam') {
+                actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="ajukanPengembalian('${peminjaman.id}')">
+                    <i class="feather-refresh-cw"></i> Return
+                </button>`;
+            } else if (displayStatus === 'Ditolak') {
+                actionBtn = `<button class="btn btn-sm btn-outline-danger" onclick="lihatDetail('${peminjaman.id}')">
+                    <i class="feather-eye"></i> Reason
+                </button>`;
+            } else {
+                actionBtn = `<button class="btn btn-sm btn-outline-info" onclick="lihatDetail('${peminjaman.id}')">
+                    <i class="feather-eye"></i> Detail
+                </button>`;
+            }
+
+            return `
+        <tr>
+            <td><strong>${escapeHtml(peminjaman.kode_peminjaman)}</strong></td>
+            <td>${new Date(peminjaman.tanggal_pinjam).toLocaleDateString('id-ID')}</td>
+            <td>${new Date(peminjaman.rencana_kembali).toLocaleDateString('id-ID')}</td>
+            <td><span class="${statusBadge}">${escapeHtml(displayStatus)}</span></td>
+            <td>${actionBtn}</td>
+        </tr>
+    `;
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        // Fungsi untuk membuat baris tabel dengan tanggal kembali (untuk yang sudah dikembalikan)
+        function createReturnedTableRow(peminjaman) {
+            const dbStatus = peminjaman.status;
+            const displayStatus = getDisplayStatus(dbStatus);
+            const statusBadge = getStatusBadge(dbStatus);
+            const detailBtn = `<button class="btn btn-sm btn-outline-info" onclick="lihatDetail('${peminjaman.id}')">
+        <i class="feather-eye"></i> Detail
+     </button>`;
+
+            return `
+        <tr>
+            <td><strong>${escapeHtml(peminjaman.kode_peminjaman)}</strong></td>
+            <td>${new Date(peminjaman.tanggal_pinjam).toLocaleDateString('id-ID')}</td>
+            <td>${peminjaman.tanggal_kembali ? new Date(peminjaman.tanggal_kembali).toLocaleDateString('id-ID') : '-'}</td>
+            <td>${new Date(peminjaman.rencana_kembali).toLocaleDateString('id-ID')}</td>
+            <td><span class="${statusBadge}">${escapeHtml(displayStatus)}</span></td>
+            <td>${detailBtn}</td>
+        </tr>
+    `;
+        }
+
+        // Load data peminjaman
+        const apiUrl = `../../api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
+        console.log('USER_ID=', USER_ID);
+        console.log('Fetching peminjaman from', apiUrl);
+
+        fetch(apiUrl, { credentials: 'same-origin' })
+            .then(res => {
+                console.log('Response status:', res.status);
+                if (!res.ok) {
+                    return res.text().then(text => {
+                        console.error('Non-OK response', res.status, text);
+                        throw new Error('Network response was not ok: ' + res.status);
+                    });
+                }
+                return res.json();
+            })
+            .then(data => {
+                console.log('Fetched data:', data);
+
+                if (!data.status) {
+                    console.error('Failed to fetch data:', data.message || data);
+                    const emptyHtml = '<tr><td colspan="5" class="text-center text-muted">No borrowing data</td></tr>';
+                    document.getElementById("tableSemua").innerHTML = emptyHtml;
+                    document.getElementById("tableMenunggu").innerHTML = emptyHtml;
+                    document.getElementById("tableDipinjam").innerHTML = emptyHtml;
+                    document.getElementById("tableDikembalikan").innerHTML = emptyHtml;
+                    document.getElementById("tableDitolak").innerHTML = emptyHtml;
+                    return;
+                }
+
+                const userPeminjaman = data.data || [];
+                console.log('User peminjaman:', userPeminjaman);
+
+                const semua = userPeminjaman;
+                const menunggu = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Menunggu Persetujuan');
+                const dipinjam = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Sedang Dipinjam');
+                const dikembalikan = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Dikembalikan');
+                const ditolak = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Ditolak');
+
+                console.log('Filtered - menunggu:', menunggu.length, 'dipinjam:', dipinjam.length);
+
+                document.getElementById("tableSemua").innerHTML =
+                    semua.length > 0 ?
+                        semua.map(p => p.status === 'Dikembalikan' ? createReturnedTableRow(p) : createTableRow(p)).join('') :
+                        '<tr><td colspan="5" class="text-center text-muted">Tidak ada data peminjaman</td></tr>';
+
+                document.getElementById("tableMenunggu").innerHTML =
+                    menunggu.length > 0 ?
+                        menunggu.map(p => createTableRow(p)).join('') :
+                        '<tr><td colspan="5" class="text-center text-muted">No pending approvals</td></tr>';
+
+                document.getElementById("tableDipinjam").innerHTML =
+                    dipinjam.length > 0 ?
+                        dipinjam.map(p => createTableRow(p)).join('') :
+                        '<tr><td colspan="5" class="text-center text-muted">No borrowed items</td></tr>';
+
+                document.getElementById("tableDikembalikan").innerHTML =
+                    dikembalikan.length > 0 ?
+                        dikembalikan.map(p => createReturnedTableRow(p)).join('') :
+                        '<tr><td colspan="5" class="text-center text-muted">No returned items</td></tr>';
+
+                document.getElementById("tableDitolak").innerHTML =
+                    ditolak.length > 0 ?
+                        ditolak.map(p => createTableRow(p)).join('') :
+                        '<tr><td colspan="5" class="text-center text-muted">No rejected requests</td></tr>';
+
+            })
+            .catch(err => {
+                console.error("Error loading peminjaman data:", err);
+                const errorHtml = '<tr><td colspan="5" class="text-center text-danger">Failed to load borrowing data</td></tr>';
+                document.getElementById("tableSemua").innerHTML = errorHtml;
+                document.getElementById("tableMenunggu").innerHTML = errorHtml;
+                document.getElementById("tableDipinjam").innerHTML = errorHtml;
+                document.getElementById("tableDikembalikan").innerHTML = errorHtml;
+                document.getElementById("tableDitolak").innerHTML = errorHtml;
+            });
+
+        // Fungsi untuk ajukan pengembalian
+        function ajukanPengembalian(peminjamanId) {
+            if (!confirm('Apakah Anda yakin ingin mengajukan pengembalian barang ini?')) return;
+
+            // Call return API to create pengembalian, then redirect to ajukan-pengembalian page
+            fetch(`../../api/peminjaman/return.php`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `peminjaman_id=${encodeURIComponent(peminjamanId)}`
+            })
+                .then(res => res.json())
+                .then(resp => {
+                    if (resp && resp.status) {
+                        // Redirect to ajukan-pengembalian page with peminjaman_id
+                        window.location.href = `../pengembalian/ajukan-pengembalian.html?peminjaman_id=${peminjamanId}`;
+                    } else {
+                        alert('Gagal mengajukan pengembalian: ' + (resp.message || 'Unknown error'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Error when calling return API', err);
+                    alert('Terjadi kesalahan saat mengajukan pengembalian');
+                });
+        }
+
+        // Fungsi untuk lihat detail
+        function lihatDetail(peminjamanId) {
+            fetch(`../../api/user/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status && res.data) {
+                        const p = res.data;
+                        document.getElementById('detailKode').textContent = escapeHtml(p.kode_peminjaman);
+                        document.getElementById('detailNama').textContent = escapeHtml(p.nama_peminjam || p.nama);
+                        document.getElementById('detailNrp').textContent = escapeHtml(p.nrp);
+                        const displayStatus = getDisplayStatus(p.status, p.status_en);
+                        document.getElementById('detailStatus').innerHTML = `<span class="${getStatusBadge(p.status, p.status_en)}">${escapeHtml(displayStatus)}</span>`;
+                        document.getElementById('detailTanggalPinjam').textContent = new Date(p.tanggal_pinjam).toLocaleDateString('id-ID');
+                        document.getElementById('detailRencanaKembali').textContent = new Date(p.rencana_kembali).toLocaleDateString('id-ID');
+
+                        // Tampilkan barang
+                        const barangHtml = (p.detail_barang || []).map((item, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${escapeHtml(item.nama_barang || item.barang || '-')}</td>
+                                <td class="text-center">${escapeHtml(item.jumlah)}</td>
+                            </tr>
+                        `).join('');
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="3" class="text-center">Tidak ada barang</td></tr>';
+
+                        // Tampilkan catatan jika ada (khusus untuk ditolak)
+                        const displayStatus2 = getDisplayStatus(p.status, p.status_en);
+                        if (displayStatus2 === 'Ditolak' && p.catatan) {
+                            document.getElementById('detailCatatanDiv').style.display = 'block';
+                            document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
+                        } else {
+                            document.getElementById('detailCatatanDiv').style.display = 'none';
+                        }
+
+                        new bootstrap.Modal(document.getElementById('modalDetail')).show();
+                    } else {
+                        alert('Gagal memuat detail peminjaman');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error memuat detail');
+                });
+        }
+    </script>
+
+
+
+
+
+</body>
+
+</html>

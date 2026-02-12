@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../assets/js/auth/page-guard.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIC Barang || Dashboard</title>
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../assets/css/custom.css">
+</head>
+
+<body>
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="dashboard.html" class="b-brand">
+                    <img src="../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption"><label>PIC Barang</label></li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="dashboard.html">Dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Update</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="update-barang/update-barang.html">Update
+                                    Item</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="pengembalian/pengembalian-barang.html">Return
+                                    Item</a></li>
+                        </ul>
+                        </a>
+                    </li>
+                    <li class="nxl-item">
+                        <a class="nxl-link" href="profil.html">
+                            <span class="nxl-micon"><i class="feather-user"></i></span>
+                            <span class="nxl-mtext">Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <div class="header-left d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button"><i class="feather-align-left"></i></a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none"><i
+                            class="feather-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="header-right ms-auto">
+                <div class="dropdown nxl-h-item">
+                    <a href="javascript:void(0);" data-bs-toggle="dropdown" role="button">
+                        <img src="../assets/images/avatar/1.png" alt="" class="img-fluid user-avtar me-0" />
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown nxl-user-dropdown">
+                        <div class="dropdown-header">
+                            <div class="d-flex align-items-center">
+                                <img src="../assets/images/avatar/1.png" alt="" class="img-fluid user-avtar" />
+                                <div>
+                                    <h6 class="text-dark mb-0" id="header-nama">PIC Barang</h6>
+                                    <span class="fs-12 fw-medium text-muted" id="header-email">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="profil.html" class="dropdown-item"><i class="feather-user"></i> Profile</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="../auth/login.html" class="dropdown-item"><i class="feather-log-out"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Dashboard</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item">Dashboard</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="row">
+                    <div class="col-xxl-3 col-md-6 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-end justify-content-between">
+                                    <div>
+                                        <p class="fs-13 fw-medium text-muted mb-2">Currently Borrowed</p>
+                                        <h4 class="mb-0" id="stat-sedang-dipinjam">0</h4>
+                                    </div>
+                                    <div class="badge bg-light-info rounded-2"><i class="feather-clock text-info"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-3 col-md-6 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-end justify-content-between">
+                                    <div>
+                                        <p class="fs-13 fw-medium text-muted mb-2">Returned Today</p>
+                                        <h4 class="mb-0" id="stat-dikembalikan-hari-ini">0</h4>
+                                    </div>
+                                    <div class="badge bg-light-success rounded-2"><i
+                                            class="feather-check text-success"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-3 col-md-6 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-end justify-content-between">
+                                    <div>
+                                        <p class="fs-13 fw-medium text-muted mb-2">Total Items</p>
+                                        <h4 class="mb-0" id="stat-total-barang">0</h4>
+                                    </div>
+                                    <div class="badge bg-light-primary rounded-2"><i
+                                            class="feather-box text-primary"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-3 col-md-6 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-end justify-content-between">
+                                    <div>
+                                        <p class="fs-13 fw-medium text-muted mb-2">Low Stock</p>
+                                        <h4 class="mb-0" id="stat-stok-menipis">0</h4>
+                                    </div>
+                                    <div class="badge bg-light-warning rounded-2"><i
+                                            class="feather-alert-triangle text-warning"></i></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Active Borrowings</h5>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Borrower</th>
+                                            <th>Borrow Date</th>
+                                            <th>Due Date</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-sedang-dipinjam">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="footer">
+            <p class="fs-11 text-muted fw-medium mb-0">Copyright ©
+                <script>document.write(new Date().getFullYear());</script> PIC Barang
+            </p>
+        </footer>
+    </main>
+
+    <script src="../assets/js/auth/role-validator.js"></script>
+    <script>
+        if (typeof RoleValidator !== 'undefined') RoleValidator.requirePicBarang();
+    </script>
+    <script src="../assets/vendors/js/vendors.min.js"></script>
+    <script src="../assets/js/common-init.min.js"></script>
+    <script>
+        const userData = RoleValidator.getUser();
+        if (userData.nama) document.getElementById('header-nama').textContent = userData.nama;
+        if (userData.email) document.getElementById('header-email').textContent = userData.email;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const res = await fetch('../api/pic_barang/dashboard-stats.php', { credentials: 'same-origin' });
+                const result = await res.json();
+                if (result.status && result.data) {
+                    const d = result.data;
+                    document.getElementById('stat-sedang-dipinjam').textContent = d.sedang_dipinjam || 0;
+                    document.getElementById('stat-dikembalikan-hari-ini').textContent = d.dikembalikan_hari_ini || 0;
+                    document.getElementById('stat-total-barang').textContent = d.total_barang || 0;
+                    document.getElementById('stat-stok-menipis').textContent = d.stok_menipis || 0;
+                    const list = d.recent_sedang_dipinjam || [];
+                    const tbody = document.getElementById('table-sedang-dipinjam');
+                    if (list.length > 0) {
+                        tbody.innerHTML = list.map(p => `
+                            <tr>
+                                <td><code>${p.kode}</code></td>
+                                <td>${p.nama_peminjam}</td>
+                                <td>${p.tanggal_pinjam}</td>
+                                <td>${p.rencana_kembali}</td>
+                                <td><a href="pengembalian/pengembalian-barang.html" class="btn btn-sm btn-primary">Process Return</a></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No active borrowings</td></tr>';
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('table-sedang-dipinjam').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Failed to load data</td></tr>';
+            }
+        });
+    </script>
+</body>
+
+</html>
