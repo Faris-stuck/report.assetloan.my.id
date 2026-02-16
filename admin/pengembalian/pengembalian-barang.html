@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    
+    
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -56,13 +61,12 @@
             <div class="m-header">
                 <a href="#" class="b-brand">
                     <!-- ========   change your logo hear   ============ -->
-                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt=""
-                        class="logo logo-lg" />
+                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt="" class="logo logo-lg" />
                     <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
                 </a>
             </div>
             <div class="navbar-content">
-                <ul class="nxl-navbar">
+                                                <ul class="nxl-navbar">
                     <li class="nxl-item nxl-caption">
                         <label>Navigation</label>
                     </li>
@@ -73,8 +77,7 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik /
-                                    Informasi</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik / Informasi</a>
                             </li>
                         </ul>
                     </li>
@@ -85,11 +88,9 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item
-                                    Data</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item Data</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item
-                                    Detail</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item Detail</a>
                             </li>
                         </ul>
                     </li>
@@ -100,14 +101,11 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/peminjaman/admin-approval.html">Approval</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/admin-approval.html">Approval</a>
                             </li>
                         </ul>
                     </li>
@@ -118,8 +116,7 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
                             </li>
                         </ul>
                     </li>
@@ -130,15 +127,13 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User
-                                    List</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User List</a>
                             </li>
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/pengaturan.html">Role List</a>
                             </li>
                         </ul>
                     </li>
-                </ul>
-            </div>
+                </ul></div>
         </div>
     </nav>
     <!--! ================================================================ !-->

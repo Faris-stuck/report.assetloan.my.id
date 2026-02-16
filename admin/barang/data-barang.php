@@ -497,12 +497,12 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                                         <!-- SAFETY STOCK -->
                                         <div class="mb-3">
                                             <label>Safety Stock</label>
-                                            <input type="number" id="edit_safety" class="form-control" min="1">
+                                            <input type="number" id="edit_safety" class="form-control" min="1" value="1">
                                         </div>
 
                                         <div class="mb-3">
                                             <label>Stock</label>
-                                            <input type="number" id="edit_stok" class="form-control">
+                                            <input type="number" id="edit_stok" class="form-control" min="0">
 
 
                                         </div>
@@ -627,12 +627,13 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                                             name="safety_stock"
                                             class="form-control"
                                             min="1"
+                                            value="1"
                                             required>
                                     </div>
 
                                     <div class="mb-2">
                                         <label>Total Stock</label>
-                                        <input type="number" id="stok_total" name="stok_total" class="form-control" required>
+                                        <input type="number" id="stok_total" name="stok_total" class="form-control" min="0" required>
                                     </div>
 
 

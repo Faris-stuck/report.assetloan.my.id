@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -16,7 +21,7 @@
     <title>KI || Dashboard</title>
     <!--! END:  Apps Title-->
     <!--! BEGIN: Favicon-->
-   <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
     <!--! END: Favicon-->
     <!--! END: Favicon-->
     <!--! BEGIN: Bootstrap CSS-->
@@ -28,7 +33,7 @@
     <!--! END: Vendors CSS-->
     <!--! BEGIN: Custom CSS-->
     <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
-     <link rel="stylesheet" href="../../assets/css/custom.css">
+    <link rel="stylesheet" href="../../assets/css/custom.css">
     <!--! END: Custom CSS-->
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
@@ -48,7 +53,7 @@
 </head>
 
 <body>
-       <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
     <!--! [Start] Navigation Manu !-->
     <!--! ================================================================ !-->
     <nav class="nxl-navigation">
@@ -56,12 +61,13 @@
             <div class="m-header">
                 <a href="#" class="b-brand">
                     <!-- ========   change your logo hear   ============ -->
-                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt="" class="logo logo-lg" />
+                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
                     <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
                 </a>
             </div>
             <div class="navbar-content">
-                                                <ul class="nxl-navbar">
+                <ul class="nxl-navbar">
                     <li class="nxl-item nxl-caption">
                         <label>Navigation</label>
                     </li>
@@ -72,7 +78,8 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik / Informasi</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik /
+                                    Informasi</a>
                             </li>
                         </ul>
                     </li>
@@ -83,9 +90,11 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item Data</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item
+                                    Data</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item Detail</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item
+                                    Detail</a>
                             </li>
                         </ul>
                     </li>
@@ -96,11 +105,14 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/admin-approval.html">Approval</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/admin-approval.html">Approval</a>
                             </li>
                         </ul>
                     </li>
@@ -111,7 +123,8 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
                             </li>
                         </ul>
                     </li>
@@ -122,13 +135,15 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User List</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User
+                                    List</a>
                             </li>
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/pengaturan.html">Role List</a>
                             </li>
                         </ul>
                     </li>
-                </ul></div>
+                </ul>
+            </div>
         </div>
     </nav>
     <!--! ================================================================ !-->
@@ -160,14 +175,14 @@
                     </a>
                 </div>
                 <!--! [End] nxl-navigation-toggle !-->
-             
+
                 <!--! [End] nxl-lavel-mega-menu !-->
             </div>
             <!--! [End] Header Left !-->
             <!--! [Start] Header Right !-->
             <div class="header-right ms-auto">
                 <div class="d-flex align-items-center">
-                   
+
                     <!---FULLSCREEN-->
                     <!---FULLSCREEN-->
                     <!---FULLSCREEN-->
@@ -181,7 +196,8 @@
                     <!---FULLSCREEN-->
                     <div class="nxl-h-item d-none d-sm-flex">
                         <div class="full-screen-switcher">
-                            <a href="javascript:void(0);" class="nxl-head-link me-0" onclick="$('body').fullScreenHelper('toggle');">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
                                 <i class="feather-maximize maximize"></i>
                                 <i class="feather-minimize minimize"></i>
                             </a>
@@ -209,15 +225,19 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <div class="dropdown nxl-h-item">
-                        <a href="javascript:void(0);" data-bs-toggle="dropdown" role="button" data-bs-auto-close="outside">
-                            <img src="../../assets/images/avatar/1.png" alt="user-image" class="img-fluid user-avtar me-0" />
+                        <a href="javascript:void(0);" data-bs-toggle="dropdown" role="button"
+                            data-bs-auto-close="outside">
+                            <img src="../../assets/images/avatar/1.png" alt="user-image"
+                                class="img-fluid user-avtar me-0" />
                         </a>
                         <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown nxl-user-dropdown">
                             <div class="dropdown-header">
                                 <div class="d-flex align-items-center">
-                                    <img src="../../assets/images/avatar/1.png" alt="user-image" class="img-fluid user-avtar" />
+                                    <img src="../../assets/images/avatar/1.png" alt="user-image"
+                                        class="img-fluid user-avtar" />
                                     <div>
-                                        <h6 class="text-dark mb-0">Alexandra Della <span class="badge bg-soft-success text-success ms-1">PRO</span></h6>
+                                        <h6 class="text-dark mb-0">Alexandra Della <span
+                                                class="badge bg-soft-success text-success ms-1">PRO</span></h6>
                                         <span class="fs-12 fw-medium text-muted">alex@example.com</span>
                                     </div>
                                 </div>
@@ -225,7 +245,8 @@
                             <div class="dropdown">
                                 <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="dropdown">
                                     <span class="hstack">
-                                        <i class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
+                                        <i
+                                            class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
                                         <span>Active</span>
                                     </span>
                                     <i class="feather-chevron-right ms-auto me-0"></i>
@@ -233,38 +254,44 @@
                                 <div class="dropdown-menu">
                                     <a href="javascript:void(0);" class="dropdown-item">
                                         <span class="hstack">
-                                            <i class="wd-10 ht-10 border border-2 border-gray-1 bg-warning rounded-circle me-2"></i>
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-warning rounded-circle me-2"></i>
                                             <span>Always</span>
                                         </span>
                                     </a>
                                     <a href="javascript:void(0);" class="dropdown-item">
                                         <span class="hstack">
-                                            <i class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
                                             <span>Active</span>
                                         </span>
                                     </a>
                                     <a href="javascript:void(0);" class="dropdown-item">
                                         <span class="hstack">
-                                            <i class="wd-10 ht-10 border border-2 border-gray-1 bg-danger rounded-circle me-2"></i>
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-danger rounded-circle me-2"></i>
                                             <span>Bussy</span>
                                         </span>
                                     </a>
                                     <a href="javascript:void(0);" class="dropdown-item">
                                         <span class="hstack">
-                                            <i class="wd-10 ht-10 border border-2 border-gray-1 bg-info rounded-circle me-2"></i>
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-info rounded-circle me-2"></i>
                                             <span>Inactive</span>
                                         </span>
                                     </a>
                                     <a href="javascript:void(0);" class="dropdown-item">
                                         <span class="hstack">
-                                            <i class="wd-10 ht-10 border border-2 border-gray-1 bg-dark rounded-circle me-2"></i>
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-dark rounded-circle me-2"></i>
                                             <span>Disabled</span>
                                         </span>
                                     </a>
                                     <div class="dropdown-divider"></div>
                                     <a href="javascript:void(0);" class="dropdown-item">
                                         <span class="hstack">
-                                            <i class="wd-10 ht-10 border border-2 border-gray-1 bg-primary rounded-circle me-2"></i>
+                                            <i
+                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-primary rounded-circle me-2"></i>
                                             <span>Cutomization</span>
                                         </span>
                                     </a>
@@ -368,11 +395,11 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Dashboard</h5>
+                        <h5 class="m-b-10">Laporan Pengembalian</h5>
                     </div>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                        <li class="breadcrumb-item">Dashboard</li>
+                        <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item">Laporan Pengembalian</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -383,7 +410,7 @@
                                 <span>Back</span>
                             </a>
                         </div>
-                       
+
                     </div>
                     <div class="d-md-none d-flex align-items-center">
                         <a href="javascript:void(0)" class="page-header-right-open-toggle">
@@ -396,7 +423,34 @@
             <!-- [ Main Content ] start -->
             <div class="main-content">
                 <div class="row">
-                   
+                    <div class="col-lg-12">
+                        <div class="card stretch stretch-full">
+                            <div class="card-header">
+                                <h6 class="mb-0">Data Pengembalian</h6>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Kode Pengembalian</th>
+                                            <th>Kode Peminjaman</th>
+                                            <th>Nama Peminjam</th>
+                                            <th>NRP</th>
+                                            <th>Tanggal Pengajuan</th>
+                                            <th>Status</th>
+                                            <th>Catatan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablePengembalian">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- [ Main Content ] end -->
@@ -409,7 +463,9 @@
                     document.write(new Date().getFullYear());
                 </script>
             </p>
-            <p><span>By: <a target="_blank" href="https://wrapbootstrap.com/user/theme_ocean" target="_blank">theme_ocean</a></span> • <span>Distributed by: <a target="_blank" href="https://themewagon.com" target="_blank">ThemeWagon</a></span></p>
+            <p><span>By: <a target="_blank" href="https://wrapbootstrap.com/user/theme_ocean"
+                        target="_blank">theme_ocean</a></span> • <span>Distributed by: <a target="_blank"
+                        href="https://themewagon.com" target="_blank">ThemeWagon</a></span></p>
             <div class="d-flex align-items-center gap-4">
                 <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Help</a>
                 <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Terms</a>
@@ -435,7 +491,55 @@
     <script src="../../assets/js/common-init.min.js"></script>
     <script src="../../assets/js/dashboard-init.min.js"></script>
     <!--! END: Apps Init !-->
-  
+    <!--! API CONFIG !-->
+    <script src="../../assets/js/config/api.js"></script>
+    <!--! END API CONFIG !-->
+    <script>
+        // Load laporan pengembalian dari database
+        function loadLaporanPengembalian() {
+            fetch(API_BASE_URL + '/pengembalian/list.php', { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    const tbody = document.getElementById('tablePengembalian');
+                    tbody.innerHTML = '';
+
+                    if (!res.status || !res.data || res.data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">Tidak ada data pengembalian</td></tr>';
+                        return;
+                    }
+
+                    res.data.forEach((p, index) => {
+                        let statusBadge = 'bg-secondary';
+                        if (p.status === 'Diajukan') statusBadge = 'bg-warning';
+                        if (p.status === 'Selesai') statusBadge = 'bg-success';
+                        if (p.status === 'Ditolak') statusBadge = 'bg-danger';
+
+                        const tanggalPengajuan = p.tanggal_pengajuan ? new Date(p.tanggal_pengajuan).toLocaleDateString('id-ID') : '-';
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td><strong>${p.kode_pengembalian || '-'}</strong></td>
+                                <td>${p.kode_peminjaman || '-'}</td>
+                                <td>${p.nama_peminjam || '-'}</td>
+                                <td>${p.nrp || '-'}</td>
+                                <td>${tanggalPengajuan}</td>
+                                <td><span class="badge ${statusBadge}">${p.status}</span></td>
+                                <td>${p.catatan_petugas ? p.catatan_petugas.substring(0, 50) : '-'}</td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(err => {
+                    console.error('Error loading laporan:', err);
+                    const tbody = document.getElementById('tablePengembalian');
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading data. Check database connection.</td></tr>';
+                });
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadLaporanPengembalian);
+    </script>
 </body>
 
 </html>

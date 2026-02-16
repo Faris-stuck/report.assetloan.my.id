@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -822,12 +827,13 @@
 
                 if (!data.status) {
                     console.error('Failed to fetch data:', data.message || data);
-                    const emptyHtml = '<tr><td colspan="5" class="text-center text-muted">No borrowing data</td></tr>';
-                    document.getElementById("tableSemua").innerHTML = emptyHtml;
-                    document.getElementById("tableMenunggu").innerHTML = emptyHtml;
-                    document.getElementById("tableDipinjam").innerHTML = emptyHtml;
-                    document.getElementById("tableDikembalikan").innerHTML = emptyHtml;
-                    document.getElementById("tableDitolak").innerHTML = emptyHtml;
+                    const emptyHtml5 = '<tr><td colspan="5" class="text-center text-muted">No borrowing data available</td></tr>';
+                    const emptyHtml6 = '<tr><td colspan="6" class="text-center text-muted">No borrowing data available</td></tr>';
+                    document.getElementById("tableSemua").innerHTML = emptyHtml5;
+                    document.getElementById("tableMenunggu").innerHTML = emptyHtml5;
+                    document.getElementById("tableDipinjam").innerHTML = emptyHtml5;
+                    document.getElementById("tableDikembalikan").innerHTML = emptyHtml6;
+                    document.getElementById("tableDitolak").innerHTML = emptyHtml5;
                     return;
                 }
 
@@ -844,8 +850,8 @@
 
                 document.getElementById("tableSemua").innerHTML =
                     semua.length > 0 ?
-                        semua.map(p => p.status === 'Dikembalikan' ? createReturnedTableRow(p) : createTableRow(p)).join('') :
-                        '<tr><td colspan="5" class="text-center text-muted">Tidak ada data peminjaman</td></tr>';
+                        semua.map(p => createTableRow(p)).join('') :
+                        '<tr><td colspan="5" class="text-center text-muted">No borrowing data available</td></tr>';
 
                 document.getElementById("tableMenunggu").innerHTML =
                     menunggu.length > 0 ?
@@ -860,7 +866,7 @@
                 document.getElementById("tableDikembalikan").innerHTML =
                     dikembalikan.length > 0 ?
                         dikembalikan.map(p => createReturnedTableRow(p)).join('') :
-                        '<tr><td colspan="5" class="text-center text-muted">No returned items</td></tr>';
+                        '<tr><td colspan="6" class="text-center text-muted">No returned items</td></tr>';
 
                 document.getElementById("tableDitolak").innerHTML =
                     ditolak.length > 0 ?
@@ -870,12 +876,13 @@
             })
             .catch(err => {
                 console.error("Error loading peminjaman data:", err);
-                const errorHtml = '<tr><td colspan="5" class="text-center text-danger">Failed to load borrowing data</td></tr>';
-                document.getElementById("tableSemua").innerHTML = errorHtml;
-                document.getElementById("tableMenunggu").innerHTML = errorHtml;
-                document.getElementById("tableDipinjam").innerHTML = errorHtml;
-                document.getElementById("tableDikembalikan").innerHTML = errorHtml;
-                document.getElementById("tableDitolak").innerHTML = errorHtml;
+                const errorHtml5 = '<tr><td colspan="5" class="text-center text-danger">Failed to load borrowing data</td></tr>';
+                const errorHtml6 = '<tr><td colspan="6" class="text-center text-danger">Failed to load borrowing data</td></tr>';
+                document.getElementById("tableSemua").innerHTML = errorHtml5;
+                document.getElementById("tableMenunggu").innerHTML = errorHtml5;
+                document.getElementById("tableDipinjam").innerHTML = errorHtml5;
+                document.getElementById("tableDikembalikan").innerHTML = errorHtml6;
+                document.getElementById("tableDitolak").innerHTML = errorHtml5;
             });
 
         // Fungsi untuk ajukan pengembalian

@@ -81,6 +81,9 @@ try {
             ];
         }
 
+        // Initialize status_en
+        $row['status_en'] = $row['status'];
+
         // Merge pengembalian inspection info if exists
         $qk = $conn->prepare("SELECT id, status FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
         $qk->bind_param("i", $row['id']);
@@ -121,8 +124,6 @@ try {
                     $row['status'] = 'Semua Rusak';
                     $row['status_en'] = 'Fully Damaged';
                 }
-            } else {
-                $row['status_en'] = $row['status'];
             }
         }
 
@@ -136,6 +137,7 @@ try {
             'rencana_kembali' => $row['rencana_kembali'],
             'tanggal_kembali' => $row['tanggal_kembali'],
             'status' => $row['status'],
+            'status_en' => $row['status_en'],
             'catatan' => $row['catatan'],
             'detail_barang' => $barang_list
         ];

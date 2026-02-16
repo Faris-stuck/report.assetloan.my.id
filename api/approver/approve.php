@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 require_once "../koneksi.php";
 $id = $_POST['id'];
 // Server-side session validation
@@ -6,7 +7,7 @@ require_once "../session-helper.php";
 
 // Validate user role
 try {
-    SessionValidator::requireRole(['manager']);
+    SessionValidator::requireRole(['admin', 'manager']);
 } catch (Exception $e) {
     http_response_code(401);
     echo json_encode([
@@ -37,11 +38,13 @@ try {
     }
     
     if ($status === 'Disetujui') {
-        // Manager approve: change status to Disetujui
-        $stmt_approve = $conn->prepare("UPDATE peminjaman SET status='Disetujui' WHERE id=?");
-        $stmt_approve->bind_param("i", $id);
+        // Manager approve: change status directly to Sedang Dipinjam (Currently Borrowed)
+        // No admin approval needed - borrowing starts immediately
+        $tanggal_disetujui = date('Y-m-d');
+        $stmt_approve = $conn->prepare("UPDATE peminjaman SET status='Sedang Dipinjam', tanggal_disetujui=? WHERE id=?");
+        $stmt_approve->bind_param("si", $tanggal_disetujui, $id);
         $stmt_approve->execute();
-        echo json_encode(["status" => true, "message" => "Peminjaman disetujui."]);
+        echo json_encode(["status" => true, "message" => "Peminjaman disetujui dan status berubah menjadi Sedang Dipinjam."]);
     } elseif ($status === 'Ditolak') {
         // Manager reject - store rejection reason in catatan field
         $rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';

@@ -1,10 +1,12 @@
 <?php
 require_once "../koneksi.php";
+require_once "../session-helper.php";
 header('Content-Type: application/json');
 
-$status = $_GET['status'] ?? 'Menunggu Persetujuan';
-
 try {
+    SessionValidator::requireRole(['admin', 'manager']);
+    
+    $status = $_GET['status'] ?? 'Menunggu Persetujuan';
     // Query untuk mengambil data peminjaman dengan detail
     $stmt = $conn->prepare("
         SELECT

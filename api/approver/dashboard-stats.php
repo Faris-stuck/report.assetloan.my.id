@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 
 try {
     // Validate role
-    SessionValidator::requireRole(['manager']);
+    SessionValidator::requireRole(['admin', 'manager']);
     
     $stats = [];
     

@@ -111,8 +111,8 @@ CREATE TABLE `vendor` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ------------------------------------------------------------
--- Tabel: pembelian_barang (riwayat pembelian stok)
--- ------------------------------------------------------------
+-- Table: pembelian_barang (riwayat pembelian stok)
+-- ----
 DROP TABLE IF EXISTS `pembelian_barang`;
 CREATE TABLE `pembelian_barang` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
@@ -120,7 +120,8 @@ CREATE TABLE `pembelian_barang` (
   `vendor_id` int(11) unsigned NOT NULL,
   `tanggal_pembelian` date NOT NULL,
   `jumlah` int(11) NOT NULL,
-  `harga_satuan` decimal(15,2) DEFAULT NULL,
+  `harga_satuan` float DEFAULT NULL COMMENT 'Harga satuan (float for decimal precision)',
+  `total_harga` float DEFAULT NULL COMMENT 'Total harga = jumlah * harga_satuan (float)',
   `keterangan` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `barang_id` (`barang_id`),

@@ -15,9 +15,37 @@ if(!$id_barang){
 $vendor = $_POST['vendor'];
 $vendor_baru = $_POST['vendor_baru'] ?? null;
 $tanggal = $_POST['tanggal_pembelian'];
-$jumlah = $_POST['jumlah'];
-$harga = $_POST['harga_satuan'];
+$jumlah = isset($_POST['jumlah']) ? (int)$_POST['jumlah'] : 0;
+$harga = isset($_POST['harga_satuan']) ? (float)$_POST['harga_satuan'] : 0;
 $keterangan = $_POST['keterangan'];
+
+// VALIDASI: tanggal pembelian tidak boleh kurang dari hari ini
+$today = date('Y-m-d');
+if (strtotime($tanggal) < strtotime($today)) {
+    echo json_encode([
+        "status"=>false,
+        "message"=>"Tanggal pembelian tidak boleh kurang dari tanggal hari ini ($today)"
+    ]);
+    exit;
+}
+
+// VALIDASI: jumlah pembelian harus positif
+if ($jumlah <= 0) {
+    echo json_encode([
+        "status"=>false,
+        "message"=>"Jumlah pembelian harus lebih dari 0"
+    ]);
+    exit;
+}
+
+// VALIDASI: harga satuan harus positif
+if ($harga <= 0) {
+    echo json_encode([
+        "status"=>false,
+        "message"=>"Harga satuan harus lebih dari 0"
+    ]);
+    exit;
+}
 
 $total = $jumlah * $harga;
 
@@ -37,7 +65,7 @@ VALUES (?,?,?,?,?,?)
 ");
 
 $stmt->bind_param(
-    "iisiis",
+    "iisids",
     $id_barang,
     $vendor,
     $tanggal,
@@ -47,13 +75,10 @@ $stmt->bind_param(
 );
 $stmt->execute();
 
-// update stok
-$conn->query("
-UPDATE barang
-SET stok_total = stok_total + $jumlah,
-    stok_tersedia = stok_tersedia + $jumlah
-WHERE id = $id_barang
-");
+// update stok - using prepared statement
+$stmtStok = $conn->prepare("UPDATE barang SET stok_total = stok_total + ?, stok_tersedia = stok_tersedia + ? WHERE id = ?");
+$stmtStok->bind_param("iii", $jumlah, $jumlah, $id_barang);
+$stmtStok->execute();
 
 echo json_encode([
     "status"=>true,

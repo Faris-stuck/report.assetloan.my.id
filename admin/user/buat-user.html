@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -64,8 +69,9 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Dashboard /
-                                    Informasi</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik /
+                                    Informasi</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -76,9 +82,11 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item
-                                    Data</a></li>
+                                    Data</a>
+                            </li>
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item
-                                    Detail</a></li>
+                                    Detail</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -89,11 +97,14 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a></li>
+                                    href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
+                            </li>
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a></li>
+                                    href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
+                            </li>
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/peminjaman/admin-approval.html">Approval</a></li>
+                                    href="../../admin/peminjaman/admin-approval.html">Approval</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -104,7 +115,8 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a></li>
+                                    href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -115,7 +127,8 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User
-                                    List</a></li>
+                                    List</a>
+                            </li>
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/pengaturan.html">Role List</a>
                             </li>
                         </ul>
@@ -414,8 +427,7 @@
                             <button class="btn btn-sm btn-outline-secondary" onclick="loadUsers()" title="Refresh">
                                 <i class="feather-refresh-cw"></i>
                             </button>
-                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
-                                data-bs-target="#modalChangePassword">
+                            <button class="btn btn-primary btn-sm" onclick="openChangePasswordFromToolbar()">
                                 <i class="feather-lock me-1"></i> Change Password
                             </button>
                         </div>
@@ -429,19 +441,20 @@
                                 <div class="table-responsive">
                                     <table class="table table-hover table-bordered align-middle mb-0" id="userTable">
                                         <thead>
-                                            <tr style="background: #3b5998; color: #fff;">
+                                            <tr style="background: #3b5998; color: #fff !important;">
                                                 <th width="4%" class="text-center">
                                                     <input type="checkbox" class="form-check-input" id="checkAll"
                                                         style="margin:0;">
                                                 </th>
-                                                <th style="cursor:pointer;" onclick="sortTable('nama')">
+                                                <th style="cursor:pointer; color: #fff !important;"
+                                                    onclick="sortTable('nama')">
                                                     Name <i class="feather-arrow-up fs-10" id="sort-nama"></i>
                                                 </th>
-                                                <th>NRP</th>
-                                                <th>Email</th>
-                                                <th>Role</th>
-                                                <th>Created</th>
-                                                <th width="10%">Action</th>
+                                                <th style="color: #fff !important;">NRP</th>
+                                                <th style="color: #fff !important;">Email</th>
+                                                <th style="color: #fff !important;">Role</th>
+                                                <th style="color: #fff !important;">Created</th>
+                                                <th width="10%" style="color: #fff !important;">Action</th>
                                             </tr>
                                             <tr style="background: #4a69bd;">
                                                 <td></td>

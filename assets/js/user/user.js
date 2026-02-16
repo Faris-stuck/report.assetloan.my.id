@@ -331,6 +331,9 @@ function renderUsersTable(users, startIndex) {
                 <td><small class="text-muted">${created}</small></td>
                 <td class="text-center">
                     <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-info" onclick="openChangePasswordForUser(${user.id}, '${escapedName}')" title="Change Password">
+                            <i class="feather-lock"></i>
+                        </button>
                         <button class="btn btn-outline-warning" onclick="openEditRoleModal(${user.id}, '${escapedName}', '${user.role}')" title="Edit Role">
                             <i class="feather-edit-2"></i>
                         </button>
@@ -434,6 +437,49 @@ function populateChangePasswordSelect(users) {
     users.forEach(u => {
         sel.innerHTML += `<option value="${u.id}">${u.nama} (${u.nrp})</option>`;
     });
+}
+
+// Open Change Password modal with pre-selected user from row action button
+function openChangePasswordForUser(userId, userName) {
+    // Set the user ID in the select dropdown
+    const cpUserId = document.getElementById('cpUserId');
+    if (cpUserId) {
+        cpUserId.value = userId;
+    }
+
+    // Open the modal
+    const modalEl = document.getElementById('modalChangePassword');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+// Open Change Password modal from toolbar button
+function openChangePasswordFromToolbar() {
+    // Get all checked user checkboxes
+    const checkedBoxes = document.querySelectorAll('.user-check:checked');
+
+    if (checkedBoxes.length === 0) {
+        showFeedback('Pilih salah satu user dari tabel terlebih dahulu, atau klik tombol 🔒 di row user', 'warning');
+        return;
+    }
+
+    if (checkedBoxes.length > 1) {
+        showFeedback('Hanya pilih 1 user untuk change password', 'warning');
+        return;
+    }
+
+    // Get the selected user ID
+    const selectedUserId = checkedBoxes[0].value;
+
+    // Find the user data to get nama
+    const selectedUser = allUsers.find(u => u.id == selectedUserId);
+    if (selectedUser) {
+        openChangePasswordForUser(selectedUserId, selectedUser.nama);
+    } else {
+        showFeedback('User tidak ditemukan', 'danger');
+    }
 }
 
 function changePassword() {

@@ -10,7 +10,7 @@ require_once "../session-helper.php";
 header('Content-Type: application/json');
 
 try {
-    SessionValidator::requireRole(['manager']);
+    SessionValidator::requireRole(['admin', 'manager']);
     
     $status = $_GET['status'] ?? 'Menunggu Persetujuan';
     $limit = intval($_GET['limit'] ?? 10);

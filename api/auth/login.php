@@ -26,17 +26,8 @@ if ($res && $res->num_rows > 0) {
     $user = $res->fetch_assoc();
     $stored = (string)($user['password'] ?? '');
 
-    // Support hashed password + legacy plaintext password
-    $ok = false;
-    if ($stored !== '') {
-        if (password_verify($password, $stored)) {
-            $ok = true;
-        } else if (hash_equals($stored, $password)) {
-            $ok = true;
-        }
-    }
-
-    if (!$ok) {
+    // ONLY verify hashed password - NO plaintext support
+    if (!password_verify($password, $stored)) {
         http_response_code(401);
         echo json_encode(["error" => "Login gagal"]);
         exit;

@@ -43,6 +43,24 @@ $safety_stock  = isset($_POST['safety_stock']) ? (int)$_POST['safety_stock'] : 1
 $kondisi       = $_POST['kondisi'] ?? 'Baik';
 $keterangan    = $_POST['keterangan'] ?? null;
 
+// VALIDASI: stok tidak boleh negatif
+if ($stok_total !== null && $stok_total < 0) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Stock tidak boleh negatif"
+    ]);
+    exit;
+}
+
+// VALIDASI: safety stock minimal 1
+if ($safety_stock < 1) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Safety Stock harus minimal 1"
+    ]);
+    exit;
+}
+
 try {
 
 // ============================

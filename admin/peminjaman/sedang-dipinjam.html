@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -494,9 +499,20 @@
     <!--! END: Apps Init !-->
 
     <script>
-        // Load data peminjaman yang sedang dipinjam
+        // Validasi role - hanya admin yang boleh akses halaman ini
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!userData.id) {
+            alert("Please log in first");
+            window.location.href = "../../auth/login.html";
+        }
+        if (userData.role && userData.role !== "admin") {
+            alert("Admin access required");
+            window.location.href = "../../user/dashboard.html";
+        }
+
+        // Load data peminjaman yang sedang dipinjam dari database peminjaman
         function loadDataSedangDipinjam() {
-            fetch("../../api/approver/list-by-status.php?status=" + encodeURIComponent("Sedang Dipinjam"))
+            fetch("../../api/peminjaman/get_by_status.php?status=" + encodeURIComponent("Sedang Dipinjam"))
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {

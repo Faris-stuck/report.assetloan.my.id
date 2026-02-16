@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -535,14 +540,18 @@
                     <!---TABEL RIWAYAT PEMBELIAN-->
                     <!---TABEL RIWAYAT PEMBELIAN-->
                     <div class="card mt-4">
-                        <div class="card-header">
-                            <h6>Purchase History</h6>
-
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembelian">
-                                Tambah Pembelian
-                            </button>
-
-
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Purchase History</h6>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#modalPembelian">
+                                    <i class="feather-plus"></i> Tambah Pembelian
+                                </button>
+                                <button class="btn btn-info" data-bs-toggle="modal"
+                                    data-bs-target="#modalEditVendor">
+                                    <i class="feather-edit"></i> Edit Vendor
+                                </button>
+                            </div>
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-bordered">
@@ -553,6 +562,7 @@
                                         <th>Qty</th>
                                         <th>Price</th>
                                         <th>Total</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="historyPembelian">
@@ -595,7 +605,10 @@
 
                                 <div class="mb-2">
                                     <label>Purchase Date</label>
-                                    <input type="date" id="tanggal_pembelian" class="form-control" required>
+                                    <input type="date" id="tanggal_pembelian" name="tanggal_pembelian"
+                                        class="form-control" required>
+                                    <small class="text-muted">Tanggal pembelian tidak boleh kurang dari tanggal hari
+                                        ini</small>
                                 </div>
 
                                 <div class="mb-2">
@@ -613,12 +626,13 @@
 
                                 <div class="mb-2">
                                     <label>Qty</label>
-                                    <input type="number" id="jumlah" class="form-control" required>
+                                    <input type="number" id="jumlah" class="form-control" min="1" required>
                                 </div>
 
                                 <div class="mb-2">
                                     <label>Unit Price</label>
-                                    <input type="number" id="harga_satuan" class="form-control" required>
+                                    <input type="number" id="harga_satuan" class="form-control" step="0.01" min="0.01"
+                                        required>
                                 </div>
 
                                 <div class="mb-2">
@@ -644,6 +658,125 @@
                 </div>
             </div>
 
+            <!-- Modal Edit Pembelian -->
+            <div class="modal fade" id="modalEditPembelian" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="formEditPembelian">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Item Purchase</h5>
+
+                            </div>
+
+                            <div class="modal-body">
+                                <input type="hidden" id="edit_id_pembelian">
+                                <input type="hidden" id="edit_id_barang_purchase">
+
+                                <div class="mb-2">
+                                    <label>Purchase Date</label>
+                                    <input type="date" id="edit_tanggal_pembelian" class="form-control" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Vendor</label>
+                                    <select id="edit_vendor" class="form-select mb-2">
+                                        <option value="">Select Vendor</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Qty</label>
+                                    <input type="number" id="edit_jumlah" class="form-control" min="1" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Unit Price</label>
+                                    <input type="number" id="edit_harga_satuan" class="form-control" step="0.01"
+                                        min="0.01" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Notes</label>
+                                    <textarea id="edit_keterangan" class="form-control"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Update</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Edit Vendor -->
+            <div class="modal fade" id="modalEditVendor" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Manage Vendors</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Vendor list table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Nama Vendor</th>
+                                            <th>Alamat</th>
+                                            <th>Kontak</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vendorTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+                            <!-- Form edit/add vendor -->
+                            <h6 id="vendorFormTitle">Add New Vendor</h6>
+                            <form id="formVendorEdit">
+                                <input type="hidden" id="vendorEditId" value="">
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label>Nama Vendor</label>
+                                        <input type="text" id="vendorEditNama" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label>Alamat</label>
+                                        <input type="text" id="vendorEditAlamat" class="form-control">
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label>Kontak</label>
+                                        <input type="text" id="vendorEditKontak" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="submit" class="btn btn-primary btn-sm" id="btnSaveVendor">
+                                        <i class="feather-save"></i> Save Vendor
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditVendor"
+                                        style="display:none;" onclick="cancelVendorEdit()">
+                                        Cancel Edit
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
 
 

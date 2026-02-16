@@ -2,8 +2,13 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    
+    
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -323,6 +328,27 @@
     <script src="../../assets/js/dashboard-init.min.js"></script>
     <!--! END: Apps Init !-->
 
+    <script src="../../assets/js/config/api.js"></script>
+    <script>
+        function loadLaporanStok() {
+            fetch(API_BASE_URL + '/barang/get.php', { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    let html = '<h4 class="mb-4">Laporan Stok Barang</h4><table class="table table-hover"><thead class="table-light"><tr>';
+                    html += '<th>No</th><th>Kode</th><th>Nama</th><th>Kategori</th><th>Total</th><th>Tersedia</th><th>Rusak</th><th>Status</th></tr></thead><tbody>';
+                    if (res.data && res.data.length > 0) {
+                        res.data.forEach((b, i) => {
+                            let badge = b.stok_tersedia <= 0 ? 'bg-danger' : (b.stok_tersedia <= b.safety_stock ? 'bg-warning' : 'bg-success');
+                            html += `<tr><td>${i+1}</td><td>${b.kode_barang}</td><td>${b.nama_barang}</td><td>${b.kategori||'-'}</td><td>${b.stok_total}</td><td>${b.stok_tersedia}</td><td>${b.stok_rusak||0}</td><td><span class="badge ${badge}">${b.stok_tersedia<=0?'Habis':(b.stok_tersedia<=b.safety_stock?'Menipis':'OK')}</span></td></tr>`;
+                        });
+                    } else {
+                        html += '<tr><td colspan="8" class="text-center text-muted">No data</td></tr>';
+                    }
+                    document.querySelector('main .nxl-content').innerHTML = html + '</tbody></table>';
+                }).catch(err => console.error(err));
+        }
+        document.addEventListener('DOMContentLoaded', loadLaporanStok);
+    </script>
 </body>
 
 </html>

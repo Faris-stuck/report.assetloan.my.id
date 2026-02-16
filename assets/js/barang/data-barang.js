@@ -73,6 +73,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const kode = (kodeInput && kodeInput.value) ? kodeInput.value.trim() : '';
             const nama = (namaInput && namaInput.value) ? namaInput.value.trim() : '';
+            const stokTotalVal = parseInt(document.getElementById('stok_total')?.value) || 0;
+            const safetyStockVal = parseInt(document.getElementById('safety_stock')?.value) || 0;
+
+            // Validasi: stock harus >= 0
+            if (stokTotalVal < 0) {
+                alert('Total Stock tidak boleh negatif');
+                return;
+            }
+
+            // Validasi: safety stock harus >= 1
+            if (safetyStockVal < 1) {
+                alert('Safety Stock harus minimal 1');
+                return;
+            }
 
             const ans = await checkUnique(kode, nama);
             if (ans.kode_exists || ans.nama_exists) {
@@ -231,6 +245,20 @@ function initEditButton() {
    SIMPAN EDIT
 ================================ */
 function simpanEditBarang() {
+    // Validasi nilai stock sebelum menyimpan
+    const stokVal = parseInt(document.getElementById('edit_stok')?.value) || 0;
+    const safetyVal = parseInt(document.getElementById('edit_safety')?.value) || 0;
+
+    if (stokVal < 0) {
+        alert('Stock tidak boleh negatif');
+        return;
+    }
+
+    if (safetyVal < 1) {
+        alert('Safety Stock harus minimal 1');
+        return;
+    }
+
     const data = new FormData();
 
     data.append("id", edit_id.value);
@@ -238,8 +266,8 @@ function simpanEditBarang() {
     data.append("nama_barang", edit_nama.value);
     data.append("kategori", document.getElementById('edit_kategori').value);
     data.append("lokasi", edit_lokasi.value);
-    data.append("stok_total", edit_stok.value);
-    data.append("safety_stock", edit_safety.value);
+    data.append("stok_total", stokVal);
+    data.append("safety_stock", safetyVal);
     data.append("kondisi", edit_kondisi.value);
     const editKetEl2 = document.getElementById('edit_keterangan');
     data.append("keterangan", editKetEl2 ? editKetEl2.value : '');

@@ -2,8 +2,12 @@
 <html lang="zxx">
 
 <head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -384,81 +388,52 @@
             <!-- [ Main Content ] start -->
             <div class="main-content">
                 <div class="row">
-                    <!-- Statistics Cards -->
-                    <div class="col-xxl-3 col-md-6 mb-3">
+                    <!-- Chart: Status Peminjaman -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
                         <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Menunggu Persetujuan</p>
-                                        <h4 class="mb-0" id="stat-menunggu-admin">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-warning rounded-2">
-                                        <i class="feather-clock text-warning"></i>
-                                    </div>
-                                </div>
+                            <div class="card-header">
+                                <h5 class="card-title">Status Peminjaman</h5>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-3 col-md-6 mb-3">
-                        <div class="card stretched-card">
                             <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Sedang Dipinjam</p>
-                                        <h4 class="mb-0" id="stat-sedang-dipinjam">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-info rounded-2">
-                                        <i class="feather-check-circle text-info"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-3 col-md-6 mb-3">
-                        <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Dikembalikan Hari Ini</p>
-                                        <h4 class="mb-0" id="stat-kembali-hari-ini">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-success rounded-2">
-                                        <i class="feather-check text-success"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-3 col-md-6 mb-3">
-                        <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Total Ditolak</p>
-                                        <h4 class="mb-0" id="stat-ditolak">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-danger rounded-2">
-                                        <i class="feather-x-circle text-danger"></i>
-                                    </div>
-                                </div>
+                                <div id="statusChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Inventory Stats -->
-                    <div class="col-xxl-4 col-md-6 mb-3">
+                    <!-- Chart: Top Barang Dipinjam (Inventory) -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
                         <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title mb-0">Top Barang Dipinjam</h5>
                                     <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Barang Tersedia</p>
-                                        <h4 class="mb-0" id="stat-barang-tersedia">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-primary rounded-2">
-                                        <i class="feather-box text-primary"></i>
+                                        <select id="topBarangKategoriFilter" class="form-select form-select-sm"
+                                            onchange="filterTopBarangByKategori()" style="width: 200px;">
+                                            <option value="all">Semua Kategori</option>
+                                        </select>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="inventoryChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart: Data Barang -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <h5 class="card-title">Data Barang</h5>
+                                <div>
+                                    <select id="dataBarangKategoriFilter" class="form-select form-select-sm"
+                                        onchange="filterTopBarangByKategori()" style="width: 200px;">
+                                        <option value="all">Semua Kategori</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="itemDataChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
@@ -477,6 +452,7 @@
                                             <th>Peminjam</th>
                                             <th>Status</th>
                                             <th>Tanggal Pinjam</th>
+                                            <th>Tanggal Pengembalian</th>
                                         </tr>
                                     </thead>
                                     <tbody id="table-recent-actions">
@@ -544,6 +520,11 @@
     <!--! END: Apps Init !-->
 
     <script>
+        // Store chart instances globally
+        let statusChartInstance = null;
+        let inventoryChartInstance = null;
+        let itemDataChartInstance = null;
+
         // Validasi role - hanya admin yang boleh akses admin dashboard
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         if (!userData.id) {
@@ -567,32 +548,97 @@
                 if (result.status && result.data) {
                     const data = result.data;
 
-                    // Update statistics cards
-                    document.getElementById('stat-menunggu-admin').textContent = data.menunggu_persetujuan || 0;
-                    document.getElementById('stat-sedang-dipinjam').textContent = data.sedang_dipinjam || 0;
-                    document.getElementById('stat-kembali-hari-ini').textContent = data.dikembalikan_hari_ini || 0;
-                    document.getElementById('stat-ditolak').textContent = data.ditolak || 0;
-                    document.getElementById('stat-barang-tersedia').textContent = data.barang_tersedia || 0;
+                    // Render Status Peminjaman Chart
+                    const statusData = {
+                        'Menunggu Persetujuan': data.menunggu_persetujuan || 0,
+                        'Sedang Dipinjam': data.sedang_dipinjam || 0,
+                        'Dikembalikan': data.dikembalikan_hari_ini || 0,
+                        'Ditolak': data.ditolak || 0
+                    };
+                    renderStatusChart(statusData);
+
+                    // Populate kategori filter dropdown
+                    const categories = data.categories || [];
+                    const kategoriSelect = document.getElementById('topBarangKategoriFilter');
+                    if (kategoriSelect && categories.length > 0) {
+                        categories.forEach(cat => {
+                            const option = document.createElement('option');
+                            option.value = cat;
+                            option.textContent = cat;
+                            kategoriSelect.appendChild(option);
+                        });
+                    }
+
+
+
+                    // Render Inventory Chart first
+                    const topBarang = data.top_barang || [];
+                    if (topBarang.length > 0) {
+                        renderInventoryChart(topBarang);
+                    } else {
+                        document.getElementById('inventoryChart').innerHTML =
+                            '<div class="text-center text-muted py-5">Belum ada data peminjaman</div>';
+                    }
+
+                    // Render Item Data Chart
+                    const allBarang = data.all_barang || [];
+                    if (allBarang.length > 0) {
+                        renderItemDataChart(allBarang);
+                    } else {
+                        document.getElementById('itemDataChart').innerHTML =
+                            '<div class="text-center text-muted py-5">Belum ada data barang</div>';
+                    }
 
                     // Populate recent actions table
                     const recentActions = data.recent_actions || [];
                     const tableBody = document.getElementById('table-recent-actions');
 
                     if (recentActions.length > 0) {
-                        tableBody.innerHTML = recentActions.map(item => `
-                            <tr>
-                                <td><code>${item.kode}</code></td>
-                                <td>${item.nama}</td>
-                                <td><span class="badge bg-${getStatusBadgeClass(item.status)}">${item.status}</span></td>
-                                <td>${item.tanggal_pinjam}</td>
-                            </tr>
-                        `).join('');
+                        tableBody.innerHTML = recentActions.map(item => {
+                            // Determine return date background color
+                            let returnDateBgClass = 'bg-secondary';
+                            let returnDateColor = 'text-white';
+
+                            if (item.status === 'Sedang Dipinjam') {
+
+                                if (item.rencana_kembali !== '-') {
+                                    const [kembaliDay, kembaliMonth, kembaliYear] = item.rencana_kembali.split('/');
+                                    const kembaliDate = new Date(kembaliYear, kembaliMonth - 1, kembaliDay);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+
+                                    // Format today as dd/mm/yyyy for comparison
+                                    const todayFormatted = String(today.getDate()).padStart(2, '0') + '/' +
+                                        String(today.getMonth() + 1).padStart(2, '0') + '/' +
+                                        today.getFullYear();
+
+                                    // If return date equals borrow date OR equals today -> yellow
+                                    if (item.rencana_kembali === todayFormatted) {
+                                        returnDateBgClass = 'bg-warning';
+                                        returnDateColor = 'text-dark';
+                                    } else if (kembaliDate < today) {
+                                        // Check if return date is overdue (in the past) -> red
+                                        returnDateBgClass = 'bg-danger';
+                                        returnDateColor = 'text-white';
+                                    }
+                                }
+                            }
+
+                            return `
+                                <tr>
+                                    <td><code>${item.kode}</code></td>
+                                    <td>${item.nama}</td>
+                                    <td><span class="badge bg-${getStatusBadgeClass(item.status)}">${item.status}</span></td>
+                                    <td>${item.tanggal_pinjam}</td>
+                                    <td><span class="badge ${returnDateBgClass} ${returnDateColor}">${item.rencana_kembali}</span></td>
+                                </tr>
+                            `;
+                        }).join('');
                     } else {
-                        tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Tidak ada aktivitas</td></tr>';
+                        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada aktivitas</td></tr>';
                     }
 
                     // Populate top barang
-                    const topBarang = data.top_barang || [];
                     const topContainer = document.getElementById('top-barang');
 
                     if (topBarang.length > 0) {
@@ -618,6 +664,224 @@
                 document.getElementById('table-recent-actions').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
             }
         });
+
+        // Chart: Status Peminjaman
+        function renderStatusChart(statusData) {
+            // Destroy existing chart instance if it exists
+            if (statusChartInstance) {
+                statusChartInstance.destroy();
+                statusChartInstance = null;
+            }
+
+            const labels = Object.keys(statusData);
+            const values = Object.values(statusData);
+            const colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: colors,
+                series: [{
+                    name: 'Jumlah Peminjaman',
+                    data: values
+                }],
+                xaxis: {
+                    categories: labels,
+                    labels: {
+                        style: { fontSize: '12px' }
+                    }
+                },
+                yaxis: {
+                    title: { text: 'Jumlah' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '60%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' peminjaman' }
+                }
+            };
+
+            if (window.ApexCharts) {
+                statusChartInstance = new ApexCharts(document.querySelector('#statusChart'), options);
+                statusChartInstance.render();
+            }
+        }
+
+        // Chart: Top Barang Dipinjam
+        function renderInventoryChart(topBarang) {
+            // Destroy existing chart instance if it exists
+            if (inventoryChartInstance) {
+                inventoryChartInstance.destroy();
+                inventoryChartInstance = null;
+            }
+
+            const names = topBarang.map(item => item.nama);
+            const peminjaman = topBarang.map(item => parseInt(item.jumlah_peminjaman) || 0);
+            const stokTersedia = topBarang.map(item => parseInt(item.stok_tersedia) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998', '#66BB6A'],
+                series: [
+                    {
+                        name: 'Dipinjam',
+                        data: peminjaman
+                    },
+                    {
+                        name: 'Tersedia',
+                        data: stokTersedia
+                    }
+                ],
+                xaxis: {
+                    categories: names,
+                    labels: {
+                        style: { fontSize: '12px' }
+                    }
+                },
+                yaxis: {
+                    title: { text: 'Jumlah' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' unit' }
+                },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'right'
+                }
+            };
+
+            if (window.ApexCharts) {
+                inventoryChartInstance = new ApexCharts(document.querySelector('#inventoryChart'), options);
+                inventoryChartInstance.render();
+            }
+        }
+
+        // Chart: Data Barang Status
+        function renderItemDataChart(allBarang) {
+            // Destroy existing chart instance if it exists
+            if (itemDataChartInstance) {
+                itemDataChartInstance.destroy();
+                itemDataChartInstance = null;
+            }
+
+            const names = allBarang.map(item => item.nama);
+            const peminjaman = allBarang.map(item => parseInt(item.jumlah_peminjaman) || 0);
+            const stokTersedia = allBarang.map(item => parseInt(item.stok_tersedia) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998', '#66BB6A'],
+                series: [
+                    {
+                        name: 'Dipinjam',
+                        data: peminjaman
+                    },
+                    {
+                        name: 'Tersedia',
+                        data: stokTersedia
+                    }
+                ],
+                xaxis: {
+                    categories: names,
+                    labels: {
+                        style: { fontSize: '12px' }
+                    }
+                },
+                yaxis: {
+                    title: { text: 'Jumlah' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' unit' }
+                },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'right'
+                }
+            };
+
+            if (window.ApexCharts) {
+                itemDataChartInstance = new ApexCharts(document.querySelector('#itemDataChart'), options);
+                itemDataChartInstance.render();
+            }
+        }
+
+        // Filter Top Barang by kategori
+        async function filterTopBarangByKategori() {
+            const kategori = document.getElementById('topBarangKategoriFilter').value;
+
+            try {
+                let url = '../api/admin/dashboard-stats.php';
+                if (kategori && kategori !== 'all') {
+                    url += '?kategori=' + encodeURIComponent(kategori);
+                }
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    const topBarang = result.data.top_barang || [];
+                    if (topBarang.length > 0) {
+                        renderInventoryChart(topBarang);
+                    } else {
+                        document.getElementById('inventoryChart').innerHTML =
+                            '<div class="text-center text-muted py-5">Tidak ada data untuk kategori terpilih</div>';
+                    }
+                } else {
+                    alert('Error loading data');
+                }
+            } catch (error) {
+                console.error('Error filtering by kategori:', error);
+                alert('Error filtering data');
+            }
+        }
 
         // Helper function to get status badge class
         function getStatusBadgeClass(status) {
