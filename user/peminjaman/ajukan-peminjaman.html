@@ -388,13 +388,20 @@
 
                     <!-- [ Borrowing Data Table ] start -->
                     <div class="card stretch stretch-full">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0">Loan</h5>
-
-                            <button class="btn btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#requestBorrowingModal">
-                                <i class="feather-plus me-2"></i>Request Borrowing
-                            </button>
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div>
+                                <h5 class="mb-0">Loan</h5>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <div id="reportrange" class="reportrange-picker d-flex align-items-center">
+                                    <span class="reportrange-picker-field"></span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" id="btnResetDate">Reset</button>
+                                <button class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#requestBorrowingModal">
+                                    <i class="feather-plus me-2"></i>Request Borrowing
+                                </button>
+                            </div>
                         </div>
 
                         <div class="d-flex d-md-none">
@@ -697,6 +704,8 @@
     <!-- vendors.min.js {always must need to be top} -->
     <script src="../../assets/vendors/js/apexcharts.min.js"></script>
     <script src="../../assets/vendors/js/circle-progress.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="../../assets/vendors/js/daterangepicker.min.js"></script>
     <!--! END: Vendors JS !-->
     <!--! BEGIN: Apps Init  !-->
     <script src="../../assets/js/common-init.min.js"></script>
@@ -729,12 +738,84 @@
             }
         }
 
+        // Global variables untuk date range filter
+        var startDate = null;
+        var endDate = null;
+
+        // Handle date range change
+        function handleDateRangeChange(picker) {
+            var newStart = picker.startDate.format('YYYY-MM-DD');
+            var newEnd = picker.endDate.format('YYYY-MM-DD');
+
+            // Prevent duplicate calls if dates haven't actually changed
+            if (startDate === newStart && endDate === newEnd) {
+                console.log('⚠ Dates unchanged - skipping reload');
+                return;
+            }
+
+            startDate = newStart;
+            endDate = newEnd;
+
+            var displayText = picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+            document.querySelector('#reportrange .reportrange-picker-field').innerHTML = displayText;
+
+            // Update styling untuk range buttons
+            document.querySelectorAll('.daterangepicker .ranges li').forEach(function (button) {
+                button.classList.remove('active');
+            });
+
+            // Check apakah range sekarang match dengan salah satu preset
+            var isMatchingPreset = false;
+            var rangeNames = Object.keys(picker.ranges);
+
+            for (var i = 0; i < rangeNames.length; i++) {
+                var rangeName = rangeNames[i];
+                var rangeValue = picker.ranges[rangeName];
+                var rangeStart = rangeValue[0].format('YYYY-MM-DD');
+                var rangeEnd = rangeValue[1].format('YYYY-MM-DD');
+
+                if (rangeStart === newStart && rangeEnd === newEnd) {
+                    console.log('✓ Matches preset: ' + rangeName);
+                    var buttons = document.querySelectorAll('.daterangepicker .ranges li');
+                    buttons.forEach(function (button) {
+                        if (button.textContent.trim() === rangeName) {
+                            button.classList.add('active');
+                            console.log('  → Highlighted button: ' + rangeName);
+                        }
+                    });
+                    isMatchingPreset = true;
+                    break;
+                }
+            }
+
+            if (!isMatchingPreset) {
+                console.log('✓ Custom range selected (tidak match dengan preset)');
+            }
+
+            console.log('Date range changed to: ' + startDate + ' to ' + endDate);
+            console.log('Calling loadDataPeminjaman with:', startDate, endDate);
+            loadDataPeminjaman(startDate, endDate);
+        }
+
         // Load data peminjaman dari database untuk user yang login
-        function loadDataPeminjaman() {
-            fetch("../../api/peminjaman/get_all.php?user_id=" + USER_ID)
+        function loadDataPeminjaman(dateStart, dateEnd) {
+            var url = "../../api/peminjaman/get_all.php?user_id=" + USER_ID;
+
+            // Add date range parameters if provided
+            if (dateStart && dateEnd) {
+                url += "&start_date=" + encodeURIComponent(dateStart) + "&end_date=" + encodeURIComponent(dateEnd);
+                console.log('Loading data with date range:', dateStart, 'to', dateEnd);
+            } else {
+                console.log('Loading data without date range');
+            }
+
+            console.log('Fetching from:', url);
+
+            fetch(url)
                 .then(res => res.json())
                 .then(res => {
                     if (res.status && res.data) {
+                        console.log('API returned data:', res.data.length, 'rows');
                         renderTable(res.data);
                     } else {
                         console.error("Error loading data:", res.message);
@@ -816,8 +897,181 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function () {
-            // Load main data on page load
-            loadDataPeminjaman();
+            console.log('Page loaded - checking libraries...');
+
+            // Check if jQuery and required libraries are loaded
+            if (typeof jQuery === 'undefined') {
+                console.error('jQuery not loaded!');
+                return;
+            }
+            if (typeof moment === 'undefined') {
+                console.error('moment.js not loaded!');
+                return;
+            }
+            if (typeof $.fn.daterangepicker === 'undefined') {
+                console.error('daterangepicker not loaded!');
+                return;
+            }
+
+            console.log('All libraries loaded successfully');
+
+            // Initialize daterangepicker
+            try {
+                var start = moment().clone().subtract(29, 'days');
+                var end = moment();
+
+                $('#reportrange').daterangepicker({
+                    startDate: start,
+                    endDate: end,
+                    locale: {
+                        format: 'YYYY-MM-DD'
+                    },
+                    ranges: {
+                        'Today': [moment(), moment()],
+                        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                        'This Month': [moment().startOf('month'), moment().endOf('month')],
+                        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                        'All Time': [moment('2020-01-01'), moment()]
+                    }
+                });
+
+                console.log('DateRangePicker initialized successfully');
+
+                // Update display dengan tanggal awal
+                var displayText = start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+                document.querySelector('#reportrange .reportrange-picker-field').innerHTML = displayText;
+
+                // Trigger initial data load
+                startDate = start.format('YYYY-MM-DD');
+                endDate = end.format('YYYY-MM-DD');
+                console.log('Initial date range loaded:', startDate, 'to', endDate);
+                loadDataPeminjaman(startDate, endDate);
+
+                // Event listener untuk apply date range
+                $('#reportrange').on('apply.daterangepicker', function (ev, picker) {
+                    console.log('✓ Apply event triggered');
+                    handleDateRangeChange(picker);
+                });
+
+                // Method 2: Direct Apply button click detection
+                $(document).on('click', '.daterangepicker .applyBtn, .drp-buttons .applyBtn', function (e) {
+                    console.log('✓ Apply button clicked');
+                    setTimeout(function () {
+                        var picker = $('#reportrange').data('daterangepicker');
+                        if (picker) {
+                            handleDateRangeChange(picker);
+                        }
+                    }, 50);
+                });
+
+                // Method 3: Detect range button click
+                $(document).on('click', '.daterangepicker .ranges li', function () {
+                    console.log('✓ Range preset clicked -', $(this).text());
+                    setTimeout(function () {
+                        var picker = $('#reportrange').data('daterangepicker');
+                        if (picker) {
+                            handleDateRangeChange(picker);
+                        }
+                    }, 50);
+                });
+
+                // Method 4: Calendar cell mousedown detection
+                $(document).on('mousedown', '.daterangepicker td.available, .daterangepicker td.off', function () {
+                    console.log('✓ Calendar cell mousedown');
+                    var rangeButtons = document.querySelectorAll('.daterangepicker .ranges li');
+                    rangeButtons.forEach(function (button) {
+                        if (button.classList.contains('active')) {
+                            button.classList.remove('active');
+                        }
+                    });
+                });
+
+                // Method 5: Aggressive interval checker untuk styling consistency
+                setInterval(function () {
+                    var picker = $('#reportrange').data('daterangepicker');
+                    if (!picker || !picker.container || !picker.container.is(':visible')) {
+                        return;
+                    }
+
+                    var currentStart = picker.startDate.format('YYYY-MM-DD');
+                    var currentEnd = picker.endDate.format('YYYY-MM-DD');
+                    var rangeButtons = document.querySelectorAll('.daterangepicker .ranges li');
+
+                    rangeButtons.forEach(function (button) {
+                        var buttonText = button.textContent.trim();
+                        var rangeValue = picker.ranges[buttonText];
+
+                        if (!rangeValue) return;
+
+                        var rangeStart = rangeValue[0].format('YYYY-MM-DD');
+                        var rangeEnd = rangeValue[1].format('YYYY-MM-DD');
+                        var isMatching = (currentStart === rangeStart && currentEnd === rangeEnd);
+                        var isActive = button.classList.contains('active');
+
+                        if (isMatching && !isActive) {
+                            button.classList.add('active');
+                        } else if (!isMatching && isActive) {
+                            button.classList.remove('active');
+                        }
+                    });
+                }, 200);
+
+                // Method 6: MutationObserver untuk span text changes
+                var spanObserver = new MutationObserver(function (mutations) {
+                    mutations.forEach(function (mutation) {
+                        if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                            setTimeout(function () {
+                                var picker = $('#reportrange').data('daterangepicker');
+                                if (picker) {
+                                    var newStart = picker.startDate.format('YYYY-MM-DD');
+                                    var newEnd = picker.endDate.format('YYYY-MM-DD');
+
+                                    if (startDate !== newStart || endDate !== newEnd) {
+                                        handleDateRangeChange(picker);
+                                    }
+                                }
+                            }, 100);
+                        }
+                    });
+                });
+
+                var spanNode = document.querySelector('#reportrange .reportrange-picker-field');
+                if (spanNode) {
+                    var spanConfig = {
+                        characterData: true,
+                        childList: true,
+                        subtree: true,
+                        characterDataOldValue: true
+                    };
+                    spanObserver.observe(spanNode, spanConfig);
+                    console.log('✓ MutationObserver ready');
+                }
+
+                console.log('✓✓✓ DateRangePicker setup complete ✓✓✓');
+
+            } catch (error) {
+                console.error('Error initializing daterangepicker:', error);
+            }
+
+            // Handle reset button
+            document.getElementById('btnResetDate').addEventListener('click', function () {
+                console.log('Reset button clicked');
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+
+                $('#reportrange').data('daterangepicker').setStartDate(newStart);
+                $('#reportrange').data('daterangepicker').setEndDate(newEnd);
+
+                var newDisplayText = newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                document.querySelector('#reportrange .reportrange-picker-field').innerHTML = newDisplayText;
+
+                console.log('Filter reset to default');
+                startDate = newStart.format('YYYY-MM-DD');
+                endDate = newEnd.format('YYYY-MM-DD');
+                loadDataPeminjaman(startDate, endDate);
+            });
 
             // Handle modal show event
             const requestModal = document.getElementById('requestBorrowingModal');

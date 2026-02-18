@@ -454,8 +454,64 @@
                         </div>
                     </div>
 
-
-
+                    <!-- [ Borrowing Detail Modal ] start -->
+                    <div class="modal fade" id="detailBorrowingModal" tabindex="-1"
+                        aria-labelledby="detailBorrowingModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="detailBorrowingModalLabel">Borrowing Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <p><strong>Code:</strong> <span id="detailKode">-</span></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p><strong>Name:</strong> <span id="detailNama">-</span></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p><strong>NRP:</strong> <span id="detailNrp">-</span></p>
+                                        </div>
+                                        <div class="col-6">
+                                            <p><strong>Status:</strong> <span id="detailStatus">-</span></p>
+                                        </div>
+                                        <div class="col-12">
+                                            <p><strong>Borrow Date:</strong> <span id="detailTanggalPinjam">-</span></p>
+                                        </div>
+                                        <div class="col-12">
+                                            <p><strong>Expected Return:</strong> <span id="detailRencanaKembali">-</span></p>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6 class="mb-3"><strong>Borrowed Items</strong></h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No.</th>
+                                                    <th>Item</th>
+                                                    <th>Quantity</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="detailBarangTable">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <hr>
+                                    <div id="detailCatatanDiv" style="display: none;">
+                                        <h6 class="text-danger mb-2"><strong>Notes</strong></h6>
+                                        <div class="alert alert-info" id="detailCatatan"></div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- [ Borrowing Detail Modal ] end -->
 
                 </div>
             </div>
@@ -510,12 +566,16 @@
             window.location.href = "../../user/dashboard.html";
         }
 
+        // Store borrowing data globally for detail modal
+        let allBorrowingData = [];
+
         // Load data peminjaman yang sedang dipinjam dari database peminjaman
         function loadDataSedangDipinjam() {
             fetch("../../api/peminjaman/get_by_status.php?status=" + encodeURIComponent("Sedang Dipinjam"))
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
+                        allBorrowingData = res.data;
                         renderTableSedangDipinjam(res.data);
                     } else {
                         console.error("Error loading data:", res.message);
@@ -561,8 +621,78 @@
 
         // Fungsi untuk melihat detail peminjaman
         function lihatDetail(id) {
-            // Redirect ke halaman detail peminjaman
-            window.location.href = `detail-peminjaman.html?id=${id}`;
+            // Find the borrowing data from the stored array
+            const borrowing = allBorrowingData.find(item => item.id === id);
+            
+            if (!borrowing) {
+                alert("Data tidak ditemukan");
+                return;
+            }
+
+            // Populate modal with data
+            document.getElementById("detailKode").textContent = borrowing.kode || "-";
+            document.getElementById("detailNama").textContent = borrowing.nama || "-";
+            document.getElementById("detailNrp").textContent = borrowing.nrp || "-";
+            document.getElementById("detailTanggalPinjam").textContent = borrowing.tanggal || "-";
+            document.getElementById("detailRencanaKembali").textContent = borrowing.rencana_kembali || "-";
+            
+            // Set status badge
+            const statusBadge = borrowing.status === "Sedang Dipinjam" 
+                ? `<span class="badge bg-primary">${borrowing.status}</span>`
+                : `<span class="badge bg-secondary">${borrowing.status}</span>`;
+            document.getElementById("detailStatus").innerHTML = statusBadge;
+
+            // Populate items table
+            const detailBarangTable = document.getElementById("detailBarangTable");
+            
+            // Try to get barang_list first, if not available parse from barang string
+            let barangList = [];
+            
+            if (borrowing.barang_list && borrowing.barang_list.length > 0) {
+                barangList = borrowing.barang_list;
+            } else if (borrowing.barang && typeof borrowing.barang === 'string') {
+                // Parse barang string format: "4x Laptop Lenovo Thinkpad (Ruang 101), 2x Kamera Canon (Ruang 102)"
+                const items = borrowing.barang.split(',').map(item => item.trim());
+                barangList = items.map(item => {
+                    // Extract quantity and name
+                    const match = item.match(/^(\d+)x\s+(.+?)(?:\s*\(.*?\))?$/);
+                    if (match) {
+                        return {
+                            jumlah: match[1],
+                            nama: match[2].trim()
+                        };
+                    }
+                    return {
+                        jumlah: 1,
+                        nama: item
+                    };
+                });
+            }
+            
+            if (barangList.length > 0) {
+                detailBarangTable.innerHTML = barangList.map((item, index) => `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.nama}</td>
+                        <td class="text-center">${item.jumlah}</td>
+                    </tr>
+                `).join('');
+            } else {
+                detailBarangTable.innerHTML = `<tr><td colspan="3" class="text-center text-muted">-</td></tr>`;
+            }
+
+            // Handle catatan/notes
+            const catatanDiv = document.getElementById("detailCatatanDiv");
+            if (borrowing.catatan && borrowing.catatan.trim() !== "") {
+                document.getElementById("detailCatatan").textContent = borrowing.catatan;
+                catatanDiv.style.display = "block";
+            } else {
+                catatanDiv.style.display = "none";
+            }
+
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('detailBorrowingModal'));
+            modal.show();
         }
 
         // Load data saat halaman dimuat

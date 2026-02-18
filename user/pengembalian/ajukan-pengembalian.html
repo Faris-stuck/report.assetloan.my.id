@@ -7,8 +7,8 @@
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
-    
-    
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -384,17 +384,21 @@
             <div class="main-content">
                 <div class="row">
 
-                    <div class="col-md-8">
+                    <div class="col-md-12">
                         <div class="card">
                             <div class="card-header">
                                 <h5>Request Return</h5>
                             </div>
                             <div class="card-body">
-                                <table class="table">
+                                <table class="table table-hover">
                                     <thead>
                                         <tr>
                                             <th>Code</th>
-                                            <th>Action</th>
+                                            <th>Barang</th>
+                                            <th>Borrow Date</th>
+                                            <th>Expected Return</th>
+                                            <th>Status</th>
+                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="kembaliTable"></tbody>
@@ -483,29 +487,54 @@
                         p.status === "Sedang Dipinjam"
                     )
                     .forEach(p => {
+                        // Determine status badge color
+                        let statusBadgeClass = "badge bg-warning";
+                        if (p.status === "Sedang Dipinjam") {
+                            statusBadgeClass = "badge bg-info";
+                        } else if (p.status === "Selesai") {
+                            statusBadgeClass = "badge bg-success";
+                        } else if (p.status.includes("Rusak")) {
+                            statusBadgeClass = "badge bg-danger";
+                        }
+
                         html += `
         <tr>
-            <td>${p.kode}</td>
+            <td><strong>${p.kode}</strong></td>
+            <td>${p.barang}</td>
+            <td>${p.tanggal}</td>
+            <td>${p.rencana_kembali}</td>
+            <td><span class="${statusBadgeClass}">${p.status}</span></td>
             <td>
-                <button class="btn btn-danger btn-sm"
-                    onclick="kembalikan(${p.id})">
-                    Return
+                <button class="btn btn-danger btn-sm" 
+                    onclick="kembalikan(${p.id})" 
+                    title="Request return for this borrowing">
+                    <i class="feather-undo"></i> Return
                 </button>
             </td>
         </tr>`;
                     });
 
+                if (html === "") {
+                    html = '<tr><td colspan="6" class="text-center text-muted py-4">No borrowings found. All items have been returned.</td></tr>';
+                }
+
                 document.getElementById("kembaliTable").innerHTML = html;
             })
             .catch(err => {
                 console.error("Error loading peminjaman data:", err);
-                document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load borrowing data</td></tr>';
+                document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load borrowing data</td></tr>';
             });
 
         function kembalikan(id) {
             let fd = new FormData();
             fd.append("peminjaman_id", id);
-            const catatan = prompt("Catatan pengembalian (opsional):", "") || "";
+            const catatan = prompt("Catatan pengembalian (opsional):", "");
+
+            // If user clicked Cancel, exit the function
+            if (catatan === null) {
+                return;
+            }
+
             fd.append("catatan_user", catatan);
 
             fetch("../../api/peminjaman/return.php", {
