@@ -386,15 +386,172 @@
             <div class="main-content">
                 <div class="row">
 
+                    <!-- [ Borrowing Data Table ] start -->
+                    <div class="card stretch stretch-full">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Loan</h5>
 
+                            <button class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#requestBorrowingModal">
+                                <i class="feather-plus me-2"></i>Request Borrowing
+                            </button>
+                        </div>
 
-                    <div class="row">
-                        <div class="col-md-8">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Request Borrowing</h5>
+                        <div class="d-flex d-md-none">
+                            <a href="javascript:void(0)" class="page-header-right-close-toggle">
+                                <i class="feather-arrow-left me-2"></i>
+                                <span>Back</span>
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <!-- Nav tabs -->
+                            <ul class="nav nav-tabs" id="statusTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="semua-tab" data-bs-toggle="tab"
+                                        data-bs-target="#semua" type="button" role="tab" aria-controls="semua"
+                                        aria-selected="true">
+                                        All
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="menunggu-tab" data-bs-toggle="tab"
+                                        data-bs-target="#menunggu" type="button" role="tab" aria-controls="menunggu"
+                                        aria-selected="false">
+                                        Pending Approval
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="dipinjam-tab" data-bs-toggle="tab"
+                                        data-bs-target="#dipinjam" type="button" role="tab" aria-controls="dipinjam"
+                                        aria-selected="false">
+                                        Borrowed
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="dikembalikan-tab" data-bs-toggle="tab"
+                                        data-bs-target="#dikembalikan" type="button" role="tab"
+                                        aria-controls="dikembalikan" aria-selected="false">
+                                        Returned
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="ditolak-tab" data-bs-toggle="tab"
+                                        data-bs-target="#ditolak" type="button" role="tab" aria-controls="ditolak"
+                                        aria-selected="false">
+                                        Rejected
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Tab content -->
+                            <div class="tab-content mt-3" id="statusTabContent">
+                                <div class="tab-pane fade show active" id="semua" role="tabpanel"
+                                    aria-labelledby="semua-tab">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Loan Code</th>
+                                                    <th>Borrowed Items</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tableSemua"></tbody>
+                                        </table>
+                                    </div>
                                 </div>
-                                <div class="card-body">
+
+                                <div class="tab-pane fade" id="menunggu" role="tabpanel" aria-labelledby="menunggu-tab">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Loan Code</th>
+                                                    <th>Borrowed Items</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tableMenunggu"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="dipinjam" role="tabpanel" aria-labelledby="dipinjam-tab">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Loan Code</th>
+                                                    <th>Borrowed Items</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tableDipinjam"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="dikembalikan" role="tabpanel"
+                                    aria-labelledby="dikembalikan-tab">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Loan Code</th>
+                                                    <th>Borrowed Items</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tableDikembalikan"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="tab-pane fade" id="ditolak" role="tabpanel" aria-labelledby="ditolak-tab">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Loan Code</th>
+                                                    <th>Borrowed Items</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tableDitolak"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- [ Borrowing Data Table ] end -->
+
+                    <!-- [ Request Borrowing Modal ] start -->
+                    <div class="modal fade" id="requestBorrowingModal" tabindex="-1"
+                        aria-labelledby="requestBorrowingModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header  text-dark">
+                                    <h5 class="modal-title" id="requestBorrowingModalLabel">Request Borrowing</h5>
+                                    <button type="button" class="btn-close btn-close-dark" data-bs-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
                                     <form id="formPinjam">
 
                                         <div class="row">
@@ -551,7 +708,7 @@
     <script>
 
 
-
+        // ========== MAIN SCRIPT ==========
 
         // Ambil user ID dari localStorage (hasil login)
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -572,9 +729,118 @@
             }
         }
 
+        // Load data peminjaman dari database untuk user yang login
+        function loadDataPeminjaman() {
+            fetch("../../api/peminjaman/get_all.php?user_id=" + USER_ID)
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status && res.data) {
+                        renderTable(res.data);
+                    } else {
+                        console.error("Error loading data:", res.message);
+                        const emptyMsg = '<tr><td colspan="6" class="text-center text-muted">Tidak ada data peminjaman</td></tr>';
+                        document.getElementById("tableSemua").innerHTML = emptyMsg;
+                        document.getElementById("tableMenunggu").innerHTML = emptyMsg;
+                        document.getElementById("tableDipinjam").innerHTML = emptyMsg;
+                        document.getElementById("tableDikembalikan").innerHTML = emptyMsg;
+                        document.getElementById("tableDitolak").innerHTML = emptyMsg;
+                    }
+                })
+                .catch(error => {
+                    console.error("Network error:", error);
+                    const errorMsg = '<tr><td colspan="6" class="text-center text-danger">Gagal memuat data</td></tr>';
+                    document.getElementById("tableSemua").innerHTML = errorMsg;
+                    document.getElementById("tableMenunggu").innerHTML = errorMsg;
+                    document.getElementById("tableDipinjam").innerHTML = errorMsg;
+                    document.getElementById("tableDikembalikan").innerHTML = errorMsg;
+                    document.getElementById("tableDitolak").innerHTML = errorMsg;
+                });
+        }
+
+        // Load items untuk modal form
+        function loadItemsForModal() {
+            fetch("../../api/barang/get.php")
+                .then(res => res.json())
+                .then(res => {
+                    let html = "";
+                    res.data.forEach(b => {
+                        if (b.stok_tersedia > 0 && b.kondisi === 'Baik') {
+                            html += `
+                <tr>
+                    <td class="align-middle">${b.nama_barang}</td>
+                    <td class="align-middle text-center"><span class="stok-display" data-barang-id="${b.id}">${b.stok_tersedia}</span></td>
+                    <td class="align-middle">
+                        <input class="form-control" type="text" name="lokasi[${b.id}]" placeholder="Opsional - lokasi spesifik">
+                    </td>
+                    <td class="align-middle">
+                        <input class="form-control text-center qty-input" type="number" name="barang[${b.id}]" min="0" max="${b.stok_tersedia}" placeholder="0" style="min-width: 80px;" data-stok="${b.stok_tersedia}" data-nama="${b.nama_barang}">
+                    </td>
+                </tr>`;
+                        }
+                    });
+                    document.getElementById("listBarang").innerHTML = html;
+
+                    // Add real-time validation on quantity inputs
+                    document.querySelectorAll('.qty-input').forEach(input => {
+                        input.addEventListener('input', function () {
+                            const qty = parseInt(this.value) || 0;
+                            const maxStok = parseInt(this.getAttribute('data-stok')) || 0;
+                            const namaBarang = this.getAttribute('data-nama');
+
+                            if (qty > maxStok) {
+                                this.value = maxStok;
+                                alert(`Jumlah pinjam untuk '${namaBarang}' tidak boleh melebihi stok tersedia (${maxStok})`);
+                            }
+                            if (qty < 0) {
+                                this.value = 0;
+                            }
+                        });
+
+                        input.addEventListener('change', function () {
+                            const qty = parseInt(this.value) || 0;
+                            const maxStok = parseInt(this.getAttribute('data-stok')) || 0;
+                            if (qty > maxStok) {
+                                this.value = maxStok;
+                            }
+                            if (qty < 0) {
+                                this.value = 0;
+                            }
+                        });
+                    });
+                })
+                .catch(err => {
+                    console.error("Error loading barang data:", err);
+                    document.getElementById("listBarang").innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load items</td></tr>';
+                });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            // Load main data on page load
+            loadDataPeminjaman();
+
+            // Handle modal show event
+            const requestModal = document.getElementById('requestBorrowingModal');
+            requestModal.addEventListener('show.bs.modal', function () {
+                // Reset form when modal opens
+                document.getElementById('formPinjam').reset();
+
+                // Auto-fill user fields
+                const nameInput = document.querySelector('#requestBorrowingModal .nama');
+                const nrpInput = document.querySelector('#requestBorrowingModal .nrp');
+                if (nameInput) nameInput.value = userData.nama || '';
+                if (nrpInput) nrpInput.value = userData.nrp || '';
+
+                // Load items
+                loadItemsForModal();
+
+                // Initialize date validation
+                initDateValidation();
+            });
+        });
+
         // ========== DATE VALIDATION ==========
-        // Set minimum date untuk tanggal pinjam = hari ini
-        (function initDateValidation() {
+        function initDateValidation() {
             const today = new Date().toISOString().split('T')[0];
             const pinjamInput = document.getElementById('rencana_pinjam');
             const kembaliInput = document.getElementById('rencana_kembali');
@@ -605,95 +871,16 @@
                     this.value = '';
                 }
             });
-        })();
+        }
 
-        // Auto-fill Borrower Name dan NRP dari data user yang tersimpan setelah login
-        (function fillUserFields() {
-            try {
-                const nameInput = document.querySelector('.nama');
-                const nrpInput = document.querySelector('.nrp');
-
-                // Log user data for debugging
-                console.log('User data from localStorage:', userData);
-
-                if (nameInput) {
-                    nameInput.value = userData.nama || '';
-                    if (!userData.nama) {
-                        console.warn('Warning: userData.nama is not set');
-                    }
-                }
-                if (nrpInput) {
-                    nrpInput.value = userData.nrp || '';
-                    if (!userData.nrp) {
-                        console.warn('Warning: userData.nrp is not set');
-                    }
-                }
-            } catch (e) {
-                console.error('Failed to auto-fill user field', e);
-            }
-        })();
-
-        fetch("../../api/barang/get.php")
-            .then(res => res.json())
-            .then(res => {
-                let html = "";
-                res.data.forEach(b => {
-                    if (b.stok_tersedia > 0 && b.kondisi === 'Baik') {
-                        html += `
-            <tr>
-                <td class="align-middle">${b.nama_barang}</td>
-                <td class="align-middle text-center"><span class="stok-display" data-barang-id="${b.id}">${b.stok_tersedia}</span></td>
-                <td class="align-middle">
-                    <input class="form-control" type="text" name="lokasi[${b.id}]" placeholder="Opsional - lokasi spesifik">
-                </td>
-                <td class="align-middle">
-                    <input class="form-control text-center qty-input" type="number" name="barang[${b.id}]" min="0" max="${b.stok_tersedia}" placeholder="0" style="min-width: 80px;" data-stok="${b.stok_tersedia}" data-nama="${b.nama_barang}">
-                </td>
-            </tr>`;
-                    }
-                });
-                document.getElementById("listBarang").innerHTML = html;
-
-                // Add real-time validation on quantity inputs
-                document.querySelectorAll('.qty-input').forEach(input => {
-                    input.addEventListener('input', function () {
-                        const qty = parseInt(this.value) || 0;
-                        const maxStok = parseInt(this.getAttribute('data-stok')) || 0;
-                        const namaBarang = this.getAttribute('data-nama');
-
-                        if (qty > maxStok) {
-                            this.value = maxStok;
-                            alert(`Jumlah pinjam untuk '${namaBarang}' tidak boleh melebihi stok tersedia (${maxStok})`);
-                        }
-                        if (qty < 0) {
-                            this.value = 0;
-                        }
-                    });
-
-                    input.addEventListener('change', function () {
-                        const qty = parseInt(this.value) || 0;
-                        const maxStok = parseInt(this.getAttribute('data-stok')) || 0;
-                        if (qty > maxStok) {
-                            this.value = maxStok;
-                        }
-                        if (qty < 0) {
-                            this.value = 0;
-                        }
-                    });
-                });
-            })
-            .catch(err => {
-                console.error("Error loading barang data:", err);
-                document.getElementById("listBarang").innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load items</td></tr>';
-            });
-
+        // Form submission handler
         document.getElementById("formPinjam").addEventListener("submit", e => {
             e.preventDefault();
 
             // Validasi tanggal pinjam >= hari ini
             const today = new Date().toISOString().split('T')[0];
-            const pinjamDate = document.querySelector('input[name="rencana_pinjam"]').value;
-            const kembaliDate = document.querySelector('input[name="rencana_kembali"]').value;
+            const pinjamDate = document.querySelector('#requestBorrowingModal input[name="rencana_pinjam"]').value;
+            const kembaliDate = document.querySelector('#requestBorrowingModal input[name="rencana_kembali"]').value;
 
             if (pinjamDate < today) {
                 alert("Tanggal peminjaman tidak boleh kurang dari hari ini (" + today + ")");
@@ -706,7 +893,7 @@
             }
 
             // Validasi: minimal ada 1 barang yang dipesan
-            let inputs = document.querySelectorAll('input[name^="barang["]');
+            let inputs = document.querySelectorAll('#requestBorrowingModal input[name^="barang["]');
             let totalBarang = 0;
             let hasError = false;
             inputs.forEach(input => {
@@ -754,35 +941,26 @@
             let fd = new FormData(form);
             fd.append("user_id", USER_ID);
 
-            // Debug: lihat apa yang dikirim
-            console.log("FormData yang dikirim:");
-            for (let [key, value] of fd.entries()) {
-                console.log(`${key}: ${value}`);
-            }
-
             fetch("../../api/user/request-peminjaman.php", {
                 method: "POST",
                 body: fd
             })
+                .then(res => res.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error("Failed to parse JSON:", e);
+                        throw new Error("Response is not valid JSON: " + text);
+                    }
+                }))
                 .then(res => {
-                    console.log("Response status:", res.status);
-                    console.log("Response headers:", Array.from(res.headers.entries()));
-                    return res.text().then(text => {
-                        console.log("Raw response text:", text);
-                        try {
-                            return JSON.parse(text);
-                        } catch (e) {
-                            console.error("Failed to parse JSON:", e);
-                            throw new Error("Response is not valid JSON: " + text);
-                        }
-                    });
-                })
-                .then(res => {
-                    console.log("Parsed Response:", res);
                     if (res.status) {
                         alert("Borrowing request submitted successfully");
                         form.reset();
-                        window.location.reload();
+                        // Close modal
+                        bootstrap.Modal.getInstance(document.getElementById('requestBorrowingModal')).hide();
+                        // Reload data
+                        loadDataPeminjaman();
                     } else {
                         alert("Error: " + (res.message || "An error occurred"));
                     }
@@ -792,10 +970,242 @@
                     alert("An error occurred while submitting request:\n" + err.message);
                 });
         });
+
+        // Render tabel dengan data dari database - filter berdasarkan status
+        function renderTable(data) {
+            // Sort data by ID descending (newest first)
+            const sortedData = [...data].sort((a, b) => parseInt(b.id) - parseInt(a.id));
+
+            // Filter data by status
+            const semua = sortedData;
+            const menunggu = sortedData.filter(p => {
+                const s = (p.status || '').toString().toLowerCase();
+                const se = (p.status_en || '').toString().toLowerCase();
+                return s.includes('menunggu') || se.includes('pending');
+            });
+            const dipinjam = sortedData.filter(p => {
+                const s = (p.status || '').toString().toLowerCase();
+                const se = (p.status_en || '').toString().toLowerCase();
+                return s.includes('sedang') || se.includes('borrowed');
+            });
+            const dikembalikan = sortedData.filter(p => {
+                const s = (p.status || '').toString().toLowerCase();
+                const se = (p.status_en || '').toString().toLowerCase();
+                return s.includes('dikembalikan') || se.includes('returned');
+            });
+            const ditolak = sortedData.filter(p => {
+                const s = (p.status || '').toString().toLowerCase();
+                const se = (p.status_en || '').toString().toLowerCase();
+                return s.includes('ditolak') || se.includes('rejected');
+            });
+
+            // Render semua tab
+            document.getElementById("tableSemua").innerHTML = renderTableRows(semua);
+            document.getElementById("tableMenunggu").innerHTML = renderTableRows(menunggu);
+            document.getElementById("tableDipinjam").innerHTML = renderTableRows(dipinjam);
+            document.getElementById("tableDikembalikan").innerHTML = renderTableRows(dikembalikan);
+            document.getElementById("tableDitolak").innerHTML = renderTableRows(ditolak);
+        }
+
+        // Helper function untuk render baris tabel
+        function renderTableRows(data) {
+            if (data.length === 0) {
+                return '<tr><td colspan="6" class="text-center">Tidak ada data</td></tr>';
+            }
+
+            return data.map((item, index) => {
+                let badgeClass = "bg-secondary";
+                const s = (item.status || '').toString().toLowerCase();
+                const se = (item.status_en || '').toString().toLowerCase();
+                if (item.status === "Menunggu Persetujuan") badgeClass = "bg-warning";
+                if (item.status === "Disetujui") badgeClass = "bg-info";
+                if (item.status === "Sedang Dipinjam") badgeClass = "bg-primary";
+                if (item.status === "Dikembalikan") badgeClass = "bg-success";
+                if (item.status === "Ditolak") badgeClass = "bg-danger";
+                if (item.status === "Proses Return") badgeClass = "bg-secondary";
+                if (s.includes('sebagian') || s.includes('seb') || se.includes('partially')) badgeClass = 'bg-warning text-dark';
+                if ((s.includes('semua') && s.includes('rusak')) || (se.includes('fully') && se.includes('damaged'))) badgeClass = 'bg-danger';
+
+                const displayStatus = item.status_en || item.status;
+                return `
+        <tr>
+            <td>${index + 1}</td>
+            <td>${item.kode}</td>
+            <td>${item.barang}</td>
+            <td>${item.tanggal}</td>
+            <td><span class="badge ${badgeClass}">${displayStatus}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${item.id}')">
+                   Detail
+                </button>
+            </td>
+        </tr>
+    `;
+            }).join('');
+        }
+
+        // Load data saat halaman dimuat
+        document.addEventListener("DOMContentLoaded", function () {
+            loadDataPeminjaman();
+        });
+
+        // ========== HELPER FUNCTIONS FOR DETAIL MODAL ==========
+        function getDisplayStatus(dbStatus, statusEn) {
+            if (statusEn) {
+                const en_lower = statusEn.toLowerCase();
+                if (en_lower.includes('partially')) return 'Partially Damaged';
+                if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
+            }
+            switch (dbStatus) {
+                case 'Menunggu Persetujuan':
+                case 'Disetujui':
+                    return 'Menunggu Persetujuan';
+                case 'Sebagian Rusak':
+                    return 'Partially Damaged';
+                case 'Semua Rusak':
+                    return 'Fully Damaged';
+                case 'Sedang Dipinjam':
+                    return 'Sedang Dipinjam';
+                case 'Dikembalikan':
+                    return 'Dikembalikan';
+                case 'Ditolak':
+                    return 'Ditolak';
+                default:
+                    return dbStatus;
+            }
+        }
+
+        function getStatusBadge(status, statusEn) {
+            const displayStatus = getDisplayStatus(status, statusEn);
+            switch (displayStatus) {
+                case 'Menunggu Persetujuan':
+                    return 'badge bg-warning';
+                case 'Partially Damaged':
+                    return 'badge bg-warning text-dark';
+                case 'Sebagian Rusak':
+                    return 'badge bg-warning text-dark';
+                case 'Fully Damaged':
+                    return 'badge bg-danger';
+                case 'Semua Rusak':
+                    return 'badge bg-danger';
+                case 'Sedang Dipinjam':
+                    return 'badge bg-primary';
+                case 'Dikembalikan':
+                    return 'badge bg-success';
+                case 'Ditolak':
+                    return 'badge bg-danger';
+                default:
+                    return 'badge bg-secondary';
+            }
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        function lihatDetail(peminjamanId) {
+            fetch(`../../api/user/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status && res.data) {
+                        const p = res.data;
+                        document.getElementById('detailKode').textContent = escapeHtml(p.kode_peminjaman || p.kode);
+                        document.getElementById('detailNama').textContent = escapeHtml(p.nama_peminjam || p.nama);
+                        document.getElementById('detailNrp').textContent = escapeHtml(p.nrp);
+                        const displayStatus = getDisplayStatus(p.status, p.status_en);
+                        document.getElementById('detailStatus').innerHTML = `<span class="${getStatusBadge(p.status, p.status_en)}">${escapeHtml(displayStatus)}</span>`;
+                        document.getElementById('detailTanggalPinjam').textContent = new Date(p.tanggal_pinjam || p.tanggal).toLocaleDateString('id-ID');
+                        document.getElementById('detailRencanaKembali').textContent = new Date(p.rencana_kembali).toLocaleDateString('id-ID');
+
+                        // Tampilkan barang
+                        const barangHtml = (p.detail_barang || []).map((item, i) => `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${escapeHtml(item.nama_barang || item.barang || '-')}</td>
+                                <td class="text-center">${escapeHtml(item.jumlah)}</td>
+                            </tr>
+                        `).join('');
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="3" class="text-center">Tidak ada barang</td></tr>';
+
+                        // Tampilkan catatan jika ada (khusus untuk ditolak)
+                        const displayStatus2 = getDisplayStatus(p.status, p.status_en);
+                        if (displayStatus2 === 'Ditolak' && p.catatan) {
+                            document.getElementById('detailCatatanDiv').style.display = 'block';
+                            document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
+                        } else {
+                            document.getElementById('detailCatatanDiv').style.display = 'none';
+                        }
+
+                        new bootstrap.Modal(document.getElementById('modalDetail')).show();
+                    } else {
+                        alert('Gagal memuat detail peminjaman');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error memuat detail');
+                });
+        }
     </script>
 
-
-
+    <!-- Modal Detail Peminjaman -->
+    <div class="modal fade" id="modalDetail" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Borrowing Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <p><strong>Code:</strong> <span id="detailKode"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Name:</strong> <span id="detailNama"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>NRP:</strong> <span id="detailNrp"></span></p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+                        </div>
+                        <div class="col-12">
+                            <p><strong>Borrow Date:</strong> <span id="detailTanggalPinjam"></span></p>
+                        </div>
+                        <div class="col-12">
+                            <p><strong>Expected Return:</strong> <span id="detailRencanaKembali"></span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3"><strong>Borrowed Items</strong></h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No.</th>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detailBarangTable"></tbody>
+                        </table>
+                    </div>
+                    <hr>
+                    <div id="detailCatatanDiv" style="display: none;">
+                        <h6 class="text-danger mb-2"><strong>Rejection Reason</strong></h6>
+                        <div class="alert alert-danger" id="detailCatatan"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 

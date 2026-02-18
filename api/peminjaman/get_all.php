@@ -2,8 +2,10 @@
 require_once "../koneksi.php";
 header('Content-Type: application/json');
 
-// Jika ada parameter user_id, filter berdasarkan user
+// Parameters for filtering
 $user_id = $_GET['user_id'] ?? null;
+$start_date = $_GET['start_date'] ?? null;
+$end_date = $_GET['end_date'] ?? null;
 
 try {
     $where_clause = "";
@@ -14,6 +16,18 @@ try {
         $where_clause = "WHERE p.user_id = ?";
         $params[] = $user_id;
         $types = "i";
+    }
+
+    // Add date range filtering
+    if ($start_date && $end_date) {
+        if ($where_clause) {
+            $where_clause .= " AND DATE(p.tanggal_pinjam) >= ? AND DATE(p.tanggal_pinjam) <= ?";
+        } else {
+            $where_clause = "WHERE DATE(p.tanggal_pinjam) >= ? AND DATE(p.tanggal_pinjam) <= ?";
+        }
+        $params[] = $start_date;
+        $params[] = $end_date;
+        $types .= "ss";
     }
 
     // Query untuk mengambil semua data peminjaman dengan detail
@@ -33,7 +47,7 @@ try {
         ORDER BY p.tanggal_pinjam DESC
     ");
 
-    if ($user_id) {
+    if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
     $stmt->execute();
