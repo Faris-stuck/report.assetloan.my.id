@@ -459,7 +459,7 @@
 
         if (!USER_ID) {
             alert("Please login first");
-            window.location.href = "../auth/login.html";
+            window.location.href = "../index.html";
         }
 
         // Check role - only users can access this page
@@ -481,7 +481,7 @@
             fetch(api, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 401 || r.status === 403) {
-                        window.location.href = '../auth/login.html';
+                        window.location.href = '../index.html';
                         throw new Error('Unauthorized');
                     }
                     if (!r.ok) throw new Error('API error ' + r.status);

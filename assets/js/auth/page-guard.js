@@ -34,7 +34,7 @@
         }
     }
 
-    var loginUrl = basePath + '/auth/login.html';
+    var loginUrl = basePath + '/index.html';
 
     // ─── 3. Determine required role from URL folder ───
     var requiredRole = null;

@@ -561,7 +561,7 @@
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         if (!userData.id) {
             alert("Please log in first");
-            window.location.href = "../../auth/login.html";
+            window.location.href = "../../index.html";
         }
         if (userData.role && userData.role !== "admin") {
             alert("Admin access required");

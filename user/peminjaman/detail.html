@@ -70,7 +70,7 @@
             fetch(`/PROJECT/api/user/get-detail.php?id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/auth/login.html';
+                        window.location.href = '/PROJECT/index.html';
                         throw new Error('unauthorized');
                     }
                     return r.json();

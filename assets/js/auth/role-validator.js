@@ -37,7 +37,7 @@ const RoleValidator = (function () {
     }
 
     function redirectToLogin() {
-        window.location.href = getBasePath() + "/auth/login.html";
+        window.location.href = getBasePath() + "/index.html";
     }
 
     function requireAuth() {

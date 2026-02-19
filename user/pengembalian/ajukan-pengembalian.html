@@ -513,7 +513,7 @@
         // If no user is logged in, redirect to login page
         if (!USER_ID) {
             alert("Please login first");
-            window.location.href = "../../auth/login.html";
+            window.location.href = "../../index.html";
         }
 
         // Check role - only users can access this page
@@ -555,7 +555,7 @@
                     res.data
                         .filter(p =>
                             p.user_id == USER_ID &&
-                            p.status === "Sedang Dipinjam"
+                            (p.status === "Sedang Dipinjam" || p.status === "Sebagian Dikembalikan")
                         )
                         .forEach(p => {
                             // Determine status badge color
@@ -607,7 +607,7 @@
             fetch(API + '/get_detail.php?peminjaman_id=' + encodeURIComponent(peminjamanId), { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/auth/login.html';
+                        window.location.href = '/PROJECT/index.html';
                         throw new Error('Unauthorized');
                     }
                     if (!r.ok) {
@@ -852,7 +852,7 @@
             fetch(API + '/return.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/auth/login.html';
+                        window.location.href = '/PROJECT/index.html';
                         throw new Error('Unauthorized');
                     }
                     if (!r.ok) {

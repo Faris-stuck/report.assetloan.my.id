@@ -32,12 +32,12 @@ async function performLogout() {
         sessionStorage.clear();
 
         // Redirect to login page
-        window.location.href = '/PROJECT/auth/login.html';
+        window.location.href = '/PROJECT/index.html';
     } catch (error) {
         console.error('Logout error:', error);
         // Still clear localStorage and redirect even if fetch fails
         localStorage.clear();
         sessionStorage.clear();
-        window.location.href = '/PROJECT/auth/login.html';
+        window.location.href = '/PROJECT/index.html';
     }
 }

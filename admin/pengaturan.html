@@ -2997,7 +2997,7 @@
         function loadRoles() {
             fetch(API_ROLES + '?action=list')
                 .then(r => {
-                    if (r.status === 403) { window.location.href = '../auth/login.html'; throw new Error('Unauthorized'); }
+                    if (r.status === 403) { window.location.href = '../index.html'; throw new Error('Unauthorized'); }
                     return r.json();
                 })
                 .then(res => {
@@ -3069,7 +3069,7 @@
 
             fetch(url)
                 .then(r => {
-                    if (r.status === 403) { window.location.href = '../auth/login.html'; throw new Error('Unauthorized'); }
+                    if (r.status === 403) { window.location.href = '../index.html'; throw new Error('Unauthorized'); }
                     return r.json();
                 })
                 .then(res => {
@@ -3279,12 +3279,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             const userData = JSON.parse(localStorage.getItem('user') || '{}');
             if (!userData.id) {
-                window.location.href = '../auth/login.html';
+                window.location.href = '../index.html';
                 return;
             }
             if (userData.role !== 'admin') {
                 alert('Akses ditolak');
-                window.location.href = '../auth/login.html';
+                window.location.href = '../index.html';
                 return;
             }
 

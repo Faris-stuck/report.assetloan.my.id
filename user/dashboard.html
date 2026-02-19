@@ -323,7 +323,7 @@
                                 <span>Account Settings</span>
                             </a>
                             <div class="dropdown-divider"></div>
-                            <a href="../auth/login.html" class="dropdown-item">
+                            <a href="../index.html" class="dropdown-item">
                                 <i class="feather-log-out"></i>
                                 <span>Logout</span>
                             </a>
@@ -545,7 +545,7 @@
         // Jika tidak ada user yang login, redirect ke halaman login
         if (!USER_ID) {
             alert("Please log in first");
-            window.location.href = "/PROJECT/auth/login.html";
+            window.location.href = "/PROJECT/index.html";
         }
 
         // Cek role - hanya user yang boleh akses halaman ini
@@ -562,7 +562,7 @@
             try {
                 const response = await fetch('/PROJECT/api/user/dashboard-stats.php', { credentials: 'same-origin' });
                 if (response.status === 401 || response.status === 403) {
-                    window.location.href = '/PROJECT/auth/login.html';
+                    window.location.href = '/PROJECT/index.html';
                     return;
                 }
                 const result = await response.json();

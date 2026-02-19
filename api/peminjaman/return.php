@@ -36,32 +36,33 @@ if (!$user_id || !$peminjaman_id) {
     exit;
 }
 
-// Pastikan peminjaman milik user dan sedang dipinjam
-$stmt = $conn->prepare("SELECT id, status FROM peminjaman WHERE id = ? AND user_id = ? LIMIT 1");
-$stmt->bind_param("ii", $peminjaman_id, $user_id);
-$stmt->execute();
-$p = $stmt->get_result()->fetch_assoc();
+// Pastikan peminjaman milik user dan sedang dipinjam atau sebagian dikembalikan
+    $stmt = $conn->prepare("SELECT id, status FROM peminjaman WHERE id = ? AND user_id = ? LIMIT 1");
+    $stmt->bind_param("ii", $peminjaman_id, $user_id);
+    $stmt->execute();
+    $p = $stmt->get_result()->fetch_assoc();
 
-if (!$p) {
-    http_response_code(404);
-    echo json_encode(["status" => false, "message" => "Data peminjaman tidak ditemukan"]);
+    if (!$p) {
+        http_response_code(404);
+        echo json_encode(["status" => false, "message" => "Data peminjaman tidak ditemukan"]);
+        exit;
+    }
+    // Allow submissions for 'Sedang Dipinjam' and 'Sebagian Dikembalikan' (partial returns)
+    if ($p['status'] !== 'Sedang Dipinjam' && $p['status'] !== 'Sebagian Dikembalikan') {
+        http_response_code(400);
+        echo json_encode(["status" => false, "message" => "Pengembalian hanya bisa diajukan saat status 'Sedang Dipinjam' atau 'Sebagian Dikembalikan'"]);
     exit;
 }
-if ($p['status'] !== 'Sedang Dipinjam') {
-    http_response_code(400);
-    echo json_encode(["status" => false, "message" => "Pengembalian hanya bisa diajukan saat status 'Sedang Dipinjam'"]);
-    exit;
-}
 
-// Cegah double submit
-$cek = $conn->prepare("SELECT id, status FROM pengembalian WHERE peminjaman_id = ? LIMIT 1");
-$cek->bind_param("i", $peminjaman_id);
-$cek->execute();
-$existing = $cek->get_result()->fetch_assoc();
-if ($existing) {
-    echo json_encode([
-        "status" => true,
-        "message" => "Pengembalian sudah pernah diajukan",
+// Cegah double submit untuk return yang masih pending (tidak selesai diproses)
+    $cek = $conn->prepare("SELECT id, status FROM pengembalian WHERE peminjaman_id = ? AND status != 'Selesai' ORDER BY id DESC LIMIT 1");
+    $cek->bind_param("i", $peminjaman_id);
+    $cek->execute();
+    $existing = $cek->get_result()->fetch_assoc();
+    if ($existing) {
+        echo json_encode([
+            "status" => true,
+            "message" => "Pengembalian sudah pernah diajukan dan masih dalam proses",
         "pengembalian_id" => (int)$existing['id'],
         "pengembalian_status" => $existing['status']
     ]);
@@ -91,14 +92,8 @@ try {
         }
     }
 
-    // Copy item dari detail_peminjaman menjadi detail_pengembalian
-    $q = $conn->prepare("
-        SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?
-    ");
-    $q->bind_param("i", $peminjaman_id);
-    $q->execute();
-    $res = $q->get_result();
-
+    // Only create detail_pengembalian for items actually being returned
+    // This allows partial returns - items not submitted remain as "still borrowed"
     $insd = $conn->prepare("
         INSERT INTO detail_pengembalian
         (pengembalian_id, barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak, biaya_ganti_rugi, catatan)
@@ -106,36 +101,30 @@ try {
     ");
 
     $count = 0;
-    while ($row = $res->fetch_assoc()) {
-        $barang_id = (int)$row['barang_id'];
-        $jumlah_pinjam = (int)$row['jumlah'];
-
-        // Check if user provided breakdown for this item
-        $jumlah_kembali = $jumlah_pinjam;
-        $jumlah_rusak = 0;
+    // Only process items that user is actually returning
+    foreach ($items_array as $item) {
+        $barang_id = (int)($item['barang_id'] ?? 0);
+        $jumlah_kembali = (int)($item['qty_return'] ?? 0);
+        $jumlah_rusak = (int)($item['damaged'] ?? 0);
         $kondisi_kembali = 'Baik';
 
-        foreach ($items_array as $item) {
-            if ((int)$item['barang_id'] === $barang_id) {
-                $jumlah_kembali = (int)($item['qty_return'] ?? $jumlah_pinjam);
-                $jumlah_rusak = (int)($item['damaged'] ?? 0);
-                // If has damaged, set kondisi to Rusak
-                if ($jumlah_rusak > 0) {
-                    $kondisi_kembali = 'Rusak';
-                }
-                break;
-            }
+        // If has damaged items, set kondisi to Rusak
+        if ($jumlah_rusak > 0) {
+            $kondisi_kembali = 'Rusak';
         }
 
-        $insd->bind_param("iiisi", $pengembalian_id, $barang_id, $jumlah_kembali, $kondisi_kembali, $jumlah_rusak);
-        if (!$insd->execute()) {
-            throw new Exception("Gagal membuat detail pengembalian: " . $insd->error);
+        // Only insert if there's actually something being returned
+        if ($jumlah_kembali > 0) {
+            $insd->bind_param("iiisi", $pengembalian_id, $barang_id, $jumlah_kembali, $kondisi_kembali, $jumlah_rusak);
+            if (!$insd->execute()) {
+                throw new Exception("Gagal membuat detail pengembalian: " . $insd->error);
+            }
+            $count++;
         }
-        $count++;
     }
 
     if ($count === 0) {
-        throw new Exception("Detail peminjaman kosong, tidak bisa ajukan pengembalian");
+        throw new Exception("Belum ada item yang diajukan untuk pengembalian");
     }
     
     // Set peminjaman status to 'Proses Return' to reflect return process in DB

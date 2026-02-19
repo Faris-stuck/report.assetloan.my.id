@@ -77,5 +77,5 @@ function clearSessionAndRedirect() {
     sessionStorage.clear();
 
     // Redirect to login
-    window.location.replace('/PROJECT/auth/login.html');
+    window.location.replace('/PROJECT/index.html');
 }
