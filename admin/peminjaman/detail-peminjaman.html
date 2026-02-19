@@ -7,8 +7,8 @@
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
-    
-    
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -61,12 +61,13 @@
             <div class="m-header">
                 <a href="#" class="b-brand">
                     <!-- ========   change your logo hear   ============ -->
-                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt="" class="logo logo-lg" />
+                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
                     <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
                 </a>
             </div>
             <div class="navbar-content">
-                                                <ul class="nxl-navbar">
+                <ul class="nxl-navbar">
                     <li class="nxl-item nxl-caption">
                         <label>Navigation</label>
                     </li>
@@ -77,7 +78,8 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik / Informasi</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik /
+                                    Informasi</a>
                             </li>
                         </ul>
                     </li>
@@ -88,9 +90,11 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item Data</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/data-barang.php">Item
+                                    Data</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item Detail</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/barang/detail-barang.html">Item
+                                    Detail</a>
                             </li>
                         </ul>
                     </li>
@@ -101,11 +105,14 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/data-peminjaman.html">Request Loan</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/sedang-dipinjam.html">List Loan</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/peminjaman/admin-approval.html">Approval</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/peminjaman/admin-approval.html">Approval</a>
                             </li>
                         </ul>
                     </li>
@@ -116,7 +123,8 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../../admin/pengembalian/pengembalian-barang.html">Return Loan</a>
                             </li>
                         </ul>
                     </li>
@@ -127,13 +135,15 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User List</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/user/buat-user.html">User
+                                    List</a>
                             </li>
                             <li class="nxl-item"><a class="nxl-link" href="../../admin/pengaturan.html">Role List</a>
                             </li>
                         </ul>
                     </li>
-                </ul></div>
+                </ul>
+            </div>
         </div>
     </nav>
     <!--! ================================================================ !-->
@@ -445,73 +455,150 @@
     <script src="../../assets/js/dashboard-init.min.js"></script>
     <!--! END: Apps Init !-->
 
+    <script src="../../assets/js/config/api.js"></script>
     <script>
         /* ===============================
-           DATA DUMMY KHUSUS DITOLAK
+           LOAD PEMINJAMAN DETAIL FROM API
         ================================ */
-        const dataDitolak = [
-            {
-                kode: "PMJ-004",
-                nama: "Bima Arya",
-                nrp: "220148",
-                tanggal: "04/01/2026",
-                alasan: "Barang sedang dipinjam oleh user lain",
-                barang: [
-                    { nama: "Kamera Canon", jumlah: 1 }
-                ]
-            },
-            {
-                kode: "PMJ-008",
-                nama: "Fajar",
-                nrp: "220152",
-                tanggal: "08/01/2026",
-                alasan: "Peminjam memiliki riwayat keterlambatan",
-                barang: [
-                    { nama: "Laptop Lenovo", jumlah: 1 }
-                ]
-            }
-        ];
 
-        /* ===============================
-           AMBIL PARAMETER URL
-        ================================ */
+        // Get parameters from URL
         const params = new URLSearchParams(window.location.search);
-        const kode = params.get("kode");
-
-        /* ===============================
-           CARI DATA SESUAI KODE
-        ================================ */
-        const data = dataDitolak.find(item => item.kode === kode);
+        const kode = params.get("kode") || '';
+        const id = params.get("id") || '';
 
         const container = document.getElementById("detail-content");
 
-        if (!data) {
-            container.innerHTML = `
-        <div class="alert alert-danger">
-            Data peminjaman <strong>DITOLAK</strong> tidak ditemukan.
-        </div>`;
+        // Build API URL
+        let apiUrl = `${API_BASE_URL}/peminjaman/get_all.php`;
+        if (kode) {
+            apiUrl += `?kode=${encodeURIComponent(kode)}`;
+        } else if (id) {
+            apiUrl += `?id=${encodeURIComponent(id)}`;
         } else {
             container.innerHTML = `
-        <table class="table table-bordered">
-            <tr><th>Borrowing Code</th><td>${data.kode}</td></tr>
-            <tr><th>Nama</th><td>${data.nama}</td></tr>
-            <tr><th>NRP</th><td>${data.nrp}</td></tr>
-            <tr><th>Date</th><td>${data.tanggal}</td></tr>
-            <tr><th>Status</th>
-                <td><span class="badge bg-danger">Ditolak</span></td>
-            </tr>
-            <tr><th>Rejection Reason</th>
-                <td>${data.alasan}</td>
-            </tr>
-        </table>
+                <div class="alert alert-danger">
+                    Tidak ada peminjaman yang dipilih. Parameter "kode" atau "id" diperlukan.
+                </div>`;
+            throw new Error("Missing peminjaman identifier");
+        }
 
-        <h6 class="mt-4">Barang yang Diajukan</h6>
-        <ul>
-            ${data.barang.map(b => `
-                <li>${b.nama} (Jumlah: ${b.jumlah})</li>
-            `).join("")}
-        </ul>
-    `;
+        // Fetch data from API
+        fetch(apiUrl, { credentials: 'same-origin' })
+            .then(res => {
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '../../auth/login.html';
+                    throw new Error('Unauthorized');
+                }
+                if (!res.ok) throw new Error('API error ' + res.status);
+                return res.json();
+            })
+            .then(res => {
+                if (!res.status) {
+                    throw new Error(res.message || 'Failed to load data');
+                }
+
+                const data = (res.data && res.data.length > 0) ? res.data[0] : null;
+
+                if (!data) {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            Data peminjaman <strong>${kode || id}</strong> tidak ditemukan.
+                        </div>`;
+                    return;
+                }
+
+                // Format status badge
+                const statusColor = {
+                    'Menunggu Persetujuan': 'warning',
+                    'Disetujui': 'info',
+                    'Sedang Dipinjam': 'primary',
+                    'Dikembalikan': 'success',
+                    'Ditolak': 'danger',
+                    'Proses Return': 'secondary'
+                };
+                const badgeClass = statusColor[data.status] || 'secondary';
+
+                // Format dates
+                const tanggalPinjam = new Date(data.tanggal_pinjam).toLocaleDateString('id-ID');
+                const rencanaKembali = new Date(data.rencana_kembali).toLocaleDateString('id-ID');
+
+                // Build HTML
+                let html = `
+                    <table class="table table-bordered">
+                        <tr><th>Kode Peminjaman</th><td>${escapeHtml(data.kode_peminjaman || '-')}</td></tr>
+                        <tr><th>Nama Peminjam</th><td>${escapeHtml(data.nama_peminjam || '-')}</td></tr>
+                        <tr><th>NRP</th><td>${escapeHtml(data.nrp || '-')}</td></tr>
+                        <tr><th>Tanggal Pinjam</th><td>${tanggalPinjam}</td></tr>
+                        <tr><th>Rencana Kembali</th><td>${rencanaKembali}</td></tr>
+                        <tr><th>Status</th>
+                            <td><span class="badge bg-${badgeClass}">${escapeHtml(data.status)}</span></td>
+                        </tr>
+                        ${data.catatan ? `<tr><th>Catatan</th><td>${escapeHtml(data.catatan)}</td></tr>` : ''}
+                    </table>
+                `;
+
+                // If there are barang details, fetch and display them
+                if (data.id) {
+                    html += `<h6 class="mt-4">Barang yang Dipinjam</h6>
+                        <div id="barang-list" class="alert alert-info">Memuat data barang...</div>`;
+
+                    // Fetch barang details
+                    fetch(`${API_BASE_URL}/user/get-detail.php?peminjaman_id=${data.id}`, { credentials: 'same-origin' })
+                        .then(r => r.ok ? r.json() : Promise.reject(r))
+                        .then(res => {
+                            const barangList = document.getElementById('barang-list');
+                            if (res.status && res.items && res.items.length > 0) {
+                                barangList.innerHTML = `
+                                    <table class="table table-sm table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Kode</th>
+                                                <th>Nama Barang</th>
+                                                <th>Jumlah</th>
+                                                <th>Lokasi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${res.items.map(item => `
+                                                <tr>
+                                                    <td><code>${escapeHtml(item.kode_barang || '-')}</code></td>
+                                                    <td>${escapeHtml(item.nama_barang || '-')}</td>
+                                                    <td>${item.jumlah || 0}</td>
+                                                    <td>${escapeHtml(item.lokasi || '-')}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>`;
+                            } else {
+                                barangList.innerHTML = '<div class="alert alert-warning">Tidak ada data barang ditemukan</div>';
+                            }
+                        })
+                        .catch(err => {
+                            const barangList = document.getElementById('barang-list');
+                            if (barangList) {
+                                barangList.innerHTML = '<div class="alert alert-danger">Gagal memuat data barang</div>';
+                            }
+                        });
+                } else {
+                    html += '<p class="text-muted">Tidak ada data barang</p>';
+                }
+
+                container.innerHTML = html;
+            })
+            .catch(err => {
+                console.error('Error loading peminjaman detail:', err);
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Gagal memuat data peminjaman: ${escapeHtml(err.message || 'Unknown error')}
+                    </div>`;
+            });
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
     </script>
 

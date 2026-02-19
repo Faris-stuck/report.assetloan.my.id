@@ -7,8 +7,8 @@
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
-    
-    
+
+
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -190,11 +190,11 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Item</th>
-                                    <th class="text-center" style="width: 90px;">Qty</th>
-                                    <th style="width: 120px;">Condition</th>
-                                    <th class="text-center" style="width: 110px;">Damaged</th>
-                                    <th class="text-end" style="width: 150px;">Compensation</th>
-                                    <th>Note</th>
+                                    <th class="text-center" style="width: 90px;">QTY Pinjam</th>
+                                    <th style="width: 120px;">QTY Return</th>
+                                    <th class="text-center" style="width: 110px;">Good condition</th>
+                                    <th class="text-end" style="width: 150px;">Damage Condicition</th>
+                                    <th>Remain Item</th>
                                 </tr>
                             </thead>
                             <tbody id="inspeksiItems">
@@ -209,8 +209,8 @@
                         <textarea class="form-control" id="catatanPetugas" rows="2" placeholder="Optional"></textarea>
                     </div>
                     <div class="mt-2 d-flex justify-content-end gap-3">
-                        <div class="text-muted">Total compensation:</div>
-                        <div class="fw-bold" id="totalGantiRugi">0</div>
+                        <div class="text-muted">Summary:</div>
+                        <div class="fw-bold" id="totalGantiRugi">0 damaged, 0 remain</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -238,12 +238,18 @@
 
         function recalcTotal() {
             const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
-            let total = 0;
+            let totalDamaged = 0;
+            let totalRemain = 0;
+
             rows.forEach(tr => {
-                const biaya = Number(tr.querySelector('.inp-biaya')?.value || 0);
-                total += isNaN(biaya) ? 0 : biaya;
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+                const remain = Number(tr.querySelector('.inp-remain')?.value || 0);
+                totalDamaged += isNaN(damaged) ? 0 : damaged;
+                totalRemain += isNaN(remain) ? 0 : remain;
             });
-            document.getElementById('totalGantiRugi').textContent = formatRupiah(total);
+
+            const summary = `${totalDamaged} damaged, ${totalRemain} remain`;
+            document.getElementById('totalGantiRugi').textContent = summary;
         }
 
         function loadPengembalian() {
@@ -275,8 +281,8 @@
                         const s = (status || '').toString().toLowerCase();
                         let badge = `<span class="badge bg-secondary">${status}</span>`;
                         if (s.includes('menunggu') || s.includes('pending')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('seb') || s.includes('sebagian') || s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('semua') || s.includes('selesai') || (s.includes('fully') && s.includes('damaged'))) badge = `<span class="badge bg-danger">${status}</span>`;
+                        else if (s.includes('sebagian') || s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
+                        else if (s.includes('selesai') && !s.includes('sebagian')) badge = `<span class="badge bg-success text-white">${status}</span>`;
                         else if (s.includes('diproses') || s.includes('dicek')) badge = `<span class="badge bg-info text-dark">${status}</span>`;
                         return `
                         <tr>
@@ -301,7 +307,7 @@
         function openInspeksi(pengembalianId) {
             currentPengembalianId = pengembalianId;
             document.getElementById('catatanPetugas').value = '';
-            document.getElementById('totalGantiRugi').textContent = formatRupiah(0);
+            document.getElementById('totalGantiRugi').textContent = '0 damaged, 0 remain';
             document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>';
 
             fetch(API + '/detail.php?pengembalian_id=' + encodeURIComponent(pengembalianId), { credentials: 'same-origin' })
@@ -329,40 +335,58 @@
                         document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
                         return;
                     }
-                    document.getElementById('inspeksiItems').innerHTML = items.map(it => `
-                        <tr data-barang-id="${it.barang_id}">
+                    document.getElementById('inspeksiItems').innerHTML = items.map(it => {
+                        const qtPinjam = it.jumlah_pinjam || it.jumlah_kembali + (it.jumlah_sisa || 0);
+                        const remainItems = qtPinjam - it.jumlah_kembali;
+                        return `
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
                             </td>
-                            <td class="text-center">${it.jumlah_kembali}</td>
-                            <td>
-                                <select class="form-select form-select-sm sel-kondisi">
-                                    <option value="Baik" ${it.kondisi_kembali === 'Baik' ? 'selected' : ''}>Baik</option>
-                                    <option value="Rusak" ${it.kondisi_kembali === 'Rusak' ? 'selected' : ''}>Rusak</option>
-                                </select>
+                            <td class="text-center"><strong>${qtPinjam}</strong></td>
+                            <td class="text-center">
+                                <input type="number" min="0" max="${qtPinjam}" class="form-control form-control-sm inp-qty-return" value="${it.jumlah_kembali}">
                             </td>
                             <td class="text-center">
-                                <input type="number" min="0" max="${it.jumlah_kembali}" class="form-control form-control-sm inp-rusak" value="${it.jumlah_rusak || 0}">
+                                <input type="number" min="0" class="form-control form-control-sm inp-good-condition" value="${it.jumlah_kembali - (it.jumlah_rusak || 0)}">
                             </td>
-                            <td class="text-end">
-                                <input type="number" min="0" step="1000" class="form-control form-control-sm text-end inp-biaya" value="${it.biaya_ganti_rugi || 0}">
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-damaged" value="${it.jumlah_rusak || 0}">
                             </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm inp-catatan" value="${(it.catatan || '').replace(/"/g, '&quot;')}">
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm inp-remain" value="${remainItems}" readonly style="background-color: #f5f5f5;">
                             </td>
                         </tr>
-                    `).join('');
+                    `;
+                    }).join('');
 
-                    document.querySelectorAll('.sel-kondisi,.inp-rusak,.inp-biaya').forEach(el => {
-                        el.addEventListener('input', () => {
-                            // jika kondisi Baik, force rusak=0 & biaya=0
-                            const tr = el.closest('tr');
-                            const kondisi = tr.querySelector('.sel-kondisi').value;
-                            if (kondisi === 'Baik') {
-                                tr.querySelector('.inp-rusak').value = 0;
-                                tr.querySelector('.inp-biaya').value = 0;
+                    // Setup event listeners for all input fields
+                    const allInputs = document.querySelectorAll('#inspeksiItems .inp-qty-return, #inspeksiItems .inp-good-condition, #inspeksiItems .inp-damaged');
+                    allInputs.forEach(input => {
+                        input.addEventListener('input', function () {
+                            const tr = this.closest('tr');
+                            const qtReturn = Number(tr.querySelector('.inp-qty-return').value || 0);
+                            const goodCond = Number(tr.querySelector('.inp-good-condition').value || 0);
+                            const damaged = Number(tr.querySelector('.inp-damaged').value || 0);
+                            const qtPinjam = Number(tr.getAttribute('data-qty-pinjam') || 0);
+
+                            // Validasi: qty return tidak boleh melebihi qty pinjam
+                            if (qtReturn > qtPinjam) {
+                                tr.querySelector('.inp-qty-return').value = qtPinjam;
                             }
+
+                            // Calculate remain items: qty pinjam - qty return
+                            const remainItems = qtPinjam - qtReturn;
+                            tr.querySelector('.inp-remain').value = remainItems;
+
+                            // Validasi: good condition + damaged tidak boleh melebihi qty return
+                            if (goodCond + damaged > qtReturn) {
+                                // Auto-correct: set damaged = qty return - good condition
+                                const newDamaged = Math.max(0, qtReturn - goodCond);
+                                tr.querySelector('.inp-damaged').value = newDamaged;
+                            }
+
                             recalcTotal();
                         });
                     });
@@ -379,16 +403,53 @@
 
         function submitInspeksi() {
             if (!currentPengembalianId) return;
+
             const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
             const items = [];
+            let hasError = false;
+
             rows.forEach(tr => {
                 const barang_id = Number(tr.getAttribute('data-barang-id'));
-                const kondisi_kembali = tr.querySelector('.sel-kondisi').value === 'Rusak' ? 'Rusak' : 'Baik';
-                const jumlah_rusak = Number(tr.querySelector('.inp-rusak').value || 0);
-                const biaya_ganti_rugi = Number(tr.querySelector('.inp-biaya').value || 0);
-                const catatan = tr.querySelector('.inp-catatan').value || '';
-                items.push({ barang_id, kondisi_kembali, jumlah_rusak, biaya_ganti_rugi, catatan });
+                const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
+                const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
+                const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+
+                // Validasi: qty return >= 0
+                if (qty_return < 0) {
+                    alert('QTY Return tidak boleh negatif');
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: qty return tidak boleh melebihi qty pinjam
+                if (qty_return > qty_pinjam) {
+                    alert(`QTY Return tidak boleh melebihi QTY Pinjam (${qty_pinjam})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: good condition + damaged = qty return
+                if (good_condition + damaged !== qty_return) {
+                    alert(`Good condition (${good_condition}) + Damaged (${damaged}) harus sama dengan QTY Return (${qty_return})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Determine kondisi_kembali based on whether there is damage
+                const kondisi_kembali = damaged > 0 ? 'Rusak' : 'Baik';
+
+                items.push({
+                    barang_id,
+                    jumlah_kembali: qty_return,
+                    kondisi_kembali: kondisi_kembali,
+                    jumlah_rusak: damaged,
+                    biaya_ganti_rugi: 0,
+                    catatan: ''
+                });
             });
+
+            if (hasError) return;
 
             if (!confirm('Finalize inspection? This will update stock and mark borrowing as returned.')) return;
 

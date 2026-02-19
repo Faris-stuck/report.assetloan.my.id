@@ -4,6 +4,8 @@ header('Content-Type: application/json');
 
 // Parameters for filtering
 $user_id = $_GET['user_id'] ?? null;
+$peminjaman_id = $_GET['id'] ?? null;
+$kode_peminjaman = $_GET['kode'] ?? null;
 $start_date = $_GET['start_date'] ?? null;
 $end_date = $_GET['end_date'] ?? null;
 
@@ -12,10 +14,32 @@ try {
     $params = [];
     $types = "";
 
-    if ($user_id) {
-        $where_clause = "WHERE p.user_id = ?";
-        $params[] = $user_id;
+    // Filter by peminjaman ID
+    if ($peminjaman_id) {
+        $where_clause = "WHERE p.id = ?";
+        $params[] = (int)$peminjaman_id;
         $types = "i";
+    }
+    
+    // Filter by kode_peminjaman
+    if ($kode_peminjaman) {
+        if ($where_clause) {
+            $where_clause .= " AND p.kode_peminjaman = ?";
+        } else {
+            $where_clause = "WHERE p.kode_peminjaman = ?";
+        }
+        $params[] = $kode_peminjaman;
+        $types .= "s";
+    }
+
+    if ($user_id) {
+        if ($where_clause) {
+            $where_clause .= " AND p.user_id = ?";
+        } else {
+            $where_clause = "WHERE p.user_id = ?";
+        }
+        $params[] = (int)$user_id;
+        $types .= "i";
     }
 
     // Add date range filtering
@@ -104,6 +128,7 @@ try {
             }
             $total_items = 0;
             $total_rusak = 0;
+            $total_kembali = 0;
             foreach ($barang_list as &$bi) {
                 $total_items += $bi['jumlah'];
                 $bid = (int)$bi['barang_id'];
@@ -112,18 +137,45 @@ try {
                     $bi['jumlah_rusak'] = (int)$map[$bid]['jumlah_rusak'];
                     $bi['kondisi_kembali'] = $map[$bid]['kondisi_kembali'];
                     $total_rusak += (int)$map[$bid]['jumlah_rusak'];
+                    $total_kembali += (int)$map[$bid]['jumlah_kembali'];
                 }
             }
-            if ($total_rusak > 0) {
-                if ($total_rusak < $total_items) {
-                    $row['status'] = 'Sebagian Rusak';
-                    $row['status_en'] = 'Partially Damaged';
+            
+            // IMPORTANT: Only auto-detect damage status if PIC has completed inspection.
+            // If pengembalian is still pending PIC approval (status='Diajukan' or 'Dicek'),
+            // show 'Sebagian Dikembalikan' regardless of user-submitted damage count.
+            // PIC inspection is the authority for final damage determination.
+            if ($pengembalian_status === 'Selesai') {
+                // PIC has completed inspection - show actual damage status
+                if ($total_rusak > 0) {
+                    if ($total_rusak < $total_items) {
+                        $row['status'] = 'Sebagian Rusak';
+                        $row['status_en'] = 'Partially Damaged';
+                    } else {
+                        $row['status'] = 'Semua Rusak';
+                        $row['status_en'] = 'Fully Damaged';
+                    }
                 } else {
-                    $row['status'] = 'Semua Rusak';
-                    $row['status_en'] = 'Fully Damaged';
+                    // All items good - show as fully returned
+                    if ($total_kembali >= $total_items) {
+                        $row['status'] = 'Dikembalikan';
+                        $row['status_en'] = 'Returned';
+                    } else {
+                        $row['status'] = 'Sebagian Dikembalikan';
+                        $row['status_en'] = 'Partially Returned';
+                    }
                 }
             } else {
-                $row['status_en'] = $row['status'];
+                // Pending PIC inspection - show partial return status
+                if ($total_kembali > 0 && $total_kembali < $total_items) {
+                    $row['status'] = 'Sebagian Dikembalikan';
+                    $row['status_en'] = 'Partially Returned';
+                } else if ($total_kembali >= $total_items) {
+                    $row['status'] = 'Dikembalikan';
+                    $row['status_en'] = 'Returned';
+                } else {
+                    $row['status_en'] = $row['status'];
+                }
             }
         }
 

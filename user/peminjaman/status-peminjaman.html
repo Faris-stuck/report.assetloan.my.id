@@ -741,8 +741,8 @@
             //const displayStatus = getDisplayStatus(dbStatus, statusEn);
             let displayStatus;
             let statusBadge;
-            // If there is an active pengembalian in Diajukan/Dicek, treat as "Proses Return"
-            if (peminjaman.pengembalian_status && ['Diajukan', 'Dicek'].includes(peminjaman.pengembalian_status)) {
+            // If there is an active pengembalian in Diajukan/Dicek/Sebagian Dikembalikan, treat as "Proses Return"
+            if (peminjaman.pengembalian_status && ['Diajukan', 'Dicek', 'Sebagian Dikembalikan'].includes(peminjaman.pengembalian_status)) {
                 displayStatus = 'Proses Return';
                 statusBadge = 'badge bg-warning text-dark';
             } else {

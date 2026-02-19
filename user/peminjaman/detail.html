@@ -7,8 +7,8 @@
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
-    
-    
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -91,6 +91,9 @@
                     if (rawStatus.toLowerCase().includes('dicek') || rawStatus.toLowerCase().includes('diproses') || rawStatus.toLowerCase().includes('proses')) {
                         displayStatus = 'Sedang Diproses';
                     }
+                    if (rawStatus.toLowerCase().includes('sebagian dikembalikan')) {
+                        displayStatus = 'Sebagian Dikembalikan';
+                    }
                     if (rawStatus.toLowerCase().includes('sebagian') || rawStatus.toLowerCase().includes('seb') || rawStatus_en.toLowerCase().includes('partially')) {
                         displayStatus = 'Partially Damaged';
                     }
@@ -106,6 +109,7 @@
                     else if (s.includes('disetujui')) statusEl.className = 'badge bg-success';
                     else if (s.includes('ditolak')) statusEl.className = 'badge bg-danger';
                     else if (s.includes('dipinjam')) statusEl.className = 'badge bg-info text-dark';
+                    else if (s.includes('sebagian dikembalikan')) statusEl.className = 'badge bg-warning text-dark';
                     else if (s.includes('diproses') || s.includes('sedang')) statusEl.className = 'badge bg-warning text-dark';
                     else if (s.includes('partially')) statusEl.className = 'badge bg-warning text-dark';
                     else if (s.includes('fully') && s.includes('damaged')) statusEl.className = 'badge bg-danger';

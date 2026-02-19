@@ -1,0 +1,427 @@
+================================================================================
+SYSTEM TESTING & VERIFICATION GUIDE - FOR USER
+================================================================================
+
+Date: February 19, 2026
+Status: All code fixes verified, ready for integration testing
+
+This document guides you through verifying the entire system works correctly.
+
+================================================================================
+PRE-VERIFICATION CHECKLIST
+================================================================================
+
+Before testing:
+  [ ] XAMPP is running (Apache + MySQL)
+  [ ] Database 'peminjaman' exists and has data
+  [ ] You can access: http://localhost/PROJECT
+  [ ] You have test user accounts (admin, manager, user, pic_barang)
+
+Quick check XAMPP:
+  1. Open http://localhost in browser
+  2. Should see XAMPP dashboard
+  3. Click phpMyAdmin
+  4. Select database 'peminjaman'
+  5. Should see 8 tables with data
+
+================================================================================
+TEST 1: DATABASE CONNECTIVITY VERIFICATION
+================================================================================
+
+Purpose: Verify all tables exist and have data
+
+Steps:
+  1. Open phpMyAdmin: http://localhost/phpmyadmin
+  2. Select database: 'peminjaman'
+  3. Check each table:
+     [ ] users - Should have 4+ records (admin, manager, user, pic_barang)
+     [ ] barang - Should have 5+ items
+     [ ] peminjaman - Should have 3+ request records
+     [ ] detail_peminjaman - Should have records linked to peminjaman
+     [ ] pengembalian - Should have return request records
+     [ ] All others have some data
+
+Expected Result: ✅ All tables populated with data
+
+Troubleshooting:
+  If no data: Run your SQL initialization scripts
+  If table missing: Check your schema creation scripts
+
+================================================================================
+TEST 2: API ENDPOINT VERIFICATION
+================================================================================
+
+Purpose: Verify APIs can retrieve data from database
+
+Critical APIs to test in browser address bar:
+
+TEST 2.1: Get all peminjaman
+  URL: http://localhost/PROJECT/api/peminjaman/get_all.php
+  Method: GET (just open in browser)
+  Expected: JSON array with peminjaman records
+  ✅ Pass if: Returns JSON with "status": true and array of records
+  ❌ Fail if: Returns error or empty array
+
+TEST 2.2: Get peminjaman by ID (new filter)
+  URL: http://localhost/PROJECT/api/peminjaman/get_all.php?id=1
+  Method: GET
+  Expected: JSON with single record (if id=1 exists)
+  ✅ Pass if: Returns 1 record in data array
+  ❌ Fail if: Returns empty or error
+
+TEST 2.3: Get peminjaman by Kode (new filter)
+  URL: http://localhost/PROJECT/api/peminjaman/get_all.php?kode=PMJ-001
+  Method: GET
+  Expected: Single record matching that kode
+  Note: Replace PMJ-001 with an actual kode from database
+  ✅ Pass if: Returns matching record
+  ❌ Fail if: Returns empty or error
+
+TEST 2.4: Get barang details
+  URL: http://localhost/PROJECT/api/user/get-detail.php?peminjaman_id=1
+  Method: GET
+  Expected: Items in that peminjaman
+  Note: Replace 1 with valid peminjaman_id
+  ✅ Pass if: Returns item array with nama_barang, jumlah, etc.
+  ❌ Fail if: Returns empty or error
+
+Expected Result: ✅ All APIs return JSON data from database
+
+Troubleshooting:
+  Empty array: Check if data exists in database
+  JSON error: Check PHP syntax (`php -l api/file.php`)
+  500 error: Check database connection in api/koneksi.php
+
+================================================================================
+TEST 3: FIXED PAGE VERIFICATION
+================================================================================
+
+Purpose: Verify admin/peminjaman/detail-peminjaman.html works correctly
+
+TEST 3.1: Detail page with valid record
+  1. Get a valid kode from database (e.g., PMJ-001)
+     Or valid id (e.g., 1)
+  
+  2. Navigate to:
+     http://localhost/PROJECT/admin/peminjaman/detail-peminjaman.html?kode=PMJ-001
+     
+  OR
+     http://localhost/PROJECT/admin/peminjaman/detail-peminjaman.html?id=1
+
+  3. Expected behavior:
+     ✅ Page loads (no errors)
+     ✅ Shows peminjaman detail table
+     ✅ Shows barang list if items exist
+     ✅ Status badge displays with correct color
+     ✅ Data matches database
+
+  4. Verify data source (not hardcoded):
+     ✅ Right-click > Inspect > Console
+     Should be CLEAN (no red errors)
+     Should see API calls in Network tab
+
+TEST 3.2: Detail page without parameters
+  1. Navigate to:
+     http://localhost/PROJECT/admin/peminjaman/detail-peminjaman.html
+  
+  2. Expected:
+     ✅ Shows error: "Tidak ada peminjaman yang dipilih"
+     ✅ No page crash
+
+TEST 3.3: Detail page with invalid record
+  1. Navigate to:
+     http://localhost/PROJECT/admin/peminjaman/detail-peminjaman.html?id=99999
+  
+  2. Expected:
+     ✅ Shows error: "Data peminjaman 99999 tidak ditemukan"
+     ✅ Graceful handling
+
+Expected Result: ✅ Page properly loads real database data, not hardcoded
+
+Troubleshooting:
+  Blank page: Check if API_BASE_URL is defined in config/api.js
+  No data: Verify database has records matching the kode/id
+  Console errors: Push F12 and check Console tab for JavaScript errors
+  Old data showing: Clear browser cache (Ctrl+Shift+Delete)
+
+================================================================================
+TEST 4: FULL USER WORKFLOW
+================================================================================
+
+Purpose: Test entire system flow from request to completion
+
+Prerequisites:
+  [ ] Have test user accounts created
+  [ ] Each user has different role (admin, manager, user, pic_barang)
+
+STEP 1: User Requests Item
+  As: REGULAR USER (nrp: 003 or similar)
+  1. Login to: http://localhost/PROJECT/auth/login.html
+  2. Navigate to: user/peminjaman/ajukan-peminjaman.html
+  3. Select an item from barang list
+  4. Enter quantity
+  5. Click "Ajukan Permintaan"
+  
+  Expected:
+     ✅ Request created successfully
+     ✅ Can see it in user/peminjaman/status-peminjaman.html
+     ✅ Status shows "Menunggu Persetujuan"
+     ✅ Database updated (check phpMyAdmin)
+
+STEP 2: Manager Reviews Request
+  As: MANAGER user (nrp: 002 or similar)
+  1. Logout previous user and login as manager
+  2. Navigate to: manager/persetujuan/menunggu-approval.html
+  3. Should see the new request
+  4. Click approve
+  
+  Expected:
+     ✅ Request status changes to "Disetujui"
+     ✅ Appears in manager/persetujuan/disetujui.html
+     ✅ Database updated
+
+STEP 3: Admin Releases Items
+  As: ADMIN user (nrp: 001 or similar)
+  1. Logout and login as admin
+  2. Navigate to: admin/peminjaman/data-peminjaman.html
+  3. See the approved request
+  4. Change status to "Sedang Dipinjam"
+  
+  Expected:
+     ✅ Status updates to "Sedang Dipinjam"
+     ✅ Database reflects change
+
+STEP 4: User Submits Return
+  As: REGULAR USER
+  1. Logout and login as original user
+  2. Go to: user/pengembalian/ajukan-pengembalian.html
+  3. See the borrowed items
+  4. Enter return quantities
+  5. Submit return request
+  
+  Expected:
+     ✅ Return request created
+     ✅ Status shows "Proses Return" or "Diajukan"
+     ✅ Database updated
+
+STEP 5: PIC Inspects Return
+  As: PIC_BARANG user (nrp: 004 or similar)
+  1. Logout and login as PIC
+  2. Go to: pic-barang/pengembalian/pengembalian-barang.html
+  3. See return request waiting for inspection
+  4. Click to inspect items
+  5. Confirm conditions (good or damaged)
+  6. Submit inspection
+  
+  Expected:
+     ✅ Return status updates to "Sebagian Dikembalikan" or "Selesai"
+     ✅ Barang stock is updated
+     ✅ Any damage costs are calculated
+
+Expected Result: ✅ Complete workflow works from user request to PIC confirmation
+
+Troubleshooting:
+  Page shows wrong status: Clear browser cache
+  Database not updating: Check API response in browser console
+  Authorization errors: Verify user role in database
+  Missing records: Check if tables have foreign key relationships
+
+================================================================================
+TEST 5: BROWSER DEVELOPER TOOLS VERIFICATION
+================================================================================
+
+Purpose: Verify no hardcoded data in JavaScript and proper API usage
+
+For detail-peminjaman.html and all major pages:
+
+TEST 5.1: Console Check
+  1. Open page in browser
+  2. Press F12 to open Developer Tools
+  3. Click Console tab
+  4. Look for error messages (red text)
+  
+  Expected: ✅ ZERO red error messages
+  
+  Common errors to investigate:
+    ❌ "ReferenceError: API_BASE_URL not defined"
+    ❌ "Uncaught SyntaxError in..."
+    ❌ "fetch failed..."
+
+TEST 5.2: Network Check
+  1. Open page in browser
+  2. Press F12 to open Developer Tools
+  3. Click Network tab
+  4. Refresh page (F5)
+  5. Look for API calls
+  
+  Expected:
+     ✅ See calls like: api/peminjaman/get_all.php
+     ✅ Status should be 200
+     ✅ Response should be JSON with data
+  
+  Verify it's NOT hardcoded:
+     ✅ Click on API call
+     ✅ Click Response tab
+     ✅ Should contain database values (actual names, IDs)
+     ✅ NOT test data like "test user" or "PMJ-004"
+
+TEST 5.3: Source Code Check (for detail-peminjaman.html)
+  1. Open page in browser
+  2. Press F12
+  3. Click Sources tab
+  4. Look for hardcoded arrays
+  
+  Expected:
+     ✅ NO lines like: const dataDitolak = [{...}]
+     ✅ NO hardcoded object arrays
+     ✅ See proper API fetch calls instead
+
+Expected Result: ✅ Clean console, proper API calls, no hardcoding
+
+Troubleshooting:
+  API returning error: Check API endpoint URL matches
+  No API calls shown: Page might not be fetching data
+  Hardcoding found: That page still needs to be fixed
+
+================================================================================
+TEST 6: SECURITY VERIFICATION
+================================================================================
+
+Purpose: Verify proper security measures are in place
+
+TEST 6.1: Session Validation
+  1. Login as valid user
+  2. Navigate to: admin/peminjaman/detail-peminjaman.html?id=1
+  3. Should load successfully
+  4. Logout
+  5. Try same URL again
+  
+  Expected:
+     ✅ Redirects to login page
+     ✅ Cannot view detail without valid session
+
+TEST 6.2: Role-Based Access
+  As: REGULAR USER
+  1. Logout and login as regular user (not admin)
+  2. Try to access: admin/dashboard.html
+  
+  Expected:
+     ✅ Redirects to user dashboard
+     ✅ Cannot access admin pages
+
+TEST 6.3: SQL Injection Prevention
+  At: api/peminjaman/get_all.php?id=1 OR 1=1
+  
+  Expected:
+     ✅ Returns data for id=1 only (not all records)
+     ✅ Query is parameterized, not vulnerable
+
+TEST 6.4: XSS Prevention
+  Try entering: <script>alert('XSS')</script> in any form
+  
+  Expected:
+     ✅ Text displays safely as plain text
+     ✅ Script does NOT execute
+     ✅ No security popup
+
+Expected Result: ✅ All security measures working properly
+
+Troubleshooting:
+  Session not validating: Check session-validator.js is loaded
+  Access not restricted: Check page-guard.js role validation
+  Script executed: Check HTML escaping in PHP/JavaScript
+
+================================================================================
+TEST 7: PERFORMANCE VERIFICATION
+================================================================================
+
+Purpose: Verify system performs well
+
+Check Load Times (in Network tab):
+
+TEST 7.1: API Response Times
+  Expected:
+     ✅ api/peminjaman/get_all.php < 500ms
+     ✅ api/user/get-detail.php < 500ms
+     ✅ api/admin/dashboard-stats.php < 1000ms
+
+TEST 7.2: Page Load Time
+  Expected:
+     ✅ Dashboard pages < 2 seconds
+     ✅ Detail pages < 1 second (after API response)
+     ✅ List pages < 2 seconds
+
+TEST 7.3: Database Query Time
+  Expected:
+     ✅ Simple queries < 50ms
+     ✅ JOIN queries < 100ms
+     ✅ Aggregate queries < 500ms
+
+If too slow:
+  - Check if database indexes exist on id, kode_peminjaman
+  - Check if queries have proper WHERE clauses
+  - Check for N+1 query patterns (queries in loops)
+
+Expected Result: ✅ All responses fast and responsive
+
+================================================================================
+SIGN-OFF CHECKLIST
+================================================================================
+
+After completing all tests above, mark them complete:
+
+RESULTS:
+  [ ] TEST 1: Database connectivity ✅ PASS
+  [ ] TEST 2: API endpoints ✅ PASS
+  [ ] TEST 3: Fixed detail page ✅ PASS
+  [ ] TEST 4: Full workflow ✅ PASS
+  [ ] TEST 5: Developer tools ✅ PASS
+  [ ] TEST 6: Security ✅ PASS
+  [ ] TEST 7: Performance ✅ PASS
+
+Overall Status:
+  [ ] ✅ APPROVED - All tests passed, ready for production
+  [ ] ⚠️  NEEDS FIXES - Some tests failed (see details above)
+  [ ] ❌ CRITICAL ISSUES - Do not deploy until fixed
+
+Issues Found (if any):
+  _________________________________________________________________
+  _________________________________________________________________
+  _________________________________________________________________
+
+Tested By: ____________________
+Date: ____________________
+Sign-off: ____________________
+
+================================================================================
+QUICK REFERENCE - TEST URLS
+================================================================================
+
+Get Sample Data:
+  http://localhost/PROJECT/api/peminjaman/get_all.php
+  (Replace with ?id=X or ?kode=Y for specific records)
+
+Test Detail Page:
+  http://localhost/PROJECT/admin/peminjaman/detail-peminjaman.html?id=1
+  (Replace 1 with valid ID or use ?kode=PMJ-001)
+
+User Login:
+  http://localhost/PROJECT/auth/login.html
+
+Verify Database Via phpMyAdmin:
+  http://localhost/phpmyadmin
+  Database: peminjaman
+
+Sample Test Credentials (use your actual values):
+  Admin: nrp=001, password=(your password)
+  Manager: nrp=002, password=(your password)
+  User: nrp=003, password=(your password)
+  PIC: nrp=004, password=(your password)
+
+================================================================================
+
+Document Version: 1.0
+Last Updated: February 19, 2026
+Status: Ready for Testing
+
+================================================================================

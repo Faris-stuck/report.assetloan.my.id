@@ -134,7 +134,7 @@ CREATE TABLE `pengembalian` (
   `kode_pengembalian` varchar(30) NOT NULL,
   `peminjaman_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `status` enum('Diajukan','Dicek','Selesai') NOT NULL DEFAULT 'Diajukan',
+  `status` enum('Diajukan','Dicek','Sebagian Dikembalikan','Selesai') NOT NULL DEFAULT 'Diajukan',
   `catatan_user` text DEFAULT NULL,
   `catatan_petugas` text DEFAULT NULL,
   `checked_by_role` enum('admin','pic_barang') DEFAULT NULL,

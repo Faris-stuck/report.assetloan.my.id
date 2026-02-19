@@ -1,0 +1,401 @@
+================================================================================
+QUICK REFERENCE CHECKLIST - System Verification
+================================================================================
+
+This checklist helps you verify that the system is properly connected and
+working after the audit and fixes.
+
+================================================================================
+1. DATABASE CONNECTION VERIFICATION
+================================================================================
+
+Test 1: Verify Database Exists
+  [ ] Open phpMyAdmin: http://localhost/phpmyadmin
+  [ ] Select database: 'peminjaman'
+  [ ] Verify 8 tables exist:
+      [ ] users
+      [ ] barang
+      [ ] peminjaman
+      [ ] detail_peminjaman
+      [ ] pengembalian
+      [ ] detail_pengembalian
+      [ ] vendor
+      [ ] pembelian_barang
+
+Test 2: Verify Sample Data Exists
+  [ ] users: At least 4 records (one per role: admin, manager, user, pic_barang)
+  [ ] barang: At least 5 records
+  [ ] peminjaman: At least 3 records
+  [ ] Check if any peminjaman has status options from enum
+
+Test 3: Verify Database Connection in Code
+  [ ] Open: api/koneksi.php
+  [ ] Verify Database: 'peminjaman'
+  [ ] Verify Connection: localhost, user: root, no password (or your config)
+
+================================================================================
+2. API ENDPOINT VERIFICATION
+================================================================================
+
+Critical APIs (Must Be Working):
+
+[ ] Location: api/peminjaman/get_all.php
+    Status: Enhanced with 'id' and 'kode' filters
+    Test URL: http://localhost/PROJECT/api/peminjaman/get_all.php
+    Expected: JSON array of all peminjaman records
+    
+[ ] Location: api/peminjaman/get_all.php?id=1
+    Test Filter by ID: http://localhost/PROJECT/api/peminjaman/get_all.php?id=1
+    Expected: JSON array with 1 record (if id=1 exists)
+    
+[ ] Location: api/peminjaman/get_detail.php?peminjaman_id=1
+    Test Detail: http://localhost/PROJECT/api/peminjaman/get_detail.php?peminjaman_id=1
+    Expected: Items in that peminjaman with sudah_dikembalikan field
+
+[ ] Location: api/user/get-detail.php?peminjaman_id=1
+    Test Barang Detail: http://localhost/PROJECT/api/user/get-detail.php?peminjaman_id=1
+    Expected: Barang list for that peminjaman
+
+[ ] Location: api/admin/dashboard-stats.php
+    Test Admin Stats: http://localhost/PROJECT/api/admin/dashboard-stats.php
+    Expected: JSON with counts of peminjaman by status
+
+Other APIs to verify working:
+  [ ] api/barang/get.php - Returns barang list
+  [ ] api/pengembalian/list.php - Returns pengembalian requests
+  [ ] api/approver/peminjaman-list.php - Returns for manager
+  [ ] All other endpoints referenced in audit report
+
+================================================================================
+3. PAGE FUNCTIONALITY VERIFICATION
+================================================================================
+
+Critical Pages (After Fixes):
+
+[ ] admin/peminjaman/detail-peminjaman.html?kode=PMJ-001
+    - Page should load data for that peminjaman
+    - Should show real data from database (not hardcoded)
+    - Should display list of items
+    - If record doesn't exist: Show "Data not found" error
+    
+[ ] admin/peminjaman/detail-peminjaman.html?id=1
+    - Same as above, but using ID parameter
+    
+[ ] admin/peminjaman/detail-peminjaman.html
+    - Should load without error but show no data until parameters provided
+
+Key Pages to Test:
+  [ ] admin/dashboard.html - Shows statistics from api/admin/dashboard-stats.php
+  [ ] admin/peminjaman/data-peminjaman.html - Shows list from api/peminjaman/get_all.php
+  [ ] manager/dashboard.html - Shows statistics
+  [ ] user/peminjaman/ajukan-peminjaman.html - Can create new request
+  [ ] pic-barang/pengembalian/pengembalian-barang.html - Can inspect returns
+
+================================================================================
+4. WORKFLOW VERIFICATION
+================================================================================
+
+Full User Workflow Test:
+
+Step 1: User Requests Item
+  [ ] Login as: user role
+  [ ] Navigate to: user/peminjaman/ajukan-peminjaman.html
+  [ ] Select barang and quantity
+  [ ] Submit request
+  [ ] Database action: INSERT into peminjaman with status 'Menunggu Persetujuan'
+
+Step 2: Manager Approves
+  [ ] Logout and login as: manager role
+  [ ] Navigate to: manager/persetujuan/menunggu-approval.html
+  [ ] See the new request in list
+  [ ] Approve the request
+  [ ] Database action: UPDATE peminjaman status to 'Disetujui'
+
+Step 3: Admin Releases Items
+  [ ] Logout and login as: admin role
+  [ ] Navigate to: admin/peminjaman/data-peminjaman.html
+  [ ] Find the approved request
+  [ ] Change status to 'Sedang Dipinjam'
+  [ ] Database action: UPDATE peminjaman status to 'Sedang Dipinjam'
+
+Step 4: User Returns Items
+  [ ] Logout and login as: user role
+  [ ] Navigate to: user/pengembalian/ajukan-pengembalian.html
+  [ ] See items to return
+  [ ] Submit return request
+  [ ] Database action: INSERT into pengembalian with status 'Diajukan'
+
+Step 5: PIC Inspects Return
+  [ ] Logout and login as: pic_barang role
+  [ ] Navigate to: pic-barang/pengembalian/pengembalian-barang.html
+  [ ] See return request
+  [ ] Inspect items and confirm status
+  [ ] Database action: UPDATE pengembalian + detail_pengembalian
+
+Step 6: View Complete in Admin
+  [ ] Logout and login as: admin role
+  [ ] See peminjaman status is now 'Dikembalikan'
+
+✅ If all steps complete with proper database updates: System working correctly
+
+================================================================================
+5. ROLE-BASED ACCESS CONTROL VERIFICATION
+================================================================================
+
+[ ] Admin User (nrp: 001)
+    Can access:
+      [ ] admin/dashboard.html
+      [ ] admin/barang/* (all pages)
+      [ ] admin/peminjaman/* (all pages)
+      [ ] admin/pengembalian/* (all pages)
+      [ ] admin/pengaturan.html
+    Cannot access:
+      [ ] user/peminjaman/* (redirects to login)
+      [ ] manager/persetujuan/* (redirects to login)
+
+[ ] Manager User (nrp: 002)
+    Can access:
+      [ ] manager/dashboard.html
+      [ ] manager/persetujuan/* (all pages)
+      [ ] manager/laporan/* (all pages)
+    Cannot access:
+      [ ] admin/* (redirects to login)
+      [ ] pic-barang/* (redirects to login)
+
+[ ] Regular User (nrp: 003)
+    Can access:
+      [ ] user/dashboard.html
+      [ ] user/peminjaman/* (view and create)
+      [ ] user/pengembalian/* (submit return)
+      [ ] user/riwayat.html
+      [ ] user/profil.html
+    Cannot access:
+      [ ] admin/* (redirects to login)
+      [ ] manager/* (redirects to login)
+
+[ ] PIC Barang User (nrp: 004)
+    Can access:
+      [ ] pic-barang/dashboard.html
+      [ ] pic-barang/pengembalian/* (inspect and confirm)
+      [ ] pic-barang/update-barang/* (update item info)
+    Cannot access:
+      [ ] admin/* (except reports)
+      [ ] user/* (except own profile)
+
+================================================================================
+6. DATA INTEGRITY VERIFICATION
+================================================================================
+
+[ ] Enum Values Match
+    Users table 'role' field:
+      [ ] 'admin' - can be set
+      [ ] 'manager' - can be set
+      [ ] 'user' - can be set
+      [ ] 'pic_barang' - can be set
+    
+    Peminjaman table 'status' field:
+      [ ] 'Menunggu Persetujuan' - used in workflow
+      [ ] 'Disetujui' - used in workflow
+      [ ] 'Sedang Dipinjam' - used in workflow
+      [ ] 'Proses Return' - used in workflow
+      [ ] 'Dikembalikan' - used in workflow
+      [ ] 'Ditolak' - used in workflow
+
+[ ] Foreign Keys Working
+    Detail Peminjaman:
+      [ ] Can link to valid peminjaman_id
+      [ ] Can link to valid barang_id
+      [ ] Cannot link to invalid IDs
+    
+    Pengembalian:
+      [ ] Can link to valid peminjaman_id
+      [ ] Can link to valid user_id
+      [ ] Maintains referential integrity
+
+[ ] No Hardcoded Data in Production
+    Checked files:
+      [ ] user/riwayat.html - Uses API (may cache in arrays but OK)
+      [ ] manager/persetujuan/*.html - Uses API
+      [ ] admin/peminjaman/detail-peminjaman.html - FIXED ✅
+      [ ] All other pages verified in audit report
+
+================================================================================
+7. SECURITY VERIFICATION
+================================================================================
+
+[ ] Passwords Hashed
+    - User passwords in database use bcrypt algorithm
+    - Never displayed in plaintext
+    - Can be verified via api/auth/login.php
+
+[ ] SQL Injection Prevention
+    - All queries use prepared statements
+    - Parameterized values properly bound
+    - Test: Try entering SQL in forms - should be treated as text
+
+[ ] XSS Prevention
+    - All output escaped using HTML entities
+    - Test: Enter <script>alert('XSS')</script> in form - should display safely
+
+[ ] Session Management
+    - Session started on login
+    - Session destroyed on logout
+    - Session validated on each API call
+    - Test: Try accessing API after logout - should fail
+
+[ ] CSRF Protection
+    - All form submissions validated by role/session
+    - Sensitive operations require valid session
+    - Test: Try API call without session - should fail
+
+================================================================================
+8. PERFORMANCE VERIFICATION
+================================================================================
+
+[ ] API Response Times
+    - api/peminjaman/get_all.php: < 500ms
+    - api/user/get-detail.php: < 500ms
+    - api/admin/dashboard-stats.php: < 1000ms
+    - Other endpoints: < 500ms typical
+
+[ ] Page Load Times
+    - Admin dashboard: < 2 seconds
+    - Detail page: < 1 second (after API response)
+    - List pages: < 2 seconds
+
+[ ] Database Query Times
+    - Simple SELECT: < 50ms
+    - With JOIN: < 100ms
+    - Complex aggregates: < 500ms
+
+If slow, check:
+  [ ] Has proper indexes on ID and kode fields
+  [ ] Database connection is local (not remote)
+  [ ] No N+1 query patterns (queries within loops)
+
+================================================================================
+9. BROWSER COMPATIBILITY VERIFICATION
+================================================================================
+
+Test in multiple browsers:
+  [ ] Chrome 90+ - Should work perfectly
+  [ ] Firefox 88+ - Should work perfectly
+  [ ] Safari 14+ - Should work perfectly
+  [ ] Edge 90+ - Should work perfectly
+  [ ] IE 11 - May have issues with modern JavaScript
+
+Features to test:
+  [ ] fetch() API works
+  [ ] Promise chains work
+  [ ] DOM manipulation works
+  [ ] Local Storage works (if used)
+
+================================================================================
+10. DEPLOYMENT CHECKLIST
+================================================================================
+
+Before Going Live:
+  [ ] All database tables exist and have data
+  [ ] All APIs tested and working
+  [ ] All pages tested with real data
+  [ ] Role-based access control verified
+  [ ] No hardcoded data in production code
+  [ ] Passwords hashed and secure
+  [ ] Error messages don't expose database info
+  [ ] Backup of current database exists
+
+After Deployment:
+  [ ] Monitor API response times via:
+      - Browser F12 > Network tab
+      - Check first load vs cached
+  [ ] Check browser console for JavaScript errors:
+      - F12 > Console tab
+      - Should have NO red error messages
+  [ ] Monitor database for slow queries
+  [ ] Set up daily backups
+  [ ] Create error logging mechanism
+  [ ] Document any issues found
+
+================================================================================
+11. TROUBLESHOOTING QUICK REFERENCE
+================================================================================
+
+Problem: "Database connection failed"
+  Solution: Check api/koneksi.php has correct credentials
+  Check: Database 'peminjaman' exists
+  Check: Root user can access database
+
+Problem: "API returns empty array"
+  Solution: Check if data exists in database table
+  Check: User has correct role to access endpoint
+  Try: Test API directly in browser URL bar
+
+Problem: "Page shows 'Data not found'"
+  Solution: Check if record exists in database
+  Try: Use valid peminjaman ID or kode
+  Check: Browser console for API error details
+
+Problem: "User cannot see page (redirected to login)"
+  Solution: Check user's role in database
+  Check: Role matches required role for page
+  Try: Login as admin to test access
+
+Problem: "Data takes too long to load"
+  Solution: Check API query time in browser Network tab
+  Try: Test with smaller dataset first
+  Check: Database indexes exist on key fields
+
+Problem: "JavaScript errors in console"
+  Solution: Press F12 to open developer tools
+  Check: Check 'Console' tab for red error messages
+  Look: For undefined variables or missing functions
+  Check: escapeHtml() function exists in page
+
+Problem: "Changes don't appear after saving"
+  Solution: Clear browser cache (Ctrl+Shift+Delete)
+  Try: Hard refresh (Ctrl+F5)
+  Check: Database record actually updated
+  Check: API returns new data
+
+================================================================================
+QUICK TEST COMMANDS (if you have terminal access)
+================================================================================
+
+Check PHP Syntax:
+  php -l api/peminjaman/get_all.php
+  Expected: "No syntax errors detected"
+
+Test API Call:
+  curl http://localhost/PROJECT/api/peminjaman/get_all.php
+  Expected: JSON response with peminjaman array
+
+Test with Parameters:
+  curl "http://localhost/PROJECT/api/peminjaman/get_all.php?id=1"
+  Expected: JSON response with single record
+
+Check Database Connection:
+  mysql -u root -p peminjaman -e "SELECT COUNT(*) FROM peminjaman;"
+  Expected: Number of records > 0
+
+================================================================================
+
+Final Verification Summary:
+  [ ] Database connected and has data
+  [ ] All APIs responding correctly
+  [ ] All pages loading with real data
+  [ ] Role-based access working
+  [ ] No hardcoded production data
+  [ ] Security measures in place
+  [ ] Performance acceptable
+  [ ] Ready for deployment
+
+Sign Off Checklist:
+  - Team Member: ___________________
+  - Date: ___________________________
+  - Status: [ ] Approved [ ] Needs Fixes
+
+================================================================================
+This checklist was generated on 2026-02-19
+Keep this for future reference and system maintenance
+
+================================================================================

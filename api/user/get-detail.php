@@ -100,14 +100,32 @@ if ($qh) {
             $total_rusak += (int)$map[$bid]['jumlah_rusak'];
         }
     }
-    // compute damage status
-    if ($total_rusak > 0) {
-        if ($total_rusak < $total_items) {
-            $display_status = 'Sebagian Rusak';
-            $display_status_en = 'Partially Damaged';
+    // compute return and damage status
+    // Count how many items have been returned
+    $total_dikembalikan = 0;
+    foreach ($detail_barang as $dbi) {
+        $total_dikembalikan += $dbi['jumlah_kembali'];
+    }
+    
+    // Determine display status based on return progress
+    if ($total_dikembalikan < $total_items) {
+        // Sebagian Dikembalikan (partial return)
+        $display_status = 'Sebagian Dikembalikan';
+        $display_status_en = 'Partially Returned';
+    } elseif ($total_dikembalikan == $total_items) {
+        // All returned - check if any are damaged
+        if ($total_rusak > 0) {
+            if ($total_rusak < $total_items) {
+                $display_status = 'Sebagian Rusak';
+                $display_status_en = 'Partially Damaged';
+            } else {
+                $display_status = 'Semua Rusak';
+                $display_status_en = 'Fully Damaged';
+            }
         } else {
-            $display_status = 'Semua Rusak';
-            $display_status_en = 'Fully Damaged';
+            // All returned and no damage
+            $display_status = 'Dikembalikan';
+            $display_status_en = 'Returned';
         }
     }
 }

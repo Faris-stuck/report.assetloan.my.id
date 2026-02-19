@@ -48,6 +48,7 @@ $stmt = $conn->prepare("
         d.barang_id,
         b.kode_barang,
         b.nama_barang,
+        COALESCE(dp.jumlah, 0) as jumlah_pinjam,
         d.jumlah_kembali,
         d.kondisi_kembali,
         d.jumlah_rusak,
@@ -55,10 +56,11 @@ $stmt = $conn->prepare("
         d.catatan
     FROM detail_pengembalian d
     JOIN barang b ON b.id = d.barang_id
+    LEFT JOIN detail_peminjaman dp ON dp.barang_id = d.barang_id AND dp.peminjaman_id = ?
     WHERE d.pengembalian_id = ?
     ORDER BY b.nama_barang ASC
 ");
-$stmt->bind_param("i", $pengembalian_id);
+$stmt->bind_param("ii", $header['peminjaman_id'], $pengembalian_id);
 $stmt->execute();
 $items = [];
 $r = $stmt->get_result();

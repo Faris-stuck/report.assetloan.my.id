@@ -455,6 +455,55 @@
     <script src="../../assets/js/dashboard-init.min.js"></script>
     <!--! END: Apps Init !-->
 
+    <!-- Modal for Return Inspection -->
+    <div class="modal fade" id="modalReturnInspeksi" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel">Return Inspection</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Borrower</label>
+                        <div id="inspeksiBorrower" class="form-control-plaintext fw-semibold">-</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%">Item</th>
+                                    <th class="text-center" style="width: 10%">QTY Pinjam</th>
+                                    <th class="text-center" style="width: 10%">QTY Return</th>
+                                    <th class="text-center" style="width: 10%">Good Condition</th>
+                                    <th class="text-center" style="width: 10%">Damaged Condition</th>
+                                    <th class="text-center" style="width: 10%">Remain Item</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inspeksiItems">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="catatanUser" rows="2"
+                            placeholder="Optional notes about the return (condition, damages, etc.)"></textarea>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-end gap-3">
+                        <div class="text-muted">Summary:</div>
+                        <div class="fw-bold" id="totalGantiRugi">0 damaged, 0 remain</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="btnSubmitReturn">Submit Return Request</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Ambil user ID dari localStorage (hasil login)
@@ -476,28 +525,50 @@
             }
         }
 
-        fetch("../../api/peminjaman/get.php", { credentials: 'same-origin' })
-            .then(res => res.json())
-            .then(res => {
-                let html = "";
+        const API = '/PROJECT/api/peminjaman';
+        let currentPeminjamanId = null;
+        let currentPeminjamanData = null;
+        let modalReturnInspeksi = null;
 
-                res.data
-                    .filter(p =>
-                        p.user_id == USER_ID &&
-                        p.status === "Sedang Dipinjam"
-                    )
-                    .forEach(p => {
-                        // Determine status badge color
-                        let statusBadgeClass = "badge bg-warning";
-                        if (p.status === "Sedang Dipinjam") {
-                            statusBadgeClass = "badge bg-info";
-                        } else if (p.status === "Selesai") {
-                            statusBadgeClass = "badge bg-success";
-                        } else if (p.status.includes("Rusak")) {
-                            statusBadgeClass = "badge bg-danger";
-                        }
+        function recalcTotal() {
+            const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
+            let totalDamaged = 0;
+            let totalRemain = 0;
 
-                        html += `
+            rows.forEach(tr => {
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+                const remain = Number(tr.querySelector('.inp-remain')?.value || 0);
+                totalDamaged += isNaN(damaged) ? 0 : damaged;
+                totalRemain += isNaN(remain) ? 0 : remain;
+            });
+
+            const summary = `${totalDamaged} damaged, ${totalRemain} remain`;
+            document.getElementById('totalGantiRugi').textContent = summary;
+        }
+
+        function loadPeminjamanList() {
+            fetch(API + "/get.php", { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    let html = "";
+
+                    res.data
+                        .filter(p =>
+                            p.user_id == USER_ID &&
+                            p.status === "Sedang Dipinjam"
+                        )
+                        .forEach(p => {
+                            // Determine status badge color
+                            let statusBadgeClass = "badge bg-warning";
+                            if (p.status === "Sedang Dipinjam") {
+                                statusBadgeClass = "badge bg-info";
+                            } else if (p.status === "Selesai") {
+                                statusBadgeClass = "badge bg-success";
+                            } else if (p.status.includes("Rusak")) {
+                                statusBadgeClass = "badge bg-danger";
+                            }
+
+                            html += `
         <tr>
             <td><strong>${p.kode}</strong></td>
             <td>${p.barang}</td>
@@ -506,53 +577,320 @@
             <td><span class="${statusBadgeClass}">${p.status}</span></td>
             <td>
                 <button class="btn btn-danger btn-sm" 
-                    onclick="kembalikan(${p.id})" 
+                    onclick="openReturnInspeksi(${p.id})" 
                     title="Request return for this borrowing">
                     <i class="feather-undo"></i> Return
                 </button>
             </td>
         </tr>`;
-                    });
+                        });
 
-                if (html === "") {
-                    html = '<tr><td colspan="6" class="text-center text-muted py-4">No borrowings found. All items have been returned.</td></tr>';
-                }
+                    if (html === "") {
+                        html = '<tr><td colspan="6" class="text-center text-muted py-4">No borrowings found. All items have been returned.</td></tr>';
+                    }
 
-                document.getElementById("kembaliTable").innerHTML = html;
-            })
-            .catch(err => {
-                console.error("Error loading peminjaman data:", err);
-                document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load borrowing data</td></tr>';
-            });
-
-        function kembalikan(id) {
-            let fd = new FormData();
-            fd.append("peminjaman_id", id);
-            const catatan = prompt("Catatan pengembalian (opsional):", "");
-
-            // If user clicked Cancel, exit the function
-            if (catatan === null) {
-                return;
-            }
-
-            fd.append("catatan_user", catatan);
-
-            fetch("../../api/peminjaman/return.php", {
-                method: "POST",
-                body: fd,
-                credentials: 'same-origin'
-            })
-                .then(res => res.json())
-                .then((res) => {
-                    if (!res.status) throw new Error(res.message || 'Failed');
-                    alert(res.message || "Return requested");
-                    location.reload();
+                    document.getElementById("kembaliTable").innerHTML = html;
                 })
                 .catch(err => {
-                    console.error("Error returning item:", err);
-                    alert(err.message || "Error occurred while requesting return");
+                    console.error("Error loading peminjaman data:", err);
+                    document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load borrowing data</td></tr>';
                 });
         }
+
+        function openReturnInspeksi(peminjamanId) {
+            currentPeminjamanId = peminjamanId;
+            document.getElementById('catatanUser').value = '';
+            document.getElementById('totalGantiRugi').textContent = '0 damaged, 0 remain';
+            document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>';
+
+            // Fetch detail items from detail_peminjaman
+            fetch(API + '/get_detail.php?peminjaman_id=' + encodeURIComponent(peminjamanId), { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = '/PROJECT/auth/login.html';
+                        throw new Error('Unauthorized');
+                    }
+                    if (!r.ok) {
+                        throw new Error('API returned status ' + r.status);
+                    }
+                    return r.text(); // Get response as text first to debug
+                })
+                .then(text => {
+                    if (!text || text.trim() === '') {
+                        throw new Error('API returned empty response');
+                    }
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('JSON Parse Error:', e);
+                        console.error('Response:', text);
+                        throw new Error('Invalid JSON response from API: ' + e.message);
+                    }
+                })
+                .then(res => {
+                    if (!res.status) {
+                        throw new Error(res.message || 'Failed to load items');
+                    }
+
+                    const h = res.header || {};
+                    document.getElementById('inspeksiBorrower').textContent = `${h.nama_peminjam || '-'} - ${h.kode_peminjaman || '-'}`;
+
+                    const items = res.items || [];
+                    if (items.length === 0) {
+                        document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
+                        return;
+                    }
+
+                    document.getElementById('inspeksiItems').innerHTML = items.map(it => {
+                        const sisaDikembalikan = it.sisa_dikembalikan || 0;
+                        const sudahDikembalikan = it.sudah_dikembalikan || 0;
+                        const qtyPinjam = it.jumlah || 0;
+
+                        return `
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtyPinjam}" data-sisa="${sisaDikembalikan}">
+                            <td>
+                                <div class="fw-semibold">${it.nama_barang}</div>
+                                <div class="small text-muted"><code>${it.kode_barang}</code></div>
+                                ${sudahDikembalikan > 0 ? `<div class="small" style="color: #28a745;"><strong>✓ ${sudahDikembalikan} returned</strong></div>` : ''}
+                            </td>
+                            <td class="text-center">
+                                <div><strong>${qtyPinjam}</strong></div>
+                                ${sudahDikembalikan > 0 ? `<div class="small text-muted">(${sudahDikembalikan} ✓)</div>` : ''}
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="" placeholder="0">
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-good-condition" value="" placeholder="0" disabled>
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-damaged" value="" placeholder="0" disabled>
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm inp-remain" value="${sisaDikembalikan}" readonly style="background-color: #f5f5f5;">
+                            </td>
+                        </tr>
+                    `;
+                    }).join('');
+
+                    // Setup event listeners for all input fields
+                    const allInputs = document.querySelectorAll('#inspeksiItems .inp-qty-return, #inspeksiItems .inp-good-condition, #inspeksiItems .inp-damaged');
+                    allInputs.forEach(input => {
+                        input.addEventListener('input', function () {
+                            const tr = this.closest('tr');
+                            const qtyReturnInput = tr.querySelector('.inp-qty-return');
+                            const goodCondInput = tr.querySelector('.inp-good-condition');
+                            const damagedInput = tr.querySelector('.inp-damaged');
+                            const qtReturn = Number(qtyReturnInput.value || 0);
+                            const goodCond = Number(goodCondInput.value || 0);
+                            const damaged = Number(damagedInput.value || 0);
+                            const qtPinjam = Number(tr.getAttribute('data-qty-pinjam') || 0);
+                            const sisa = Number(tr.getAttribute('data-sisa') || 0);
+
+                            // Jika qty return kosong atau 0, disable good condition dan damaged
+                            if (qtReturn === 0 || qtyReturnInput.value === '') {
+                                goodCondInput.disabled = true;
+                                damagedInput.disabled = true;
+                                goodCondInput.value = '';
+                                damagedInput.value = '';
+                                tr.querySelector('.inp-remain').value = sisa;
+                                recalcTotal();
+                                return;
+                            }
+
+                            // Jika qty return diisi, enable good condition dan damaged
+                            goodCondInput.disabled = false;
+                            damagedInput.disabled = false;
+
+                            // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                            if (qtReturn > sisa) {
+                                qtyReturnInput.value = sisa;
+                            }
+
+                            // Validasi: good condition tidak boleh melebihi sisa
+                            if (goodCond > sisa) {
+                                goodCondInput.value = sisa;
+                                alert(`Good condition tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
+                            }
+
+                            // Validasi: damaged tidak boleh melebihi sisa
+                            if (damaged > sisa) {
+                                damagedInput.value = sisa;
+                                alert(`Damaged tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
+                            }
+
+                            // Re-read values after corrections
+                            const qtReturnUpdated = Number(qtyReturnInput.value || 0);
+                            const goodCondUpdated = Number(goodCondInput.value || 0);
+                            const damagedUpdated = Number(damagedInput.value || 0);
+
+                            // Validasi: good condition tidak boleh melebihi qty return
+                            if (goodCondUpdated > qtReturnUpdated && qtReturnUpdated > 0) {
+                                goodCondInput.value = qtReturnUpdated;
+                                alert(`Good condition tidak boleh melebihi QTY Return (${qtReturnUpdated})`);
+                            }
+
+                            // Validasi: damaged tidak boleh melebihi qty return
+                            if (damagedUpdated > qtReturnUpdated && qtReturnUpdated > 0) {
+                                damagedInput.value = qtReturnUpdated;
+                                alert(`Damaged tidak boleh melebihi QTY Return (${qtReturnUpdated})`);
+                            }
+
+                            // Calculate remain items: sisa - qty return
+                            const remainItems = sisa - qtReturnUpdated;
+                            tr.querySelector('.inp-remain').value = remainItems;
+
+                            recalcTotal();
+                        });
+                    });
+                    recalcTotal();
+                })
+                .catch(err => {
+                    document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + (err.message || 'Failed') + '</td></tr>';
+                })
+                .finally(() => {
+                    if (!modalReturnInspeksi) modalReturnInspeksi = new bootstrap.Modal(document.getElementById('modalReturnInspeksi'));
+                    modalReturnInspeksi.show();
+                });
+        }
+
+        function submitReturnRequest() {
+            if (!currentPeminjamanId) return;
+
+            const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
+            const items = [];
+            let hasError = false;
+
+            rows.forEach(tr => {
+                const barang_id = Number(tr.getAttribute('data-barang-id'));
+                const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
+                const sisa = Number(tr.getAttribute('data-sisa'));
+                const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
+                const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+
+                // Jika qty return kosong, skip item ini (tidak perlu dikembalikan/dicek)
+                if (qty_return === 0 || !tr.querySelector('.inp-qty-return').value) {
+                    return;
+                }
+
+                // Validasi: qty return >= 0
+                if (qty_return < 0) {
+                    alert('QTY Return tidak boleh negatif');
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                if (qty_return > sisa) {
+                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: Jika qty return diisi, good condition dan damaged harus diisi dan total harus = qty return
+                if (qty_return > 0) {
+                    if (good_condition === 0 && damaged === 0) {
+                        alert(`Untuk item yang dikembalikan, harus isi Good Condition atau Damaged`);
+                        hasError = true;
+                        return;
+                    }
+
+                    if (good_condition + damaged !== qty_return) {
+                        alert(`Good condition (${good_condition}) + Damaged (${damaged}) harus sama dengan QTY Return (${qty_return})`);
+                        hasError = true;
+                        return;
+                    }
+                }
+
+                // Validasi: good condition tidak boleh melebihi sisa
+                if (good_condition > sisa) {
+                    alert(`Good condition tidak boleh melebihi sisa (${sisa})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: damaged tidak boleh melebihi sisa
+                if (damaged > sisa) {
+                    alert(`Damaged tidak boleh melebihi sisa (${sisa})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: good condition tidak boleh melebihi qty return
+                if (good_condition > qty_return && qty_return > 0) {
+                    alert(`Good condition (${good_condition}) tidak boleh melebihi QTY Return (${qty_return})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: damaged tidak boleh melebihi qty return
+                if (damaged > qty_return && qty_return > 0) {
+                    alert(`Damaged (${damaged}) tidak boleh melebihi QTY Return (${qty_return})`);
+                    hasError = true;
+                    return;
+                }
+
+                items.push({
+                    barang_id,
+                    qty_pinjam,
+                    qty_return,
+                    good_condition,
+                    damaged
+                });
+            });
+
+            if (hasError) return;
+
+            if (!confirm('Submit return request? This will be reviewed by the admin/PIC.')) return;
+
+            const fd = new FormData();
+            fd.append('peminjaman_id', currentPeminjamanId);
+            fd.append('catatan_user', document.getElementById('catatanUser').value || '');
+            fd.append('items', JSON.stringify(items));
+
+            fetch(API + '/return.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = '/PROJECT/auth/login.html';
+                        throw new Error('Unauthorized');
+                    }
+                    if (!r.ok) {
+                        throw new Error('API returned status ' + r.status);
+                    }
+                    return r.text();
+                })
+                .then(text => {
+                    if (!text || text.trim() === '') {
+                        throw new Error('API returned empty response');
+                    }
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        console.error('JSON Parse Error:', e);
+                        console.error('Response:', text);
+                        throw new Error('Invalid JSON response from API');
+                    }
+                })
+                .then(res => {
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
+                    if (res.status) {
+                        if (modalReturnInspeksi) modalReturnInspeksi.hide();
+                        loadPeminjamanList();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert(err.message || 'Connection error');
+                });
+
+        }
+
+        document.addEventListener('DOMContentLoaded', loadPeminjamanList);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btnSubmitReturn');
+            if (btn) btn.addEventListener('click', submitReturnRequest);
+        });
     </script>
 
 

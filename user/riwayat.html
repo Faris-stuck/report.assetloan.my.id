@@ -7,8 +7,8 @@
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
-    
-    
+
+
 
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
@@ -506,8 +506,8 @@
                         if (status.includes('dicek') || status.includes('diproses') || status.includes('proses')) {
                             display = 'Sedang Diproses';
                         }
-                        if (status.includes('sebagian') || status.includes('seb') || status_en.includes('partially')) {
-                            display = 'Partially Damaged';
+                        if (status.includes('sebagian dikembalikan')) {
+                            display = 'Sebagian Dikembalikan';
                         }
                         if ((status.includes('semua') && status.includes('rusak')) || status_en.includes('fully')) {
                             display = 'Fully Damaged';
@@ -517,7 +517,7 @@
                         else if (status.includes('disetujui') || status.includes('approved')) badge = '<span class="badge bg-success">' + display + '</span>';
                         else if (status.includes('ditolak') || status.includes('rejected')) badge = '<span class="badge bg-danger">' + display + '</span>';
                         else if (status.includes('dipinjam') || status.includes('borrowed') || status.includes('ongoing')) badge = '<span class="badge bg-info text-dark">' + display + '</span>';
-                        else if (status.includes('sebagian') || status.includes('seb') || status_en.includes('partially')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        else if (status.includes('sebagian dikembalikan')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
                         else if ((status.includes('semua') && status.includes('rusak')) || status_en.includes('fully')) badge = '<span class="badge bg-danger">' + display + '</span>';
                         else if (status.includes('dicek') || status.includes('diproses') || status.includes('proses')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
 

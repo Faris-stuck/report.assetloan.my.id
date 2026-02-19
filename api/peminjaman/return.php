@@ -6,6 +6,7 @@
  * Input (POST):
  * - peminjaman_id (int) required
  * - catatan_user (string) optional
+ * - items (JSON string) optional - array of {barang_id, qty_return, good_condition, damaged}
  *
  * Output:
  * - { status: true, message, pengembalian_id }
@@ -26,6 +27,8 @@ try {
 $user_id = (int) (SessionValidator::getUserId() ?? 0);
 $peminjaman_id = (int)($_POST['peminjaman_id'] ?? 0);
 $catatan_user = trim((string)($_POST['catatan_user'] ?? ''));
+$items_json = trim((string)($_POST['items'] ?? ''));
+$items_array = [];
 
 if (!$user_id || !$peminjaman_id) {
     http_response_code(400);
@@ -80,8 +83,18 @@ try {
     }
     $pengembalian_id = (int)$conn->insert_id;
 
-    // Copy item dari detail_peminjaman menjadi detail_pengembalian (default kondisi Baik)
-    $q = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
+    // Parse items from user submission if provided
+    if (!empty($items_json)) {
+        $items_array = json_decode($items_json, true);
+        if (!is_array($items_array)) {
+            $items_array = [];
+        }
+    }
+
+    // Copy item dari detail_peminjaman menjadi detail_pengembalian
+    $q = $conn->prepare("
+        SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?
+    ");
     $q->bind_param("i", $peminjaman_id);
     $q->execute();
     $res = $q->get_result();
@@ -89,14 +102,32 @@ try {
     $insd = $conn->prepare("
         INSERT INTO detail_pengembalian
         (pengembalian_id, barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak, biaya_ganti_rugi, catatan)
-        VALUES (?, ?, ?, 'Baik', 0, 0.00, '')
+        VALUES (?, ?, ?, ?, ?, 0.00, '')
     ");
 
     $count = 0;
     while ($row = $res->fetch_assoc()) {
         $barang_id = (int)$row['barang_id'];
-        $jumlah = (int)$row['jumlah'];
-        $insd->bind_param("iii", $pengembalian_id, $barang_id, $jumlah);
+        $jumlah_pinjam = (int)$row['jumlah'];
+
+        // Check if user provided breakdown for this item
+        $jumlah_kembali = $jumlah_pinjam;
+        $jumlah_rusak = 0;
+        $kondisi_kembali = 'Baik';
+
+        foreach ($items_array as $item) {
+            if ((int)$item['barang_id'] === $barang_id) {
+                $jumlah_kembali = (int)($item['qty_return'] ?? $jumlah_pinjam);
+                $jumlah_rusak = (int)($item['damaged'] ?? 0);
+                // If has damaged, set kondisi to Rusak
+                if ($jumlah_rusak > 0) {
+                    $kondisi_kembali = 'Rusak';
+                }
+                break;
+            }
+        }
+
+        $insd->bind_param("iiisi", $pengembalian_id, $barang_id, $jumlah_kembali, $kondisi_kembali, $jumlah_rusak);
         if (!$insd->execute()) {
             throw new Exception("Gagal membuat detail pengembalian: " . $insd->error);
         }
@@ -106,6 +137,7 @@ try {
     if ($count === 0) {
         throw new Exception("Detail peminjaman kosong, tidak bisa ajukan pengembalian");
     }
+    
     // Set peminjaman status to 'Proses Return' to reflect return process in DB
     $upd_status = $conn->prepare("UPDATE peminjaman SET status = 'Proses Return' WHERE id = ?");
     $upd_status->bind_param("i", $peminjaman_id);

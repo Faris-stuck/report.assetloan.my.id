@@ -460,7 +460,7 @@
                                                 <tr>
                                                     <th>No</th>
                                                     <th>Loan Code</th>
-                                                    <th>Borrowed Items</th>
+                                                    <th>Borrower Name</th>
                                                     <th>Date</th>
                                                     <th>Status</th>
                                                     <th>Action</th>
@@ -478,7 +478,7 @@
                                                 <tr>
                                                     <th>No</th>
                                                     <th>Loan Code</th>
-                                                    <th>Borrowed Items</th>
+                                                    <th>Borrower Name</th>
                                                     <th>Date</th>
                                                     <th>Status</th>
                                                     <th>Action</th>
@@ -496,7 +496,7 @@
                                                 <tr>
                                                     <th>No</th>
                                                     <th>Loan Code</th>
-                                                    <th>Borrowed Items</th>
+                                                    <th>Borrower Name</th>
                                                     <th>Date</th>
                                                     <th>Status</th>
                                                     <th>Action</th>
@@ -515,7 +515,7 @@
                                                 <tr>
                                                     <th>No</th>
                                                     <th>Loan Code</th>
-                                                    <th>Borrowed Items</th>
+                                                    <th>Borrower Name</th>
                                                     <th>Date</th>
                                                     <th>Status</th>
                                                     <th>Action</th>
@@ -533,7 +533,7 @@
                                                 <tr>
                                                     <th>No</th>
                                                     <th>Loan Code</th>
-                                                    <th>Borrowed Items</th>
+                                                    <th>Borrower Name</th>
                                                     <th>Date</th>
                                                     <th>Status</th>
                                                     <th>Action</th>
@@ -1230,27 +1230,30 @@
             // Sort data by ID descending (newest first)
             const sortedData = [...data].sort((a, b) => parseInt(b.id) - parseInt(a.id));
 
-            // Filter data by status
+            // Filter data by status - EXACT MATCHING to avoid partial status overlap
             const semua = sortedData;
             const menunggu = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                return s.includes('menunggu') || se.includes('pending');
+                return s === 'menunggu persetujuan' || s === 'disetujui' ||
+                    se === 'pending approval' || se === 'approved';
             });
             const dipinjam = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                return s.includes('sedang') || se.includes('borrowed');
+                return s === 'sedang dipinjam' || se === 'borrowed';
             });
             const dikembalikan = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                return s.includes('dikembalikan') || se.includes('returned');
+                // ONLY "Dikembalikan" - exclude "Sebagian Dikembalikan" and "Sebagian Rusak"
+                return (s === 'dikembalikan' || se === 'returned') &&
+                    !s.includes('sebagian') && !se.includes('partial') && !se.includes('partially');
             });
             const ditolak = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                return s.includes('ditolak') || se.includes('rejected');
+                return s === 'ditolak' || se === 'rejected';
             });
 
             // Render semua tab
@@ -1277,15 +1280,18 @@
                 if (item.status === "Dikembalikan") badgeClass = "bg-success";
                 if (item.status === "Ditolak") badgeClass = "bg-danger";
                 if (item.status === "Proses Return") badgeClass = "bg-secondary";
+                if (s.includes('sebagian dikembalikan')) badgeClass = 'bg-warning text-dark';
+                if (s.includes('sebagian rusak')) badgeClass = 'bg-danger';
                 if (s.includes('sebagian') || s.includes('seb') || se.includes('partially')) badgeClass = 'bg-warning text-dark';
                 if ((s.includes('semua') && s.includes('rusak')) || (se.includes('fully') && se.includes('damaged'))) badgeClass = 'bg-danger';
 
                 const displayStatus = item.status_en || item.status;
+                const borrowerName = item.nama_peminjam || item.nama || '-';
                 return `
         <tr>
             <td>${index + 1}</td>
             <td>${item.kode}</td>
-            <td>${item.barang}</td>
+            <td>${borrowerName}</td>
             <td>${item.tanggal}</td>
             <td><span class="badge ${badgeClass}">${displayStatus}</span></td>
             <td>
@@ -1307,15 +1313,16 @@
         function getDisplayStatus(dbStatus, statusEn) {
             if (statusEn) {
                 const en_lower = statusEn.toLowerCase();
-                if (en_lower.includes('partially')) return 'Partially Damaged';
                 if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
             }
             switch (dbStatus) {
                 case 'Menunggu Persetujuan':
                 case 'Disetujui':
                     return 'Menunggu Persetujuan';
+                case 'Sebagian Dikembalikan':
+                    return 'Sebagian Dikembalikan';
                 case 'Sebagian Rusak':
-                    return 'Partially Damaged';
+                    return 'Sebagian Rusak';
                 case 'Semua Rusak':
                     return 'Fully Damaged';
                 case 'Sedang Dipinjam':
@@ -1334,10 +1341,10 @@
             switch (displayStatus) {
                 case 'Menunggu Persetujuan':
                     return 'badge bg-warning';
-                case 'Partially Damaged':
+                case 'Sebagian Dikembalikan':
                     return 'badge bg-warning text-dark';
                 case 'Sebagian Rusak':
-                    return 'badge bg-warning text-dark';
+                    return 'badge bg-danger';
                 case 'Fully Damaged':
                     return 'badge bg-danger';
                 case 'Semua Rusak':
@@ -1374,15 +1381,60 @@
                         document.getElementById('detailTanggalPinjam').textContent = new Date(p.tanggal_pinjam || p.tanggal).toLocaleDateString('id-ID');
                         document.getElementById('detailRencanaKembali').textContent = new Date(p.rencana_kembali).toLocaleDateString('id-ID');
 
-                        // Tampilkan barang
-                        const barangHtml = (p.detail_barang || []).map((item, i) => `
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${escapeHtml(item.nama_barang || item.barang || '-')}</td>
-                                <td class="text-center">${escapeHtml(item.jumlah)}</td>
-                            </tr>
-                        `).join('');
-                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="3" class="text-center">Tidak ada barang</td></tr>';
+                        // Tampilkan barang per-unit dengan status pengembalian individual
+                        let rowNum = 1;
+                        const isRejected = p.status && p.status.includes('Ditolak');
+                        const barangHtml = (p.detail_barang || []).map((item) => {
+                            const totalQty = parseInt(item.jumlah) || 0;
+                            const returned = parseInt(item.jumlah_kembali) || 0;
+                            const damaged = parseInt(item.jumlah_rusak) || 0;
+
+                            // Create row for EACH unit (expand all units)
+                            let rows = '';
+                            for (let unitNum = 1; unitNum <= totalQty; unitNum++) {
+                                let returnStatus = 'Belum Dikembalikan';
+                                let badgeClass = 'bg-secondary';
+
+                                // If peminjaman is rejected, show "Ditolak" status
+                                if (isRejected) {
+                                    returnStatus = 'Ditolak';
+                                    badgeClass = 'bg-danger';
+                                } else {
+                                    // Determine return status for this unit
+                                    if (unitNum <= returned) {
+                                        // This unit has been returned
+                                        returnStatus = 'Dikembalikan';
+                                        if (item.kondisi_kembali === 'Rusak' || unitNum <= damaged) {
+                                            returnStatus = 'Dikembalikan - Rusak';
+                                            badgeClass = 'bg-danger';
+                                        } else {
+                                            badgeClass = 'bg-success';
+                                        }
+                                    } else {
+                                        // Not yet returned
+                                        badgeClass = 'bg-secondary';
+                                    }
+                                }
+
+                                rows += `
+                                <tr>
+                                    <td>${rowNum}</td>
+                                    <td>${escapeHtml(item.nama_barang || item.barang || '-')}</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center"><span class="badge ${badgeClass}">${returnStatus}</span></td>
+                                </tr>`;
+                                rowNum++;
+                            }
+                            return rows;
+                        }).join('');
+
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="4" class="text-center">Tidak ada barang</td></tr>';
+
+                        // Always show the return status column (since we show per-unit now)
+                        const statusHeaderCol = document.getElementById('statusHeaderCol');
+                        if (statusHeaderCol) {
+                            statusHeaderCol.style.display = 'table-cell';
+                        }
 
                         // Tampilkan catatan jika ada (khusus untuk ditolak)
                         const displayStatus2 = getDisplayStatus(p.status, p.status_en);
@@ -1443,6 +1495,7 @@
                                     <th>No.</th>
                                     <th>Item</th>
                                     <th>Quantity</th>
+                                    <th id="statusHeaderCol">Return Status</th>
                                 </tr>
                             </thead>
                             <tbody id="detailBarangTable"></tbody>

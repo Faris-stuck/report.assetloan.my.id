@@ -647,11 +647,12 @@
             if (s.includes('dicek') || s.includes('diproses') || s.includes('proses')) return 'info';
             if (s.includes('sedang') || s.includes('dipinjam') || s.includes('borrowed') || s.includes('ongoing')) return 'success';
             if (s.includes('ditolak') || s.includes('rejected')) return 'danger';
+            if (s.includes('sebagian dikembalikan')) return 'warning';
             if (s.includes('dikembalikan') || s.includes('returned')) return 'secondary';
             if (se.includes('partially') || s.includes('sebagian')) return 'warning';
             if (se.includes('fully') && se.includes('damaged')) return 'danger';
             return 'light';
-        }
+        }}
 
         // Helper function to format date
         function formatDate(dateString) {

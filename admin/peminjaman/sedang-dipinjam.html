@@ -481,7 +481,8 @@
                                             <p><strong>Borrow Date:</strong> <span id="detailTanggalPinjam">-</span></p>
                                         </div>
                                         <div class="col-12">
-                                            <p><strong>Expected Return:</strong> <span id="detailRencanaKembali">-</span></p>
+                                            <p><strong>Expected Return:</strong> <span
+                                                    id="detailRencanaKembali">-</span></p>
                                         </div>
                                     </div>
                                     <hr>
@@ -506,7 +507,8 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Close</button>
                                 </div>
                             </div>
                         </div>
@@ -623,7 +625,7 @@
         function lihatDetail(id) {
             // Find the borrowing data from the stored array
             const borrowing = allBorrowingData.find(item => item.id === id);
-            
+
             if (!borrowing) {
                 alert("Data tidak ditemukan");
                 return;
@@ -635,19 +637,19 @@
             document.getElementById("detailNrp").textContent = borrowing.nrp || "-";
             document.getElementById("detailTanggalPinjam").textContent = borrowing.tanggal || "-";
             document.getElementById("detailRencanaKembali").textContent = borrowing.rencana_kembali || "-";
-            
+
             // Set status badge
-            const statusBadge = borrowing.status === "Sedang Dipinjam" 
+            const statusBadge = borrowing.status === "Sedang Dipinjam"
                 ? `<span class="badge bg-primary">${borrowing.status}</span>`
                 : `<span class="badge bg-secondary">${borrowing.status}</span>`;
             document.getElementById("detailStatus").innerHTML = statusBadge;
 
             // Populate items table
             const detailBarangTable = document.getElementById("detailBarangTable");
-            
+
             // Try to get barang_list first, if not available parse from barang string
             let barangList = [];
-            
+
             if (borrowing.barang_list && borrowing.barang_list.length > 0) {
                 barangList = borrowing.barang_list;
             } else if (borrowing.barang && typeof borrowing.barang === 'string') {
@@ -668,7 +670,7 @@
                     };
                 });
             }
-            
+
             if (barangList.length > 0) {
                 detailBarangTable.innerHTML = barangList.map((item, index) => `
                     <tr>
