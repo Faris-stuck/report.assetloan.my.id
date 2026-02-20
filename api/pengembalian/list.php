@@ -23,9 +23,19 @@ try {
     exit;
 }
 
-$status = $_GET['status'] ?? 'Diajukan';
+$status_input = $_GET['status'] ?? 'Diajukan';
+// Support comma-separated statuses: e.g., "Diajukan,Dicek"
+$statuses = array_map('trim', explode(',', $status_input));
+$statuses = array_filter(array_unique($statuses)); // remove empty/duplicate values
 
-$stmt = $conn->prepare("
+// If empty, default to just Diajukan
+if (empty($statuses)) {
+    $statuses = ['Diajukan'];
+}
+
+// Build WHERE clause with multiple status values
+$placeholders = implode(',', array_fill(0, count($statuses), '?'));
+$sql = "
     SELECT
         k.id AS pengembalian_id,
         k.kode_pengembalian,
@@ -43,11 +53,33 @@ $stmt = $conn->prepare("
     FROM pengembalian k
     JOIN peminjaman p ON p.id = k.peminjaman_id
     LEFT JOIN detail_pengembalian dp ON dp.pengembalian_id = k.id
-    WHERE k.status = ?
+    WHERE k.status IN ($placeholders)
     GROUP BY k.id
     ORDER BY k.diajukan_at DESC
-" );
-$stmt->bind_param("s", $status);
+";
+
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(["status" => false, "message" => "Prepare error: " . $conn->error]);
+    exit;
+}
+
+// Build type string and pass references individually
+$types = str_repeat('s', count($statuses));
+// Pass status values by reference for bind_param
+$statusRefs = [];
+foreach ($statuses as $k => $v) {
+    $statusRefs[$k] = $statuses[$k];
+}
+
+// Use call_user_func_array to bind with proper reference handling
+$bindParams = [$types];
+foreach ($statusRefs as $k => $v) {
+    $bindParams[] = &$statusRefs[$k];
+}
+call_user_func_array([$stmt, 'bind_param'], $bindParams);
+
 $stmt->execute();
 $res = $stmt->get_result();
 

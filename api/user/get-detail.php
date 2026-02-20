@@ -75,15 +75,16 @@ while ($row = $result_detail->fetch_assoc()) {
     ];
 }
 
-// Attach pengembalian inspection details - aggregate from ALL pengembalian records
-// This ensures accurate total returned/damaged across multiple submissions
+// Attach pengembalian inspection details - aggregate from FINALIZED pengembalian records ONLY
+// Only count returns that have been approved by PIC (status='Selesai')
+// Pending submissions (Diajukan/Dicek) are NOT counted as returned yet
 $agg_q = $conn->prepare("
     SELECT 
         SUM(dp.jumlah_kembali) as total_kembali,
         SUM(dp.jumlah_rusak) as total_rusak
     FROM detail_pengembalian dp
     JOIN pengembalian p ON dp.pengembalian_id = p.id
-    WHERE p.peminjaman_id = ?
+    WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
 ");
 $agg_q->bind_param("i", $peminjaman_id);
 $agg_q->execute();
@@ -98,8 +99,8 @@ foreach ($detail_barang as $dbi) {
     $total_items += (int)$dbi['jumlah'];
 }
 
-// Get aggregate detail PER BARANG from ALL pengembalian (not just latest)
-// This is critical for multiple submission scenarios
+// Get aggregate detail PER BARANG from FINALIZED pengembalian ONLY
+// This is critical - only items committed by PIC should show as returned
 $per_barang = $conn->prepare("
     SELECT 
         barang_id,
@@ -108,7 +109,7 @@ $per_barang = $conn->prepare("
         MAX(kondisi_kembali) as kondisi_kembali
     FROM detail_pengembalian
     WHERE pengembalian_id IN (
-        SELECT id FROM pengembalian WHERE peminjaman_id = ?
+        SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Selesai'
     )
     GROUP BY barang_id
 ");
@@ -138,9 +139,10 @@ if ($agg_result) {
     $total_dikembalikan = (int)($agg_result['total_kembali'] ?? 0);
     $total_rusak = (int)($agg_result['total_rusak'] ?? 0);
     
-    // Determine display status based on aggregate return progress
+    // Determine display status based on FINALIZED returns only
+    // Pending submissions (awaiting PIC approval) are NOT counted
     if ($total_dikembalikan >= $total_items && $total_items > 0) {
-        // All items have been returned across all pengembalian submissions
+        // All items have been returned AND finalized by PIC
         if ($total_rusak > 0) {
             if ($total_rusak >= $total_items) {
                 $display_status = 'Semua Rusak';
@@ -155,7 +157,7 @@ if ($agg_result) {
             $display_status_en = 'Returned';
         }
     } else if ($total_dikembalikan > 0 && $total_dikembalikan < $total_items) {
-        // Partial return
+        // Partial return (finalized)
         $display_status = 'Sebagian Dikembalikan';
         $display_status_en = 'Partially Returned';
     }

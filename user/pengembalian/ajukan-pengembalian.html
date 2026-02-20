@@ -37,9 +37,9 @@
     <!--! END: Custom CSS-->
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
+    <script src="../../assets/js/auth/logout.js"></script>
     <!--[if lt IE 9]>    <script src="../../assets/js/auth/auth-manager.js"></script>
     <script src="../../assets/js/auth/role-validator.js"></script>
-    <script src="../../assets/js/auth/logout.js"></script>
     <script>
         // Page protection
         if (typeof RoleValidator !== 'undefined') {
@@ -760,6 +760,7 @@
             const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
             const items = [];
             let hasError = false;
+            let itemsWithQty = 0;
 
             rows.forEach(tr => {
                 const barang_id = Number(tr.getAttribute('data-barang-id'));
@@ -773,6 +774,8 @@
                 if (qty_return === 0 || !tr.querySelector('.inp-qty-return').value) {
                     return;
                 }
+
+                itemsWithQty++;  // Track items being returned
 
                 // Validasi: qty return >= 0
                 if (qty_return < 0) {
@@ -843,6 +846,12 @@
 
             if (hasError) return;
 
+            // Ensure at least one item is being returned
+            if (itemsWithQty === 0) {
+                alert('Please enter QTY Return for at least one item before submitting');
+                return;
+            }
+
             if (!confirm('Submit return request? This will be reviewed by the admin/PIC.')) return;
 
             const fd = new FormData();
@@ -893,7 +902,18 @@
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert('Return Request Failed:\n\n' + (err.message || 'Connection error'));
+                    let errorMsg = err.message || 'Connection error';
+
+                    // If it's a known API error, provide additional context
+                    if (errorMsg.includes('sudah pernah diajukan')) {
+                        errorMsg += '\n\n(Please wait for admin review of your previous return submission)';
+                    } else if (errorMsg.includes('Semua barang sudah dikembalikan')) {
+                        errorMsg += '\n\n(All items for this borrowing have already been returned)';
+                    } else if (errorMsg.includes('tidak bisa diajukan')) {
+                        errorMsg += '\n\n(This borrowing cannot accept new returns in its current state)';
+                    }
+
+                    alert('Return Request Failed:\n\n' + errorMsg);
                 });
 
         }

@@ -170,22 +170,34 @@ try {
             }
         }
         
-        // STATUS CALCULATION: Use aggregate totals to determine accurate status
-        if ($total_kembali >= $total_items && $total_items > 0) {
-            // All items have been returned
-            if ($total_rusak > 0) {
-                $row['status'] = ($total_rusak >= $total_items) ? 'Semua Rusak' : 'Sebagian Rusak';
-                $row['status_en'] = ($total_rusak >= $total_items) ? 'Fully Damaged' : 'Partially Damaged';
-            } else {
-                $row['status'] = 'Dikembalikan';
-                $row['status_en'] = 'Returned';
-            }
-        } else if ($total_kembali > 0 && $total_kembali < $total_items) {
-            // Partial return
+        // STATUS CALCULATION: Use aggregate totals + pending returns to determine accurate status
+        // If there's a pending return (not Selesai yet), use intermediate status
+        // Only use final status when all items returned AND pengembalian is Selesai
+        
+        $sisa = $total_items - $total_kembali;
+        
+        if ($sisa <= 0 && $total_items > 0) {
+            // All items have been returned - status is "Dikembalikan" regardless of damage
+            // (damage detail is shown in modal, not in card body status)
+            $row['status'] = 'Dikembalikan';
+            $row['status_en'] = 'Returned';
+        } else if ($total_kembali > 0 && $sisa > 0) {
+            // Partial return - items still pending
             $row['status'] = 'Sebagian Dikembalikan';
             $row['status_en'] = 'Partially Returned';
-        } else {
+        } else if ($total_kembali === 0 && $total_items > 0) {
             // No items returned yet
+            if ($pengembalian_status && strtolower($pengembalian_status) !== 'selesai') {
+                // But there's a pending return submission
+                $row['status'] = 'Proses Return';
+                $row['status_en'] = 'Return In Progress';
+            } else {
+                // Still borrowing, no return submitted
+                if (!isset($row['status_en'])) {
+                    $row['status_en'] = $row['status'];
+                }
+            }
+        } else {
             if (!isset($row['status_en'])) {
                 $row['status_en'] = $row['status'];
             }

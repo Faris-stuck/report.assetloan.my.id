@@ -112,7 +112,8 @@
                         <div class="dropdown-divider"></div>
                         <a href="../profil.html" class="dropdown-item"><i class="feather-user"></i> Profile</a>
                         <div class="dropdown-divider"></div>
-                        <a href="../../index.html" class="dropdown-item"><i class="feather-log-out"></i> Logout</a>
+                        <a href="javascript:void(0);" data-logout class="dropdown-item"><i class="feather-log-out"></i>
+                            Logout</a>
                     </div>
                 </div>
             </div>
@@ -168,6 +169,7 @@
     </main>
 
     <script src="../../assets/js/auth/role-validator.js"></script>
+    <script src="../../assets/js/auth/logout.js"></script>
     <script>if (typeof RoleValidator !== 'undefined') RoleValidator.requirePicBarang();</script>
     <script src="../../assets/vendors/js/vendors.min.js"></script>
     <script src="../../assets/js/common-init.min.js"></script>
@@ -253,6 +255,7 @@
         }
 
         function loadPengembalian() {
+            // Fetch only completely new returns (Diajukan), not ones being examined (Dicek) or finalized (Selesai)
             fetch(API + '/list.php?status=Diajukan', { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
@@ -336,26 +339,36 @@
                         return;
                     }
                     document.getElementById('inspeksiItems').innerHTML = items.map(it => {
-                        const qtPinjam = it.jumlah_pinjam || it.jumlah_kembali + (it.sisa_dikembalikan || (it.jumlah_sisa || 0));
-                        const remainItems = it.sisa_dikembalikan || (qtPinjam - it.jumlah_kembali);
+                        // All data comes from API - no hardcoding
+                        const qtPinjam = Number(it.jumlah_pinjam) || 0;
+                        const qtReturnThisSubmission = Number(it.jumlah_kembali) || 0;
+                        const qtRusakThisSubmission = Number(it.jumlah_rusak) || 0;
+                        const qtBaikThisSubmission = qtReturnThisSubmission - qtRusakThisSubmission;
+                        const sudahDikembalikan = Number(it.sudah_dikembalikan) || 0;
+                        const sisaDikembalikan = Number(it.sisa_dikembalikan) || 0;
+
                         return `
-                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}">
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-sisa="${sisaDikembalikan}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
-                            </td>
-                            <td class="text-center"><strong>${qtPinjam}</strong></td>
-                            <td class="text-center">
-                                <input type="number" min="0" max="${qtPinjam}" class="form-control form-control-sm inp-qty-return" value="${it.jumlah_kembali}">
+                                ${sudahDikembalikan > 0 ? `<div class="small" style="color: #28a745;"><strong>✓ ${sudahDikembalikan} returned</strong></div>` : ''}
                             </td>
                             <td class="text-center">
-                                <input type="number" min="0" class="form-control form-control-sm inp-good-condition" value="${it.jumlah_kembali - (it.jumlah_rusak || 0)}">
+                                <div><strong>${qtPinjam}</strong></div>
+                                ${sudahDikembalikan > 0 ? `<div class="small text-muted">(${sudahDikembalikan} ✓)</div>` : ''}
                             </td>
                             <td class="text-center">
-                                <input type="number" min="0" class="form-control form-control-sm inp-damaged" value="${it.jumlah_rusak || 0}">
+                                <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="${qtReturnThisSubmission}">
                             </td>
                             <td class="text-center">
-                                <input type="text" class="form-control form-control-sm inp-remain" value="${remainItems}" readonly style="background-color: #f5f5f5;">
+                                <input type="number" min="0" class="form-control form-control-sm inp-good-condition" value="${qtBaikThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-damaged" value="${qtRusakThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm inp-remain" value="${sisaDikembalikan}" readonly style="background-color: #f5f5f5;">
                             </td>
                         </tr>
                     `;
@@ -369,15 +382,15 @@
                             const qtReturn = Number(tr.querySelector('.inp-qty-return').value || 0);
                             const goodCond = Number(tr.querySelector('.inp-good-condition').value || 0);
                             const damaged = Number(tr.querySelector('.inp-damaged').value || 0);
-                            const qtPinjam = Number(tr.getAttribute('data-qty-pinjam') || 0);
+                            const sisa = Number(tr.getAttribute('data-sisa') || 0);
 
-                            // Validasi: qty return tidak boleh melebihi qty pinjam
-                            if (qtReturn > qtPinjam) {
-                                tr.querySelector('.inp-qty-return').value = qtPinjam;
+                            // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                            if (qtReturn > sisa) {
+                                tr.querySelector('.inp-qty-return').value = sisa;
                             }
 
-                            // Calculate remain items: qty pinjam - qty return
-                            const remainItems = qtPinjam - qtReturn;
+                            // Calculate remain items: sisa - qty return
+                            const remainItems = sisa - qtReturn;
                             tr.querySelector('.inp-remain').value = remainItems;
 
                             // Validasi: good condition + damaged tidak boleh melebihi qty return
@@ -411,6 +424,7 @@
             rows.forEach(tr => {
                 const barang_id = Number(tr.getAttribute('data-barang-id'));
                 const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
+                const sisa = Number(tr.getAttribute('data-sisa'));
                 const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
                 const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
                 const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
@@ -422,9 +436,9 @@
                     return;
                 }
 
-                // Validasi: qty return tidak boleh melebihi qty pinjam
-                if (qty_return > qty_pinjam) {
-                    alert(`QTY Return tidak boleh melebihi QTY Pinjam (${qty_pinjam})`);
+                // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                if (qty_return > sisa) {
+                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
                     hasError = true;
                     return;
                 }

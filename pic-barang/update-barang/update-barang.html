@@ -112,7 +112,8 @@
                         <div class="dropdown-divider"></div>
                         <a href="../profil.html" class="dropdown-item"><i class="feather-user"></i> Profile</a>
                         <div class="dropdown-divider"></div>
-                        <a href="../../index.html" class="dropdown-item"><i class="feather-log-out"></i> Logout</a>
+                        <a href="javascript:void(0);" data-logout class="dropdown-item"><i class="feather-log-out"></i>
+                            Logout</a>
                     </div>
                 </div>
             </div>
@@ -228,6 +229,7 @@
     </div>
 
     <script src="../../assets/js/auth/role-validator.js"></script>
+    <script src="../../assets/js/auth/logout.js"></script>
     <script>if (typeof RoleValidator !== 'undefined') RoleValidator.requirePicBarang();</script>
     <script src="../../assets/vendors/js/vendors.min.js"></script>
     <script src="../../assets/js/common-init.min.js"></script>

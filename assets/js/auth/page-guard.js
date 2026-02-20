@@ -101,12 +101,44 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             removeShield();
+            updateUserProfileDropdown();
         });
     } else {
         removeShield();
+        updateUserProfileDropdown();
     }
 
     // ─── Helper functions ───
+    function updateUserProfileDropdown() {
+        // Update hardcoded user profile with actual data from localStorage
+        // User data stored as "user" key (set by login.php response)
+        try {
+            let userData = user || JSON.parse(localStorage.getItem('user') || '{}');
+            let nama = userData.nama || 'User';
+            let email = userData.email || '';
+
+            // Find all profile name and email elements in dropdown headers
+            let profileNameElements = document.querySelectorAll('.nxl-user-dropdown .dropdown-header h6');
+            let profileEmailElements = document.querySelectorAll('.nxl-user-dropdown .dropdown-header .fs-12.fw-medium.text-muted');
+
+            profileNameElements.forEach(el => {
+                // Replace only the name text, keep the badge/span
+                let badgeSpan = el.querySelector('span');
+                el.textContent = nama;
+                if (badgeSpan) {
+                    el.appendChild(document.createTextNode(' '));
+                    el.appendChild(badgeSpan);
+                }
+            });
+
+            profileEmailElements.forEach(el => {
+                el.textContent = email;
+            });
+        } catch (e) {
+            console.warn('Page Guard: Gagal update user profile dropdown:', e.message);
+        }
+    }
+
     function removeShield() {
         var s = document.getElementById('__page_guard_shield');
         if (s) {

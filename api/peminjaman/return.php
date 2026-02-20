@@ -67,94 +67,63 @@ if (!$peminjaman_id) {
         exit;
     }
     
-    // Allow submissions ONLY when items are still pending return
-    // Prevent submission when all items already returned (final statuses)
-    $allowedStatuses = ['Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return'];
-    $finalStatuses = ['Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Ditolak', 'Selesai'];
-    
-    if (in_array($p['status'], $finalStatuses, true)) {
-        http_response_code(400);
-        echo json_encode([
-            "status" => false, 
-            "message" => "Pengembalian tidak bisa diajukan lagi. Semua barang sudah dikembalikan dan selesai diproses.",
-            "debug" => [
-                "peminjaman_id" => $peminjaman_id,
-                "kode_peminjaman" => $p['kode_peminjaman'],
-                "current_status" => $p['status'],
-                "allowed_statuses" => $allowedStatuses
-            ]
-        ]);
-        exit;
-    }
-    
-    if (!in_array($p['status'], $allowedStatuses, true)) {
-        http_response_code(400);
-        echo json_encode([
-            "status" => false, 
-            "message" => "Pengembalian hanya bisa diajukan saat peminjaman berstatus: " . implode(", ", $allowedStatuses) . ". Status saat ini: " . $p['status'],
-            "debug" => [
-                "peminjaman_id" => $peminjaman_id,
-                "kode_peminjaman" => $p['kode_peminjaman'],
-                "current_status" => $p['status'],
-                "allowed_statuses" => $allowedStatuses
-            ]
-        ]);
-        exit;
-    }
-
-    // Validasi tambahan: cek apakah ada item yang belum dikembalikan di detail_peminjaman
-    // Hitung item yang belum dikembalikan (yang tidak ada di pengembalian dengan status Selesai)
-    $cek_items = $conn->prepare("
-        SELECT COUNT(id) as belum_dikembalikan
-        FROM detail_peminjaman dp
+    // Validasi: Hitung total item yang masih belum dikembalikan FIRST (before status checks)
+    // Bandingkan aggregate pengembalian dengan detail_peminjaman asli
+    $count_total = $conn->prepare("
+        SELECT COALESCE(SUM(jumlah), 0) as total_items
+        FROM detail_peminjaman
         WHERE peminjaman_id = ?
-        AND NOT EXISTS (
-            SELECT 1 FROM detail_pengembalian dr
-            LEFT JOIN pengembalian p ON dr.pengembalian_id = p.id
-            WHERE dr.barang_id = dp.barang_id
-            AND p.peminjaman_id = ?
-            AND p.status = 'Selesai'
-            AND dr.jumlah_kembali >= dp.jumlah
+    ");
+    $count_total->bind_param("i", $peminjaman_id);
+    $count_total->execute();
+    $total_result = $count_total->get_result()->fetch_assoc();
+    $total_items = (int)$total_result['total_items'];
+
+    // Hitung total yang sudah dikembalikan dari ALL pengembalian records (regardless of status)
+    $count_returned = $conn->prepare("
+        SELECT COALESCE(SUM(jumlah_kembali), 0) as total_returned
+        FROM detail_pengembalian
+        WHERE pengembalian_id IN (
+            SELECT id FROM pengembalian WHERE peminjaman_id = ?
         )
     ");
-    if ($cek_items) {
-        $cek_items->bind_param("ii", $peminjaman_id, $peminjaman_id);
-        $cek_items->execute();
-        $items_result = $cek_items->get_result()->fetch_assoc();
-        if ($items_result['belum_dikembalikan'] == 0) {
-            http_response_code(400);
-            echo json_encode([
-                "status" => false, 
-                "message" => "Semua barang sudah dikembalikan dan selesai diproses. Tidak ada yang perlu dikembalikan lagi."
-            ]);
-            exit;
-        }
-    }
+    $count_returned->bind_param("i", $peminjaman_id);
+    $count_returned->execute();
+    $returned_result = $count_returned->get_result()->fetch_assoc();
+    $total_returned = (int)$returned_result['total_returned'];
 
-// Cegah double submit untuk return yang masih pending (tidak selesai diproses)
-    $cek = $conn->prepare("SELECT id, status, diajukan_at FROM pengembalian WHERE peminjaman_id = ? AND status != 'Selesai' ORDER BY id DESC LIMIT 1");
-    if (!$cek) {
-        http_response_code(500);
-        echo json_encode(["status" => false, "message" => "Database error: " . $conn->error]);
-        exit;
-    }
-    $cek->bind_param("i", $peminjaman_id);
-    $cek->execute();
-    $existing = $cek->get_result()->fetch_assoc();
-    if ($existing) {
+    // Hitung sisa yang belum dikembalikan
+    $sisa_dikembalikan = $total_items - $total_returned;
+
+    // KEY VALIDATION: Only block if aggregate shows EVERYTHING already returned
+    // This is the source of truth - NOT the status field
+    if ($sisa_dikembalikan <= 0 && $total_items > 0) {
         http_response_code(400);
         echo json_encode([
-            "status" => false,
-            "message" => "Pengembalian sudah pernah diajukan dengan status '" . $existing['status'] . "' dan masih dalam proses. Tunggu hingga selesai diperiksa admin.",
+            "status" => false, 
+            "message" => "Semua barang sudah dikembalikan. Total: $total_items, Sudah dikembalikan: $total_returned",
             "debug" => [
                 "peminjaman_id" => $peminjaman_id,
-                "pengembalian_id_existing" => (int)$existing['id'],
-                "existing_status" => $existing['status'],
-                "diajukan_at" => $existing['diajukan_at']
+                "total_items" => $total_items,
+                "total_returned" => $total_returned,
+                "sisa" => $sisa_dikembalikan,
+                "peminjaman_status" => $p['status']
             ]
         ]);
         exit;
     }
+    
+    // Secondary check: If items remain pending, allow return submission regardless of status
+    // This allows users to continue returns even if system marked it complete
+    if ($sisa_dikembalikan > 0) {
+        // Items remain - ALLOW submission
+        // No further status checks needed
+    }
+
+// NOTE: Allow multiple return submissions for the same peminjaman
+    // The aggregate validation below will ensure user can't exceed what was borrowed
+    // This allows users to submit returns in batches if needed
+    // (e.g., return 4/5 items first, then return remaining 1 later)
 
 $conn->begin_transaction();
 try {

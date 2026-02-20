@@ -37,9 +37,9 @@
     <!--! END: Custom CSS-->
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
+    <script src="../../assets/js/auth/logout.js"></script>
     <!--[if lt IE 9]>    <script src="../../assets/js/auth/auth-manager.js"></script>
     <script src="../../assets/js/auth/role-validator.js"></script>
-    <script src="../../assets/js/auth/logout.js"></script>
     <script>
         // Page protection
         if (typeof RoleValidator !== 'undefined') {
@@ -1276,16 +1276,14 @@
                 let badgeClass = "bg-secondary";
                 const s = (item.status || '').toString().toLowerCase();
                 const se = (item.status_en || '').toString().toLowerCase();
-                if (item.status === "Menunggu Persetujuan") badgeClass = "bg-warning";
-                if (item.status === "Disetujui") badgeClass = "bg-info";
-                if (item.status === "Sedang Dipinjam") badgeClass = "bg-primary";
-                if (item.status === "Dikembalikan") badgeClass = "bg-success";
-                if (item.status === "Ditolak") badgeClass = "bg-danger";
-                if (item.status === "Proses Return") badgeClass = "bg-secondary";
-                if (s.includes('sebagian dikembalikan')) badgeClass = 'bg-warning text-dark';
-                if (s.includes('sebagian rusak')) badgeClass = 'bg-danger';
-                if (s.includes('sebagian') || s.includes('seb') || se.includes('partially')) badgeClass = 'bg-warning text-dark';
-                if ((s.includes('semua') && s.includes('rusak')) || (se.includes('fully') && se.includes('damaged'))) badgeClass = 'bg-danger';
+
+                // Simple status-to-badge mapping
+                if (item.status === "Menunggu Persetujuan" || item.status === "Disetujui") badgeClass = "bg-warning";
+                else if (item.status === "Sedang Dipinjam") badgeClass = "bg-primary";
+                else if (item.status === "Dikembalikan") badgeClass = "bg-success";
+                else if (item.status === "Ditolak") badgeClass = "bg-danger";
+                else if (item.status === "Sebagian Dikembalikan") badgeClass = 'bg-warning text-dark';
+                else if (item.status === "Proses Return") badgeClass = "bg-secondary";
 
                 const displayStatus = item.status_en || item.status;
                 const borrowerName = item.nama_peminjam || item.nama || '-';
@@ -1404,12 +1402,13 @@
                                 } else {
                                     // Determine return status for this unit
                                     if (unitNum <= returned) {
-                                        // This unit has been returned - status always Dikembalikan
-                                        returnStatus = 'Dikembalikan';
-                                        // Badge color indicates condition: green=good, orange=damaged
-                                        if (item.kondisi_kembali === 'Rusak' || unitNum <= damaged) {
-                                            badgeClass = 'bg-warning text-dark';  // Orange = damaged but returned
+                                        // This unit has been returned
+                                        // Check if THIS specific unit is damaged (only count damaged qty)
+                                        if (unitNum <= damaged) {
+                                            returnStatus = 'Rusak';
+                                            badgeClass = 'bg-warning text-dark';  // Orange = damaged
                                         } else {
+                                            returnStatus = 'Dikembalikan';
                                             badgeClass = 'bg-success';  // Green = good condition
                                         }
                                     } else {
@@ -1490,7 +1489,7 @@
                         </div>
                     </div>
                     <hr>
-                    <h6 class="mb-3"><strong>Borrowed Items</strong></h6>
+                    <h6 class="mb-3"><strong>Borrowed Items (Per Unit)</strong></h6>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
                             <thead class="table-light">
