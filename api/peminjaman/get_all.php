@@ -107,17 +107,51 @@ try {
             ];
         }
 
-        // Attach latest pengembalian inspection details if any
+        // Aggregate returns from ALL pengembalian records for this peminjaman
+        // Calculate total returned and damaged across all submissions
+        $agg = $conn->prepare("
+            SELECT 
+                SUM(dp.jumlah_kembali) as total_kembali,
+                SUM(dp.jumlah_rusak) as total_rusak,
+                SUM(CASE WHEN p.status = 'Selesai' THEN 1 ELSE 0 END) as has_selesai
+            FROM detail_pengembalian dp
+            JOIN pengembalian p ON dp.pengembalian_id = p.id
+            WHERE p.peminjaman_id = ?
+        ");
+        $agg->bind_param("i", $row['id']);
+        $agg->execute();
+        $agg_result = $agg->get_result()->fetch_assoc();
+        
+        $total_items = 0;
+        $total_kembali = 0;
+        $total_rusak = 0;
+        $has_selesai = 0;
+        
+        // Sum all detail_peminjaman quantities
+        foreach ($barang_list as $bi) {
+            $total_items += (int)$bi['jumlah'];
+        }
+        
+        if ($agg_result) {
+            $total_kembali = (int)($agg_result['total_kembali'] ?? 0);
+            $total_rusak = (int)($agg_result['total_rusak'] ?? 0);
+            $has_selesai = (int)($agg_result['has_selesai'] ?? 0);
+        }
+        
+        // Get detail for latest pengembalian for display purposes
         $qk = $conn->prepare("SELECT id, status FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
         $qk->bind_param("i", $row['id']);
         $qk->execute();
         $hk = $qk->get_result()->fetch_assoc();
         $pengembalian_status = null;
         $has_pengembalian = false;
+        
         if ($hk) {
             $has_pengembalian = true;
             $peng_id = (int)$hk['id'];
             $pengembalian_status = $hk['status'];
+            
+            // Get detail from latest pengembalian for display in barang_list
             $sd = $conn->prepare("SELECT barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
             $sd->bind_param("i", $peng_id);
             $sd->execute();
@@ -126,56 +160,34 @@ try {
             while ($r = $rd->fetch_assoc()) {
                 $map[(int)$r['barang_id']] = $r;
             }
-            $total_items = 0;
-            $total_rusak = 0;
-            $total_kembali = 0;
             foreach ($barang_list as &$bi) {
-                $total_items += $bi['jumlah'];
                 $bid = (int)$bi['barang_id'];
                 if (isset($map[$bid])) {
                     $bi['jumlah_kembali'] = (int)$map[$bid]['jumlah_kembali'];
                     $bi['jumlah_rusak'] = (int)$map[$bid]['jumlah_rusak'];
                     $bi['kondisi_kembali'] = $map[$bid]['kondisi_kembali'];
-                    $total_rusak += (int)$map[$bid]['jumlah_rusak'];
-                    $total_kembali += (int)$map[$bid]['jumlah_kembali'];
                 }
             }
-            
-            // IMPORTANT: Only auto-detect damage status if PIC has completed inspection.
-            // If pengembalian is still pending PIC approval (status='Diajukan' or 'Dicek'),
-            // show 'Sebagian Dikembalikan' regardless of user-submitted damage count.
-            // PIC inspection is the authority for final damage determination.
-            if ($pengembalian_status === 'Selesai') {
-                // PIC has completed inspection - show actual damage status
-                if ($total_rusak > 0) {
-                    if ($total_rusak < $total_items) {
-                        $row['status'] = 'Sebagian Rusak';
-                        $row['status_en'] = 'Partially Damaged';
-                    } else {
-                        $row['status'] = 'Semua Rusak';
-                        $row['status_en'] = 'Fully Damaged';
-                    }
-                } else {
-                    // All items good - show as fully returned
-                    if ($total_kembali >= $total_items) {
-                        $row['status'] = 'Dikembalikan';
-                        $row['status_en'] = 'Returned';
-                    } else {
-                        $row['status'] = 'Sebagian Dikembalikan';
-                        $row['status_en'] = 'Partially Returned';
-                    }
-                }
+        }
+        
+        // STATUS CALCULATION: Use aggregate totals to determine accurate status
+        if ($total_kembali >= $total_items && $total_items > 0) {
+            // All items have been returned
+            if ($total_rusak > 0) {
+                $row['status'] = ($total_rusak >= $total_items) ? 'Semua Rusak' : 'Sebagian Rusak';
+                $row['status_en'] = ($total_rusak >= $total_items) ? 'Fully Damaged' : 'Partially Damaged';
             } else {
-                // Pending PIC inspection - show partial return status
-                if ($total_kembali > 0 && $total_kembali < $total_items) {
-                    $row['status'] = 'Sebagian Dikembalikan';
-                    $row['status_en'] = 'Partially Returned';
-                } else if ($total_kembali >= $total_items) {
-                    $row['status'] = 'Dikembalikan';
-                    $row['status_en'] = 'Returned';
-                } else {
-                    $row['status_en'] = $row['status'];
-                }
+                $row['status'] = 'Dikembalikan';
+                $row['status_en'] = 'Returned';
+            }
+        } else if ($total_kembali > 0 && $total_kembali < $total_items) {
+            // Partial return
+            $row['status'] = 'Sebagian Dikembalikan';
+            $row['status_en'] = 'Partially Returned';
+        } else {
+            // No items returned yet
+            if (!isset($row['status_en'])) {
+                $row['status_en'] = $row['status'];
             }
         }
 

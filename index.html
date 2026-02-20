@@ -141,7 +141,7 @@
     <div class="login-card">
         <div class="logo">
             <!-- Ganti src sesuai lokasi logo kamu -->
-            <img src="../assets/images/Komatsu-Logo-removebg-preview.png" alt="Komatsu Logo">
+            <img src="assets/images/Komatsu-Logo-removebg-preview.png" alt="Komatsu Logo">
         </div>
 
         <div class="title">Komatsu Group Indonesia</div>
@@ -174,6 +174,66 @@
     </div>
 
     <script>
+        /**
+         * ============================================
+         * SESSION CHECK: Auto-redirect jika sudah login
+         * Cek server session dulu, baru localStorage
+         * ============================================
+         */
+        (function checkExistingSession() {
+            var userStr = localStorage.getItem('user');
+            if (!userStr) return;
+
+            try {
+                var user = JSON.parse(userStr);
+                if (!user || !user.id || !user.role) {
+                    localStorage.removeItem('user');
+                    return;
+                }
+
+                // Verifikasi session di server secara SINKRON
+                // agar halaman login tidak sempat muncul jika sudah login
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/PROJECT/api/auth/verify-session.php', false); // synchronous
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.withCredentials = true;
+                xhr.send(JSON.stringify({ user_id: user.id, user_role: user.role }));
+
+                if (xhr.status === 200) {
+                    // Session server valid, redirect ke dashboard sesuai role
+                    redirectToDashboard(user.role);
+                } else {
+                    // Session server tidak valid, hapus localStorage
+                    localStorage.removeItem('user');
+                    sessionStorage.clear();
+                }
+            } catch (e) {
+                // Error parsing atau network, biarkan tetap di halaman login
+                localStorage.removeItem('user');
+            }
+        })();
+
+        /**
+         * Redirect ke dashboard berdasarkan role
+         */
+        function redirectToDashboard(role) {
+            switch (role) {
+                case 'admin':
+                    window.location.replace('/PROJECT/admin/dashboard.html');
+                    break;
+                case 'manager':
+                    window.location.replace('/PROJECT/manager/dashboard.html');
+                    break;
+                case 'pic_barang':
+                    window.location.replace('/PROJECT/pic-barang/dashboard.html');
+                    break;
+                case 'user':
+                default:
+                    window.location.replace('/PROJECT/user/dashboard.html');
+                    break;
+            }
+        }
+
         function togglePassword() {
             const input = document.getElementById("password");
             const text = event.target;
@@ -193,11 +253,16 @@
 
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
+            const loginBtn = document.querySelector('.login-btn');
 
             if (!email || !password) {
-                alert("Email and password are required");
+                alert("Email dan password harus diisi");
                 return;
             }
+
+            // Disable button saat proses login
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
 
             const formData = new FormData();
             formData.append("email", email);
@@ -206,33 +271,31 @@
             try {
                 const res = await fetch("/PROJECT/api/auth/login.php", {
                     method: "POST",
+                    credentials: "include", // PENTING: kirim session cookie
                     body: formData,
                 });
 
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    alert(err.error || "Login failed. Please check your email/password again.");
+                    alert(err.error || "Login gagal. Periksa email/password Anda.");
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Log in';
                     return;
                 }
 
                 const data = await res.json();
 
-                // Save user info to localStorage (can be replaced with PHP session if needed)
+                // Simpan user info ke localStorage (sebagai cache, session server = sumber kebenaran)
                 localStorage.setItem("user", JSON.stringify(data));
 
-                // Redirect based on role
-                if (data.role === "admin") {
-                    window.location.href = "../admin/dashboard.html";
-                } else if (data.role === "manager") {
-                    window.location.href = "../manager/dashboard.html";
-                } else if (data.role === "pic_barang") {
-                    window.location.href = "../pic-barang/dashboard.html";
-                } else {
-                    window.location.href = "../user/dashboard.html";
-                }
+                // Redirect berdasarkan role dari SERVER (bukan dari input user)
+                redirectToDashboard(data.role);
+
             } catch (error) {
-                alert("A connection error occurred with the server.");
+                alert("Terjadi kesalahan koneksi ke server.");
                 console.error(error);
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Log in';
             }
         });
     </script>

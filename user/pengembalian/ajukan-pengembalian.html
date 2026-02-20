@@ -836,7 +836,8 @@
                     qty_pinjam,
                     qty_return,
                     good_condition,
-                    damaged
+                    damaged,
+                    remain_item: Number(tr.querySelector('.inp-remain')?.value || 0)
                 });
             });
 
@@ -853,23 +854,34 @@
                 .then(r => {
                     if (r.status === 403) {
                         window.location.href = '/PROJECT/index.html';
-                        throw new Error('Unauthorized');
+                        throw new Error('Unauthorized - Please login again');
                     }
-                    if (!r.ok) {
-                        throw new Error('API returned status ' + r.status);
-                    }
-                    return r.text();
+                    // Read response body regardless of status code
+                    return r.text().then(text => ({
+                        status: r.status,
+                        ok: r.ok,
+                        body: text
+                    }));
                 })
-                .then(text => {
-                    if (!text || text.trim() === '') {
-                        throw new Error('API returned empty response');
+                .then(({ status, ok, body }) => {
+                    if (!body || body.trim() === '') {
+                        throw new Error('API returned empty response (status ' + status + ')');
                     }
                     try {
-                        return JSON.parse(text);
+                        const parsed = JSON.parse(body);
+                        // If response is not ok, throw error with API message
+                        if (!ok) {
+                            const errorMsg = parsed.message || ('API error: ' + parsed.error || 'Unknown error');
+                            throw new Error(errorMsg);
+                        }
+                        return parsed;
                     } catch (e) {
-                        console.error('JSON Parse Error:', e);
-                        console.error('Response:', text);
-                        throw new Error('Invalid JSON response from API');
+                        if (e instanceof SyntaxError) {
+                            console.error('JSON Parse Error:', e);
+                            console.error('Response:', body);
+                            throw new Error('Invalid JSON response from API (status ' + status + ')');
+                        }
+                        throw e;
                     }
                 })
                 .then(res => {
@@ -881,7 +893,7 @@
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert(err.message || 'Connection error');
+                    alert('Return Request Failed:\n\n' + (err.message || 'Connection error'));
                 });
 
         }

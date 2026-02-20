@@ -1,0 +1,95 @@
+QUICK CHANGES SUMMARY
+=====================
+
+STEP 1: DATABASE (1 command)
+============================
+
+ALTER TABLE detail_pengembalian 
+ADD COLUMN sisa_dikembalikan INT NOT NULL DEFAULT 0 AFTER jumlah_rusak;
+
+STEP 2: BACKEND - return.php  
+===============================
+
+Line 139-142 (UPDATE INSERT statement):
+  BEFORE: (pengembalian_id, barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak, biaya_ganti_rugi, catatan)
+  AFTER:  (pengembalian_id, barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak, sisa_dikembalikan, biaya_ganti_rugi, catatan)
+
+Line 148 (ADD variable extraction):
+  BEFORE: $sisa_dikembalikan = (int)($item['remain_item'] ?? 0);  ← NOT EXIST
+  AFTER:  $sisa_dikembalikan = (int)($item['remain_item'] ?? 0);  ← ADDED
+
+Line 166 (UPDATE bind_param):
+  BEFORE: $insd->bind_param("iiisi", $pengembalian_id, $barang_id, $jumlah_kembali, $kondisi_kembali, $jumlah_rusak);
+  AFTER:  $insd->bind_param("iiiiii", $pengembalian_id, $barang_id, $jumlah_kembali, $kondisi_kembali, $jumlah_rusak, $sisa_dikembalikan);
+
+STEP 3: BACKEND - detail.php
+=============================
+
+Line 55-56 (UPDATE SELECT):
+  BEFORE: SELECT ... d.jumlah_rusak, d.biaya_ganti_rugi, d.catatan
+  AFTER:  SELECT ... d.jumlah_rusak, d.sisa_dikembalikan, d.biaya_ganti_rugi, d.catatan
+
+STEP 4: FRONTEND - ajukan-pengembalian.html
+============================================
+
+Line 834-839 (UPDATE items.push):
+  BEFORE: items.push({ barang_id, qty_pinjam, qty_return, good_condition, damaged });
+  AFTER:  items.push({ barang_id, qty_pinjam, qty_return, good_condition, damaged, remain_item: Number(...) });
+
+STEP 5: FRONTEND - pengembalian-barang.html (PIC View)
+==============================================
+
+Line 339-340 (UPDATE calculation):
+  BEFORE: const remainItems = qtPinjam - it.jumlah_kembali;
+  AFTER:  const remainItems = it.sisa_dikembalikan || (qtPinjam - it.jumlah_kembali);
+
+VERIFICATION COMMANDS:
+====================
+
+Check database column:
+  /opt/lampp/bin/mysql -u root peminjaman -e "DESCRIBE detail_pengembalian"
+
+Check PHP syntax:
+  /opt/lampp/bin/php -l api/peminjaman/return.php
+  /opt/lampp/bin/php -l api/pengembalian/detail.php
+
+Test integration:
+  /opt/lampp/bin/php test-remain-item-integration.php
+
+EXPECTED OUTCOME:
+================
+
+User submit: Remain Item = 1
+    ↓
+Stored in DB: sisa_dikembalikan = 1
+    ↓
+PIC view: Remain Item = 1 ✓ (EXACT MATCH)
+
+BEFORE FIX:
+User submit: Remain Item = 1
+    ↓
+Not stored in DB (default 0)
+    ↓
+PIC view: Remain Item = 3 (calculated wrong) ✗
+
+FILES MODIFIED:
+==============
+
+Database:
+  ✓ detail_pengembalian table (added column)
+
+Backend:
+  ✓ api/peminjaman/return.php
+  ✓ api/pengembalian/detail.php
+
+Frontend:
+  ✓ user/pengembalian/ajukan-pengembalian.html
+  ✓ pic-barang/pengembalian/pengembalian-barang.html
+
+BACKWARD COMPATIBILITY:
+======================
+
+✓ Old data (sisa_dikembalikan = 0) will fallback to calculation
+✓ New data (sisa_dikembalikan > 0) will use exact database value
+✓ No breaking changes
+✓ All queries have fallback logic

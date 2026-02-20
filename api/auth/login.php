@@ -2,6 +2,11 @@
 header('Content-Type: application/json');
 require_once "../koneksi.php";
 
+// Start session sebelum apapun (1 session = 1 role per browser)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
 
@@ -33,13 +38,17 @@ if ($res && $res->num_rows > 0) {
         exit;
     }
 
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
-    }
+    // Hapus session lama sebelum buat session baru
+    // Ini memastikan 1 browser = 1 role (tidak bisa multi-role)
+    $_SESSION = array();
+    session_regenerate_id(true); // Regenerate ID untuk keamanan
+
+    // Set session baru
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['user_nama'] = $user['nama'];
     $_SESSION['user_email'] = $user['email'];
+    $_SESSION['login_time'] = time();
 
     unset($user['password']);
     echo json_encode($user);

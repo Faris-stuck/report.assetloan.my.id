@@ -10,6 +10,10 @@ require_once "../koneksi.php";
 require_once "../session-helper.php";
 header('Content-Type: application/json');
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 try {
     SessionValidator::requireRole(['admin']);
 

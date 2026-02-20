@@ -511,11 +511,11 @@
                 if (result.status && result.data) {
                     const data = result.data;
 
-                    // Render Status Peminjaman Chart
+                    // Render Status Peminjaman Chart (ALL TIME aggregate)
                     const statusData = {
                         'Menunggu Persetujuan': data.menunggu_persetujuan || 0,
                         'Sedang Dipinjam': data.sedang_dipinjam || 0,
-                        'Dikembalikan': data.dikembalikan_hari_ini || 0,
+                        'Dikembalikan': data.dikembalikan || 0,
                         'Ditolak': data.ditolak || 0
                     };
                     renderStatusChart(statusData);

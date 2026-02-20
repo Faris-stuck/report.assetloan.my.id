@@ -2,80 +2,59 @@
  * Session Security Validator
  * Menjalankan SEBELUM page-guard.js
  * 
- * Validasi:
+ * Validasi cepat:
  * 1. User data harus ada di localStorage
- * 2. Session di server harus valid
- * 3. Jika invalid, redirect ke login dan clear cache
+ * 2. Data user harus punya field yang diperlukan (id, role, email)
+ * 3. Jika tidak valid, bersihkan dan redirect ke login
+ * 
+ * NOTE: Verifikasi session server dilakukan oleh page-guard.js secara SINKRON
+ *       Script ini hanya melakukan quick-check localStorage
  */
 
 (function () {
     'use strict';
 
-    // Check if user is logged in
-    const userStr = localStorage.getItem('user');
+    // Quick check: apakah ada user data di localStorage
+    var userStr = localStorage.getItem('user');
 
     if (!userStr) {
-        // No user in localStorage - redirect to login
-        console.warn('Session check: No user in localStorage');
+        // Tidak ada data user — redirect ke login
         clearSessionAndRedirect();
         return;
     }
 
     try {
-        const user = JSON.parse(userStr);
+        var user = JSON.parse(userStr);
 
-        // Validate user object has required fields
+        // Validasi field wajib
         if (!user.id || !user.role || !user.email) {
-            console.warn('Session check: Invalid user object');
             clearSessionAndRedirect();
             return;
         }
 
-        // Verify session on server asynchronously
-        validateServerSession(user);
+        // Validasi role harus salah satu dari yang diizinkan
+        var validRoles = ['admin', 'manager', 'pic_barang', 'user'];
+        if (validRoles.indexOf(user.role) === -1) {
+            clearSessionAndRedirect();
+            return;
+        }
 
     } catch (error) {
-        console.error('Session check error:', error);
         clearSessionAndRedirect();
     }
 })();
 
 /**
- * Validate session with server
- */
-async function validateServerSession(user) {
-    try {
-        const response = await fetch('/PROJECT/api/auth/verify-session.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-                user_id: user.id,
-                user_role: user.role
-            })
-        });
-
-        if (!response.ok) {
-            console.warn('Server session validation failed');
-            clearSessionAndRedirect();
-        }
-    } catch (error) {
-        console.warn('Server session validation error:', error);
-        // Don't redirect on network errors, but user session might expire soon
-    }
-}
-
-/**
- * Clear all session data and redirect to login
+ * Bersihkan semua data session client dan redirect ke login
  */
 function clearSessionAndRedirect() {
-    localStorage.removeItem('user');
-    localStorage.removeItem('role');
-    localStorage.removeItem('userId');
-    sessionStorage.clear();
+    try {
+        localStorage.removeItem('user');
+        localStorage.removeItem('role');
+        localStorage.removeItem('userId');
+        sessionStorage.clear();
+    } catch (e) { }
 
-    // Redirect to login
+    // Redirect ke login
     window.location.replace('/PROJECT/index.html');
 }

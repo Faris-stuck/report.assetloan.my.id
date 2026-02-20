@@ -23,6 +23,10 @@ require_once "../koneksi.php";
 require_once "../session-helper.php";
 header('Content-Type: application/json');
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 try {
     SessionValidator::requireRole(['admin', 'pic_barang']);
 } catch (Exception $e) {
@@ -132,9 +136,35 @@ try {
         }
     }
 
-    // Update peminjaman
+    // Update peminjaman status based on damage
     $peminjaman_id = (int)$header['peminjaman_id'];
-    $conn->query("UPDATE peminjaman SET status = 'Dikembalikan', tanggal_kembali = CURDATE() WHERE id = $peminjaman_id");
+    
+    // Get total items and total damaged to determine correct final status
+    $tq = $conn->prepare("SELECT SUM(jumlah) as total FROM detail_peminjaman WHERE peminjaman_id = ?");
+    $tq->bind_param("i", $peminjaman_id);
+    $tq->execute();
+    $tq_result = $tq->get_result()->fetch_assoc();
+    $total_items = (int)($tq_result['total'] ?? 0);
+    
+    // Get total damaged from inspection
+    $td = $conn->prepare("SELECT SUM(jumlah_rusak) as total FROM detail_pengembalian WHERE pengembalian_id = ?");
+    $td->bind_param("i", $pengembalian_id);
+    $td->execute();
+    $td_result = $td->get_result()->fetch_assoc();
+    $total_damaged = (int)($td_result['total'] ?? 0);
+    
+    // Set status based on damage: Dikembalikan (no damage), Sebagian Rusak (some damaged), Semua Rusak (all damaged)
+    if ($total_damaged > 0) {
+        $final_status = ($total_damaged >= $total_items) ? 'Semua Rusak' : 'Sebagian Rusak';
+    } else {
+        $final_status = 'Dikembalikan';
+    }
+    
+    $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ?, tanggal_kembali = CURDATE() WHERE id = ?");
+    $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
+    if (!$upd_peminjaman->execute()) {
+        throw new Exception("Gagal update peminjaman status: " . $upd_peminjaman->error);
+    }
 
     // Update header pengembalian
     $u = $conn->prepare("

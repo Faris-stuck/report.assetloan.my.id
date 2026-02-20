@@ -1,0 +1,157 @@
+KONDISI_KEMBALI BIND_PARAM TYPE FIX
+===================================
+
+STATUS: ✓ FIXED & VERIFIED
+
+ERROR YANG TERJADI:
+===================
+
+"Return Request Failed: Data truncated for column 'kondisi_kembali' at row 1"
+
+Terjadi saat user submit return request dengan barang yang memiliki riwayat pengembalian sebelumnya.
+
+ROOT CAUSE:
+===========
+
+File: /opt/lampp/htdocs/PROJECT/api/peminjaman/return.php
+Line: 161 (sebelum fix)
+
+SEBELUMNYA (SALAH):
+    $insd->bind_param("iiiiii", $pengembalian_id, $barang_id, $jumlah_kembali, 
+                      $kondisi_kembali, $jumlah_rusak, $sisa_dikembalikan);
+                      ^^^^^^
+                      ALL INTEGER - WRONG!
+
+MASALAH:
+- Column 'kondisi_kembali' adalah ENUM('Baik','Rusak')
+- ENUM adalah tipe STRING, bukan INTEGER
+- bind_param signature "iiiiii" berarti semua parameter adalah INT
+- PHP coerce string 'Baik'/'Rusak' menjadi integer → 0
+- Database menolak value yang tidak valid untuk enum ('Baik' atau 'Rusak')
+- Hasilnya: "Data truncated" error
+
+SOLUSI:
+=======
+
+SESUDAH (BENAR):
+    $insd->bind_param("iiisii", $pengembalian_id, $barang_id, $jumlah_kembali,
+                      $kondisi_kembali, $jumlah_rusak, $sisa_dikembalikan);
+                      ^^^^^^
+                      4th parameter adalah S (STRING) - CORRECT!
+
+PENJELASAN SIGNATURE "iiisii":
+- i (pengembalian_id) → INT
+- i (barang_id) → INT
+- i (jumlah_kembali) → INT
+- s (kondisi_kembali) → STRING ← FIX: Was 'i', now 's'
+- i (jumlah_rusak) → INT
+- i (sisa_dikembalikan) → INT
+
+LOGIC YANG BENAR:
+=================
+
+$kondisi_kembali = 'Baik';  // Default STRING value
+
+if ($jumlah_rusak > 0) {
+    $kondisi_kembali = 'Rusak';  // Update to STRING value
+}
+
+Kedua nilai adalah STRING, jadi bind_param harus 's' bukan 'i'.
+
+DATABASE COLUMN:
+================
+
+kondisi_kembali enum('Baik','Rusak') NOT NULL
+
+- Type: ENUM
+- Valid values: 'Baik', 'Rusak'
+- Default: 'Baik'
+
+Hanya menerima STRING values seperti 'Baik' atau 'Rusak'.
+Tidak boleh nilai integer atau value lain.
+
+VERIFICATION TEST RESULTS:
+==========================
+
+✓ Column type verified: enum('Baik','Rusak')
+✓ INSERT statement prepared successfully
+✓ bind_param signature 'iiisii' works correctly
+✓ All test cases pass:
+  - jumlah_rusak=0 → kondisi='Baik' ✓
+  - jumlah_rusak=1 → kondisi='Rusak' ✓
+  - jumlah_rusak=5 → kondisi='Rusak' ✓
+
+IMPACT:
+=======
+
+Sebelum fix:
+- User submit return request
+- kondisi_kembali sent sebagai integer (invalid for enum)
+- Database truncate value
+- Error: "Data truncated for column 'kondisi_kembali'"
+- Return request GAGAL ✗
+
+Setelah fix:
+- User submit return request
+- kondisi_kembali sent sebagai STRING ('Baik' atau 'Rusak')
+- Database accept valid enum value
+- Insert berhasil
+- Return request SUCCESS ✓
+
+FILES MODIFIED:
+===============
+
+✓ api/peminjaman/return.php (Line 161)
+  Changed: "iiiiii" → "iiisii"
+
+BACKWARD COMPATIBILITY:
+======================
+
+✓ No breaking changes
+✓ Only affects INSERT parameter binding
+✓ Logic unchanged
+✓ All existing functionality preserved
+
+MYSQL BIND_PARAM TYPES:
+======================
+
+Type designators untuk bind_param:
+- i (integer)
+- d (double/float)
+- s (string)
+- b (blob)
+
+Penting untuk match dengan column type:
+- INT/BIGINT/SMALLINT → 'i'
+- FLOAT/DOUBLE/DECIMAL → 'd'
+- VARCHAR/CHAR/TEXT/ENUM → 's'
+- BLOB/BINARY → 'b'
+
+TESTING COMMANDS:
+================
+
+Test signature:
+  /opt/lampp/bin/php -l /opt/lampp/htdocs/PROJECT/api/peminjaman/return.php
+
+Full integration test:
+  /opt/lampp/bin/php /opt/lampp/htdocs/PROJECT/test-kondisi-fix.php
+
+Expected output:
+  ✓ Column: kondisi_kembali
+  ✓ Type: enum('Baik','Rusak')
+  ✓ bind_param signature correct: 'iiisii'
+  ✓ All test cases pass
+
+NEXT TEST:
+==========
+
+1. Login as user
+2. Open "Ajukan Pengembalian"
+3. Select borrowing with partial return history
+4. Fill form: return 1 item
+5. Submit
+6. Expected: Success message (no more "Data truncated" error)
+7. Check database: detail_pengembalian should have kondisi_kembali='Baik' or 'Rusak'
+
+STATUS: PRODUCTION READY ✓
+TIMESTAMP: 2026-02-20 08:55 UTC+1

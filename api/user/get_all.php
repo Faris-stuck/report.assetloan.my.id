@@ -4,6 +4,10 @@ header('Content-Type: application/json');
 // Server-side session validation
 require_once "../session-helper.php";
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Validate user role
 try {
     SessionValidator::requireRole(['admin']);

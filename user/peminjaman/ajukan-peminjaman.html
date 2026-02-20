@@ -1241,14 +1241,16 @@
             const dipinjam = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                return s === 'sedang dipinjam' || se === 'borrowed';
+                // Include items still being borrowed and partial returns
+                return s === 'sedang dipinjam' || s === 'sebagian dikembalikan' ||
+                    se === 'borrowed' || se === 'partially returned';
             });
             const dikembalikan = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                // ONLY "Dikembalikan" - exclude "Sebagian Dikembalikan" and "Sebagian Rusak"
-                return (s === 'dikembalikan' || se === 'returned') &&
-                    !s.includes('sebagian') && !se.includes('partial') && !se.includes('partially');
+                // Include all returned items: "Dikembalikan", "Sebagian Dikembalikan", "Sebagian Rusak", "Semua Rusak"
+                return s === 'dikembalikan' || s === 'sebagian dikembalikan' || s === 'sebagian rusak' || s === 'semua rusak' ||
+                    se === 'returned' || se === 'partially returned' || se === 'partially damaged' || se === 'fully damaged';
             });
             const ditolak = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
@@ -1402,16 +1404,17 @@
                                 } else {
                                     // Determine return status for this unit
                                     if (unitNum <= returned) {
-                                        // This unit has been returned
+                                        // This unit has been returned - status always Dikembalikan
                                         returnStatus = 'Dikembalikan';
+                                        // Badge color indicates condition: green=good, orange=damaged
                                         if (item.kondisi_kembali === 'Rusak' || unitNum <= damaged) {
-                                            returnStatus = 'Dikembalikan - Rusak';
-                                            badgeClass = 'bg-danger';
+                                            badgeClass = 'bg-warning text-dark';  // Orange = damaged but returned
                                         } else {
-                                            badgeClass = 'bg-success';
+                                            badgeClass = 'bg-success';  // Green = good condition
                                         }
                                     } else {
                                         // Not yet returned
+                                        returnStatus = 'Belum Dikembalikan';
                                         badgeClass = 'bg-secondary';
                                     }
                                 }

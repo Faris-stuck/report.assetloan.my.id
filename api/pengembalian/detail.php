@@ -11,6 +11,10 @@ require_once "../koneksi.php";
 require_once "../session-helper.php";
 header('Content-Type: application/json');
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 try {
     SessionValidator::requireRole(['admin', 'pic_barang']);
 } catch (Exception $e) {
@@ -52,6 +56,7 @@ $stmt = $conn->prepare("
         d.jumlah_kembali,
         d.kondisi_kembali,
         d.jumlah_rusak,
+        d.sisa_dikembalikan,
         d.biaya_ganti_rugi,
         d.catatan
     FROM detail_pengembalian d

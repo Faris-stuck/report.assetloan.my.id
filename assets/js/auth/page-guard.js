@@ -1,5 +1,5 @@
 /**
- * PAGE GUARD — Sistem Keamanan Halaman
+ * PAGE GUARD — Sistem Keamanan Halaman (Session-Based)
  * ═══════════════════════════════════════════════════════════════
  * Script ini HARUS dimuat di <head> SEBELUM CSS/konten lainnya.
  * 
@@ -8,9 +8,11 @@
  * 2. Cek localStorage 'user' — jika tidak ada → redirect login
  * 3. Deteksi folder role dari URL (admin/, user/, manager/, pic-barang/)
  * 4. Bandingkan user.role dengan folder → jika tidak cocok → redirect login
- * 5. Jika cocok → hapus layar hitam, tampilkan konten
+ * 5. VERIFIKASI SESSION SERVER secara SINKRON → jika invalid → redirect login
+ * 6. Jika semua lolos → hapus layar hitam, tampilkan konten
  * 
- * Proteksi: layar tetap hitam selama validasi, data tidak terlihat
+ * Proteksi: layar tetap hitam selama validasi, data tidak terlihat.
+ * Session server = sumber kebenaran tunggal (1 role per browser).
  */
 (function () {
     'use strict';
@@ -19,42 +21,32 @@
     var shield = document.createElement('div');
     shield.id = '__page_guard_shield';
     shield.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999999;';
-    // Insert into <html> immediately (before <body> exists)
     document.documentElement.appendChild(shield);
 
-    // ─── 2. Detect base path ───
+    // ─── 2. Konfigurasi path ───
+    var loginUrl = '/PROJECT/index.html';
+    var verifyUrl = '/PROJECT/api/auth/verify-session.php';
     var path = window.location.pathname || '';
-    var basePath = '/PROJECT'; // default
-    var segments = ['admin', 'user', 'manager', 'pic-barang', 'auth'];
-    for (var i = 0; i < segments.length; i++) {
-        var idx = path.indexOf('/' + segments[i]);
-        if (idx >= 0) {
-            basePath = path.substring(0, idx);
-            break;
-        }
-    }
 
-    var loginUrl = basePath + '/index.html';
-
-    // ─── 3. Determine required role from URL folder ───
+    // ─── 3. Tentukan role yang diperlukan dari folder URL ───
     var requiredRole = null;
-    if (path.indexOf('/admin/') >= 0 || path.indexOf('/admin') === path.length - 6) {
+    if (path.indexOf('/admin/') >= 0 || path.match(/\/admin$/)) {
         requiredRole = 'admin';
-    } else if (path.indexOf('/manager/') >= 0 || path.indexOf('/manager') === path.length - 8) {
+    } else if (path.indexOf('/manager/') >= 0 || path.match(/\/manager$/)) {
         requiredRole = 'manager';
-    } else if (path.indexOf('/pic-barang/') >= 0 || path.indexOf('/pic-barang') === path.length - 11) {
+    } else if (path.indexOf('/pic-barang/') >= 0 || path.match(/\/pic-barang$/)) {
         requiredRole = 'pic_barang';
-    } else if (path.indexOf('/user/') >= 0 || path.indexOf('/user') === path.length - 5) {
+    } else if (path.indexOf('/user/') >= 0 || path.match(/\/user$/)) {
         requiredRole = 'user';
     }
 
-    // If we can't determine the role folder, don't block (might be auth page etc)
+    // Jika tidak bisa tentukan role folder, jangan blokir (mungkin halaman auth)
     if (!requiredRole) {
         removeShield();
         return;
     }
 
-    // ─── 4. Validate user session ───
+    // ─── 4. Quick check: localStorage 'user' ───
     var user = null;
     try {
         user = JSON.parse(localStorage.getItem('user') || 'null');
@@ -62,20 +54,50 @@
         user = null;
     }
 
-    // No user logged in → redirect to login
+    // Tidak ada data user → tendang ke login
     if (!user || !user.id || !user.role) {
         kickToLogin();
         return;
     }
 
-    // Role mismatch → kick out
+    // Role tidak sesuai folder → tendang ke login
     if (user.role !== requiredRole) {
         kickToLogin();
         return;
     }
 
-    // ─── 5. PASSED — remove blackout ───
-    // Wait for DOM to be ready then remove shield
+    // ─── 5. VERIFIKASI SESSION SERVER (SINKRON) ───
+    // Ini memastikan session PHP valid dan role cocok.
+    // localStorage bisa dimanipulasi, session server TIDAK bisa.
+    // Sinkron agar halaman TIDAK pernah tampil tanpa verifikasi server.
+    try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', verifyUrl, false); // synchronous = blocking
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.withCredentials = true; // kirim session cookie
+        xhr.send(JSON.stringify({
+            user_id: user.id,
+            user_role: user.role
+        }));
+
+        if (xhr.status !== 200) {
+            // Session server tidak valid — bisa jadi:
+            // - Session expired
+            // - Role berubah di database
+            // - localStorage dimanipulasi
+            // - Session hijacking attempt
+            kickToLogin();
+            return;
+        }
+    } catch (e) {
+        // Network error — untuk keamanan, tetap tendang ke login
+        // Lebih baik logout dari pada membiarkan akses tanpa verifikasi
+        console.warn('Page Guard: Gagal verifikasi session server:', e.message);
+        kickToLogin();
+        return;
+    }
+
+    // ─── 6. SEMUA LOLOS — tampilkan halaman ───
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
             removeShield();
@@ -88,7 +110,6 @@
     function removeShield() {
         var s = document.getElementById('__page_guard_shield');
         if (s) {
-            // Smooth fade out
             s.style.transition = 'opacity 0.2s ease';
             s.style.opacity = '0';
             setTimeout(function () {
@@ -98,9 +119,14 @@
     }
 
     function kickToLogin() {
-        // Clear user data for security
-        try { localStorage.removeItem('user'); } catch (e) { }
-        // Redirect (shield stays black, user sees nothing)
+        // Bersihkan semua data client untuk keamanan
+        try {
+            localStorage.removeItem('user');
+            localStorage.removeItem('role');
+            localStorage.removeItem('userId');
+            sessionStorage.clear();
+        } catch (e) { }
+        // Redirect (shield tetap hitam, user tidak lihat apa-apa)
         window.location.replace(loginUrl);
     }
 

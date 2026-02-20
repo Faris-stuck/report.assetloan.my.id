@@ -336,8 +336,8 @@
                         return;
                     }
                     document.getElementById('inspeksiItems').innerHTML = items.map(it => {
-                        const qtPinjam = it.jumlah_pinjam || it.jumlah_kembali + (it.jumlah_sisa || 0);
-                        const remainItems = qtPinjam - it.jumlah_kembali;
+                        const qtPinjam = it.jumlah_pinjam || it.jumlah_kembali + (it.sisa_dikembalikan || (it.jumlah_sisa || 0));
+                        const remainItems = it.sisa_dikembalikan || (qtPinjam - it.jumlah_kembali);
                         return `
                         <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}">
                             <td>

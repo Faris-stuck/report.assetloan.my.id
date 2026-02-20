@@ -45,10 +45,10 @@ try {
     $stats['sedang_dipinjam'] = (int)($row['total'] ?? 0);
     $stmt->close();
     
-    // 3. Dikembalikan today
+    // 3. Dikembalikan (all time aggregate, not just today)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE status = 'Dikembalikan' AND DATE(tanggal_kembali) = CURDATE()
+        WHERE status = 'Dikembalikan'
     ");
     if (!$stmt) {
         throw new Exception("Query 3 Error: " . $conn->error);
@@ -56,7 +56,7 @@ try {
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
-    $stats['dikembalikan_hari_ini'] = (int)($row['total'] ?? 0);
+    $stats['dikembalikan'] = (int)($row['total'] ?? 0);
     $stmt->close();
     
     // 4. Ditolak
@@ -114,6 +114,7 @@ try {
     $stmt->close();
     
     // 7. Top Barang Dipinjam (hitung total UNIT yang dipinjam dari detail_peminjaman)
+    // Include: Sedang Dipinjam + Sebagian Dikembalikan
     // Build dynamic query based on kategori filter
     if (!empty($kategoriFilter) && $kategoriFilter !== 'all') {
         // Query with kategori filter
@@ -127,7 +128,7 @@ try {
             FROM barang b
             LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
             LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
-            WHERE b.kategori = ? AND (p.status = 'Sedang Dipinjam' OR p.status IS NULL)
+            WHERE b.kategori = ? AND (p.status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan') OR p.status IS NULL)
             GROUP BY b.id, b.nama_barang, b.kategori, b.stok_tersedia
             HAVING COALESCE(SUM(dp.jumlah), 0) > 0
             ORDER BY jumlah_dipinjam DESC
@@ -149,7 +150,7 @@ try {
             FROM barang b
             LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
             LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
-            WHERE p.status = 'Sedang Dipinjam' OR p.status IS NULL
+            WHERE p.status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan') OR p.status IS NULL
             GROUP BY b.id, b.nama_barang, b.kategori, b.stok_tersedia
             HAVING COALESCE(SUM(dp.jumlah), 0) > 0
             ORDER BY jumlah_dipinjam DESC
@@ -190,13 +191,13 @@ try {
     $stats['categories'] = $categories;
     $stmt->close();
     
-    // 9. Data Barang: All items with dipinjam (Sedang Dipinjam) vs tersedia count
+    // 9. Data Barang: All items with dipinjam (Sedang Dipinjam + Sebagian Dikembalikan) vs tersedia count
     $stmt = $conn->prepare("
         SELECT 
             b.id,
             b.nama_barang, 
             b.stok_tersedia, 
-            COALESCE(SUM(CASE WHEN p.status = 'Sedang Dipinjam' THEN dp.jumlah ELSE 0 END), 0) as jumlah_dipinjam
+            COALESCE(SUM(CASE WHEN p.status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan') THEN dp.jumlah ELSE 0 END), 0) as jumlah_dipinjam
         FROM barang b
         LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
         LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
@@ -204,7 +205,7 @@ try {
         ORDER BY b.nama_barang ASC
     ");
     if (!$stmt) {
-        throw new Exception("Query 8 Error: " . $conn->error);
+        throw new Exception("Query 9 Error: " . $conn->error);
     }
     $stmt->execute();
     $result = $stmt->get_result();

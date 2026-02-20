@@ -3,6 +3,10 @@ require_once "../koneksi.php";
 require_once "../session-helper.php";
 header('Content-Type: application/json');
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Validate user role
 try {
     SessionValidator::requireRole(['user']);
@@ -71,62 +75,89 @@ while ($row = $result_detail->fetch_assoc()) {
     ];
 }
 
-// Attach pengembalian inspection details if any
-$q = $conn->prepare("SELECT id FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
-$q->bind_param("i", $peminjaman_id);
-$q->execute();
-$qh = $q->get_result()->fetch_assoc();
+// Attach pengembalian inspection details - aggregate from ALL pengembalian records
+// This ensures accurate total returned/damaged across multiple submissions
+$agg_q = $conn->prepare("
+    SELECT 
+        SUM(dp.jumlah_kembali) as total_kembali,
+        SUM(dp.jumlah_rusak) as total_rusak
+    FROM detail_pengembalian dp
+    JOIN pengembalian p ON dp.pengembalian_id = p.id
+    WHERE p.peminjaman_id = ?
+");
+$agg_q->bind_param("i", $peminjaman_id);
+$agg_q->execute();
+$agg_result = $agg_q->get_result()->fetch_assoc();
+
 $display_status = $peminjaman['status'];
 $display_status_en = $peminjaman['status'];
-if ($qh) {
-    $peng_id = (int)$qh['id'];
-    $sd = $conn->prepare("SELECT barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
-    $sd->bind_param("i", $peng_id);
-    $sd->execute();
-    $rd = $sd->get_result();
-    $map = [];
-    $total_items = 0;
-    $total_rusak = 0;
-    while ($r = $rd->fetch_assoc()) {
-        $map[(int)$r['barang_id']] = $r;
+$total_items = 0;
+
+// Sum all detail_peminjaman quantities
+foreach ($detail_barang as $dbi) {
+    $total_items += (int)$dbi['jumlah'];
+}
+
+// Get aggregate detail PER BARANG from ALL pengembalian (not just latest)
+// This is critical for multiple submission scenarios
+$per_barang = $conn->prepare("
+    SELECT 
+        barang_id,
+        SUM(jumlah_kembali) as total_kembali,
+        SUM(jumlah_rusak) as total_rusak,
+        MAX(kondisi_kembali) as kondisi_kembali
+    FROM detail_pengembalian
+    WHERE pengembalian_id IN (
+        SELECT id FROM pengembalian WHERE peminjaman_id = ?
+    )
+    GROUP BY barang_id
+");
+$per_barang->bind_param("i", $peminjaman_id);
+$per_barang->execute();
+$pb_result = $per_barang->get_result();
+$per_barang_map = [];
+while ($row = $pb_result->fetch_assoc()) {
+    $per_barang_map[(int)$row['barang_id']] = [
+        'jumlah_kembali' => (int)$row['total_kembali'],
+        'jumlah_rusak' => (int)$row['total_rusak'],
+        'kondisi_kembali' => $row['kondisi_kembali']
+    ];
+}
+
+// Update detail_barang with aggregated values PER BARANG
+foreach ($detail_barang as &$dbi) {
+    $bid = (int)$dbi['barang_id'];
+    if (isset($per_barang_map[$bid])) {
+        $dbi['jumlah_kembali'] = $per_barang_map[$bid]['jumlah_kembali'];
+        $dbi['jumlah_rusak'] = $per_barang_map[$bid]['jumlah_rusak'];
+        $dbi['kondisi_kembali'] = $per_barang_map[$bid]['kondisi_kembali'];
     }
-    foreach ($detail_barang as &$dbi) {
-        $bid = (int)$dbi['barang_id'];
-        $total_items += $dbi['jumlah'];
-        if (isset($map[$bid])) {
-            $dbi['jumlah_kembali'] = (int)$map[$bid]['jumlah_kembali'];
-            $dbi['jumlah_rusak'] = (int)$map[$bid]['jumlah_rusak'];
-            $dbi['kondisi_kembali'] = $map[$bid]['kondisi_kembali'];
-            $total_rusak += (int)$map[$bid]['jumlah_rusak'];
-        }
-    }
-    // compute return and damage status
-    // Count how many items have been returned
-    $total_dikembalikan = 0;
-    foreach ($detail_barang as $dbi) {
-        $total_dikembalikan += $dbi['jumlah_kembali'];
-    }
+}
+
+if ($agg_result) {
+    $total_dikembalikan = (int)($agg_result['total_kembali'] ?? 0);
+    $total_rusak = (int)($agg_result['total_rusak'] ?? 0);
     
-    // Determine display status based on return progress
-    if ($total_dikembalikan < $total_items) {
-        // Sebagian Dikembalikan (partial return)
-        $display_status = 'Sebagian Dikembalikan';
-        $display_status_en = 'Partially Returned';
-    } elseif ($total_dikembalikan == $total_items) {
-        // All returned - check if any are damaged
+    // Determine display status based on aggregate return progress
+    if ($total_dikembalikan >= $total_items && $total_items > 0) {
+        // All items have been returned across all pengembalian submissions
         if ($total_rusak > 0) {
-            if ($total_rusak < $total_items) {
-                $display_status = 'Sebagian Rusak';
-                $display_status_en = 'Partially Damaged';
-            } else {
+            if ($total_rusak >= $total_items) {
                 $display_status = 'Semua Rusak';
                 $display_status_en = 'Fully Damaged';
+            } else {
+                $display_status = 'Sebagian Rusak';
+                $display_status_en = 'Partially Damaged';
             }
         } else {
             // All returned and no damage
             $display_status = 'Dikembalikan';
             $display_status_en = 'Returned';
         }
+    } else if ($total_dikembalikan > 0 && $total_dikembalikan < $total_items) {
+        // Partial return
+        $display_status = 'Sebagian Dikembalikan';
+        $display_status_en = 'Partially Returned';
     }
 }
 
