@@ -584,6 +584,64 @@
                         </div>
                     </div>
 
+                    <!-- Modal Detail Peminjaman -->
+                    <div class="modal fade" id="modalDetail" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Borrowing Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Borrower Info -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p><strong>Code:</strong> <span id="detailKode"></span></p>
+                                            <p><strong>Name:</strong> <span id="detailNama"></span></p>
+                                            <p><strong>NRP:</strong> <span id="detailNrp"></span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+                                            <p><strong>Loan Date:</strong> <span id="detailTanggalPinjam"></span></p>
+                                            <p><strong>Expected Return Date:</strong> <span
+                                                    id="detailRencanaKembali"></span></p>
+                                        </div>
+                                    </div>
+
+                                    <hr>
+
+                                    <!-- Items Table -->
+                                    <h6>Borrowed Items (Per Unit)</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Item Name</th>
+                                                    <th>Qty</th>
+                                                    <th id="statusHeaderCol">Return Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="detailBarangTable">
+                                                <!-- Items will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Notes Section -->
+                                    <div id="detailCatatanDiv" style="display: none;" class="alert alert-warning mt-3">
+                                        <strong>Notes:</strong>
+                                        <p id="detailCatatan"></p>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <!-- [ Main Content ] end -->
@@ -1188,27 +1246,6 @@
 
 
     <script>
-        function getDetailPage(status) {
-            if (status === "Menunggu Persetujuan") {
-                return "menunggu-persetujuan.html";
-            }
-
-            if (status === "Sedang Dipinjam") {
-                return "sedang-dipinjam.html";
-            }
-
-            if (status === "Dikembalikan") {
-                return "../../admin/pengembalian/pengembalian-barang.html";
-            }
-
-            // Ditolak
-            return "detail-peminjaman.html";
-        }
-    </script>
-
-
-
-    <script>
         // Render tabel dengan data dari database
         function renderTable(data) {
             console.log('renderTable called with', data.length, 'rows');
@@ -1222,8 +1259,6 @@
 
             console.log('Generating HTML for', data.length, 'rows');
             tbody.innerHTML = data.map((item, index) => {
-                const detailPage = getDetailPage(item.status);
-
                 let badgeClass = "bg-secondary";
                 const s = (item.status || '').toString().toLowerCase();
                 const se = (item.status_en || '').toString().toLowerCase();
@@ -1247,10 +1282,9 @@
             <td>${item.tanggal}</td>
             <td><span class="badge ${badgeClass}">${displayStatus}</span></td>
             <td>
-                <a href="${detailPage}?id=${item.id}"
-                   class="btn btn-sm btn-outline-primary">
+                <button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${item.id}')">
                    Detail
-                </a>
+                </button>
             </td>
         </tr>
     `;
@@ -1258,12 +1292,145 @@
             console.log('Table rendering completed');
         }
 
-        // Initialize daterangepicker - TIDAK PERLU LAGI, GANTI DENGAN INPUT DATE HTML BIASA
+        // ========== HELPER FUNCTIONS FOR DETAIL MODAL ==========
+        function getDisplayStatus(dbStatus, statusEn) {
+            if (statusEn) {
+                const en_lower = statusEn.toLowerCase();
+                if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
+            }
+            switch (dbStatus) {
+                case 'Menunggu Persetujuan':
+                case 'Disetujui':
+                    return 'Menunggu Persetujuan';
+                case 'Sebagian Dikembalikan':
+                    return 'Sebagian Dikembalikan';
+                case 'Sebagian Rusak':
+                    return 'Sebagian Rusak';
+                case 'Semua Rusak':
+                    return 'Fully Damaged';
+                case 'Sedang Dipinjam':
+                    return 'Sedang Dipinjam';
+                case 'Dikembalikan':
+                    return 'Dikembalikan';
+                case 'Ditolak':
+                    return 'Ditolak';
+                default:
+                    return dbStatus;
+            }
+        }
 
+        function getStatusBadge(status, statusEn) {
+            const displayStatus = getDisplayStatus(status, statusEn);
+            switch (displayStatus) {
+                case 'Menunggu Persetujuan':
+                    return 'badge bg-warning';
+                case 'Sebagian Dikembalikan':
+                    return 'badge bg-warning text-dark';
+                case 'Sebagian Rusak':
+                    return 'badge bg-danger';
+                case 'Fully Damaged':
+                    return 'badge bg-danger';
+                case 'Semua Rusak':
+                    return 'badge bg-danger';
+                case 'Sedang Dipinjam':
+                    return 'badge bg-primary';
+                case 'Dikembalikan':
+                    return 'badge bg-success';
+                case 'Ditolak':
+                    return 'badge bg-danger';
+                default:
+                    return 'badge bg-secondary';
+            }
+        }
 
-        // Helper function untuk update date display - TIDAK PERLU LAGI
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
 
-        // Load data saat halaman dimuat - SUDAH DIHANDLE DI DOMECONTENTLOADED PERTAMA
+        function lihatDetail(peminjamanId) {
+            fetch(`../../api/admin/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status && res.data) {
+                        const p = res.data;
+                        document.getElementById('detailKode').textContent = escapeHtml(p.kode_peminjaman || p.kode);
+                        document.getElementById('detailNama').textContent = escapeHtml(p.nama);
+                        document.getElementById('detailNrp').textContent = escapeHtml(p.nrp);
+                        const displayStatus = getDisplayStatus(p.status, p.status_en);
+                        document.getElementById('detailStatus').innerHTML = `<span class="${getStatusBadge(p.status, p.status_en)}">${escapeHtml(displayStatus)}</span>`;
+                        document.getElementById('detailTanggalPinjam').textContent = new Date(p.tanggal_pinjam).toLocaleDateString('id-ID');
+                        document.getElementById('detailRencanaKembali').textContent = new Date(p.rencana_kembali).toLocaleDateString('id-ID');
+
+                        // Display items per unit with return status
+                        let rowNum = 1;
+                        const isRejected = p.status && p.status.includes('Ditolak');
+                        const barangHtml = (p.detail_barang || []).map((item) => {
+                            const totalQty = parseInt(item.jumlah) || 0;
+                            const returned = parseInt(item.jumlah_kembali) || 0;
+                            const damaged = parseInt(item.jumlah_rusak) || 0;
+
+                            let rows = '';
+                            for (let unitNum = 1; unitNum <= totalQty; unitNum++) {
+                                let returnStatus = 'Belum Dikembalikan';
+                                let badgeClass = 'bg-secondary';
+
+                                if (isRejected) {
+                                    returnStatus = 'Ditolak';
+                                    badgeClass = 'bg-danger';
+                                } else {
+                                    if (unitNum <= returned) {
+                                        returnStatus = 'Dikembalikan';
+                                        if (item.kondisi_kembali === 'Rusak' || unitNum <= damaged) {
+                                            badgeClass = 'bg-warning text-dark';
+                                        } else {
+                                            badgeClass = 'bg-success';
+                                        }
+                                    } else {
+                                        returnStatus = 'Belum Dikembalikan';
+                                        badgeClass = 'bg-secondary';
+                                    }
+                                }
+
+                                rows += `
+                                <tr>
+                                    <td>${rowNum}</td>
+                                    <td>${escapeHtml(item.nama_barang || item.barang || '-')}</td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center"><span class="badge ${badgeClass}">${returnStatus}</span></td>
+                                </tr>`;
+                                rowNum++;
+                            }
+                            return rows;
+                        }).join('');
+
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="4" class="text-center">Tidak ada barang</td></tr>';
+
+                        const statusHeaderCol = document.getElementById('statusHeaderCol');
+                        if (statusHeaderCol) {
+                            statusHeaderCol.style.display = 'table-cell';
+                        }
+
+                        const displayStatus2 = getDisplayStatus(p.status, p.status_en);
+                        if (displayStatus2 === 'Ditolak' && p.catatan) {
+                            document.getElementById('detailCatatanDiv').style.display = 'block';
+                            document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
+                        } else {
+                            document.getElementById('detailCatatanDiv').style.display = 'none';
+                        }
+
+                        new bootstrap.Modal(document.getElementById('modalDetail')).show();
+                    } else {
+                        alert('Gagal memuat detail peminjaman');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('Error memuat detail');
+                });
+        }
     </script>
 
 
