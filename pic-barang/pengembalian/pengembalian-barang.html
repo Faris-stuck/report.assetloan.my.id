@@ -223,6 +223,44 @@
         </div>
     </div>
 
+    <!-- Final Approval Confirmation Modal -->
+    <div class="modal fade" id="confirmFinalApprovalModal" tabindex="-1" aria-labelledby="confirmFinalApprovalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmFinalApprovalLabel">
+                        <i class="feather-check-circle me-2"></i>Final Return Approval
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-success">
+                        <strong>✅ Final Approval:</strong>
+                        This is the FINAL APPROVAL that will complete the entire return process.
+                    </div>
+                    <div class="alert alert-warning">
+                        <small>
+                            <strong>Before Final Approval, Verify:</strong><br>
+                            ✓ All inspections are complete<br>
+                            ✓ Final status is correctly recorded<br>
+                            ✓ All damages/missing items documented<br>
+                            ✓ Return process is fully verified<br>
+                            ✓ Borrowing record ready to close
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmFinalApprovalButton">
+                        <i class="feather-check me-2"></i>Yes, Final Approval
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const userData = RoleValidator.getUser();
         if (userData.nama) document.getElementById('header-nama').textContent = userData.nama;
@@ -232,6 +270,7 @@
         const API = '/PROJECT/api/pengembalian';
         let currentPengembalianId = null;
         let modalInspeksi = null;
+        let pendingInspeksiData = null;
 
         function formatRupiah(n) {
             const num = Number(n || 0);
@@ -465,12 +504,24 @@
 
             if (hasError) return;
 
-            if (!confirm('Finalize inspection? This will update stock and mark borrowing as returned.')) return;
+            if (!confirm('✅ FINAL RETURN CONFIRMATION\n\nThis is the FINAL APPROVAL that will:\n✓ Complete the return process\n✓ Update final item status\n✓ Close the borrowing record\n✓ Record all damages/missing items\n\nEnsure all inspections are complete!\n\nConfirm final approval?')) return;
+
+            pendingInspeksiData = {
+                pengembalian_id: currentPengembalianId,
+                catatan_petugas: document.getElementById('catatanPetugas').value || '',
+                items: JSON.stringify(items)
+            };
+
+            doSubmitInspeksi();
+        }
+
+        function doSubmitInspeksi() {
+            if (!pendingInspeksiData) return;
 
             const fd = new FormData();
-            fd.append('pengembalian_id', currentPengembalianId);
-            fd.append('catatan_petugas', document.getElementById('catatanPetugas').value || '');
-            fd.append('items', JSON.stringify(items));
+            fd.append('pengembalian_id', pendingInspeksiData.pengembalian_id);
+            fd.append('catatan_petugas', pendingInspeksiData.catatan_petugas);
+            fd.append('items', pendingInspeksiData.items);
 
             fetch(API + '/inspect.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => {
@@ -483,6 +534,9 @@
                 .then(res => {
                     alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
+                        // Hide confirmation modal
+                        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmFinalApprovalModal'));
+                        if (confirmModal) confirmModal.hide();
                         if (modalInspeksi) modalInspeksi.hide();
                         loadPengembalian();
                     }

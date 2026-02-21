@@ -635,32 +635,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Confirmation Modal -->
-                    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel"
-                        aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header bg-primary text-white">
-                                    <h5 class="modal-title" id="confirmModalLabel">Confirm Borrowing Request</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                                        aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <p><strong>Are you sure that all entered data is correct?</strong></p>
-                                    <div class="alert alert-info" role="alert">
-                                        <small>Please verify all data before confirming the borrowing request.</small>
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
-                                        data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" id="confirmButton">Yes,
-                                        Continue</button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
 
@@ -1177,20 +1152,10 @@
                 return;
             }
 
-            // Simpan form untuk disubmit nanti setelah konfirmasi
-            window.formDataToSubmit = e.target;
+            // Show confirmation alert
+            if (!confirm("⚠️ CONFIRM BORROWING REQUEST\n\nPlease verify all data:\n✓ All items and quantities correct\n✓ Loan date and expected return date correct\n✓ Location specified\n\nProceed with this borrowing request?")) return;
 
-            // Tampilkan modal konfirmasi
-            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-            confirmModal.show();
-        });
-
-        // Handle tombol konfirmasi "Ya, Lanjutkan"
-        document.getElementById("confirmButton").addEventListener("click", () => {
-            const form = window.formDataToSubmit;
-            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
-            confirmModal.hide();
-
+            const form = e.target;
             // Proses submit sebenarnya
             let fd = new FormData(form);
             fd.append("user_id", USER_ID);

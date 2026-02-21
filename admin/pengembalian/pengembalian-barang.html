@@ -540,6 +540,44 @@
         </div>
     </div>
 
+    <!-- Finalize Inspection Confirmation Modal -->
+    <div class="modal fade" id="confirmFinalizeModal" tabindex="-1" aria-labelledby="confirmFinalizeLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmFinalizeLabel">
+                        <i class="feather-check-circle me-2"></i>Finalize Inspection
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <strong>🔍 Inspection Finalization:</strong>
+                        This action will complete the item inspection and update inventory records.
+                    </div>
+                    <div class="alert alert-warning">
+                        <small>
+                            <strong>Before Finalizing, Verify:</strong><br>
+                            ✓ All items have been inspected<br>
+                            ✓ Condition values are accurate<br>
+                            ✓ Damage details and costs are recorded<br>
+                            ✓ All notes are complete<br>
+                            ✓ Stock updates are correct
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmFinalizeButton">
+                        <i class="feather-check me-2"></i>Yes, Finalize Inspection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../../assets/js/auth/role-validator.js"></script>
     <script>
         if (typeof RoleValidator !== 'undefined') {
@@ -550,6 +588,7 @@
         const API = '../../api/pengembalian';
         let currentPengembalianId = null;
         let modalInspeksi = null;
+        let pendingInspeksiData = null;
 
         function formatRupiah(n) {
             const num = Number(n || 0);
@@ -719,12 +758,24 @@
                 items.push({ barang_id, kondisi_kembali, jumlah_rusak, biaya_ganti_rugi, catatan });
             });
 
-            if (!confirm('Finalize inspection? This will update stock and mark borrowing as returned.')) return;
+            if (!confirm('🔍 FINALIZE INSPECTION CONFIRMATION\n\nThis action will:\n✓ Complete item inspection\n✓ Update inventory stock\n✓ Mark borrowing as returned\n✓ Record damage/missing items\n\nMake sure all items are inspected!\n\nConfirm finalization?')) return;
+
+            pendingInspeksiData = {
+                pengembalian_id: currentPengembalianId,
+                catatan_petugas: document.getElementById('catatanPetugas').value || '',
+                items: JSON.stringify(items)
+            };
+
+            doSubmitInspeksi();
+        }
+
+        function doSubmitInspeksi() {
+            if (!pendingInspeksiData) return;
 
             const fd = new FormData();
-            fd.append('pengembalian_id', currentPengembalianId);
-            fd.append('catatan_petugas', document.getElementById('catatanPetugas').value || '');
-            fd.append('items', JSON.stringify(items));
+            fd.append('pengembalian_id', pendingInspeksiData.pengembalian_id);
+            fd.append('catatan_petugas', pendingInspeksiData.catatan_petugas);
+            fd.append('items', pendingInspeksiData.items);
 
             fetch(API + '/inspect.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => {
@@ -737,6 +788,9 @@
                 .then(res => {
                     alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
+                        // Hide confirmation modal
+                        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmFinalizeModal'));
+                        if (confirmModal) confirmModal.hide();
                         if (modalInspeksi) modalInspeksi.hide();
                         loadPengembalian();
                     }

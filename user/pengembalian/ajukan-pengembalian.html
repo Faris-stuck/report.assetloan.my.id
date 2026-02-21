@@ -505,6 +505,44 @@
         </div>
     </div>
 
+    <!-- Return Confirmation Modal -->
+    <div class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="confirmReturnLabel">
+                        <i class="feather-send me-2"></i>Confirm Return Request
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        <strong>⚠️ Important Verification:</strong> Please ensure all returned quantities and item
+                        conditions are correct.
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        <small>
+                            <strong>Before Submitting, Verify:</strong><br>
+                            ✓ All returned quantities are correct and match items<br>
+                            ✓ Item conditions (good/damaged/remain) are accurately marked<br>
+                            ✓ Damage details and notes are properly documented<br>
+                            ✓ All required items have been accounted for
+                        </small>
+                    </div>
+                    <p><strong>Once submitted, your return request will be reviewed by Admin/PIC for final
+                            approval.</strong></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="confirmReturnButton">
+                        <i class="feather-check me-2"></i>Yes, Submit Return Request
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Ambil user ID dari localStorage (hasil login)
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -529,6 +567,8 @@
         let currentPeminjamanId = null;
         let currentPeminjamanData = null;
         let modalReturnInspeksi = null;
+        let shouldSubmitReturn = false;
+        let pendingReturnData = null;
 
         function recalcTotal() {
             const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
@@ -852,12 +892,24 @@
                 return;
             }
 
-            if (!confirm('Submit return request? This will be reviewed by the admin/PIC.')) return;
+            if (!confirm('⚠️ CONFIRM RETURN REQUEST\n\nVerify:\n✓ All returned quantities correct\n✓ Item conditions accurately marked\n✓ Damage details documented\n✓ All items accounted for\n\nProceed?')) return;
+
+            pendingReturnData = {
+                peminjaman_id: currentPeminjamanId,
+                catatan_user: document.getElementById('catatanUser').value || '',
+                items: JSON.stringify(items)
+            };
+
+            doSubmitReturnRequest();
+        }
+
+        function doSubmitReturnRequest() {
+            if (!pendingReturnData) return;
 
             const fd = new FormData();
-            fd.append('peminjaman_id', currentPeminjamanId);
-            fd.append('catatan_user', document.getElementById('catatanUser').value || '');
-            fd.append('items', JSON.stringify(items));
+            fd.append('peminjaman_id', pendingReturnData.peminjaman_id);
+            fd.append('catatan_user', pendingReturnData.catatan_user);
+            fd.append('items', pendingReturnData.items);
 
             fetch(API + '/return.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => {
@@ -896,6 +948,9 @@
                 .then(res => {
                     alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
+                        // Hide confirmation modal
+                        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmReturnModal'));
+                        if (confirmModal) confirmModal.hide();
                         if (modalReturnInspeksi) modalReturnInspeksi.hide();
                         loadPeminjamanList();
                     }
@@ -916,13 +971,17 @@
                     alert('Return Request Failed:\n\n' + errorMsg);
                 });
 
-        }
 
-        document.addEventListener('DOMContentLoaded', loadPeminjamanList);
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('btnSubmitReturn');
-            if (btn) btn.addEventListener('click', submitReturnRequest);
-        });
+            document.addEventListener('DOMContentLoaded', loadPeminjamanList);
+            document.addEventListener('DOMContentLoaded', () => {
+                const btn = document.getElementById('btnSubmitReturn');
+                if (btn) btn.addEventListener('click', submitReturnRequest);
+
+                const confirmBtn = document.getElementById('confirmReturnButton');
+                if (confirmBtn) {
+                    confirmBtn.addEventListener('click', doSubmitReturnRequest);
+                }
+            });
     </script>
 
 

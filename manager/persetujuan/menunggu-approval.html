@@ -601,6 +601,16 @@
                 }
             }
 
+            // Show confirmation alert
+            let confirmMsg = '';
+            if (selectedStatus === 'Disetujui') {
+                confirmMsg = '✅ CONFIRM APPROVAL\n\nYou are approving this borrowing request.\n\nPlease verify:\n✓ All borrowing details are correct\n✓ Items and quantities verified\n✓ Dates and location confirmed\n\nProceed with approval?';
+            } else {
+                confirmMsg = '❌ CONFIRM REJECTION\n\nYou are rejecting this borrowing request.\n\nPlease verify:\n✓ Rejection reason is clear\n✓ Borrower will be notified\n✓ This decision is final\n\nProceed with rejection?';
+            }
+
+            if (!confirm(confirmMsg)) return;
+
             // Kirim request ke API untuk update status
             const formData = new FormData();
             formData.append('id', selectedPeminjaman.id);

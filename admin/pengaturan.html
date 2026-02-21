@@ -2977,6 +2977,11 @@
         let modalTambahRole = null;
         let allRolesData = []; // Store loaded roles from database
 
+        // Store pending action data for confirmations
+        let pendingChangeRoleData = null;
+        let pendingCreateRoleData = null;
+        let pendingDeleteRoleData = null;
+
         // Get badge color from loaded DB data (no hardcode)
         function getRoleBadge(role) {
             const found = allRolesData.find(r => r.role === role);
@@ -3161,11 +3166,22 @@
                 return;
             }
 
-            if (!confirm('Yakin ingin mengubah role user ini?')) return;
+            if (!confirm('⚠️ CHANGE USER ROLE CONFIRMATION\n\nChanging role will:\n✓ Update user permissions\n✓ May restrict access to features\n✓ Affect user capabilities\n\nMake sure this is intentional.\n\nConfirm role change?')) return;
+
+            pendingChangeRoleData = {
+                user_id: userId,
+                role: newRole
+            };
+
+            doSimpanRole();
+        }
+
+        function doSimpanRole() {
+            if (!pendingChangeRoleData) return;
 
             const fd = new FormData();
-            fd.append('user_id', userId);
-            fd.append('role', newRole);
+            fd.append('user_id', pendingChangeRoleData.user_id);
+            fd.append('role', pendingChangeRoleData.role);
 
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
@@ -3206,13 +3222,26 @@
                 return;
             }
 
-            if (!confirm(`Yakin ingin membuat role baru "${roleName}"?`)) return;
+            if (!confirm(`🆕 CREATE NEW ROLE CONFIRMATION\n\nRole: ${roleName}\n\nThis will:\n✓ Create new role in system\n✓ Allow users to be assigned this role\n✓ Be available for permission management\n\nConfirm role creation?`)) return;
+
+            pendingCreateRoleData = {
+                action: 'create_role',
+                role_name: roleName,
+                deskripsi: roleDesc,
+                badge_color: badgeColor
+            };
+
+            doSimpanRoleBaru();
+        }
+
+        function doSimpanRoleBaru() {
+            if (!pendingCreateRoleData) return;
 
             const fd = new FormData();
-            fd.append('action', 'create_role');
-            fd.append('role_name', roleName);
-            fd.append('deskripsi', roleDesc);
-            fd.append('badge_color', badgeColor);
+            fd.append('action', pendingCreateRoleData.action);
+            fd.append('role_name', pendingCreateRoleData.role_name);
+            fd.append('deskripsi', pendingCreateRoleData.deskripsi);
+            fd.append('badge_color', pendingCreateRoleData.badge_color);
 
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
@@ -3234,11 +3263,22 @@
                 return;
             }
 
-            if (!confirm(`Yakin ingin menghapus role "${getRoleLabel(roleName)}"?\nRole hanya dapat dihapus jika tidak ada user yang menggunakannya.`)) return;
+            if (!confirm(`🗑️ DELETE ROLE CONFIRMATION\n\nRole: ${getRoleLabel(roleName)}\n\n⚠️ WARNING: This action CANNOT be undone!\n\nConditions for deletion:\n✓ No users currently have this role\n✓ All permission associations will be removed\n\nConfirm permanent deletion?`)) return;
+
+            pendingDeleteRoleData = {
+                action: 'delete_role',
+                role_name: roleName
+            };
+
+            doHapusRole();
+        }
+
+        function doHapusRole() {
+            if (!pendingDeleteRoleData) return;
 
             const fd = new FormData();
-            fd.append('action', 'delete_role');
-            fd.append('role_name', roleName);
+            fd.append('action', pendingDeleteRoleData.action);
+            fd.append('role_name', pendingDeleteRoleData.role_name);
 
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())

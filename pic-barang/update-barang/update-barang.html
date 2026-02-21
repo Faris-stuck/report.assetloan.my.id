@@ -287,6 +287,8 @@
             });
         }
         document.getElementById('btn-save-edit').addEventListener('click', () => {
+            if (!confirm('⚠️ CONFIRM ITEM UPDATE\n\nYou are updating item information.\n\nPlease verify:\n✓ Category and location are correct\n✓ Stock quantities are accurate\n✓ Condition status updated\n✓ Notes are clear and complete\n\nProceed with update?')) return;
+
             const fd = new FormData();
             fd.append('id', document.getElementById('edit_id').value);
             fd.append('kategori', document.getElementById('edit_kategori').value);
