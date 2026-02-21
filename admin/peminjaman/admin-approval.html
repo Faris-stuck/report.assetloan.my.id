@@ -294,12 +294,12 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Manage Active Loans</h5>
+                        <h5 class="m-b-10">Pending Loan Approvals (Monitoring + Fallback)</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Dashboard</a></li>
                         <li class="breadcrumb-item"><a href="#">Item Loan</a></li>
-                        <li class="breadcrumb-item">Manage Loans</li>
+                        <li class="breadcrumb-item">Pending Approvals</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -319,7 +319,7 @@
                 <div class="row">
                     <div class="card stretch stretch-full">
                         <div class="card-header">
-                            <h5 class="mb-0">Active Loans Currently Borrowed</h5>
+                            <h5 class="mb-0">Pending Loan Requests Awaiting Approval</h5>
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-bordered align-middle">
@@ -345,7 +345,8 @@
                                     <div class="modal-content">
 
                                         <div class="modal-header">
-                                            <h5 class="modal-title">Process Borrowing</h5>
+                                            <h5 class="modal-title">Loan Approval Review (Admin - Fallback Approver)
+                                            </h5>
                                             <button class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
 
@@ -389,6 +390,10 @@
                                                 </table>
                                             </div>
                                             <div class="modal-footer">
+                                                <button type="button" class="btn btn-success me-2" id="btnSetuju"
+                                                    onclick="setStatus('Disetujui'); toggleReasonField(false);">
+                                                    Approve Loan
+                                                </button>
                                                 <button type="button" class="btn btn-danger me-2" id="btnTolak"
                                                     onclick="setStatus('Ditolak'); toggleReasonField(true);">
                                                     Reject Loan
@@ -467,9 +472,10 @@
         let selectedPeminjaman = null;
         let selectedStatus = null;
 
-        // Load data peminjaman - only show currently borrowed items (Sedang Dipinjam status)
+        // Load data peminjaman - show pending approvals (Menunggu Persetujuan status)
+        // Admin as fallback approver if manager doesn't take action
         function loadDataPeminjaman() {
-            fetch("/PROJECT/api/approver/list-by-status.php?status=Sedang Dipinjam")
+            fetch("/PROJECT/api/approver/list-by-status.php?status=Menunggu Persetujuan")
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
@@ -492,7 +498,7 @@
             const tbody = document.getElementById("tabelMenunggu");
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No active loans currently borrowed</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No pending loan approvals. All requests have been processed.</td></tr>';
                 return;
             }
 
@@ -515,9 +521,10 @@
   `).join('');
         }
 
-        // Open modal to manage borrowing
+        // Open modal to process borrowing
+        // Fetch fresh data to ensure we have the latest status
         function openModal(id) {
-            fetch("/PROJECT/api/approver/list-by-status.php?status=Sedang Dipinjam")
+            fetch("/PROJECT/api/approver/list-by-status.php?status=Menunggu Persetujuan")
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
@@ -570,7 +577,7 @@
             document.getElementById("reasonDiv").style.display = show ? 'block' : 'none';
         }
 
-        // Set status that was selected - now only rejection or return
+        // Set status that was selected
         function setStatus(status) {
             selectedStatus = status;
             if (status === 'Ditolak') {
@@ -580,10 +587,10 @@
             }
         }
 
-        // Save process - only rejection allowed now (approval is done by manager)
+        // Save process - approve or reject borrowing
         function saveProcess() {
             if (!selectedStatus) {
-                alert("Please select Reject");
+                alert("Select Approve or Reject first");
                 return;
             }
 
@@ -600,6 +607,16 @@
                     return;
                 }
             }
+
+            // Show confirmation alert
+            let confirmMsg = '';
+            if (selectedStatus === 'Disetujui') {
+                confirmMsg = '✅ CONFIRM APPROVAL\n\nYou are approving this borrowing request.\n\nPlease verify:\n✓ All borrowing details are correct\n✓ Items and quantities verified\n✓ Dates and location confirmed\n\nProceed with approval?';
+            } else {
+                confirmMsg = '❌ CONFIRM REJECTION\n\nYou are rejecting this borrowing request.\n\nPlease verify:\n✓ Rejection reason is clear\n✓ Borrower will be notified\n✓ This decision is final\n\nProceed with rejection?';
+            }
+
+            if (!confirm(confirmMsg)) return;
 
             // Kirim request ke API untuk update status
             const formData = new FormData();

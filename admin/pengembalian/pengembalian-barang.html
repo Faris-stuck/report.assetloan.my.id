@@ -38,18 +38,6 @@
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
     <script src="../../assets/js/auth/logout.js"></script>
-    <!--[if lt IE 9]>    <script src="../../assets/js/auth/auth-manager.js"></script>
-    <script src="../../assets/js/auth/role-validator.js"></script>
-    <script>
-        // Page protection
-        if (typeof RoleValidator !== 'undefined') {
-            RoleValidator.requireAdmin();
-        }
-    </script>
-
-			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-		<![endif]-->
 </head>
 
 <body>
@@ -395,11 +383,11 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Dashboard</h5>
+                        <h5 class="m-b-10">Item Return</h5>
                     </div>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Home</a></li>
-                        <li class="breadcrumb-item">Dashboard</li>
+                        <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item">Return</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -443,7 +431,7 @@
                                     </thead>
                                     <tbody id="table-pengembalian">
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">Loading...</td>
+                                            <td colspan="7" class="text-center text-muted">Loading...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -509,11 +497,11 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Item</th>
-                                    <th class="text-center" style="width: 90px;">Qty</th>
-                                    <th style="width: 120px;">Condition</th>
+                                    <th class="text-center" style="width: 90px;">QTY Pinjam</th>
+                                    <th style="width: 120px;">QTY Return</th>
+                                    <th class="text-center" style="width: 110px;">Good Condition</th>
                                     <th class="text-center" style="width: 110px;">Damaged</th>
-                                    <th class="text-end" style="width: 150px;">Compensation</th>
-                                    <th>Note</th>
+                                    <th>Remain Item</th>
                                 </tr>
                             </thead>
                             <tbody id="inspeksiItems">
@@ -528,8 +516,8 @@
                         <textarea class="form-control" id="catatanPetugas" rows="2" placeholder="Optional"></textarea>
                     </div>
                     <div class="mt-2 d-flex justify-content-end gap-3">
-                        <div class="text-muted">Total compensation:</div>
-                        <div class="fw-bold" id="totalGantiRugi">0</div>
+                        <div class="text-muted">Summary:</div>
+                        <div class="fw-bold" id="totalGantiRugi">0 damaged, 0 remain</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -545,7 +533,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-danger text-white">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="confirmFinalizeLabel">
                         <i class="feather-check-circle me-2"></i>Finalize Inspection
                     </h5>
@@ -553,8 +541,8 @@
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-danger">
-                        <strong>🔍 Inspection Finalization:</strong>
+                    <div class="alert alert-success">
+                        <strong>✅ Inspection Finalization:</strong>
                         This action will complete the item inspection and update inventory records.
                     </div>
                     <div class="alert alert-warning">
@@ -570,7 +558,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-danger" id="confirmFinalizeButton">
+                    <button type="button" class="btn btn-success" id="confirmFinalizeButton">
                         <i class="feather-check me-2"></i>Yes, Finalize Inspection
                     </button>
                 </div>
@@ -597,12 +585,18 @@
 
         function recalcTotal() {
             const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
-            let total = 0;
+            let totalDamaged = 0;
+            let totalRemain = 0;
+
             rows.forEach(tr => {
-                const biaya = Number(tr.querySelector('.inp-biaya')?.value || 0);
-                total += isNaN(biaya) ? 0 : biaya;
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+                const remain = Number(tr.querySelector('.inp-remain')?.value || 0);
+                totalDamaged += isNaN(damaged) ? 0 : damaged;
+                totalRemain += isNaN(remain) ? 0 : remain;
             });
-            document.getElementById('totalGantiRugi').textContent = formatRupiah(total);
+
+            const summary = `${totalDamaged} damaged, ${totalRemain} remain`;
+            document.getElementById('totalGantiRugi').textContent = summary;
         }
 
         function loadPengembalian() {
@@ -623,13 +617,13 @@
                             window.location.href = '/PROJECT/index.html';
                             return;
                         }
-                        document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="6" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
+                        document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="7" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
                         return;
                     }
                     const list = res.data || [];
                     const tbody = document.getElementById('table-pengembalian');
                     if (list.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No return request waiting inspection</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No return request waiting inspection</td></tr>';
                         return;
                     }
                     tbody.innerHTML = list.map(p => {
@@ -637,8 +631,8 @@
                         const s = (status || '').toString().toLowerCase();
                         let badge = `<span class="badge bg-secondary">${status}</span>`;
                         if (s.includes('menunggu') || s.includes('pending')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('seb') || s.includes('sebagian') || s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('semua') || s.includes('selesai') || (s.includes('fully') && s.includes('damaged'))) badge = `<span class="badge bg-danger">${status}</span>`;
+                        else if (s.includes('sebagian') || s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
+                        else if (s.includes('selesai') && !s.includes('sebagian')) badge = `<span class="badge bg-success text-white">${status}</span>`;
                         else if (s.includes('diproses') || s.includes('dicek')) badge = `<span class="badge bg-info text-dark">${status}</span>`;
                         return `
                         <tr>
@@ -660,7 +654,7 @@
                 .catch(err => {
                     console.error('Error loading pengembalian:', err);
                     const tbody = document.getElementById('table-pengembalian');
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-danger">
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-danger">
                         <strong>Connection error:</strong> ${err.message}
                         <br><small><a href="../setup-database.html" class="text-reset">Click here to setup database</a></small>
                     </td></tr>`;
@@ -670,7 +664,7 @@
         function openInspeksi(pengembalianId) {
             currentPengembalianId = pengembalianId;
             document.getElementById('catatanPetugas').value = '';
-            document.getElementById('totalGantiRugi').textContent = formatRupiah(0);
+            document.getElementById('totalGantiRugi').textContent = '0 damaged, 0 remain';
             document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>';
 
             fetch(API + '/detail.php?pengembalian_id=' + encodeURIComponent(pengembalianId), { credentials: 'same-origin' })
@@ -698,39 +692,67 @@
                         document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
                         return;
                     }
-                    document.getElementById('inspeksiItems').innerHTML = items.map(it => `
-                        <tr data-barang-id="${it.barang_id}">
+                    document.getElementById('inspeksiItems').innerHTML = items.map(it => {
+                        // All data comes from API - no hardcoding
+                        const qtPinjam = Number(it.jumlah_pinjam) || 0;
+                        const qtReturnThisSubmission = Number(it.jumlah_kembali) || 0;
+                        const qtRusakThisSubmission = Number(it.jumlah_rusak) || 0;
+                        const qtBaikThisSubmission = qtReturnThisSubmission - qtRusakThisSubmission;
+                        const sudahDikembalikan = Number(it.sudah_dikembalikan) || 0;
+                        const sisaDikembalikan = Number(it.sisa_dikembalikan) || 0;
+
+                        return `
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-sisa="${sisaDikembalikan}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
-                            </td>
-                            <td class="text-center">${it.jumlah_kembali}</td>
-                            <td>
-                                <select class="form-select form-select-sm sel-kondisi">
-                                    <option value="Baik" ${it.kondisi_kembali === 'Baik' ? 'selected' : ''}>Baik</option>
-                                    <option value="Rusak" ${it.kondisi_kembali === 'Rusak' ? 'selected' : ''}>Rusak</option>
-                                </select>
+                                ${sudahDikembalikan > 0 ? `<div class="small" style="color: #28a745;"><strong>✓ ${sudahDikembalikan} returned</strong></div>` : ''}
                             </td>
                             <td class="text-center">
-                                <input type="number" min="0" max="${it.jumlah_kembali}" class="form-control form-control-sm inp-rusak" value="${it.jumlah_rusak || 0}">
+                                <div><strong>${qtPinjam}</strong></div>
+                                ${sudahDikembalikan > 0 ? `<div class="small text-muted">(${sudahDikembalikan} ✓)</div>` : ''}
                             </td>
-                            <td class="text-end">
-                                <input type="number" min="0" step="1000" class="form-control form-control-sm text-end inp-biaya" value="${it.biaya_ganti_rugi || 0}">
+                            <td class="text-center">
+                                <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="${qtReturnThisSubmission}">
                             </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm inp-catatan" value="${(it.catatan || '').replace(/"/g, '&quot;')}">
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-good-condition" value="${qtBaikThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-damaged" value="${qtRusakThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm inp-remain" value="${sisaDikembalikan}" readonly style="background-color: #f5f5f5;">
                             </td>
                         </tr>
-                    `).join('');
+                    `;
+                    }).join('');
 
-                    document.querySelectorAll('.sel-kondisi,.inp-rusak,.inp-biaya').forEach(el => {
-                        el.addEventListener('input', () => {
-                            const tr = el.closest('tr');
-                            const kondisi = tr.querySelector('.sel-kondisi').value;
-                            if (kondisi === 'Baik') {
-                                tr.querySelector('.inp-rusak').value = 0;
-                                tr.querySelector('.inp-biaya').value = 0;
+                    // Setup event listeners for all input fields
+                    const allInputs = document.querySelectorAll('#inspeksiItems .inp-qty-return, #inspeksiItems .inp-good-condition, #inspeksiItems .inp-damaged');
+                    allInputs.forEach(input => {
+                        input.addEventListener('input', function () {
+                            const tr = this.closest('tr');
+                            const qtReturn = Number(tr.querySelector('.inp-qty-return').value || 0);
+                            const goodCond = Number(tr.querySelector('.inp-good-condition').value || 0);
+                            const damaged = Number(tr.querySelector('.inp-damaged').value || 0);
+                            const sisa = Number(tr.getAttribute('data-sisa') || 0);
+
+                            // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                            if (qtReturn > sisa) {
+                                tr.querySelector('.inp-qty-return').value = sisa;
                             }
+
+                            // Calculate remain items: sisa - qty return
+                            const remainItems = sisa - qtReturn;
+                            tr.querySelector('.inp-remain').value = remainItems;
+
+                            // Validasi: good condition + damaged tidak boleh melebihi qty return
+                            if (goodCond + damaged > qtReturn) {
+                                const newDamaged = Math.max(0, qtReturn - goodCond);
+                                tr.querySelector('.inp-damaged').value = newDamaged;
+                            }
+
                             recalcTotal();
                         });
                     });
@@ -747,16 +769,54 @@
 
         function submitInspeksi() {
             if (!currentPengembalianId) return;
+
             const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
             const items = [];
+            let hasError = false;
+
             rows.forEach(tr => {
                 const barang_id = Number(tr.getAttribute('data-barang-id'));
-                const kondisi_kembali = tr.querySelector('.sel-kondisi').value === 'Rusak' ? 'Rusak' : 'Baik';
-                const jumlah_rusak = Number(tr.querySelector('.inp-rusak').value || 0);
-                const biaya_ganti_rugi = Number(tr.querySelector('.inp-biaya').value || 0);
-                const catatan = tr.querySelector('.inp-catatan').value || '';
-                items.push({ barang_id, kondisi_kembali, jumlah_rusak, biaya_ganti_rugi, catatan });
+                const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
+                const sisa = Number(tr.getAttribute('data-sisa'));
+                const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
+                const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+
+                // Validasi: qty return >= 0
+                if (qty_return < 0) {
+                    alert('QTY Return tidak boleh negatif');
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                if (qty_return > sisa) {
+                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: good condition + damaged = qty return
+                if (good_condition + damaged !== qty_return) {
+                    alert(`Good condition (${good_condition}) + Damaged (${damaged}) harus sama dengan QTY Return (${qty_return})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Determine kondisi_kembali based on whether there is damage
+                const kondisi_kembali = damaged > 0 ? 'Rusak' : 'Baik';
+
+                items.push({
+                    barang_id,
+                    jumlah_kembali: qty_return,
+                    kondisi_kembali: kondisi_kembali,
+                    jumlah_rusak: damaged,
+                    biaya_ganti_rugi: 0,
+                    catatan: ''
+                });
             });
+
+            if (hasError) return;
 
             if (!confirm('🔍 FINALIZE INSPECTION CONFIRMATION\n\nThis action will:\n✓ Complete item inspection\n✓ Update inventory stock\n✓ Mark borrowing as returned\n✓ Record damage/missing items\n\nMake sure all items are inspected!\n\nConfirm finalization?')) return;
 

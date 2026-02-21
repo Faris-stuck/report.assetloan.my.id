@@ -38,15 +38,7 @@
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
     <script src="../../assets/js/auth/logout.js"></script>
-    <!--[if lt IE 9]>    <script src="../../assets/js/auth/auth-manager.js"></script>
-    <script src="../../assets/js/auth/role-validator.js"></script>
-    <script>
-        // Page protection
-        if (typeof RoleValidator !== 'undefined') {
-            RoleValidator.requireUser();
-        }
-    </script>
-
+    <!--[if lt IE 9]>
 			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
@@ -587,34 +579,83 @@
         }
 
         function loadPeminjamanList() {
-            fetch(API + "/get.php", { credentials: 'same-origin' })
-                .then(res => res.json())
+            // Validate USER_ID is available
+            if (!USER_ID) {
+                console.error("USER_ID not available");
+                document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger">User ID not found. Please login again.</td></tr>';
+                return;
+            }
+
+            console.log("=== Loading Peminjaman List ===");
+            console.log("USER_ID:", USER_ID);
+
+            // Fetch all borrowings from database
+            fetch(API + "/get.php", {
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
                 .then(res => {
+                    console.log("API Response Status:", res.status);
+                    if (!res.ok) {
+                        throw new Error(`HTTP Error: ${res.status} ${res.statusText}`);
+                    }
+                    return res.json();
+                })
+                .then(res => {
+                    console.log("API Response:", res);
+
+                    // Validate response
+                    if (!res.status) {
+                        throw new Error("API returned error: " + (res.message || "Unknown error"));
+                    }
+
+                    if (!res.data || !Array.isArray(res.data)) {
+                        console.error("Invalid data format. Response:", res);
+                        throw new Error("Invalid API response format");
+                    }
+
+                    console.log("Total items in API response:", res.data.length);
+
+                    // Filter untuk menampilkan peminjaman yang belum dikembalikan sepenuhnya
+                    // Hanya tampilkan items milik user dengan status belum final
+                    const itemsToReturn = res.data.filter(p => {
+                        // Debug setiap item
+                        const userMatch = (p.user_id == USER_ID);
+                        const statusMatch = p.status && !["Selesai", "Ditolak", "Batal", "Dikembalikan"].includes(p.status);
+
+                        if (p.user_id == USER_ID) {
+                            console.log(`  - Item: ${p.kode}, user_id=${p.user_id}, status=${p.status}, userMatch=${userMatch}, statusMatch=${statusMatch}`);
+                        }
+
+                        return userMatch && statusMatch;
+                    });
+
+                    console.log("Items to display (filtered):", itemsToReturn.length);
+
+                    // Build HTML
                     let html = "";
+                    itemsToReturn.forEach(p => {
+                        // Determine status badge color
+                        let statusBadgeClass = "badge bg-secondary";
+                        if (p.status === "Sedang Dipinjam") {
+                            statusBadgeClass = "badge bg-info";
+                        } else if (p.status === "Sebagian Dikembalikan") {
+                            statusBadgeClass = "badge bg-warning";
+                        } else if (p.status === "Dipinjam Kembali") {
+                            statusBadgeClass = "badge bg-secondary";
+                        } else if (p.status && p.status.includes("Rusak")) {
+                            statusBadgeClass = "badge bg-danger";
+                        }
 
-                    res.data
-                        .filter(p =>
-                            p.user_id == USER_ID &&
-                            (p.status === "Sedang Dipinjam" || p.status === "Sebagian Dikembalikan")
-                        )
-                        .forEach(p => {
-                            // Determine status badge color
-                            let statusBadgeClass = "badge bg-warning";
-                            if (p.status === "Sedang Dipinjam") {
-                                statusBadgeClass = "badge bg-info";
-                            } else if (p.status === "Selesai") {
-                                statusBadgeClass = "badge bg-success";
-                            } else if (p.status.includes("Rusak")) {
-                                statusBadgeClass = "badge bg-danger";
-                            }
-
-                            html += `
+                        html += `
         <tr>
-            <td><strong>${p.kode}</strong></td>
-            <td>${p.barang}</td>
-            <td>${p.tanggal}</td>
-            <td>${p.rencana_kembali}</td>
-            <td><span class="${statusBadgeClass}">${p.status}</span></td>
+            <td><strong>${p.kode || '-'}</strong></td>
+            <td>${p.barang || '-'}</td>
+            <td>${p.tanggal || '-'}</td>
+            <td>${p.rencana_kembali || '-'}</td>
+            <td><span class="${statusBadgeClass}">${p.status || '-'}</span></td>
             <td>
                 <button class="btn btn-danger btn-sm" 
                     onclick="openReturnInspeksi(${p.id})" 
@@ -623,17 +664,19 @@
                 </button>
             </td>
         </tr>`;
-                        });
+                    });
 
                     if (html === "") {
-                        html = '<tr><td colspan="6" class="text-center text-muted py-4">No borrowings found. All items have been returned.</td></tr>';
+                        html = '<tr><td colspan="6" class="text-center text-muted py-4">No items to return. You have returned all borrowed items or no borrowings yet.</td></tr>';
                     }
 
+                    console.log("Rendering HTML with", itemsToReturn.length, "items");
                     document.getElementById("kembaliTable").innerHTML = html;
                 })
                 .catch(err => {
-                    console.error("Error loading peminjaman data:", err);
-                    document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load borrowing data</td></tr>';
+                    console.error("=== API Error ===", err);
+                    console.error("Error message:", err.message);
+                    document.getElementById("kembaliTable").innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error: ' + err.message + '</td></tr>';
                 });
         }
 
@@ -970,18 +1013,27 @@
 
                     alert('Return Request Failed:\n\n' + errorMsg);
                 });
+        }
 
 
-            document.addEventListener('DOMContentLoaded', loadPeminjamanList);
-            document.addEventListener('DOMContentLoaded', () => {
-                const btn = document.getElementById('btnSubmitReturn');
-                if (btn) btn.addEventListener('click', submitReturnRequest);
+        // ═══════════════════════════════════════════════════════
+        // Initialize page on DOMContentLoaded
+        // ═══════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOMContentLoaded event fired");
+            console.log("Current USER_ID:", USER_ID);
 
-                const confirmBtn = document.getElementById('confirmReturnButton');
-                if (confirmBtn) {
-                    confirmBtn.addEventListener('click', doSubmitReturnRequest);
-                }
-            });
+            // Load peminjaman list
+            loadPeminjamanList();
+
+            const btn = document.getElementById('btnSubmitReturn');
+            if (btn) btn.addEventListener('click', submitReturnRequest);
+
+            const confirmBtn = document.getElementById('confirmReturnButton');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', doSubmitReturnRequest);
+            }
+        });
     </script>
 
 

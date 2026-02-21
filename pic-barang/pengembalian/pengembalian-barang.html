@@ -153,7 +153,7 @@
                             </thead>
                             <tbody id="table-pengembalian">
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">Loading...</td>
+                                    <td colspan="7" class="text-center text-muted">Loading...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -309,13 +309,13 @@
                             window.location.href = '/PROJECT/index.html';
                             return;
                         }
-                        document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="6" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
+                        document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="7" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
                         return;
                     }
                     const list = res.data || [];
                     const tbody = document.getElementById('table-pengembalian');
                     if (list.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No return request waiting inspection</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No return request waiting inspection</td></tr>';
                         return;
                     }
                     tbody.innerHTML = list.map(p => {
@@ -343,7 +343,7 @@
                         btn.addEventListener('click', () => openInspeksi(btn.getAttribute('data-id')));
                     });
                 })
-                .catch(() => document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="6" class="text-danger">Connection error</td></tr>');
+                .catch(() => document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="7" class="text-danger">Connection error</td></tr>');
         }
 
         function openInspeksi(pengembalianId) {

@@ -46,6 +46,9 @@ if (!$header) {
     exit;
 }
 
+// Calculate sudah_dikembalikan: total returned from OTHER completed pengembalian for same peminjaman
+$peminjaman_id_for_query = (int)$header['peminjaman_id'];
+
 $stmt = $conn->prepare("
     SELECT
         d.id,
@@ -58,14 +61,23 @@ $stmt = $conn->prepare("
         d.jumlah_rusak,
         d.sisa_dikembalikan,
         d.biaya_ganti_rugi,
-        d.catatan
+        d.catatan,
+        COALESCE((
+            SELECT SUM(dk2.jumlah_kembali)
+            FROM detail_pengembalian dk2
+            JOIN pengembalian k2 ON k2.id = dk2.pengembalian_id
+            WHERE k2.peminjaman_id = ?
+            AND dk2.barang_id = d.barang_id
+            AND k2.status = 'Selesai'
+            AND k2.id != d.pengembalian_id
+        ), 0) as sudah_dikembalikan
     FROM detail_pengembalian d
     JOIN barang b ON b.id = d.barang_id
     LEFT JOIN detail_peminjaman dp ON dp.barang_id = d.barang_id AND dp.peminjaman_id = ?
     WHERE d.pengembalian_id = ?
     ORDER BY b.nama_barang ASC
 ");
-$stmt->bind_param("ii", $header['peminjaman_id'], $pengembalian_id);
+$stmt->bind_param("iii", $peminjaman_id_for_query, $peminjaman_id_for_query, $pengembalian_id);
 $stmt->execute();
 $items = [];
 $r = $stmt->get_result();
