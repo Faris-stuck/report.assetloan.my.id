@@ -172,22 +172,20 @@ try {
     
     // Determine status based on how many items are returned vs total
     if ($sisa <= 0 && $total_items > 0) {
-        // All items returned - check damage
-        if ($total_damaged > 0) {
-            $final_status = ($total_damaged >= $total_items) ? 'Semua Rusak' : 'Dikembalikan';
-        } else {
-            $final_status = 'Dikembalikan';
-        }
+        // All items returned - regardless of damage status, mark as 'Dikembalikan'
+        $final_status = 'Dikembalikan';
         // Set tanggal_kembali only when ALL items returned
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ?, tanggal_kembali = CURDATE() WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     } else if ($total_returned > 0) {
         // Partial return - some items still out
-        $final_status = 'Sebagian Dikembalikan';
+        // Use 'Proses Return' to indicate inspection/return process is ongoing
+        $final_status = 'Proses Return';
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     } else {
         // Nothing returned (edge case: PIC set all qty to 0)
+        // Keep as 'Sedang Dipinjam' since no return yet
         $final_status = 'Sedang Dipinjam';
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);

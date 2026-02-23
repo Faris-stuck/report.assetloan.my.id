@@ -827,7 +827,7 @@
                     <td class="align-middle">${b.nama_barang}</td>
                     <td class="align-middle text-center"><span class="stok-display" data-barang-id="${b.id}">${b.stok_tersedia}</span></td>
                     <td class="align-middle">
-                        <input class="form-control" type="text" name="lokasi[${b.id}]" placeholder="Opsional - lokasi spesifik">
+                        <input class="form-control" type="text" name="lokasi[${b.id}]" placeholder="Lokasi dari database" value="${b.lokasi || ''}" readonly style="min-width: 250px; background-color: #e9ecef;">
                     </td>
                     <td class="align-middle">
                         <input class="form-control text-center qty-input" type="number" name="barang[${b.id}]" min="0" max="${b.stok_tersedia}" placeholder="0" style="min-width: 80px;" data-stok="${b.stok_tersedia}" data-nama="${b.nama_barang}">
