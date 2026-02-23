@@ -79,12 +79,13 @@ if (!$peminjaman_id) {
     $total_result = $count_total->get_result()->fetch_assoc();
     $total_items = (int)$total_result['total_items'];
 
-    // Hitung total yang sudah dikembalikan dari ALL pengembalian records (regardless of status)
+    // Hitung total yang sudah dikembalikan dari FINALIZED pengembalian records (status='Selesai')
+    // Only count approved/finalized ones, not pending submissions
     $count_returned = $conn->prepare("
         SELECT COALESCE(SUM(jumlah_kembali), 0) as total_returned
         FROM detail_pengembalian
         WHERE pengembalian_id IN (
-            SELECT id FROM pengembalian WHERE peminjaman_id = ?
+            SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Selesai'
         )
     ");
     $count_returned->bind_param("i", $peminjaman_id);
@@ -94,6 +95,31 @@ if (!$peminjaman_id) {
 
     // Hitung sisa yang belum dikembalikan
     $sisa_dikembalikan = $total_items - $total_returned;
+
+    // CHECK: Prevent multiple pending submissions (only ONE Diajukan/Dicek allowed at a time)
+    // This prevents duplicate submissions and allows sequential returns
+    $check_pending = $conn->prepare("
+        SELECT COUNT(*) as pending_count
+        FROM pengembalian
+        WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek')
+    ");
+    $check_pending->bind_param("i", $peminjaman_id);
+    $check_pending->execute();
+    $pending_result = $check_pending->get_result()->fetch_assoc();
+    $pending_count = (int)$pending_result['pending_count'];
+    
+    if ($pending_count > 0) {
+        http_response_code(400);
+        echo json_encode([
+            "status" => false, 
+            "message" => "Anda sudah memiliki pengajuan pengembalian yang menunggu persetujuan. Silakan menunggu PIC/Admin memeriksa pengajuan sebelumnya.",
+            "debug" => [
+                "peminjaman_id" => $peminjaman_id,
+                "pending_count" => $pending_count
+            ]
+        ]);
+        exit;
+    }
 
     // KEY VALIDATION: Only block if aggregate shows EVERYTHING already returned
     // This is the source of truth - NOT the status field

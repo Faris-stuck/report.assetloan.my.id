@@ -703,6 +703,8 @@
                     return 'Dikembalikan';
                 case 'Ditolak':
                     return 'Ditolak';
+                case 'Proses Return':
+                    return 'Proses Return';
                 default:
                     return dbStatus;
             }
@@ -730,6 +732,8 @@
                     return 'badge bg-success';
                 case 'Ditolak':
                     return 'badge bg-danger';
+                case 'Proses Return':
+                    return 'badge bg-info text-dark';
                 default:
                     return 'badge bg-secondary';
             }
@@ -757,6 +761,10 @@
             if (displayStatus === 'Sedang Dipinjam') {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="ajukanPengembalian('${peminjaman.id}')">
                     <i class="feather-refresh-cw"></i> Return
+                </button>`;
+            } else if (displayStatus === 'Proses Return') {
+                actionBtn = `<button class="btn btn-sm btn-outline-info" onclick="lihatDetail('${peminjaman.id}')">
+                    <i class="feather-eye"></i> View Return Status
                 </button>`;
             } else if (displayStatus === 'Ditolak') {
                 actionBtn = `<button class="btn btn-sm btn-outline-danger" onclick="lihatDetail('${peminjaman.id}')">
@@ -843,7 +851,10 @@
 
                 const semua = userPeminjaman;
                 const menunggu = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Menunggu Persetujuan');
-                const dipinjam = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Sedang Dipinjam');
+                const dipinjam = userPeminjaman.filter(p => {
+                    const ds = getDisplayStatus(p.status, p.status_en);
+                    return ds === 'Sedang Dipinjam' || ds === 'Proses Return';
+                });
                 const dikembalikan = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Dikembalikan');
                 const ditolak = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Ditolak');
 

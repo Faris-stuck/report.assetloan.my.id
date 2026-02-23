@@ -438,6 +438,45 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Extend Requests Section -->
+                    <div class="col-12 mt-3">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Extend Requests (Perpanjangan Peminjaman)</h5>
+                                <div>
+                                    <select id="extendFilter" class="form-select form-select-sm"
+                                        style="width:auto;display:inline-block;" onchange="loadExtendRequests()">
+                                        <option value="Pending" selected>Pending</option>
+                                        <option value="Approved">Approved</option>
+                                        <option value="Rejected">Rejected</option>
+                                        <option value="">All</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Borrow Code</th>
+                                            <th>Borrower</th>
+                                            <th>NRP</th>
+                                            <th>Current Return</th>
+                                            <th>Requested Date</th>
+                                            <th>Reason</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-extend">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- [ Main Content ] end -->
@@ -863,6 +902,104 @@
             const btn = document.getElementById('btnSubmitInspeksi');
             if (btn) btn.addEventListener('click', submitInspeksi);
         });
+
+        // ═══════════════════════════════════════════════════════
+        // Extend (Perpanjang) Functions
+        // ═══════════════════════════════════════════════════════
+        const API_EXTEND = '/PROJECT/api/extend';
+
+        function loadExtendRequests() {
+            const filterStatus = document.getElementById('extendFilter').value;
+            const url = API_EXTEND + '/list.php' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
+
+            fetch(url, { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = '/PROJECT/index.html';
+                        throw new Error('Unauthorized');
+                    }
+                    return r.json();
+                })
+                .then(res => {
+                    const tbody = document.getElementById('table-extend');
+                    if (!res.status) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
+                        return;
+                    }
+                    const list = res.data || [];
+                    if (list.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No extend requests</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = list.map(e => {
+                        let badge = '';
+                        if (e.extend_status === 'Pending') badge = '<span class="badge bg-warning text-dark">Pending</span>';
+                        else if (e.extend_status === 'Approved') badge = '<span class="badge bg-success">Approved</span>';
+                        else if (e.extend_status === 'Rejected') badge = '<span class="badge bg-danger">Rejected</span>';
+
+                        let actionHtml = '';
+                        if (e.extend_status === 'Pending') {
+                            actionHtml = `
+                                <button class="btn btn-sm btn-success me-1" onclick="approveExtend(${e.extend_id})" title="Approve">
+                                    <i class="feather-check"></i> Approve
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="rejectExtend(${e.extend_id})" title="Reject">
+                                    <i class="feather-x"></i> Reject
+                                </button>`;
+                        } else {
+                            actionHtml = `<span class="text-muted small">${e.approved_by_nama ? 'By: ' + e.approved_by_nama : '-'}</span>`;
+                            if (e.approved_at) actionHtml += `<br><span class="text-muted small">${e.approved_at}</span>`;
+                        }
+
+                        return `
+                        <tr>
+                            <td><code>${e.kode_peminjaman}</code></td>
+                            <td>${e.nama_peminjam}</td>
+                            <td>${e.nrp}</td>
+                            <td>${e.tanggal_kembali_sekarang}</td>
+                            <td><strong>${e.tanggal_perpanjang}</strong></td>
+                            <td><small>${e.alasan || '-'}</small></td>
+                            <td>${badge}</td>
+                            <td>${actionHtml}</td>
+                        </tr>`;
+                    }).join('');
+                })
+                .catch(err => {
+                    document.getElementById('table-extend').innerHTML = '<tr><td colspan="8" class="text-danger">Connection error</td></tr>';
+                });
+        }
+
+        function approveExtend(extendId) {
+            if (!confirm('Setujui perpanjangan peminjaman ini?\n\nTanggal kembali akan diperbarui ke tanggal yang diminta.')) return;
+
+            const fd = new FormData();
+            fd.append('extend_id', extendId);
+
+            fetch(API_EXTEND + '/approve.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    if (res.status) loadExtendRequests();
+                })
+                .catch(() => alert('Connection error'));
+        }
+
+        function rejectExtend(extendId) {
+            if (!confirm('Tolak perpanjangan peminjaman ini?')) return;
+
+            const fd = new FormData();
+            fd.append('extend_id', extendId);
+
+            fetch(API_EXTEND + '/reject.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    if (res.status) loadExtendRequests();
+                })
+                .catch(() => alert('Connection error'));
+        }
+
+        document.addEventListener('DOMContentLoaded', loadExtendRequests);
     </script>
 
 </body>

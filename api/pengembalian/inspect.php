@@ -86,19 +86,25 @@ try {
 
     $upd = $conn->prepare("
         UPDATE detail_pengembalian
-        SET kondisi_kembali = ?, jumlah_rusak = ?, biaya_ganti_rugi = ?, catatan = ?
+        SET jumlah_kembali = ?, kondisi_kembali = ?, jumlah_rusak = ?, biaya_ganti_rugi = ?, catatan = ?
         WHERE pengembalian_id = ? AND barang_id = ?
     ");
 
     // Reset stok return effect first by not supporting re-inspect after completion.
     foreach ($items as $it) {
         $barang_id = (int)($it['barang_id'] ?? 0);
+        $jumlah_kembali = max(0, (int)($it['jumlah_kembali'] ?? 0));
         $kondisi = ($it['kondisi_kembali'] ?? 'Baik') === 'Rusak' ? 'Rusak' : 'Baik';
         $jumlah_rusak = max(0, (int)($it['jumlah_rusak'] ?? 0));
         $biaya = (float)($it['biaya_ganti_rugi'] ?? 0);
         $catatan = trim((string)($it['catatan'] ?? ''));
 
         if (!$barang_id) continue;
+
+        // Ensure jumlah_rusak does not exceed jumlah_kembali
+        if ($jumlah_rusak > $jumlah_kembali) {
+            $jumlah_rusak = $jumlah_kembali;
+        }
 
         if ($kondisi === 'Rusak') {
             $has_rusak = 1;
@@ -114,7 +120,7 @@ try {
             }
         }
 
-        $upd->bind_param("sidsii", $kondisi, $jumlah_rusak, $biaya, $catatan, $pengembalian_id, $barang_id);
+        $upd->bind_param("isidsii", $jumlah_kembali, $kondisi, $jumlah_rusak, $biaya, $catatan, $pengembalian_id, $barang_id);
         if (!$upd->execute()) {
             throw new Exception("Gagal update detail pengembalian: " . $upd->error);
         }
@@ -136,32 +142,57 @@ try {
         }
     }
 
-    // Update peminjaman status based on damage
+    // Update peminjaman status based on AGGREGATE totals across ALL pengembalian records (including current one)
     $peminjaman_id = (int)$header['peminjaman_id'];
     
-    // Get total items and total damaged to determine correct final status
+    // Get total items borrowed
     $tq = $conn->prepare("SELECT SUM(jumlah) as total FROM detail_peminjaman WHERE peminjaman_id = ?");
     $tq->bind_param("i", $peminjaman_id);
     $tq->execute();
     $tq_result = $tq->get_result()->fetch_assoc();
     $total_items = (int)($tq_result['total'] ?? 0);
     
-    // Get total damaged from inspection
-    $td = $conn->prepare("SELECT SUM(jumlah_rusak) as total FROM detail_pengembalian WHERE pengembalian_id = ?");
-    $td->bind_param("i", $pengembalian_id);
-    $td->execute();
-    $td_result = $td->get_result()->fetch_assoc();
-    $total_damaged = (int)($td_result['total'] ?? 0);
+    // Get AGGREGATE total returned and damaged from ALL pengembalian records (incl. current one being finalized)
+    // This counts pengembalian with status IN ('Dicek', 'Selesai') to include the current inspection
+    $agg = $conn->prepare("
+        SELECT 
+            COALESCE(SUM(dp.jumlah_kembali), 0) as total_kembali,
+            COALESCE(SUM(dp.jumlah_rusak), 0) as total_rusak
+        FROM detail_pengembalian dp
+        JOIN pengembalian p ON dp.pengembalian_id = p.id
+        WHERE p.peminjaman_id = ? AND (p.status = 'Selesai' OR p.id = ?)
+    ");
+    $agg->bind_param("ii", $peminjaman_id, $pengembalian_id);
+    $agg->execute();
+    $agg_result = $agg->get_result()->fetch_assoc();
+    $total_returned = (int)($agg_result['total_kembali'] ?? 0);
+    $total_damaged = (int)($agg_result['total_rusak'] ?? 0);
     
-    // Set status based on damage: Dikembalikan (no damage), Sebagian Rusak (some damaged), Semua Rusak (all damaged)
-    if ($total_damaged > 0) {
-        $final_status = ($total_damaged >= $total_items) ? 'Semua Rusak' : 'Sebagian Rusak';
+    $sisa = $total_items - $total_returned;
+    
+    // Determine status based on how many items are returned vs total
+    if ($sisa <= 0 && $total_items > 0) {
+        // All items returned - check damage
+        if ($total_damaged > 0) {
+            $final_status = ($total_damaged >= $total_items) ? 'Semua Rusak' : 'Dikembalikan';
+        } else {
+            $final_status = 'Dikembalikan';
+        }
+        // Set tanggal_kembali only when ALL items returned
+        $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ?, tanggal_kembali = CURDATE() WHERE id = ?");
+        $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
+    } else if ($total_returned > 0) {
+        // Partial return - some items still out
+        $final_status = 'Sebagian Dikembalikan';
+        $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
+        $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     } else {
-        $final_status = 'Dikembalikan';
+        // Nothing returned (edge case: PIC set all qty to 0)
+        $final_status = 'Sedang Dipinjam';
+        $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
+        $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     }
     
-    $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ?, tanggal_kembali = CURDATE() WHERE id = ?");
-    $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     if (!$upd_peminjaman->execute()) {
         throw new Exception("Gagal update peminjaman status: " . $upd_peminjaman->error);
     }

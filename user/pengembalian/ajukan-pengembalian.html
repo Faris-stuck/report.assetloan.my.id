@@ -498,6 +498,45 @@
     </div>
 
     <!-- Return Confirmation Modal -->
+
+    <!-- Modal: Request Extend -->
+    <div class="modal fade" id="modalExtend" tabindex="-1" aria-labelledby="modalExtendLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title" id="modalExtendLabel">
+                        <i class="feather-calendar me-2"></i>Perpanjang Masa Peminjaman
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="extendPeminjamanId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tanggal Kembali Saat Ini</label>
+                        <input type="text" class="form-control" id="extendCurrentDate" readonly
+                            style="background-color: #f5f5f5;">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tanggal Perpanjangan Baru <span
+                                class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="extendNewDate" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Alasan Perpanjangan <span
+                                class="text-danger">*</span></label>
+                        <textarea class="form-control" id="extendAlasan" rows="3"
+                            placeholder="Jelaskan alasan perpanjangan masa peminjaman..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-warning" onclick="submitExtendRequest()">
+                        <i class="feather-send me-1"></i>Ajukan Perpanjangan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="confirmReturnModal" tabindex="-1" aria-labelledby="confirmReturnLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -556,9 +595,11 @@
         }
 
         const API = '/PROJECT/api/peminjaman';
+        const API_EXTEND = '/PROJECT/api/extend';
         let currentPeminjamanId = null;
         let currentPeminjamanData = null;
         let modalReturnInspeksi = null;
+        let modalExtend = null;
         let shouldSubmitReturn = false;
         let pendingReturnData = null;
 
@@ -649,19 +690,33 @@
                             statusBadgeClass = "badge bg-danger";
                         }
 
+                        // Determine if extend button should be shown
+                        const canExtend = ["Sedang Dipinjam", "Disetujui", "Sebagian Dikembalikan"].includes(p.status);
+
                         html += `
         <tr>
             <td><strong>${p.kode || '-'}</strong></td>
             <td>${p.barang || '-'}</td>
             <td>${p.tanggal || '-'}</td>
             <td>${p.rencana_kembali || '-'}</td>
-            <td><span class="${statusBadgeClass}">${p.status || '-'}</span></td>
             <td>
-                <button class="btn btn-danger btn-sm" 
-                    onclick="openReturnInspeksi(${p.id})" 
-                    title="Request return for this borrowing">
-                    <i class="feather-undo"></i> Return
-                </button>
+                <span class="${statusBadgeClass}">${p.status || '-'}</span>
+                <span id="extend-badge-${p.id}"></span>
+            </td>
+            <td>
+                <div class="d-flex gap-1 flex-wrap">
+                    <button class="btn btn-danger btn-sm" 
+                        onclick="openReturnInspeksi(${p.id})" 
+                        title="Request return for this borrowing">
+                        <i class="feather-undo"></i> Return
+                    </button>
+                    ${canExtend ? `<button class="btn btn-warning btn-sm" 
+                        onclick="openExtendModal(${p.id}, '${p.rencana_kembali || ''}')" 
+                        title="Request extend for this borrowing"
+                        id="btn-extend-${p.id}">
+                        <i class="feather-calendar"></i> Extend
+                    </button>` : ''}
+                </div>
             </td>
         </tr>`;
                     });
@@ -672,6 +727,11 @@
 
                     console.log("Rendering HTML with", itemsToReturn.length, "items");
                     document.getElementById("kembaliTable").innerHTML = html;
+
+                    // Load extend status for each item
+                    itemsToReturn.forEach(p => {
+                        loadExtendStatus(p.id);
+                    });
                 })
                 .catch(err => {
                     console.error("=== API Error ===", err);
@@ -1015,6 +1075,87 @@
                 });
         }
 
+
+        // ═══════════════════════════════════════════════════════
+        // Extend (Perpanjang) Functions
+        // ═══════════════════════════════════════════════════════
+        function loadExtendStatus(peminjamanId) {
+            fetch(API_EXTEND + '/status.php?peminjaman_id=' + encodeURIComponent(peminjamanId), { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.status || !res.has_extend) return;
+                    const ext = res.data;
+                    const badgeEl = document.getElementById('extend-badge-' + peminjamanId);
+                    const btnEl = document.getElementById('btn-extend-' + peminjamanId);
+                    if (!badgeEl) return;
+
+                    if (ext.extend_status === 'Pending') {
+                        badgeEl.innerHTML = '<br><span class="badge bg-warning text-dark mt-1"><i class="feather-clock"></i> Extend Pending</span>';
+                        if (btnEl) btnEl.style.display = 'none';
+                    } else if (ext.extend_status === 'Approved') {
+                        badgeEl.innerHTML = '<br><span class="badge bg-success mt-1"><i class="feather-check"></i> Extend Approved</span>';
+                        if (btnEl) btnEl.style.display = 'none';
+                    } else if (ext.extend_status === 'Rejected') {
+                        badgeEl.innerHTML = '<br><span class="badge bg-danger mt-1"><i class="feather-x"></i> Extend Rejected</span>';
+                        // Allow re-request after rejection
+                    }
+                })
+                .catch(() => { });
+        }
+
+        function openExtendModal(peminjamanId, currentReturnDate) {
+            document.getElementById('extendPeminjamanId').value = peminjamanId;
+            document.getElementById('extendCurrentDate').value = currentReturnDate || '-';
+            document.getElementById('extendNewDate').value = '';
+            document.getElementById('extendAlasan').value = '';
+
+            // Set min date to tomorrow based on current return date
+            if (currentReturnDate) {
+                // Parse dd/mm/yyyy format
+                const parts = currentReturnDate.split('/');
+                if (parts.length === 3) {
+                    const dateObj = new Date(parts[2], parts[1] - 1, parseInt(parts[0]) + 1);
+                    const minDate = dateObj.toISOString().split('T')[0];
+                    document.getElementById('extendNewDate').min = minDate;
+                }
+            }
+
+            if (!modalExtend) modalExtend = new bootstrap.Modal(document.getElementById('modalExtend'));
+            modalExtend.show();
+        }
+
+        function submitExtendRequest() {
+            const peminjamanId = document.getElementById('extendPeminjamanId').value;
+            const newDate = document.getElementById('extendNewDate').value;
+            const alasan = document.getElementById('extendAlasan').value.trim();
+
+            if (!newDate) {
+                alert('Tanggal perpanjangan harus diisi');
+                return;
+            }
+            if (!alasan) {
+                alert('Alasan perpanjangan harus diisi');
+                return;
+            }
+
+            if (!confirm('Ajukan perpanjangan masa peminjaman?\n\nTanggal baru: ' + newDate + '\nAlasan: ' + alasan)) return;
+
+            const fd = new FormData();
+            fd.append('peminjaman_id', peminjamanId);
+            fd.append('tanggal_perpanjang', newDate);
+            fd.append('alasan', alasan);
+
+            fetch(API_EXTEND + '/request.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    if (res.status) {
+                        if (modalExtend) modalExtend.hide();
+                        loadPeminjamanList();
+                    }
+                })
+                .catch(() => alert('Connection error'));
+        }
 
         // ═══════════════════════════════════════════════════════
         // Initialize page on DOMContentLoaded

@@ -107,16 +107,17 @@ try {
             ];
         }
 
-        // Aggregate returns from ALL pengembalian records for this peminjaman
-        // Calculate total returned and damaged across all submissions
+        // Aggregate returns from ALL FINALIZED pengembalian records for this peminjaman
+        // Only count pengembalian with status='Selesai' (completed/finalized by PIC/Admin)
+        // Pengembalian with status 'Diajukan', 'Dicek' are still pending and not included
         $agg = $conn->prepare("
             SELECT 
                 SUM(dp.jumlah_kembali) as total_kembali,
                 SUM(dp.jumlah_rusak) as total_rusak,
-                SUM(CASE WHEN p.status = 'Selesai' THEN 1 ELSE 0 END) as has_selesai
+                COUNT(DISTINCT p.id) as has_selesai
             FROM detail_pengembalian dp
             JOIN pengembalian p ON dp.pengembalian_id = p.id
-            WHERE p.peminjaman_id = ?
+            WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
         ");
         $agg->bind_param("i", $row['id']);
         $agg->execute();
@@ -138,7 +139,7 @@ try {
             $has_selesai = (int)($agg_result['has_selesai'] ?? 0);
         }
         
-        // Get detail for latest pengembalian for display purposes
+        // Get detail for latest pengembalian for display purposes (including pending ones)
         $qk = $conn->prepare("SELECT id, status FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
         $qk->bind_param("i", $row['id']);
         $qk->execute();
@@ -170,24 +171,22 @@ try {
             }
         }
         
-        // STATUS CALCULATION: Use aggregate totals + pending returns to determine accurate status
-        // If there's a pending return (not Selesai yet), use intermediate status
-        // Only use final status when all items returned AND pengembalian is Selesai
+        // STATUS CALCULATION: Use aggregate totals from FINALIZED records (status='Selesai')
+        // Check latest pengembalian to determine if still in progress
         
         $sisa = $total_items - $total_kembali;
         
-        if ($sisa <= 0 && $total_items > 0) {
-            // All items have been returned - status is "Dikembalikan" regardless of damage
-            // (damage detail is shown in modal, not in card body status)
+        if ($sisa <= 0 && $total_items > 0 && $has_selesai > 0) {
+            // All items have been returned and approved
             $row['status'] = 'Dikembalikan';
             $row['status_en'] = 'Returned';
         } else if ($total_kembali > 0 && $sisa > 0) {
-            // Partial return - items still pending
+            // Partial return - some items still out
             $row['status'] = 'Sebagian Dikembalikan';
             $row['status_en'] = 'Partially Returned';
         } else if ($total_kembali === 0 && $total_items > 0) {
-            // No items returned yet
-            if ($pengembalian_status && strtolower($pengembalian_status) !== 'selesai') {
+            // No items have been finalized/approved yet
+            if ($has_pengembalian && $pengembalian_status && strtolower($pengembalian_status) !== 'selesai') {
                 // But there's a pending return submission
                 $row['status'] = 'Proses Return';
                 $row['status_en'] = 'Return In Progress';

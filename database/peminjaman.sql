@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Waktu pembuatan: 19 Feb 2026 pada 05.52
+-- Waktu pembuatan: 23 Feb 2026 pada 04.10
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.1.25
 
@@ -47,7 +47,7 @@ CREATE TABLE `barang` (
 --
 
 INSERT INTO `barang` (`id`, `kode_barang`, `nama_barang`, `kategori`, `lokasi`, `stok_total`, `stok_tersedia`, `safety_stock`, `kondisi`, `keterangan`, `created_at`, `stok_rusak`) VALUES
-(144, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 65, 62, 1, 'Baik', '', '2026-02-13 08:09:53', 0),
+(144, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 65, 60, 1, 'Baik', '', '2026-02-13 08:09:53', 1),
 (145, 'ADC-KEYB-01', 'Keyboard Fantech', 'Keyboard', 'ICT - MAIN OFFICE', 11, 11, 5, 'Baik', 'Keperluan Keyboard', '2026-02-13 08:24:52', 0),
 (146, 'ADC-LAP-02', 'Laptop Lenovo Ideapad Slim 3', 'Laptop', 'ICT - MAIN OFFICE', 9, 9, 1, 'Baik', '', '2026-02-13 15:09:29', 0),
 (147, 'ADC-LAP-03', 'Laptop Lenovo IDeapad Slim 5', 'Laptop', 'ICT - MAIN OFFICE', 9, 9, 1, 'Baik', '', '2026-02-13 15:10:01', 0),
@@ -90,7 +90,10 @@ INSERT INTO `detail_peminjaman` (`id`, `peminjaman_id`, `barang_id`, `lokasi`, `
 (109, 80, 147, '', 1, 'Baik', '2026-02-19 07:22:10'),
 (110, 80, 148, '', 1, 'Baik', '2026-02-19 07:22:10'),
 (111, 80, 149, '', 1, 'Baik', '2026-02-19 07:22:10'),
-(112, 81, 144, '', 5, 'Baik', '2026-02-19 09:13:05');
+(112, 81, 144, '', 5, 'Baik', '2026-02-19 09:13:05'),
+(113, 82, 144, '', 2, 'Baik', '2026-02-20 07:24:57'),
+(114, 83, 144, '', 4, 'Baik', '2026-02-20 15:35:35'),
+(115, 84, 144, '', 5, 'Baik', '2026-02-21 16:21:12');
 
 -- --------------------------------------------------------
 
@@ -105,6 +108,7 @@ CREATE TABLE `detail_pengembalian` (
   `jumlah_kembali` int(11) NOT NULL DEFAULT 1,
   `kondisi_kembali` enum('Baik','Rusak') NOT NULL DEFAULT 'Baik',
   `jumlah_rusak` int(11) NOT NULL DEFAULT 0,
+  `sisa_dikembalikan` int(11) NOT NULL DEFAULT 0,
   `biaya_ganti_rugi` decimal(15,2) NOT NULL DEFAULT 0.00,
   `catatan` text DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
@@ -114,16 +118,50 @@ CREATE TABLE `detail_pengembalian` (
 -- Dumping data untuk tabel `detail_pengembalian`
 --
 
-INSERT INTO `detail_pengembalian` (`id`, `pengembalian_id`, `barang_id`, `jumlah_kembali`, `kondisi_kembali`, `jumlah_rusak`, `biaya_ganti_rugi`, `catatan`, `created_at`) VALUES
-(13, 10, 144, 15, 'Baik', 0, 0.00, '', '2026-02-13 10:41:43'),
-(14, 11, 144, 10, 'Baik', 0, 0.00, '', '2026-02-13 14:07:43'),
-(15, 12, 145, 5, 'Baik', 0, 0.00, '', '2026-02-18 07:51:32'),
-(16, 13, 144, 2, 'Baik', 0, 0.00, '', '2026-02-18 14:41:55'),
-(17, 14, 145, 3, 'Baik', 0, 0.00, '', '2026-02-18 15:33:51'),
-(18, 15, 144, 2, 'Baik', 0, 0.00, '', '2026-02-19 07:32:25'),
-(19, 16, 144, 4, 'Baik', 0, 0.00, '', '2026-02-19 08:41:16'),
-(20, 17, 144, 7, 'Baik', 0, 0.00, '', '2026-02-19 09:06:31'),
-(21, 18, 144, 2, 'Baik', 0, 0.00, '', '2026-02-19 09:42:15');
+INSERT INTO `detail_pengembalian` (`id`, `pengembalian_id`, `barang_id`, `jumlah_kembali`, `kondisi_kembali`, `jumlah_rusak`, `sisa_dikembalikan`, `biaya_ganti_rugi`, `catatan`, `created_at`) VALUES
+(13, 10, 144, 15, 'Baik', 0, 0, 0.00, '', '2026-02-13 10:41:43'),
+(14, 11, 144, 10, 'Baik', 0, 0, 0.00, '', '2026-02-13 14:07:43'),
+(15, 12, 145, 5, 'Baik', 0, 0, 0.00, '', '2026-02-18 07:51:32'),
+(16, 13, 144, 2, 'Baik', 0, 0, 0.00, '', '2026-02-18 14:41:55'),
+(17, 14, 145, 3, 'Baik', 0, 0, 0.00, '', '2026-02-18 15:33:51'),
+(18, 15, 144, 2, 'Baik', 0, 0, 0.00, '', '2026-02-19 07:32:25'),
+(19, 16, 144, 4, 'Baik', 0, 0, 0.00, '', '2026-02-19 08:41:16'),
+(20, 17, 144, 7, 'Baik', 0, 0, 0.00, '', '2026-02-19 09:06:31'),
+(21, 18, 144, 2, 'Baik', 0, 0, 0.00, '', '2026-02-19 09:42:15'),
+(22, 19, 144, 1, 'Baik', 0, 0, 0.00, '', '2026-02-20 08:32:24'),
+(23, 20, 144, 2, 'Rusak', 1, 0, 0.00, '', '2026-02-20 08:38:10'),
+(24, 23, 144, 1, 'Baik', 0, 0, 0.00, '', '2026-02-20 08:54:18'),
+(25, 24, 144, 1, 'Baik', 0, 0, 0.00, '', '2026-02-20 12:56:41'),
+(26, 25, 144, 2, 'Baik', 0, 3, 0.00, '', '2026-02-21 17:32:43'),
+(27, 26, 144, 2, 'Baik', 0, 1, 0.00, '', '2026-02-23 08:46:47'),
+(28, 27, 144, 1, 'Baik', 0, 0, 0.00, '', '2026-02-23 08:47:40'),
+(29, 28, 144, 1, 'Baik', 0, 0, 0.00, '', '2026-02-23 09:17:17');
+
+-- --------------------------------------------------------
+
+--
+-- Struktur dari tabel `extend_peminjaman`
+--
+
+CREATE TABLE `extend_peminjaman` (
+  `id` int(11) NOT NULL,
+  `peminjaman_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `tanggal_kembali_sekarang` date NOT NULL,
+  `tanggal_perpanjang` date NOT NULL,
+  `alasan` text DEFAULT NULL,
+  `status` enum('Pending','Approved','Rejected') NOT NULL DEFAULT 'Pending',
+  `approved_by` int(11) DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `extend_peminjaman`
+--
+
+INSERT INTO `extend_peminjaman` (`id`, `peminjaman_id`, `user_id`, `tanggal_kembali_sekarang`, `tanggal_perpanjang`, `alasan`, `status`, `approved_by`, `approved_at`, `created_at`) VALUES
+(1, 83, 1004, '2026-02-20', '2026-02-25', 'TES EXTEND', 'Approved', 1, '2026-02-23 03:47:24', '2026-02-23 09:42:06');
 
 -- --------------------------------------------------------
 
@@ -189,7 +227,10 @@ INSERT INTO `peminjaman` (`id`, `kode_peminjaman`, `user_id`, `nama_peminjam`, `
 (78, 'PMJ-1771375834', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'sf sfv', '2026-02-18', '2026-02-19', '2026-02-19', 'Dikembalikan', '', '2026-02-18 07:50:34', '2026-02-19'),
 (79, 'PMJ-1771385466', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'kjhg', '2026-02-18', '2026-02-19', '2026-02-19', 'Dikembalikan', '', '2026-02-18 10:31:06', '2026-02-19'),
 (80, 'PMJ-1771460530', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'JYD', '2026-02-19', '2026-02-22', NULL, 'Ditolak', '55E', '2026-02-19 07:22:10', NULL),
-(81, 'PMJ-1771467185', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'sf', '2026-02-19', '2026-02-22', '2026-02-19', 'Dikembalikan', '', '2026-02-19 09:13:05', '2026-02-19');
+(81, 'PMJ-1771467185', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'sf', '2026-02-19', '2026-02-22', '2026-02-19', 'Dikembalikan', '', '2026-02-19 09:13:05', '2026-02-20'),
+(82, 'PMJ-1771547097', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'Hydraulic', '2026-02-20', '2026-02-23', '2026-02-20', 'Dikembalikan', '', '2026-02-20 07:24:57', '2026-02-20'),
+(83, 'PMJ-1771576535', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'ICT - MAIN OFFICE', '2026-02-20', '2026-02-25', '2026-02-21', 'Sedang Dipinjam', 'TES NOTIFIKASI PERINGATAN SEGALA KONFIRMASI', '2026-02-20 15:35:35', NULL),
+(84, 'PMJ-1771665671', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'ghj', '2026-02-21', '2026-02-21', '2026-02-21', 'Dikembalikan', '', '2026-02-21 16:21:11', '2026-02-23');
 
 -- --------------------------------------------------------
 
@@ -227,7 +268,15 @@ INSERT INTO `pengembalian` (`id`, `kode_pengembalian`, `peminjaman_id`, `user_id
 (15, 'KMB-1771461145', 78, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-19 07:32:25', '2026-02-19 08:09:03', '2026-02-19 08:09:03'),
 (16, 'KMB-1771465276', 76, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-19 08:41:16', '2026-02-19 08:57:18', '2026-02-19 08:57:18'),
 (17, 'KMB-1771466791', 79, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-19 09:06:31', '2026-02-19 09:06:52', '2026-02-19 09:06:52'),
-(18, 'KMB-1771468935', 81, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-19 09:42:15', '2026-02-19 09:58:23', '2026-02-19 09:58:23');
+(18, 'KMB-1771468935', 81, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-19 09:42:15', '2026-02-19 09:58:23', '2026-02-19 09:58:23'),
+(19, 'KMB-1771551144', 82, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-20 08:32:24', '2026-02-20 08:32:46', '2026-02-20 08:32:46'),
+(20, 'KMB-1771551490', 81, 1004, 'Selesai', '', '', 'pic_barang', 1006, 1, 0.00, '2026-02-20 08:38:10', '2026-02-20 08:48:36', '2026-02-20 08:48:36'),
+(23, 'KMB-1771552458', 82, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-20 08:54:18', '2026-02-20 08:54:28', '2026-02-20 08:54:28'),
+(24, 'KMB-1771567001', 81, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-20 12:56:41', '2026-02-20 13:38:38', '2026-02-20 13:38:38'),
+(25, 'KMB-1771669963', 84, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-21 17:32:43', '2026-02-23 08:46:16', '2026-02-23 08:46:16'),
+(26, 'KMB-1771811207', 84, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-23 08:46:47', '2026-02-23 08:47:31', '2026-02-23 08:47:31'),
+(27, 'KMB-1771811260', 84, 1004, 'Selesai', '', '', 'pic_barang', 1006, 0, 0.00, '2026-02-23 08:47:40', '2026-02-23 09:41:31', '2026-02-23 09:41:31'),
+(28, 'KMB-1771813037', 84, 1004, 'Diajukan', '', NULL, NULL, NULL, 0, 0.00, '2026-02-23 09:17:17', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -302,7 +351,7 @@ INSERT INTO `users` (`id`, `nama`, `nrp`, `email`, `password`, `role`, `created_
 (1013, 'afsdfsvs', '13112', 'a3@gmail.com', '$2y$10$5Ayl0AGHXdohwE8iPZ0yvesNNVCg.oOjYUBjTryuDMdjlZmBr12W2', 'pic_barang', '2026-02-13 14:39:47'),
 (1014, 'advsdgss', '2424', 'a1221@gmail.com', '$2y$10$iyCiHSkIAsHDmz3svlAbj.hiReztaF4zcaAm7xW/8a8zQ0/Bq9ujO', 'user', '2026-02-13 14:40:07'),
 (1015, 'advdvs', '28y2846274', 'aaiigi@gmail.com', '$2y$10$r/3.zpk0yU1L5.ZIoeBC6.nrSQ7KYZ0jlyLvsOPg8fHNfEC0.iV/2', 'admin', '2026-02-13 14:41:17'),
-(1016, 'aaue', '2112', 'ds@gmais.com', '$2y$10$4kURlxA5cfWbMFRLSTKIpuS.9B6zU5ocOeeDGK2dCZdqK5.7BXzfm', 'operator', '2026-02-18 03:47:11');
+(1016, 'aaue', '2112', 'ds@gmais.com', '$2y$10$r7TzaIymk0YuJQ77g3iSEutqDyhUUCFRgMw2QluMgFTku1n2asBke', 'operator', '2026-02-18 03:47:11');
 
 -- --------------------------------------------------------
 
@@ -352,6 +401,15 @@ ALTER TABLE `detail_pengembalian`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_detail_pengembalian_pengembalian` (`pengembalian_id`),
   ADD KEY `idx_detail_pengembalian_barang` (`barang_id`);
+
+--
+-- Indeks untuk tabel `extend_peminjaman`
+--
+ALTER TABLE `extend_peminjaman`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `peminjaman_id` (`peminjaman_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `approved_by` (`approved_by`);
 
 --
 -- Indeks untuk tabel `pembelian_barang`
@@ -421,13 +479,19 @@ ALTER TABLE `barang`
 -- AUTO_INCREMENT untuk tabel `detail_peminjaman`
 --
 ALTER TABLE `detail_peminjaman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_pengembalian`
 --
 ALTER TABLE `detail_pengembalian`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
+-- AUTO_INCREMENT untuk tabel `extend_peminjaman`
+--
+ALTER TABLE `extend_peminjaman`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT untuk tabel `pembelian_barang`
@@ -439,13 +503,13 @@ ALTER TABLE `pembelian_barang`
 -- AUTO_INCREMENT untuk tabel `peminjaman`
 --
 ALTER TABLE `peminjaman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT untuk tabel `pengembalian`
 --
 ALTER TABLE `pengembalian`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT untuk tabel `riwayat_pembelian`
@@ -488,6 +552,14 @@ ALTER TABLE `detail_peminjaman`
 ALTER TABLE `detail_pengembalian`
   ADD CONSTRAINT `fk_detail_pengembalian_barang` FOREIGN KEY (`barang_id`) REFERENCES `barang` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_detail_pengembalian_pengembalian` FOREIGN KEY (`pengembalian_id`) REFERENCES `pengembalian` (`id`) ON DELETE CASCADE;
+
+--
+-- Ketidakleluasaan untuk tabel `extend_peminjaman`
+--
+ALTER TABLE `extend_peminjaman`
+  ADD CONSTRAINT `extend_peminjaman_ibfk_1` FOREIGN KEY (`peminjaman_id`) REFERENCES `peminjaman` (`id`),
+  ADD CONSTRAINT `extend_peminjaman_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `extend_peminjaman_ibfk_3` FOREIGN KEY (`approved_by`) REFERENCES `users` (`id`);
 
 --
 -- Ketidakleluasaan untuk tabel `pembelian_barang`

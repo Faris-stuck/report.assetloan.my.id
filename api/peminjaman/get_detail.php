@@ -59,8 +59,8 @@ try {
         exit;
     }
 
-    // Get detail items WITH aggregate return history from ALL pengembalian records
-    // This ensures user sees correct "remaining to return" across all submission statuses
+    // Get detail items WITH aggregate return history from ONLY FINALIZED pengembalian records
+    // This shows user what's already been returned and approved
     $stmt = $conn->prepare("
         SELECT
             d.id,
@@ -74,7 +74,7 @@ try {
         LEFT JOIN detail_pengembalian dr ON dr.barang_id = d.barang_id 
             AND dr.pengembalian_id IN (
                 SELECT id FROM pengembalian 
-                WHERE peminjaman_id = ?
+                WHERE peminjaman_id = ? AND status = 'Selesai'
             )
         WHERE d.peminjaman_id = ?
         GROUP BY d.id, d.barang_id, d.jumlah, b.kode_barang, b.nama_barang

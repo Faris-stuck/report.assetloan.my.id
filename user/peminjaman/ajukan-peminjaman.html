@@ -1206,16 +1206,16 @@
             const dipinjam = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                // Include items still being borrowed and partial returns
-                return s === 'sedang dipinjam' || s === 'sebagian dikembalikan' ||
-                    se === 'borrowed' || se === 'partially returned';
+                // Include items still being borrowed, partial returns, and in-progress returns
+                return s === 'sedang dipinjam' || s === 'sebagian dikembalikan' || s === 'proses return' ||
+                    se === 'borrowed' || se === 'partially returned' || se === 'return in progress';
             });
             const dikembalikan = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
-                // Include all returned items: "Dikembalikan", "Sebagian Dikembalikan", "Sebagian Rusak", "Semua Rusak"
-                return s === 'dikembalikan' || s === 'sebagian dikembalikan' || s === 'sebagian rusak' || s === 'semua rusak' ||
-                    se === 'returned' || se === 'partially returned' || se === 'partially damaged' || se === 'fully damaged';
+                // Include all returned items: "Dikembalikan", "Sebagian Dikembalikan", "Sebagian Rusak", "Semua Rusak", "Proses Return"
+                return s === 'dikembalikan' || s === 'sebagian dikembalikan' || s === 'sebagian rusak' || s === 'semua rusak' || s === 'proses return' ||
+                    se === 'returned' || se === 'partially returned' || se === 'partially damaged' || se === 'fully damaged' || se === 'return in progress';
             });
             const ditolak = sortedData.filter(p => {
                 const s = (p.status || '').toString().toLowerCase();
@@ -1248,7 +1248,10 @@
                 else if (item.status === "Dikembalikan") badgeClass = "bg-success";
                 else if (item.status === "Ditolak") badgeClass = "bg-danger";
                 else if (item.status === "Sebagian Dikembalikan") badgeClass = 'bg-warning text-dark';
-                else if (item.status === "Proses Return") badgeClass = "bg-secondary";
+                else if (item.status === "Proses Return") badgeClass = 'bg-info text-dark';
+                else if (item.status_en === "Return In Progress") badgeClass = 'bg-info text-dark';
+                else if (item.status === "Sebagian Rusak") badgeClass = "bg-danger";
+                else if (item.status === "Semua Rusak") badgeClass = "bg-danger";
 
                 const displayStatus = item.status_en || item.status;
                 const borrowerName = item.nama_peminjam || item.nama || '-';
@@ -1278,6 +1281,7 @@
         function getDisplayStatus(dbStatus, statusEn) {
             if (statusEn) {
                 const en_lower = statusEn.toLowerCase();
+                if (en_lower.includes('return in progress')) return 'Proses Return';
                 if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
             }
             switch (dbStatus) {
@@ -1296,6 +1300,8 @@
                     return 'Dikembalikan';
                 case 'Ditolak':
                     return 'Ditolak';
+                case 'Proses Return':
+                    return 'Proses Return';
                 default:
                     return dbStatus;
             }
@@ -1320,6 +1326,9 @@
                     return 'badge bg-success';
                 case 'Ditolak':
                     return 'badge bg-danger';
+                case 'Proses Return':
+                case 'Return In Progress':
+                    return 'badge bg-info text-dark';
                 default:
                     return 'badge bg-secondary';
             }
