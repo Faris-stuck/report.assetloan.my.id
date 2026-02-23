@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
     <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
@@ -174,12 +175,12 @@
         if (userData.email) document.getElementById('profil-email').textContent = userData.email;
         if (userData.nrp) document.getElementById('profil-nrp').textContent = 'NRP: ' + userData.nrp;
         if (userData.avatar) {
-            const avatarUrl = (userData.avatar.indexOf('http') === 0) ? userData.avatar : ('/PROJECT/' + userData.avatar);
+            const avatarUrl = (userData.avatar.indexOf('http') === 0) ? userData.avatar : ( BASE_URL + '/' + userData.avatar);
             document.getElementById('profileAvatar').src = avatarUrl;
             if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
         }
 
-        fetch('../api/pic_barang/profile.php', { credentials: 'same-origin' })
+        fetch(BASE_URL + '/api/pic_barang/profile.php', { credentials: 'same-origin' })
             .then(r => r.json())
             .then(res => {
                 if (res.status && res.data) {
@@ -188,7 +189,7 @@
                     document.getElementById('profil-email').textContent = d.email;
                     document.getElementById('profil-nrp').textContent = 'NRP: ' + (d.nrp || '-');
                     if (d.avatar) {
-                        const avatarUrl = (d.avatar.indexOf('http') === 0) ? d.avatar : ('/PROJECT/' + d.avatar);
+                        const avatarUrl = (d.avatar.indexOf('http') === 0) ? d.avatar : ( BASE_URL + '/' + d.avatar);
                         document.getElementById('profileAvatar').src = avatarUrl;
                         try { const lu = JSON.parse(localStorage.getItem('user') || '{}'); lu.avatar = d.avatar; localStorage.setItem('user', JSON.stringify(lu)); } catch (e) { }
                         if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
@@ -202,11 +203,11 @@
             const f = document.getElementById('inputAvatar').files[0];
             if (!f) return alert('Select an image first');
             const fd = new FormData(); fd.append('avatar', f);
-            fetch('/PROJECT/api/user/upload-avatar.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+            fetch(BASE_URL + '/api/user/upload-avatar.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
                     if (res.status && res.avatar) {
-                        const avatarUrl = '/PROJECT/' + res.avatar;
+                        const avatarUrl = BASE_URL + '/' + res.avatar;
                         document.getElementById('profileAvatar').src = avatarUrl;
                         try { const lu = JSON.parse(localStorage.getItem('user') || '{}'); lu.avatar = res.avatar; localStorage.setItem('user', JSON.stringify(lu)); } catch (e) { }
                         if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();

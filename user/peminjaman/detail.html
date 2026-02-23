@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -67,10 +68,10 @@
             document.getElementById('alert').style.display = 'block';
             document.getElementById('alert').innerText = 'ID peminjaman tidak ditemukan di query string.';
         } else {
-            fetch(`/PROJECT/api/user/get-detail.php?id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
+            fetch(`${BASE_URL}/api/user/get-detail.php?id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/index.html';
+                        window.location.href = BASE_URL + '/index.html';
                         throw new Error('unauthorized');
                     }
                     return r.json();

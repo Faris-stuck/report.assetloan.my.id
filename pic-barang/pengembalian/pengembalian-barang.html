@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -304,7 +305,7 @@
         if (userData.email) document.getElementById('header-email').textContent = userData.email;
     </script>
     <script>
-        const API = '/PROJECT/api/pengembalian';
+        const API = BASE_URL + '/api/pengembalian';
         let currentPengembalianId = null;
         let modalInspeksi = null;
         let pendingInspeksiData = null;
@@ -335,7 +336,7 @@
             fetch(API + '/list.php?status=Diajukan', { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/index.html';
+                        window.location.href = BASE_URL + '/index.html';
                         throw new Error('Unauthorized');
                     }
                     return r.json();
@@ -343,7 +344,7 @@
                 .then(res => {
                     if (!res.status) {
                         if (res.message && res.message.toLowerCase().includes('akses ditolak')) {
-                            window.location.href = '/PROJECT/index.html';
+                            window.location.href = BASE_URL + '/index.html';
                             return;
                         }
                         document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="7" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
@@ -392,7 +393,7 @@
             fetch(API + '/detail.php?pengembalian_id=' + encodeURIComponent(pengembalianId), { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/index.html';
+                        window.location.href = BASE_URL + '/index.html';
                         throw new Error('Unauthorized');
                     }
                     if (!r.ok) throw new Error('API returned status ' + r.status);
@@ -401,7 +402,7 @@
                 .then(res => {
                     if (!res.status) {
                         if (res.message && res.message.toLowerCase().includes('akses ditolak')) {
-                            window.location.href = '/PROJECT/index.html';
+                            window.location.href = BASE_URL + '/index.html';
                             return;
                         }
                         throw new Error(res.message || 'Failed');
@@ -563,7 +564,7 @@
             fetch(API + '/inspect.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/index.html';
+                        window.location.href = BASE_URL + '/index.html';
                         throw new Error('Unauthorized');
                     }
                     return r.json();
@@ -589,7 +590,7 @@
         // ═══════════════════════════════════════════════════════
         // Extend (Perpanjang) Functions
         // ═══════════════════════════════════════════════════════
-        const API_EXTEND = '/PROJECT/api/extend';
+        const API_EXTEND = BASE_URL + '/api/extend';
 
         function loadExtendRequests() {
             const filterStatus = document.getElementById('extendFilter').value;
@@ -598,7 +599,7 @@
             fetch(url, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
-                        window.location.href = '/PROJECT/index.html';
+                        window.location.href = BASE_URL + '/index.html';
                         throw new Error('Unauthorized');
                     }
                     return r.json();

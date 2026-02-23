@@ -12,7 +12,7 @@ let rolesData = []; // Loaded from database, no hardcode
 // ═══════════════════════════════════════════════════════════════
 // Load roles from database via API
 function loadRolesData() {
-    return fetch('../../api/admin/roles.php?action=list')
+    return fetch(BASE_URL + '/api/admin/roles.php?action=list')
         .then(r => r.json())
         .then(res => {
             if (res.status && res.data) {
@@ -142,7 +142,7 @@ function tambahUser() {
     formData.append('password', password);
     formData.append('role', role);
 
-    fetch('../../api/user/create.php', { method: 'POST', body: formData })
+    fetch(BASE_URL + '/api/user/create.php', { method: 'POST', body: formData })
         .then(response => {
             if (!response.ok && response.status !== 400) throw new Error('HTTP ' + response.status);
             return response.json();
@@ -169,7 +169,7 @@ function tambahUser() {
 // ═══════════════════════════════════════════════════════════════
 // Load Users
 function loadUsers() {
-    fetch('../../api/user/get_all.php')
+    fetch(BASE_URL + '/api/user/get_all.php')
         .then(response => {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
@@ -363,7 +363,7 @@ function updateUserRole(userId, newRole) {
     formData.append('id', userId);
     formData.append('role', newRole);
 
-    fetch('../../api/user/update_role.php', { method: 'POST', body: formData })
+    fetch(BASE_URL + '/api/user/update_role.php', { method: 'POST', body: formData })
         .then(response => {
             if (!response.ok && response.status !== 400) throw new Error('HTTP ' + response.status);
             return response.json();
@@ -387,7 +387,7 @@ function deleteUser(userId, userName) {
     const formData = new FormData();
     formData.append('id', userId);
 
-    fetch('../../api/user/delete.php', { method: 'POST', body: formData })
+    fetch(BASE_URL + '/api/user/delete.php', { method: 'POST', body: formData })
         .then(response => {
             if (!response.ok && response.status !== 400) throw new Error('HTTP ' + response.status);
             return response.json();
@@ -495,7 +495,7 @@ function changePassword() {
     fd.append('id', userId);
     fd.append('password', newPass);
 
-    fetch('../../api/user/change_password.php', { method: 'POST', body: fd })
+    fetch(BASE_URL + '/api/user/change_password.php', { method: 'POST', body: fd })
         .then(r => r.json())
         .then(res => {
             if (res.status) {

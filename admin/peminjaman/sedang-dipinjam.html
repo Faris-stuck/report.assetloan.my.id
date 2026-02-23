@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -573,7 +574,7 @@
 
         // Load data peminjaman yang sedang dipinjam dari database peminjaman
         function loadDataSedangDipinjam() {
-            fetch("../../api/peminjaman/get_by_status.php?status=" + encodeURIComponent("Sedang Dipinjam"))
+            fetch(BASE_URL + "/api/peminjaman/get_by_status.php?status=" + encodeURIComponent("Sedang Dipinjam"))
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {

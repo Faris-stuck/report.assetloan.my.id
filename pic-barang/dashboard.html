@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
     <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
@@ -241,7 +242,7 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const res = await fetch('../api/pic_barang/dashboard-stats.php', { credentials: 'same-origin' });
+                const res = await fetch(BASE_URL + '/api/pic_barang/dashboard-stats.php', { credentials: 'same-origin' });
                 const result = await res.json();
                 if (result.status && result.data) {
                     const d = result.data;

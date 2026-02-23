@@ -10,7 +10,7 @@ const RoleValidator = (function () {
         if (path.indexOf("/manager") >= 0) return path.split("/manager")[0];
         if (path.indexOf("/user") >= 0) return path.split("/user")[0];
         if (path.indexOf("/auth") >= 0) return path.split("/auth")[0];
-        return "/PROJECT";
+        return (typeof BASE_URL !== 'undefined') ? BASE_URL : '';
     }
 
     function getUser() {
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const f = inp.files[0];
                 if (!f) return;
                 const fd = new FormData(); fd.append('avatar', f);
-                fetch('/PROJECT/api/user/upload-avatar.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                fetch(BASE_URL + '/api/user/upload-avatar.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                     .then(r => r.json())
                     .then(res => {
                         if (res.status && res.avatar) {

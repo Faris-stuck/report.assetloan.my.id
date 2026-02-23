@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -816,7 +817,7 @@
         }
 
         // Load data peminjaman
-        const apiUrl = `../../api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
+        const apiUrl = `${BASE_URL}/api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
         console.log('USER_ID=', USER_ID);
         console.log('Fetching peminjaman from', apiUrl);
 
@@ -913,7 +914,7 @@
             const peminjamanId = pendingReturnPeminjamanId;
 
             // Call return API to create pengembalian, then redirect to ajukan-pengembalian page
-            fetch(`../../api/peminjaman/return.php`, {
+            fetch(`${BASE_URL}/api/peminjaman/return.php`, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -938,7 +939,7 @@
 
         // Fungsi untuk lihat detail
         function lihatDetail(peminjamanId) {
-            fetch(`../../api/user/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
+            fetch(`${BASE_URL}/api/user/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
                     if (res.status && res.data) {

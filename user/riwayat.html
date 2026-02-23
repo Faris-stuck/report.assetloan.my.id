@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
     <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
@@ -477,7 +478,7 @@
         (function () {
             const table = document.getElementById('riwayatTable');
             if (!table) return;
-            const api = `../api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
+            const api = `${BASE_URL}/api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
             fetch(api, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 401 || r.status === 403) {

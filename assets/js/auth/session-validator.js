@@ -56,5 +56,5 @@ function clearSessionAndRedirect() {
     } catch (e) { }
 
     // Redirect ke login
-    window.location.replace('/PROJECT/index.html');
+    window.location.replace((typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/index.html');
 }

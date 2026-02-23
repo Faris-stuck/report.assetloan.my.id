@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
     <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
@@ -2971,7 +2972,7 @@
     <!--! END: Apps Init !-->
 
     <script>
-        const API_ROLES = '../api/admin/roles.php';
+        const API_ROLES = BASE_URL + '/api/admin/roles.php';
         let modalUbahRole = null;
         let modalListUser = null;
         let modalTambahRole = null;

@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -375,7 +376,7 @@
 
     <script>
         (function () {
-            const api = '/PROJECT/api/approver/list-by-status.php?status=' + encodeURIComponent('Disetujui');
+            const api = BASE_URL + '/api/approver/list-by-status.php?status=' + encodeURIComponent('Disetujui');
             function escapeHtml(s) { if (!s && s !== 0) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
             function readField(item, keys) { for (const k of keys) if (item[k] !== undefined) return item[k]; return ''; }
             async function load() {

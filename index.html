@@ -173,6 +173,7 @@
         </div>
     </div>
 
+    <script src="assets/js/base-url.js"></script>
     <script>
         /**
          * ============================================
@@ -194,7 +195,7 @@
                 // Verifikasi session di server secara SINKRON
                 // agar halaman login tidak sempat muncul jika sudah login
                 var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/PROJECT/api/auth/verify-session.php', false); // synchronous
+                xhr.open('POST', BASE_URL + '/api/auth/verify-session.php', false); // synchronous
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.withCredentials = true;
                 xhr.send(JSON.stringify({ user_id: user.id, user_role: user.role }));
@@ -219,17 +220,17 @@
         function redirectToDashboard(role) {
             switch (role) {
                 case 'admin':
-                    window.location.replace('/PROJECT/admin/dashboard.html');
+                    window.location.replace(BASE_URL + '/admin/dashboard.html');
                     break;
                 case 'manager':
-                    window.location.replace('/PROJECT/manager/dashboard.html');
+                    window.location.replace(BASE_URL + '/manager/dashboard.html');
                     break;
                 case 'pic_barang':
-                    window.location.replace('/PROJECT/pic-barang/dashboard.html');
+                    window.location.replace(BASE_URL + '/pic-barang/dashboard.html');
                     break;
                 case 'user':
                 default:
-                    window.location.replace('/PROJECT/user/dashboard.html');
+                    window.location.replace(BASE_URL + '/user/dashboard.html');
                     break;
             }
         }
@@ -269,7 +270,7 @@
             formData.append("password", password);
 
             try {
-                const res = await fetch("/PROJECT/api/auth/login.php", {
+                const res = await fetch(BASE_URL + "/api/auth/login.php", {
                     method: "POST",
                     credentials: "include", // PENTING: kirim session cookie
                     body: formData,

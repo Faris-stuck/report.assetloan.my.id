@@ -24,8 +24,8 @@
     document.documentElement.appendChild(shield);
 
     // ─── 2. Konfigurasi path ───
-    var loginUrl = '/PROJECT/index.html';
-    var verifyUrl = '/PROJECT/api/auth/verify-session.php';
+    var loginUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/index.html';
+    var verifyUrl = (typeof BASE_URL !== 'undefined' ? BASE_URL : '') + '/api/auth/verify-session.php';
     var path = window.location.pathname || '';
 
     // ─── 3. Tentukan role yang diperlukan dari folder URL ───

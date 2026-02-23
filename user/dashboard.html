@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
     <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
@@ -546,24 +547,24 @@
         // Jika tidak ada user yang login, redirect ke halaman login
         if (!USER_ID) {
             alert("Please log in first");
-            window.location.href = "/PROJECT/index.html";
+            window.location.href = BASE_URL + "/index.html";
         }
 
         // Cek role - hanya user yang boleh akses halaman ini
         if (userData.role && userData.role !== "user") {
             if (userData.role === "admin") {
-                window.location.href = "/PROJECT/admin/dashboard.html";
+                window.location.href = BASE_URL + "/admin/dashboard.html";
             } else if (userData.role === "manager") {
-                window.location.href = "/PROJECT/manager/dashboard.html";
+                window.location.href = BASE_URL + "/manager/dashboard.html";
             }
         }
 
         // Load user's dashboard statistics and peminjaman data
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/PROJECT/api/user/dashboard-stats.php', { credentials: 'same-origin' });
+                const response = await fetch(BASE_URL + '/api/user/dashboard-stats.php', { credentials: 'same-origin' });
                 if (response.status === 401 || response.status === 403) {
-                    window.location.href = '/PROJECT/index.html';
+                    window.location.href = BASE_URL + '/index.html';
                     return;
                 }
                 const result = await response.json();
@@ -613,7 +614,7 @@
         });
 
         // Load available items
-        fetch('/PROJECT/api/barang/get.php')
+        fetch(BASE_URL + '/api/barang/get.php')
             .then(res => res.json())
             .then(res => {
                 let html = "";

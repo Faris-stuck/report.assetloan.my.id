@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -666,7 +667,7 @@
 
         // Load data peminjaman dari database dengan optional date filtering
         function loadDataPeminjaman(start = null, end = null) {
-            let url = "../../api/peminjaman/get_all.php";
+            let url = BASE_URL + "/api/peminjaman/get_all.php";
 
             // Add date parameters if provided
             if (start && end) {
@@ -767,7 +768,7 @@
 
         // Load items untuk modal form
         function loadItemsForModal() {
-            fetch("../../api/barang/get.php")
+            fetch(BASE_URL + "/api/barang/get.php")
                 .then(res => res.json())
                 .then(res => {
                     let html = "";
@@ -1176,7 +1177,7 @@
             let fd = new FormData(form);
             fd.append("user_id", USER_ID);
 
-            fetch("../../api/user/request-peminjaman.php", {
+            fetch(BASE_URL + "/api/user/request-peminjaman.php", {
                 method: "POST",
                 body: fd
             })
@@ -1311,7 +1312,7 @@
         }
 
         function lihatDetail(peminjamanId) {
-            fetch(`../../api/admin/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
+            fetch(`${BASE_URL}/api/admin/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
                     if (res.status && res.data) {

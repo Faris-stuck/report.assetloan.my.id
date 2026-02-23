@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -475,7 +476,7 @@
         // Load data peminjaman - show pending approvals (Menunggu Persetujuan status)
         // Admin as fallback approver if manager doesn't take action
         function loadDataPeminjaman() {
-            fetch("/PROJECT/api/approver/list-by-status.php?status=Menunggu Persetujuan")
+            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan")
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
@@ -524,7 +525,7 @@
         // Open modal to process borrowing
         // Fetch fresh data to ensure we have the latest status
         function openModal(id) {
-            fetch("/PROJECT/api/approver/list-by-status.php?status=Menunggu Persetujuan")
+            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan")
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
@@ -627,7 +628,7 @@
                 formData.append('rejection_reason', document.getElementById("reasonTextarea").value);
             }
 
-            const endpoint = "/PROJECT/api/approver/approve.php";
+            const endpoint = BASE_URL + "/api/approver/approve.php";
 
             fetch(endpoint, {
                 method: "POST",

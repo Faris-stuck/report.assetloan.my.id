@@ -84,7 +84,7 @@ async function performLogout() {
         logoutButtons.forEach(btn => btn.disabled = true);
 
         // Call server logout endpoint to destroy session
-        const response = await fetch('/PROJECT/api/auth/logout.php', {
+        const response = await fetch(BASE_URL + '/api/auth/logout.php', {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -102,7 +102,7 @@ async function performLogout() {
         // Small delay to ensure cleanup happens before redirect
         setTimeout(() => {
             console.log('🚀 Redirecting to login page...');
-            window.location.href = '/PROJECT/index.html';
+            window.location.href = BASE_URL + '/index.html';
         }, 100);
 
     } catch (error) {
@@ -112,7 +112,7 @@ async function performLogout() {
         performLocalCleanup();
 
         setTimeout(() => {
-            window.location.href = '/PROJECT/index.html';
+            window.location.href = BASE_URL + '/index.html';
         }, 100);
     }
 }

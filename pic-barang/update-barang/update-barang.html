@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -239,7 +240,7 @@
         if (userData.email) document.getElementById('header-email').textContent = userData.email;
     </script>
     <script>
-        const API = '../../api/pic_barang';
+        const API = BASE_URL + '/api/pic_barang';
         function loadBarang() {
             fetch(API + '/barang-get.php', { credentials: 'same-origin' })
                 .then(r => r.json())

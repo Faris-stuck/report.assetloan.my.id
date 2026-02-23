@@ -3,6 +3,7 @@
 
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -575,7 +576,7 @@
 
         // Load data peminjaman - load only "Menunggu Persetujuan" status
         function loadDataPeminjaman() {
-            fetch("../../api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
+            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
                     if (res.status) {
@@ -623,7 +624,7 @@
 
         // Open modal untuk proses peminjaman
         function openModal(id) {
-            fetch("../../api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
+            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
                     if (!res.status || !res.data) return;
@@ -704,7 +705,7 @@
             formData.append('id', selectedPeminjaman.id);
 
             // All items in this view are "Menunggu Persetujuan", so route to approver endpoint
-            const endpoint = "../../api/approver/approve.php";
+            const endpoint = BASE_URL + "/api/approver/approve.php";
             const apiStatus = selectedStatus === 'Disetujui' ? 'Disetujui' : 'Ditolak';
 
             formData.append('status', apiStatus);
