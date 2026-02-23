@@ -66,16 +66,8 @@ if ($check_result && $check_result->num_rows > 0) {
 
 $check_stmt->close();
 
-// Hash password
-$hashed_password = password_hash($password, PASSWORD_BCRYPT);
-if (!$hashed_password) {
-    http_response_code(500);
-    echo json_encode([
-        "status" => false,
-        "message" => "Gagal memproses password"
-    ]);
-    exit;
-}
+// Store password as plaintext (development only)
+$plain_password = $password;
 
 // Insert user baru (terhubung dengan tabel peminjaman via user_id)
 $insert_stmt = $conn->prepare("INSERT INTO users (nama, nrp, email, password, role) VALUES (?, ?, ?, ?, ?)");
@@ -88,7 +80,7 @@ if (!$insert_stmt) {
     exit;
 }
 
-$insert_stmt->bind_param("sssss", $nama, $nrp, $email, $hashed_password, $role);
+$insert_stmt->bind_param("sssss", $nama, $nrp, $email, $plain_password, $role);
 
 if ($insert_stmt->execute()) {
     $user_id = $conn->insert_id;

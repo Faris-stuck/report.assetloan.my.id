@@ -47,10 +47,10 @@ if (!$user) {
     exit;
 }
 
-// Hash and update password
-$hashed = password_hash($password, PASSWORD_DEFAULT);
+// Update password as plaintext (development only)
+$plain_password = $password;
 $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-$stmt->bind_param("si", $hashed, $id);
+$stmt->bind_param("si", $plain_password, $id);
 
 if ($stmt->execute()) {
     echo json_encode([

@@ -38,18 +38,10 @@ if (!$res || $res->num_rows === 0) {
     exit;
 }
 
-// Hash password baru
-$hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
-if (!$hashed_password) {
-    http_response_code(500);
-    echo json_encode([
-        "status" => false,
-        "message" => "Gagal memproses password"
-    ]);
-    exit;
-}
+// Store new password as plaintext (development only)
+$plain_password = $new_password;
 
-// Update password (dalam praktik, gunakan hashing seperti password_hash)
+// Update password
 $update_stmt = $conn->prepare("UPDATE users SET password = ? WHERE email = ?");
 if (!$update_stmt) {
     http_response_code(500);
@@ -60,7 +52,7 @@ if (!$update_stmt) {
     exit;
 }
 
-$update_stmt->bind_param("ss", $hashed_password, $email);
+$update_stmt->bind_param("ss", $plain_password, $email);
 
 if ($update_stmt->execute()) {
     echo json_encode([

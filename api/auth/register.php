@@ -43,16 +43,8 @@ if ($check_result && $check_result->num_rows > 0) {
 
 $check_stmt->close();
 
-// Hash password (recommended)
-$hashed_password = password_hash($password, PASSWORD_BCRYPT);
-if (!$hashed_password) {
-    http_response_code(500);
-    echo json_encode([
-        "status" => false,
-        "message" => "Gagal memproses password"
-    ]);
-    exit;
-}
+// Store password as plaintext (development only)
+$plain_password = $password;
 
 // Insert user baru dengan role default 'user'
 $insert_stmt = $conn->prepare("INSERT INTO users (nama, nrp, email, password, role) VALUES (?, ?, ?, ?, 'user')");
@@ -65,7 +57,7 @@ if (!$insert_stmt) {
     exit;
 }
 
-$insert_stmt->bind_param("ssss", $nama, $nrp, $email, $hashed_password);
+$insert_stmt->bind_param("ssss", $nama, $nrp, $email, $plain_password);
 
 if ($insert_stmt->execute()) {
     echo json_encode([
