@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Waktu pembuatan: 23 Feb 2026 pada 04.10
+-- Waktu pembuatan: 23 Feb 2026 pada 05.29
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.1.25
 
@@ -341,17 +341,17 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nama`, `nrp`, `email`, `password`, `role`, `created_at`) VALUES
-(1, 'Admin Sistem', '100001', 'admin@komatsu.co.id', '$2y$10$yg3fxFMHXHDHCq8R3n/nHeySTbLYaJBZJKQco7wDlAoOr0gGOn/82', 'admin', '2026-01-27 15:59:06'),
-(1004, 'Muhammad Faris Azmiarif', '1323241224', 'azmiariffaris@gmail.com', '$2y$10$BSPP9V.syKlR5ROdu5bzsujnUnK9cvinSN/peBnIhl8a.kK4tVNIy', 'user', '2026-02-12 16:26:27'),
-(1005, 'manager', '321231221', 'manager@komatsu.co.id', '$2y$10$HoURA5hmsEtade..w34S.uSj4RuXH3Uu/I2zi9MwYFWWbelHfekRe', 'manager', '2026-02-12 16:28:00'),
-(1006, 'Pic Barang', '323231333213', 'picbarang@komatsu.co.id', '$2y$10$4KZjYvtDFZRuzK/7DWtht.MhjsSEbMARrm82AOn2s9YnBaMiat6C.', 'pic_barang', '2026-02-13 10:52:26'),
-(1010, 'sashf', '23232', 'a11@gmail.com', '$2y$10$KEAMczrrpIwLbq/8sDq.FO66UVrjKACM9P/FeVM4hOgc1i6/neBwC', 'admin', '2026-02-13 14:38:30'),
-(1011, 'ddvsds', '22332', 'a1@gmail.com', '$2y$10$e7JXqfNMUXRqvbpC2wA5A..jH2T83wtEfXzNfgAcf0vFU/Jd3XKFq', 'admin', '2026-02-13 14:38:54'),
-(1012, 'asafa', '2323132', 'a2@gmail.com', '$2y$10$19CwDWkgTSvA/B2MUYbseuIE3kTqmftS2kQoDy91HKFQHKOrPEBZC', 'admin', '2026-02-13 14:39:15'),
-(1013, 'afsdfsvs', '13112', 'a3@gmail.com', '$2y$10$5Ayl0AGHXdohwE8iPZ0yvesNNVCg.oOjYUBjTryuDMdjlZmBr12W2', 'pic_barang', '2026-02-13 14:39:47'),
-(1014, 'advsdgss', '2424', 'a1221@gmail.com', '$2y$10$iyCiHSkIAsHDmz3svlAbj.hiReztaF4zcaAm7xW/8a8zQ0/Bq9ujO', 'user', '2026-02-13 14:40:07'),
-(1015, 'advdvs', '28y2846274', 'aaiigi@gmail.com', '$2y$10$r/3.zpk0yU1L5.ZIoeBC6.nrSQ7KYZ0jlyLvsOPg8fHNfEC0.iV/2', 'admin', '2026-02-13 14:41:17'),
-(1016, 'aaue', '2112', 'ds@gmais.com', '$2y$10$r7TzaIymk0YuJQ77g3iSEutqDyhUUCFRgMw2QluMgFTku1n2asBke', 'operator', '2026-02-18 03:47:11');
+(1, 'Admin Sistem', '100001', 'admin@komatsu.co.id', '123456', 'admin', '2026-01-27 15:59:06'),
+(1004, 'Muhammad Faris Azmiarif', '1323241224', 'azmiariffaris@gmail.com', '123456', 'user', '2026-02-12 16:26:27'),
+(1005, 'manager', '321231221', 'manager@komatsu.co.id', '123456', 'manager', '2026-02-12 16:28:00'),
+(1006, 'Pic Barang', '323231333213', 'picbarang@komatsu.co.id', '123456', 'pic_barang', '2026-02-13 10:52:26'),
+(1010, 'sashf', '23232', 'a11@gmail.com', '123456', 'admin', '2026-02-13 14:38:30'),
+(1011, 'ddvsds', '22332', 'a1@gmail.com', '123456', 'admin', '2026-02-13 14:38:54'),
+(1012, 'asafa', '2323132', 'a2@gmail.com', '123456', 'admin', '2026-02-13 14:39:15'),
+(1013, 'afsdfsvs', '13112', 'a3@gmail.com', '123456', 'pic_barang', '2026-02-13 14:39:47'),
+(1014, 'advsdgss', '2424', 'a1221@gmail.com', '123456', 'user', '2026-02-13 14:40:07'),
+(1015, 'advdvs', '28y2846274', 'aaiigi@gmail.com', '123456', 'admin', '2026-02-13 14:41:17'),
+(1016, 'aaue', '2112', 'ds@gmais.com', '123456', 'operator', '2026-02-18 03:47:11');
 
 -- --------------------------------------------------------
 
