@@ -36,22 +36,21 @@ try {
         // Map status to badge color dynamically
         $badgeColor = "bg-secondary"; // default
         
-        switch ($status) {
-            case "Menunggu Persetujuan":
-                $badgeColor = "bg-warning";
-                break;
-            case "Disetujui":
-                $badgeColor = "bg-info";
-                break;
-            case "Ditolak":
-                $badgeColor = "bg-danger";
-                break;
-            case "Selesai":
-                $badgeColor = "bg-success";
-                break;
-            case "Sedang Dipinjam":
-                $badgeColor = "bg-primary";
-                break;
+        // Dynamic badge color mapping
+        if ($status === "Menunggu Persetujuan") {
+            $badgeColor = "bg-warning";
+        } elseif ($status === "Disetujui") {
+            $badgeColor = "bg-info";
+        } elseif ($status === "Ditolak") {
+            $badgeColor = "bg-danger";
+        } elseif ($status === "Selesai" || $status === "Dikembalikan") {
+            $badgeColor = "bg-success";
+        } elseif ($status === "Sedang Dipinjam") {
+            $badgeColor = "bg-primary";
+        } elseif ($status === "Overdue" || $status === "Due Today") {
+            $badgeColor = "bg-danger";
+        } elseif (strpos($status, "Due") === 0) {
+            $badgeColor = "bg-warning text-dark";
         }
         
         $statuses[] = [

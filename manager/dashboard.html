@@ -523,6 +523,9 @@
                 'Disetujui': 'info',
                 'Currently Borrowed': 'success',
                 'Sedang Dipinjam': 'success',
+                'Overdue': 'danger',
+                'Due Today': 'danger',
+                'Due Tomorrow': 'warning',
                 'Ditolak': 'danger',
                 'Dikembalikan': 'secondary',
                 'Sebagian Rusak': 'warning',
@@ -532,6 +535,7 @@
                 'Returned': 'secondary'
             };
             const key = statusEn || status;
+            if (key.startsWith('Due in')) return 'warning';
             return statusMap[key] || 'light';
         }
 

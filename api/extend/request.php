@@ -57,9 +57,11 @@ try {
     }
 
     // Only allow extend for active borrowings
-    $allowed_statuses = ['Sedang Dipinjam', 'Disetujui', 'Sebagian Dikembalikan'];
-    if (!in_array($peminjaman['status'], $allowed_statuses)) {
-        echo json_encode(['status' => false, 'message' => 'Peminjaman dengan status "' . $peminjaman['status'] . '" tidak dapat diperpanjang']);
+    $currentStatus = $peminjaman['status'];
+    $isActive = in_array($currentStatus, ['Sedang Dipinjam', 'Disetujui', 'Sebagian Dikembalikan', 'Overdue'])
+                || strpos($currentStatus, 'Due') === 0;
+    if (!$isActive) {
+        echo json_encode(['status' => false, 'message' => 'Peminjaman dengan status "' . $currentStatus . '" tidak dapat diperpanjang']);
         exit;
     }
 

@@ -645,6 +645,8 @@
             const s = (status || '').toString().toLowerCase();
             const se = (statusEn || '').toString().toLowerCase();
             if (s.includes('menunggu') || s.includes('pending')) return 'warning';
+            if (s === 'overdue' || s === 'due today') return 'danger';
+            if (s.startsWith('due')) return 'warning';
             if (s.includes('disetujui') || s.includes('approved')) return 'info';
             if (s.includes('dicek') || s.includes('diproses') || s.includes('proses')) return 'info';
             if (s.includes('sedang') || s.includes('dipinjam') || s.includes('borrowed') || s.includes('ongoing')) return 'success';

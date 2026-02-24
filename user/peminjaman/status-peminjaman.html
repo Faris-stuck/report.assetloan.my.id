@@ -736,6 +736,8 @@
                 case 'Proses Return':
                     return 'badge bg-info text-dark';
                 default:
+                    if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
+                    if (displayStatus.startsWith('Due')) return 'badge bg-warning text-dark';
                     return 'badge bg-secondary';
             }
         }
@@ -759,7 +761,7 @@
             const totalBarang = peminjaman.detail_barang.reduce((sum, item) => sum + parseInt(item.jumlah), 0);
 
             let actionBtn = '';
-            if (displayStatus === 'Sedang Dipinjam') {
+            if (displayStatus === 'Sedang Dipinjam' || displayStatus.startsWith('Due') || displayStatus === 'Overdue') {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="ajukanPengembalian('${peminjaman.id}')">
                     <i class="feather-refresh-cw"></i> Return
                 </button>`;
@@ -854,7 +856,7 @@
                 const menunggu = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Menunggu Persetujuan');
                 const dipinjam = userPeminjaman.filter(p => {
                     const ds = getDisplayStatus(p.status, p.status_en);
-                    return ds === 'Sedang Dipinjam' || ds === 'Proses Return';
+                    return ds === 'Sedang Dipinjam' || ds.startsWith('Due') || ds === 'Overdue' || ds === 'Proses Return';
                 });
                 const dikembalikan = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Dikembalikan');
                 const ditolak = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Ditolak');

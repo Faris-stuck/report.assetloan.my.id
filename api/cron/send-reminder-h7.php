@@ -1,21 +1,24 @@
 <?php
 /**
  * ============================================================
- * CRON: Kirim Email Pengingat H-7 Sebelum Tanggal Kembali
+ * EMAIL REMINDER: Kirim Pengingat Harian H-7 sampai H-0
  * ============================================================
  * 
  * File   : /PROJECT/api/cron/send-reminder-h7.php
  * Akses  : http://localhost/PROJECT/api/cron/send-reminder-h7.php
  * 
- * Cron job (setiap hari jam 08:00):
- *   0 8 * * * /opt/lampp/bin/php /opt/lampp/htdocs/PROJECT/api/cron/send-reminder-h7.php >> /opt/lampp/htdocs/PROJECT/api/cron/reminder.log 2>&1
+ * Cara kerja:
+ *   - Dibuka via browser (bukan cron job)
+ *   - Cek peminjaman dengan rencana_kembali antara H-7 s/d H-0
+ *   - Kirim email reminder 1x per hari per peminjaman
+ *   - Tidak kirim ulang jika halaman di-refresh di hari yang sama
+ *   - Menggunakan kolom last_reminder_date untuk tracking
  * 
  * ============================================================
  */
 
 // ============================================================
 // 1. KONFIGURASI SMTP — dari config/email.php (TIDAK HARDCODE)
-//    Semua email penerima diambil dari database
 // ============================================================
 require_once __DIR__ . '/../../config/email.php';
 
@@ -24,18 +27,17 @@ require_once __DIR__ . '/../../config/email.php';
 // ============================================================
 if (php_sapi_name() !== 'cli') {
     header('Content-Type: text/html; charset=utf-8');
+    echo '<pre style="font-family: Consolas, monospace; font-size: 14px; background: #1e1e2e; color: #cdd6f4; padding: 24px; border-radius: 8px; max-width: 900px; margin: 20px auto; line-height: 1.6;">';
 }
 
 echo "============================================================\n";
-echo "  CRON: Email Pengingat H-7 Pengembalian Barang\n";
+echo "  REMINDER: Email Pengingat Pengembalian Barang (H-7 s/d H-0)\n";
 echo "  Waktu eksekusi: " . date('Y-m-d H:i:s') . "\n";
 echo "============================================================\n\n";
 
 // ============================================================
 // 3. KONEKSI DATABASE
 // ============================================================
-
-// Deteksi environment: CLI tidak punya HTTP_HOST
 if (php_sapi_name() === 'cli') {
     $_SERVER['HTTP_HOST'] = 'localhost';
 }
@@ -46,7 +48,8 @@ if ($conn->connect_error) {
     echo "[ERROR] Koneksi database gagal: " . $conn->connect_error . "\n";
     exit(1);
 }
-echo "[OK] Koneksi database berhasil.\n\n";
+echo "[OK] Koneksi database berhasil.\n";
+echo "[INFO] Tanggal hari ini: " . date('Y-m-d') . "\n\n";
 
 // ============================================================
 // 4. LOAD PHPMAILER & EMAIL FUNCTIONS
@@ -54,10 +57,11 @@ echo "[OK] Koneksi database berhasil.\n\n";
 require_once __DIR__ . '/../email/email-functions.php';
 
 // ============================================================
-// 5. QUERY: Ambil peminjaman H-7 sebelum tanggal kembali
-//    - rencana_kembali = tanggal rencana kembali
-//    - status = 'Sedang Dipinjam' (masih aktif dipinjam)
-//    - JOIN ke tabel users untuk mendapatkan email & nama
+// 5. QUERY: Ambil peminjaman H-7 sampai H-0
+//    - DATEDIFF(rencana_kembali, CURDATE()) BETWEEN 0 AND 7
+//    - last_reminder_date IS NULL OR != CURDATE() (anti duplikasi)
+//    - Status aktif (Sedang Dipinjam / Due* / Overdue)
+//    - JOIN users untuk email & nama
 // ============================================================
 $sql = "
     SELECT 
@@ -66,12 +70,17 @@ $sql = "
         p.nama_peminjam,
         p.rencana_kembali,
         p.tanggal_pinjam,
+        p.status,
+        p.last_reminder_date,
+        DATEDIFF(p.rencana_kembali, CURDATE()) AS sisa_hari,
         u.email,
         u.nama AS nama_user
     FROM peminjaman p
     JOIN users u ON p.user_id = u.id
-    WHERE p.status = 'Sedang Dipinjam'
-      AND DATEDIFF(p.rencana_kembali, CURDATE()) = 7
+    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+      AND DATEDIFF(p.rencana_kembali, CURDATE()) BETWEEN 0 AND 7
+      AND (p.last_reminder_date IS NULL OR p.last_reminder_date != CURDATE())
+    ORDER BY p.rencana_kembali ASC
 ";
 
 $result = $conn->query($sql);
@@ -82,11 +91,31 @@ if (!$result) {
 }
 
 $totalRows = $result->num_rows;
-echo "[INFO] Ditemukan {$totalRows} peminjaman yang H-7 hari ini.\n\n";
+echo "[INFO] Ditemukan {$totalRows} peminjaman yang perlu diingatkan.\n\n";
+
+// ============================================================
+// Cek juga berapa yang sudah dikirim hari ini (info saja)
+// ============================================================
+$sqlSudah = "
+    SELECT COUNT(*) AS cnt FROM peminjaman
+    WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
+      AND DATEDIFF(rencana_kembali, CURDATE()) BETWEEN 0 AND 7
+      AND last_reminder_date = CURDATE()
+";
+$resSudah = $conn->query($sqlSudah);
+$sudahDikirim = 0;
+if ($resSudah && $rowSudah = $resSudah->fetch_assoc()) {
+    $sudahDikirim = (int) $rowSudah['cnt'];
+}
+if ($sudahDikirim > 0) {
+    echo "[INFO] {$sudahDikirim} peminjaman sudah dikirim reminder hari ini (dilewati).\n\n";
+}
 
 if ($totalRows === 0) {
-    echo "[INFO] Tidak ada email yang perlu dikirim hari ini.\n";
-    echo "============================================================\n";
+    echo "[INFO] Tidak ada email yang perlu dikirim saat ini.\n";
+    if (php_sapi_name() !== 'cli') echo '</pre>';
+    echo "\n============================================================\n";
+    $conn->close();
     exit(0);
 }
 
@@ -97,14 +126,18 @@ $berhasil = 0;
 $gagal    = 0;
 
 while ($row = $result->fetch_assoc()) {
+    $peminjaman_id  = $row['id'];
     $namaUser       = $row['nama_user'] ?: $row['nama_peminjam'];
     $emailUser      = $row['email'];
     $kodePeminjaman = $row['kode_peminjaman'];
     $tanggalPinjam  = date('d F Y', strtotime($row['tanggal_pinjam']));
     $tanggalKembali = date('d F Y', strtotime($row['rencana_kembali']));
+    $sisaHari       = (int) $row['sisa_hari'];
+    $statusPinjaman = $row['status'];
 
     echo "-----------------------------------------------------------\n";
     echo "[PROSES] Kode: {$kodePeminjaman} | {$namaUser} | {$emailUser}\n";
+    echo "         Status: {$statusPinjaman} | Sisa: {$sisaHari} hari\n";
     echo "         Pinjam: {$tanggalPinjam} → Kembali: {$tanggalKembali}\n";
 
     // Validasi email
@@ -115,17 +148,25 @@ while ($row = $result->fetch_assoc()) {
     }
 
     // ---------------------------------------------------------
-    // Kirim menggunakan fungsi sendEmail() dari email-functions.php
-    // (email penerima dari database, bukan hardcode)
+    // Kirim email menggunakan sendEmail() dari email-functions.php
+    // Email penerima dari database, bukan hardcode
     // ---------------------------------------------------------
-    $subject  = 'Peringatan Pengembalian Barang - ' . $kodePeminjaman;
-    $htmlBody = buildEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali);
+    $subject  = 'Pengingat Pengembalian Barang - ' . $kodePeminjaman;
+    $htmlBody = buildReminderEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
+    $plainBody = buildReminderEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
 
-    if (sendEmail($emailUser, $subject, $htmlBody, $namaUser, buildEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali))) {
-        echo "[OK]     Email berhasil dikirim ke: {$emailUser}\n\n";
+    if (sendEmail($emailUser, $subject, $htmlBody, $namaUser, $plainBody)) {
+        echo "<span style='color: #a6e3a1;'>[OK]     Reminder terkirim ke: {$emailUser}</span>\n";
         $berhasil++;
+
+        // Update last_reminder_date agar tidak kirim ulang hari ini
+        $stmtUpdate = $conn->prepare("UPDATE peminjaman SET last_reminder_date = CURDATE() WHERE id = ?");
+        $stmtUpdate->bind_param("i", $peminjaman_id);
+        $stmtUpdate->execute();
+        $stmtUpdate->close();
+        echo "         last_reminder_date diupdate ke: " . date('Y-m-d') . "\n\n";
     } else {
-        echo "[GAGAL]  Email gagal dikirim ke: {$emailUser}\n\n";
+        echo "<span style='color: #f38ba8;'>[GAGAL]  Email gagal dikirim ke: {$emailUser}</span>\n\n";
         $gagal++;
     }
 }
@@ -134,21 +175,48 @@ while ($row = $result->fetch_assoc()) {
 // 7. SUMMARY
 // ============================================================
 echo "============================================================\n";
-echo "  HASIL PENGIRIMAN\n";
-echo "  Total peminjaman  : {$totalRows}\n";
-echo "  Berhasil dikirim  : {$berhasil}\n";
-echo "  Gagal / Dilewati  : {$gagal}\n";
-echo "  Waktu selesai     : " . date('Y-m-d H:i:s') . "\n";
+echo "  HASIL PENGIRIMAN REMINDER\n";
+echo "  Total perlu dikirim  : {$totalRows}\n";
+echo "  Berhasil dikirim     : {$berhasil}\n";
+echo "  Gagal / Dilewati     : {$gagal}\n";
+echo "  Sudah dikirim hari ini (sebelumnya): {$sudahDikirim}\n";
+echo "  Waktu selesai        : " . date('Y-m-d H:i:s') . "\n";
 echo "============================================================\n";
+
+if (php_sapi_name() !== 'cli') echo '</pre>';
 
 $conn->close();
 exit(0);
 
 
 // ============================================================
-// FUNGSI: Template Email HTML
+// FUNGSI: Template Email HTML — dinamis berdasarkan sisa hari
 // ============================================================
-function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
+function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari) {
+    // Pesan dinamis berdasarkan sisa hari
+    if ($sisaHari <= 0) {
+        $pesanAlert = '<strong>⚠️ Perhatian!</strong> Masa peminjaman barang Anda <strong>sudah jatuh tempo hari ini</strong>. Mohon segera kembalikan.';
+        $alertBg    = '#fee2e2';
+        $alertBorder = '#ef4444';
+        $alertColor  = '#991b1b';
+        $headerBg    = 'linear-gradient(135deg, #991b1b, #dc2626)';
+        $headerTitle = '🚨 Pengembalian Barang Jatuh Tempo!';
+    } elseif ($sisaHari === 1) {
+        $pesanAlert = '<strong>⚠️ Perhatian!</strong> Masa peminjaman barang Anda akan berakhir <strong>besok</strong>.';
+        $alertBg    = '#fef3c7';
+        $alertBorder = '#f59e0b';
+        $alertColor  = '#92400e';
+        $headerBg    = 'linear-gradient(135deg, #92400e, #d97706)';
+        $headerTitle = '⏰ Pengembalian Barang Besok!';
+    } else {
+        $pesanAlert = '<strong>Perhatian!</strong> Masa peminjaman barang Anda akan berakhir dalam <strong>' . $sisaHari . ' hari</strong>.';
+        $alertBg    = '#fef3c7';
+        $alertBorder = '#f59e0b';
+        $alertColor  = '#92400e';
+        $headerBg    = 'linear-gradient(135deg, #1e3a8a, #2563eb)';
+        $headerTitle = '⚠️ Pengingat Pengembalian Barang';
+    }
+
     return '
     <!DOCTYPE html>
     <html>
@@ -170,7 +238,7 @@ function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
                 box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             }
             .header { 
-                background: linear-gradient(135deg, #1e3a8a, #2563eb); 
+                background: ' . $headerBg . '; 
                 color: #ffffff; 
                 padding: 28px 32px; 
                 text-align: center;
@@ -192,16 +260,13 @@ function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
                 font-size: 15px;
             }
             .alert-box {
-                background: #fef3c7;
-                border-left: 4px solid #f59e0b;
+                background: ' . $alertBg . ';
+                border-left: 4px solid ' . $alertBorder . ';
                 padding: 14px 18px;
                 border-radius: 6px;
                 margin: 20px 0;
                 font-size: 14px;
-                color: #92400e;
-            }
-            .alert-box strong {
-                color: #78350f;
+                color: ' . $alertColor . ';
             }
             .info-table {
                 width: 100%;
@@ -221,6 +286,16 @@ function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
             .info-table td:last-child {
                 color: #1f2937;
             }
+            .sisa-hari {
+                text-align: center;
+                padding: 16px;
+                margin: 16px 0;
+                border-radius: 8px;
+                background: ' . ($sisaHari <= 1 ? '#fee2e2' : '#dbeafe') . ';
+                color: ' . ($sisaHari <= 1 ? '#991b1b' : '#1e3a8a') . ';
+                font-size: 24px;
+                font-weight: 700;
+            }
             .footer { 
                 background: #f9fafb; 
                 padding: 18px 32px; 
@@ -234,14 +309,18 @@ function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
     <body>
         <div class="container">
             <div class="header">
-                <h1>⚠️ Peringatan Pengembalian Barang</h1>
+                <h1>' . $headerTitle . '</h1>
                 <p>Komatsu Indonesia - Sistem Peminjaman</p>
             </div>
             <div class="body">
                 <p>Halo <strong>' . htmlspecialchars($nama) . '</strong>,</p>
                 
                 <div class="alert-box">
-                    <strong>Perhatian!</strong> Masa peminjaman barang Anda akan berakhir dalam <strong>7 hari</strong>.
+                    ' . $pesanAlert . '
+                </div>
+
+                <div class="sisa-hari">
+                    ' . ($sisaHari <= 0 ? 'JATUH TEMPO HARI INI' : 'Sisa ' . $sisaHari . ' Hari') . '
                 </div>
                 
                 <p>Berikut adalah detail peminjaman Anda:</p>
@@ -258,6 +337,10 @@ function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
                     <tr>
                         <td>Batas Pengembalian</td>
                         <td><strong style="color: #dc2626;">' . htmlspecialchars($tglKembali) . '</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Sisa Hari</td>
+                        <td><strong style="color: ' . ($sisaHari <= 1 ? '#dc2626' : '#2563eb') . ';">' . ($sisaHari <= 0 ? 'Hari ini!' : $sisaHari . ' hari') . '</strong></td>
                     </tr>
                 </table>
                 
@@ -279,17 +362,22 @@ function buildEmailBody($nama, $kode, $tglPinjam, $tglKembali) {
 
 
 // ============================================================
-// FUNGSI: Template Email Plain Text (fallback)
+// FUNGSI: Template Email Plain Text — dinamis berdasarkan sisa hari
 // ============================================================
-function buildEmailPlainText($nama, $kode, $tglPinjam, $tglKembali) {
+function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari) {
+    $pesanSisa = $sisaHari <= 0 
+        ? "Masa peminjaman barang Anda SUDAH JATUH TEMPO hari ini." 
+        : "Masa peminjaman barang Anda akan berakhir dalam {$sisaHari} hari (tanggal {$tglKembali}).";
+
     return "Halo {$nama},
 
-Masa peminjaman barang Anda akan berakhir pada tanggal {$tglKembali}.
+{$pesanSisa}
 
 Detail Peminjaman:
 - Kode Peminjaman : {$kode}
 - Tanggal Pinjam  : {$tglPinjam}
 - Batas Kembali   : {$tglKembali}
+- Sisa Hari       : " . ($sisaHari <= 0 ? 'HARI INI!' : "{$sisaHari} hari") . "
 
 Mohon segera melakukan pengembalian sebelum tanggal tersebut.
 

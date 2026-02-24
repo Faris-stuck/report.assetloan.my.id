@@ -88,7 +88,17 @@ try {
         }
     }
 
-    echo json_encode(["status" => true, "success" => true, "message" => "Status berhasil diupdate"]);
+    // Kirim email notifikasi penolakan pengembalian ke user
+    if ($status === 'Ditolak') {
+        try {
+            require_once __DIR__ . '/../email/send-rejected.php';
+            sendRejectedEmail($conn, $id, 'Pengembalian');
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] admin/process-return-reject: " . $emailEx->getMessage());
+        }
+    }
+
+    echo json_encode(["status" => true, "success" => true, "message" => "Status berhasil diupdate"]);    
 } catch (Exception $e) {
     $conn->rollback();
     http_response_code(500);

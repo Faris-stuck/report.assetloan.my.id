@@ -49,7 +49,7 @@ try {
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
         FROM peminjaman 
-        WHERE status = 'Sedang Dipinjam'
+        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
     ");
     $stmt->execute();
     $result = $stmt->get_result();

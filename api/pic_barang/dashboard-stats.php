@@ -14,7 +14,7 @@ try {
     $stats = [];
 
     // Sedang Dipinjam
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Sedang Dipinjam'");
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')");
     $stmt->execute();
     $stats['sedang_dipinjam'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -47,7 +47,7 @@ try {
     $stmt = $conn->prepare("
         SELECT id, kode_peminjaman, nama_peminjam, status, tanggal_pinjam, rencana_kembali
         FROM peminjaman
-        WHERE status = 'Sedang Dipinjam'
+        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
         ORDER BY rencana_kembali ASC
         LIMIT 5
     ");

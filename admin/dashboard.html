@@ -564,7 +564,7 @@
                             let returnDateBgClass = 'bg-secondary';
                             let returnDateColor = 'text-white';
 
-                            if (item.status === 'Sedang Dipinjam') {
+                            if (item.status === 'Sedang Dipinjam' || item.status.startsWith('Due') || item.status === 'Overdue') {
 
                                 if (item.rencana_kembali !== '-') {
                                     const [kembaliDay, kembaliMonth, kembaliYear] = item.rencana_kembali.split('/');
@@ -850,6 +850,8 @@
 
         // Helper function to get status badge class
         function getStatusBadgeClass(status) {
+            if (status === 'Overdue' || status === 'Due Today') return 'danger';
+            if (status === 'Due Tomorrow' || status.startsWith('Due in')) return 'warning';
             const statusMap = {
                 'Menunggu Persetujuan': 'warning',
                 'Disetujui': 'info',

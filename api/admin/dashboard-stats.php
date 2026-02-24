@@ -34,7 +34,7 @@ try {
     
     // 2. Sedang Dipinjam (active loans)
     $stmt = $conn->prepare("
-        SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Sedang Dipinjam'
+        SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
     ");
     if (!$stmt) {
         throw new Exception("Query 2 Error: " . $conn->error);
@@ -128,7 +128,7 @@ try {
             FROM barang b
             LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
             LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
-            WHERE b.kategori = ? AND (p.status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan') OR p.status IS NULL)
+            WHERE b.kategori = ? AND (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' OR p.status = 'Sebagian Dikembalikan' OR p.status IS NULL)
             GROUP BY b.id, b.nama_barang, b.kategori, b.stok_tersedia
             HAVING COALESCE(SUM(dp.jumlah), 0) > 0
             ORDER BY jumlah_dipinjam DESC
@@ -150,7 +150,7 @@ try {
             FROM barang b
             LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
             LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
-            WHERE p.status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan') OR p.status IS NULL
+            WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' OR p.status = 'Sebagian Dikembalikan' OR p.status IS NULL)
             GROUP BY b.id, b.nama_barang, b.kategori, b.stok_tersedia
             HAVING COALESCE(SUM(dp.jumlah), 0) > 0
             ORDER BY jumlah_dipinjam DESC
@@ -197,7 +197,7 @@ try {
             b.id,
             b.nama_barang, 
             b.stok_tersedia, 
-            COALESCE(SUM(CASE WHEN p.status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan') THEN dp.jumlah ELSE 0 END), 0) as jumlah_dipinjam
+            COALESCE(SUM(CASE WHEN (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' OR p.status = 'Sebagian Dikembalikan') THEN dp.jumlah ELSE 0 END), 0) as jumlah_dipinjam
         FROM barang b
         LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
         LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id

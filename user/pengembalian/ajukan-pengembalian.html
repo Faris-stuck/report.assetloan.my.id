@@ -683,6 +683,10 @@
                         let statusBadgeClass = "badge bg-secondary";
                         if (p.status === "Sedang Dipinjam") {
                             statusBadgeClass = "badge bg-info";
+                        } else if (p.status === "Overdue" || p.status === "Due Today") {
+                            statusBadgeClass = "badge bg-danger";
+                        } else if (p.status && p.status.startsWith("Due")) {
+                            statusBadgeClass = "badge bg-warning text-dark";
                         } else if (p.status === "Sebagian Dikembalikan") {
                             statusBadgeClass = "badge bg-warning";
                         } else if (p.status === "Dipinjam Kembali") {
@@ -692,7 +696,7 @@
                         }
 
                         // Determine if extend button should be shown
-                        const canExtend = ["Sedang Dipinjam", "Disetujui", "Sebagian Dikembalikan"].includes(p.status);
+                        const canExtend = p.status === "Sedang Dipinjam" || p.status === "Disetujui" || p.status === "Sebagian Dikembalikan" || p.status === "Overdue" || (p.status && p.status.startsWith("Due"));
 
                         html += `
         <tr>
@@ -789,9 +793,11 @@
                         const sisaDikembalikan = it.sisa_dikembalikan || 0;
                         const sudahDikembalikan = it.sudah_dikembalikan || 0;
                         const qtyPinjam = it.jumlah || 0;
+                        // Calculate sisa pinjam: total pinjam - yang sudah dikembalikan
+                        const sisaPinjam = qtyPinjam - sudahDikembalikan;
 
                         return `
-                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtyPinjam}" data-sisa="${sisaDikembalikan}">
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtyPinjam}" data-sisa="${sudahDikembalikan}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
@@ -799,7 +805,7 @@
                             </td>
                             <td class="text-center">
                                 <div><strong>${qtyPinjam}</strong></div>
-                                ${sudahDikembalikan > 0 ? `<div class="small text-muted">(${sudahDikembalikan} ✓)</div>` : ''}
+                                ${sisaPinjam > 0 ? `<div class="small text-muted">Sisa: ${sisaPinjam}</div>` : ''}
                             </td>
                             <td class="text-center">
                                 <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="" placeholder="0">

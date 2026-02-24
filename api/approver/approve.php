@@ -85,6 +85,16 @@ try {
             error_log("[EMAIL ERROR] approver/approve: " . $emailEx->getMessage());
         }
     }
+
+    // Kirim email notifikasi penolakan ke user
+    if ($status === 'Ditolak') {
+        try {
+            require_once __DIR__ . '/../email/send-rejected.php';
+            sendRejectedEmail($conn, $id, 'Peminjaman');
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] approver/approve-reject: " . $emailEx->getMessage());
+        }
+    }
 } catch (Exception $e) {
     $conn->rollback();
     http_response_code(500);

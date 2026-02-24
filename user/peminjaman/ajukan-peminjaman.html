@@ -1208,7 +1208,7 @@
                 const s = (p.status || '').toString().toLowerCase();
                 const se = (p.status_en || '').toString().toLowerCase();
                 // Include items still being borrowed, partial returns, and in-progress returns
-                return s === 'sedang dipinjam' || s === 'sebagian dikembalikan' || s === 'proses return' ||
+                return s === 'sedang dipinjam' || s.startsWith('due') || s === 'overdue' || s === 'sebagian dikembalikan' || s === 'proses return' ||
                     se === 'borrowed' || se === 'partially returned' || se === 'return in progress';
             });
             const dikembalikan = sortedData.filter(p => {

@@ -62,6 +62,14 @@ try {
     $stmt->bind_param("isi", $approver_id, $now, $extend_id);
     $stmt->execute();
 
+    // Kirim email notifikasi penolakan perpanjangan ke user
+    try {
+        require_once __DIR__ . '/../email/send-extend-rejected.php';
+        sendExtendRejectedEmail($conn, $extend_id);
+    } catch (Exception $emailEx) {
+        error_log("[EMAIL ERROR] extend/reject: " . $emailEx->getMessage());
+    }
+
     echo json_encode(['status' => true, 'message' => 'Permintaan perpanjangan ditolak']);
 
 } catch (Exception $e) {

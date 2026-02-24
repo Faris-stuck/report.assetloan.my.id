@@ -107,6 +107,8 @@
                     statusEl.className = 'badge bg-secondary';
                     const s = displayStatus.toLowerCase();
                     if (s.includes('menunggu')) statusEl.className = 'badge bg-warning text-dark';
+                    else if (s === 'overdue' || s === 'due today') statusEl.className = 'badge bg-danger';
+                    else if (s.startsWith('due')) statusEl.className = 'badge bg-warning text-dark';
                     else if (s.includes('disetujui')) statusEl.className = 'badge bg-success';
                     else if (s.includes('ditolak')) statusEl.className = 'badge bg-danger';
                     else if (s.includes('dipinjam')) statusEl.className = 'badge bg-info text-dark';

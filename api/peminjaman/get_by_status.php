@@ -3,25 +3,43 @@ require_once "../koneksi.php";
 header('Content-Type: application/json');
 
 $status = $_GET['status'] ?? 'Menunggu Persetujuan';
+$include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
 
 try {
     // Query untuk mengambil data peminjaman dengan detail
-    $stmt = $conn->prepare("
-        SELECT
-            p.id,
-            p.kode_peminjaman,
-            p.nama_peminjam,
-            p.nrp,
-            p.tanggal_pinjam,
-            p.rencana_kembali,
-            p.status,
-            p.catatan
-        FROM peminjaman p
-        WHERE p.status = ?
-        ORDER BY p.tanggal_pinjam DESC
-    ");
-
-    $stmt->bind_param("s", $status);
+    if ($include_due) {
+        // Include all active statuses: Sedang Dipinjam + Due% + Overdue
+        $stmt = $conn->prepare("
+            SELECT
+                p.id,
+                p.kode_peminjaman,
+                p.nama_peminjam,
+                p.nrp,
+                p.tanggal_pinjam,
+                p.rencana_kembali,
+                p.status,
+                p.catatan
+            FROM peminjaman p
+            WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+            ORDER BY p.rencana_kembali ASC
+        ");
+    } else {
+        $stmt = $conn->prepare("
+            SELECT
+                p.id,
+                p.kode_peminjaman,
+                p.nama_peminjam,
+                p.nrp,
+                p.tanggal_pinjam,
+                p.rencana_kembali,
+                p.status,
+                p.catatan
+            FROM peminjaman p
+            WHERE p.status = ?
+            ORDER BY p.tanggal_pinjam DESC
+        ");
+        $stmt->bind_param("s", $status);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
 

@@ -740,9 +740,13 @@
                         const qtBaikThisSubmission = qtReturnThisSubmission - qtRusakThisSubmission;
                         const sudahDikembalikan = Number(it.sudah_dikembalikan) || 0;
                         const sisaDikembalikan = Number(it.sisa_dikembalikan) || 0;
+                        // Calculate sisa pinjam: total pinjam - yang sudah dikembalikan
+                        const sisaPinjam = qtPinjam - sudahDikembalikan;
+                        // Calculate remain items: sisa - qty return
+                        const remainItems = sisaDikembalikan - qtReturnThisSubmission;
 
                         return `
-                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-sisa="${sisaDikembalikan}">
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-sisa="${sudahDikembalikan}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
@@ -750,7 +754,7 @@
                             </td>
                             <td class="text-center">
                                 <div><strong>${qtPinjam}</strong></div>
-                                ${sudahDikembalikan > 0 ? `<div class="small text-muted">(${sudahDikembalikan} ✓)</div>` : ''}
+                                ${sisaPinjam > 0 ? `<div class="small text-muted">Sisa: ${sisaPinjam}</div>` : ''}
                             </td>
                             <td class="text-center">
                                 <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="${qtReturnThisSubmission}">

@@ -348,14 +348,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 res.data.forEach((p, index) => {
-                    // Hitung total yang sedang dipinjam (status Sedang Dipinjam)
-                    if (p.status === 'Sedang Dipinjam') {
+                    // Hitung total yang sedang dipinjam (status aktif)
+                    if (p.status === 'Sedang Dipinjam' || p.status.startsWith('Due') || p.status === 'Overdue') {
                         totalDipinjam += p.jumlah;
                     }
 
                     let statusBadge = "bg-secondary";
                     if (p.status === "Menunggu Persetujuan") statusBadge = "bg-warning";
                     if (p.status === "Sedang Dipinjam") statusBadge = "bg-primary";
+                    if (p.status === "Overdue" || p.status === "Due Today") statusBadge = "bg-danger";
+                    else if (p.status.startsWith("Due")) statusBadge = "bg-warning";
                     if (p.status === "Dikembalikan") statusBadge = "bg-success";
                     if (p.status === "Ditolak") statusBadge = "bg-danger";
 

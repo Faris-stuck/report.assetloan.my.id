@@ -54,7 +54,7 @@ try {
     // 4. Sedang Dipinjam (active)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND status = 'Sedang Dipinjam'
+        WHERE user_id = ? AND (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();

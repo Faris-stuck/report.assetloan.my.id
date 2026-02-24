@@ -515,9 +515,12 @@
                     'Sedang Dipinjam': 'primary',
                     'Dikembalikan': 'success',
                     'Ditolak': 'danger',
-                    'Proses Return': 'secondary'
+                    'Proses Return': 'secondary',
+                    'Overdue': 'danger',
+                    'Due Today': 'danger',
+                    'Due Tomorrow': 'warning'
                 };
-                const badgeClass = statusColor[data.status] || 'secondary';
+                let badgeClass = statusColor[data.status] || (data.status.startsWith('Due') ? 'warning' : 'secondary');
 
                 // Format dates
                 const tanggalPinjam = new Date(data.tanggal_pinjam).toLocaleDateString('id-ID');

@@ -61,6 +61,14 @@ try {
     }
     
     $conn->commit();
+
+    // Kirim email notifikasi penolakan ke user
+    try {
+        require_once __DIR__ . '/../email/send-rejected.php';
+        sendRejectedEmail($conn, $id, 'Peminjaman');
+    } catch (Exception $emailEx) {
+        error_log("[EMAIL ERROR] approver/reject: " . $emailEx->getMessage());
+    }
     
     echo json_encode([
         "status" => true,

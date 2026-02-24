@@ -574,7 +574,7 @@
 
         // Load data peminjaman yang sedang dipinjam dari database peminjaman
         function loadDataSedangDipinjam() {
-            fetch(BASE_URL + "/api/peminjaman/get_by_status.php?status=" + encodeURIComponent("Sedang Dipinjam"))
+            fetch(BASE_URL + "/api/peminjaman/get_by_status.php?include_due=1")
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
@@ -611,7 +611,7 @@
       <td>${item.barang}</td>
       <td>${item.tanggal}</td>
       <td>${item.rencana_kembali}</td>
-      <td><span class="badge bg-primary">Sedang Dipinjam</span></td>
+      <td><span class="badge ${item.status === 'Overdue' || item.status === 'Due Today' ? 'bg-danger' : item.status.startsWith('Due') ? 'bg-warning text-dark' : 'bg-primary'}">${item.status}</span></td>
       <td>
         <button class="btn btn-sm btn-info"
           onclick="lihatDetail(${item.id})">
@@ -640,9 +640,10 @@
             document.getElementById("detailRencanaKembali").textContent = borrowing.rencana_kembali || "-";
 
             // Set status badge
-            const statusBadge = borrowing.status === "Sedang Dipinjam"
-                ? `<span class="badge bg-primary">${borrowing.status}</span>`
-                : `<span class="badge bg-secondary">${borrowing.status}</span>`;
+            let badgeCls = 'bg-primary';
+            if (borrowing.status === 'Overdue' || borrowing.status === 'Due Today') badgeCls = 'bg-danger';
+            else if (borrowing.status.startsWith('Due')) badgeCls = 'bg-warning text-dark';
+            const statusBadge = `<span class="badge ${badgeCls}">${borrowing.status}</span>`;
             document.getElementById("detailStatus").innerHTML = statusBadge;
 
             // Populate items table

@@ -93,6 +93,16 @@ try {
         }
     }
 
+    // Kirim email notifikasi penolakan ke user
+    if ($new_status === 'Ditolak') {
+        try {
+            require_once __DIR__ . '/../email/send-rejected.php';
+            sendRejectedEmail($conn, $id, 'Peminjaman');
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] admin/update-status-reject: " . $emailEx->getMessage());
+        }
+    }
+
     echo json_encode([
         "status" => true,
         "message" => "Status berhasil diperbarui"
