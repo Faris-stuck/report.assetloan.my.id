@@ -64,6 +64,15 @@ try {
             $stmt_restore->execute();
         }
         $conn->commit();
+
+        // Kirim email notifikasi ke user bahwa pengembalian dikonfirmasi
+        try {
+            require_once __DIR__ . '/../email/send-return-confirmed.php';
+            sendReturnConfirmedEmail($conn, $id);
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] admin/approve: " . $emailEx->getMessage());
+        }
+
         echo json_encode(["status" => true, "message" => "Item successfully returned and stock restored."]);
     } elseif ($status === 'Ditolak') {
         // Admin can reject even after manager approval if needed

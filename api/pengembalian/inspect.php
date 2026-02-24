@@ -214,6 +214,17 @@ try {
     }
 
     $conn->commit();
+
+    // Kirim email notifikasi ke user saat semua barang dikembalikan
+    if ($final_status === 'Dikembalikan') {
+        try {
+            require_once __DIR__ . '/../email/send-return-confirmed.php';
+            sendReturnConfirmedEmail($conn, $peminjaman_id);
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] pengembalian/inspect: " . $emailEx->getMessage());
+        }
+    }
+
     echo json_encode([
         "status" => true,
         "message" => $has_rusak ? "Selesai. Ada barang rusak, user wajib ganti rugi." : "Selesai. Pengembalian dalam kondisi baik.",

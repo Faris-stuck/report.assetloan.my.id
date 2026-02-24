@@ -33,4 +33,12 @@ while ($detail = $detail_query->fetch_assoc()) {
     $conn->query("UPDATE barang SET stok_tersedia = stok_tersedia + " . (int)$detail['jumlah'] . " WHERE id = " . (int)$detail['barang_id']);
 }
 
+// Kirim email notifikasi ke user bahwa pengembalian dikonfirmasi
+try {
+    require_once __DIR__ . '/../email/send-return-confirmed.php';
+    sendReturnConfirmedEmail($conn, $id);
+} catch (Exception $emailEx) {
+    error_log("[EMAIL ERROR] pic_barang/process-return: " . $emailEx->getMessage());
+}
+
 echo json_encode(["status" => true, "message" => "Pengembalian berhasil diproses"]);

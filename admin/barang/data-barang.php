@@ -360,7 +360,7 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                                 <span>Account Settings</span>
                             </a>
                             <div class="dropdown-divider"></div>
-                            <a href="../../auth/login.html" class="dropdown-item">
+                            <a href="../../index.html" class="dropdown-item">
                                 <i class="feather-log-out"></i>
                                 <span>Logout</span>
                             </a>
@@ -701,6 +701,8 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
     <script src="../../assets/js/common-init.min.js"></script>
     <script src="../../assets/js/dashboard-init.min.js"></script>
     <!--! END: Apps Init !-->
+    <!-- BASE URL DETECTION (REQUIRED) -->
+    <script src="../../assets/js/base-url.js"></script>
     <!--KONEKSI KE API.JS -->
     <script src="../../assets/js/config/api.js"></script>
 

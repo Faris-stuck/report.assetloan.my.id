@@ -218,6 +218,15 @@ try {
     }
 
     $conn->commit();
+
+    // Kirim email notifikasi ke admin tentang permintaan pengembalian
+    try {
+        require_once __DIR__ . '/../email/send-return-request.php';
+        sendReturnRequestEmail($conn, $peminjaman_id);
+    } catch (Exception $emailEx) {
+        error_log("[EMAIL ERROR] peminjaman/return: " . $emailEx->getMessage());
+    }
+
     echo json_encode([
         "status" => true,
         "message" => "Pengembalian berhasil diajukan. Menunggu pengecekan Admin/PIC.",

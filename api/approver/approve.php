@@ -75,6 +75,16 @@ try {
     }
     
     $conn->commit();
+
+    // Kirim email notifikasi setelah berhasil
+    if ($status === 'Disetujui') {
+        try {
+            require_once __DIR__ . '/../email/send-approved.php';
+            sendApprovedEmail($conn, $id);
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] approver/approve: " . $emailEx->getMessage());
+        }
+    }
 } catch (Exception $e) {
     $conn->rollback();
     http_response_code(500);

@@ -153,9 +153,15 @@ document.addEventListener("DOMContentLoaded", function () {
 ================================ */
 function loadBarang() {
     fetch(`${API_BASE_URL}/barang/get.php`)
-        .then(res => res.json())
         .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            return res.json();
+        })
+        .then(res => {
+            if (!res || !res.data) throw new Error('Invalid response format: missing data field');
+
             const tbody = document.getElementById("tabelBarang");
+            if (!tbody) throw new Error('Table element #tabelBarang not found');
             tbody.innerHTML = "";
 
             res.data.forEach((item, i) => {
@@ -193,7 +199,12 @@ function loadBarang() {
                 </tr>`;
             });
         })
-        .catch(() => alert("Failed to load item data"));
+        .catch((err) => {
+            console.error('loadBarang error:', err);
+            const errMsg = err?.message || 'Unknown error';
+            console.log('API_BASE_URL value:', API_BASE_URL);
+            alert(`Failed to load item data: ${errMsg}`);
+        });
 }
 
 /* ===============================

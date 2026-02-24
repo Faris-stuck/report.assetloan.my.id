@@ -77,6 +77,17 @@ try {
     }
     
     $conn->commit();
+
+    // Kirim email notifikasi berdasarkan status
+    if ($status === 'Dikembalikan') {
+        try {
+            require_once __DIR__ . '/../email/send-return-confirmed.php';
+            sendReturnConfirmedEmail($conn, $id);
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] admin/process-return: " . $emailEx->getMessage());
+        }
+    }
+
     echo json_encode(["status" => true, "success" => true, "message" => "Status berhasil diupdate"]);
 } catch (Exception $e) {
     $conn->rollback();

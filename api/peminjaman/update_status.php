@@ -103,6 +103,16 @@ try {
 
     $conn->commit();
 
+    // Kirim email notifikasi setelah berhasil
+    if ($new_status === 'Sedang Dipinjam') {
+        try {
+            require_once __DIR__ . '/../email/send-approved.php';
+            sendApprovedEmail($conn, $id);
+        } catch (Exception $emailEx) {
+            error_log("[EMAIL ERROR] peminjaman/update_status: " . $emailEx->getMessage());
+        }
+    }
+
     echo json_encode([
         "status" => true,
         "message" => "Status berhasil diperbarui"

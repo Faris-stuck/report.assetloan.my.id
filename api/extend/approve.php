@@ -73,6 +73,14 @@ try {
 
     $conn->commit();
 
+    // Kirim email notifikasi ke user bahwa perpanjangan disetujui
+    try {
+        require_once __DIR__ . '/../email/send-extend-approved.php';
+        sendExtendApprovedEmail($conn, $extend['peminjaman_id'], $extend['tanggal_perpanjang']);
+    } catch (Exception $emailEx) {
+        error_log("[EMAIL ERROR] extend/approve: " . $emailEx->getMessage());
+    }
+
     echo json_encode([
         'status' => true,
         'message' => 'Perpanjangan disetujui. Tanggal kembali diperbarui ke ' . date('d/m/Y', strtotime($extend['tanggal_perpanjang']))

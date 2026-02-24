@@ -14,17 +14,10 @@
  */
 
 // ============================================================
-// 1. KONFIGURASI SMTP GMAIL
-//    Ganti dengan email & App Password Gmail Anda
+// 1. KONFIGURASI SMTP — dari config/email.php (TIDAK HARDCODE)
+//    Semua email penerima diambil dari database
 // ============================================================
-$smtpConfig = [
-    'host'     => 'smtp.gmail.com',
-    'port'     => 587,
-    'secure'   => 'tls',
-    'username' => 'openclaaw@gmail.com',        // ← GANTI dengan email Gmail Anda
-    'password' => 'olok ffwy ojxx gyyj ',         // ← GANTI dengan App Password Gmail (16 karakter)
-    'fromName' => 'Komatsu Indonesia - Sistem Peminjaman',
-];
+require_once __DIR__ . '/../../config/email.php';
 
 // ============================================================
 // 2. OUTPUT HEADER (untuk akses via browser)
@@ -56,14 +49,9 @@ if ($conn->connect_error) {
 echo "[OK] Koneksi database berhasil.\n\n";
 
 // ============================================================
-// 4. LOAD PHPMAILER
+// 4. LOAD PHPMAILER & EMAIL FUNCTIONS
 // ============================================================
-require_once __DIR__ . '/../../phpmailer/src/Exception.php';
-require_once __DIR__ . '/../../phpmailer/src/PHPMailer.php';
-require_once __DIR__ . '/../../phpmailer/src/SMTP.php';
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+require_once __DIR__ . '/../email/email-functions.php';
 
 // ============================================================
 // 5. QUERY: Ambil peminjaman H-7 sebelum tanggal kembali
@@ -127,40 +115,17 @@ while ($row = $result->fetch_assoc()) {
     }
 
     // ---------------------------------------------------------
-    // Buat instance PHPMailer
+    // Kirim menggunakan fungsi sendEmail() dari email-functions.php
+    // (email penerima dari database, bukan hardcode)
     // ---------------------------------------------------------
-    $mail = new PHPMailer(true);
+    $subject  = 'Peringatan Pengembalian Barang - ' . $kodePeminjaman;
+    $htmlBody = buildEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali);
 
-    try {
-        // SMTP Configuration
-        $mail->isSMTP();
-        $mail->Host       = $smtpConfig['host'];
-        $mail->SMTPAuth   = true;
-        $mail->Username   = $smtpConfig['username'];
-        $mail->Password   = $smtpConfig['password'];
-        $mail->SMTPSecure = $smtpConfig['secure'];
-        $mail->Port       = $smtpConfig['port'];
-        $mail->CharSet    = 'UTF-8';
-
-        // Sender & Recipient
-        $mail->setFrom($smtpConfig['username'], $smtpConfig['fromName']);
-        $mail->addAddress($emailUser, $namaUser);
-
-        // Email Content
-        $mail->isHTML(true);
-        $mail->Subject = 'Peringatan Pengembalian Barang - ' . $kodePeminjaman;
-        $mail->Body    = buildEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali);
-        $mail->AltBody = buildEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali);
-
-        // Send
-        $mail->send();
-
+    if (sendEmail($emailUser, $subject, $htmlBody, $namaUser, buildEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali))) {
         echo "[OK]     Email berhasil dikirim ke: {$emailUser}\n\n";
         $berhasil++;
-
-    } catch (Exception $e) {
-        echo "[GAGAL]  Email gagal dikirim ke: {$emailUser}\n";
-        echo "         Error: " . $mail->ErrorInfo . "\n\n";
+    } else {
+        echo "[GAGAL]  Email gagal dikirim ke: {$emailUser}\n\n";
         $gagal++;
     }
 }
