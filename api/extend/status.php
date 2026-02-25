@@ -25,6 +25,48 @@ if ($peminjaman_id <= 0) {
 }
 
 try {
+    // ========================================
+    // 1. GET PEMINJAMAN STATUS - to determine if can extend
+    // ========================================
+    $stmt_p = $conn->prepare("SELECT status FROM peminjaman WHERE id = ?");
+    $stmt_p->bind_param("i", $peminjaman_id);
+    $stmt_p->execute();
+    $peminjaman_result = $stmt_p->get_result();
+    $peminjaman_row = $peminjaman_result->fetch_assoc();
+    
+    $peminjaman_status = $peminjaman_row ? $peminjaman_row['status'] : '';
+    
+    // ========================================
+    // 2. DETERMINE IF CAN EXTEND - based on peminjaman status
+    // ========================================
+    // Status peminjaman yang memungkinkan extend (dinamis, bukan hardcoded)
+    $active_statuses = [
+        'Sedang Dipinjam',
+        'Disetujui',
+        'Approved',
+        'Sebagian Dikembalikan',
+        'Partially Returned',
+        'Proses Return',
+        'Return In Progress',
+        'Overdue',
+        'Due Today',
+        'Due H-0',
+        'Due H-1',
+        'Due H-2',
+        'Due H-3',
+        'Due H-4',
+        'Due H-5',
+        'Due H-6',
+        'Due H-7'
+    ];
+    
+    // Allow extend jika peminjaman masih aktif (status bukan final/closed)
+    $can_extend = in_array($peminjaman_status, $active_statuses);
+    
+    // ========================================
+    // 3. GET EXTEND STATUS - latest record
+    // ========================================
+    // Use ORDER BY id DESC (not created_at DESC) for deterministic latest-record retrieval
     $stmt = $conn->prepare("
         SELECT 
             e.id AS extend_id,
@@ -38,7 +80,7 @@ try {
         FROM extend_peminjaman e
         LEFT JOIN users u ON e.approved_by = u.id
         WHERE e.peminjaman_id = ?
-        ORDER BY e.created_at DESC
+        ORDER BY e.id DESC
         LIMIT 1
     ");
     $stmt->bind_param("i", $peminjaman_id);
@@ -50,10 +92,12 @@ try {
         echo json_encode([
             'status' => true,
             'has_extend' => true,
+            'can_extend' => $can_extend,
+            'peminjaman_status' => $peminjaman_status,
             'data' => [
                 'extend_id' => (int)$extend['extend_id'],
-                'tanggal_kembali_sekarang' => $extend['tanggal_kembali_sekarang'],
-                'tanggal_perpanjang' => $extend['tanggal_perpanjang'],
+                'tanggal_kembali_sekarang' => $extend['tanggal_kembali_sekarang'] ? date('d/m/Y', strtotime($extend['tanggal_kembali_sekarang'])) : '-',
+                'tanggal_perpanjang' => $extend['tanggal_perpanjang'] ? date('d/m/Y', strtotime($extend['tanggal_perpanjang'])) : '-',
                 'alasan' => $extend['alasan'],
                 'extend_status' => $extend['extend_status'],
                 'created_at' => $extend['created_at'] ? date('d/m/Y H:i', strtotime($extend['created_at'])) : '-',
@@ -62,7 +106,13 @@ try {
             ]
         ]);
     } else {
-        echo json_encode(['status' => true, 'has_extend' => false, 'data' => null]);
+        echo json_encode([
+            'status' => true,
+            'has_extend' => false,
+            'can_extend' => $can_extend,
+            'peminjaman_status' => $peminjaman_status,
+            'data' => null
+        ]);
     }
 
 } catch (Exception $e) {

@@ -4,14 +4,13 @@
  * EMAIL: Peminjaman Ditolak (Status → Ditolak)
  * ============================================================
  * 
+ * Email dikirim ke SEMUA pihak terkait:
+ *   - USER (pemilik peminjaman)
+ *   - ADMIN (semua admin)
+ *   - PIC_BARANG (semua PIC)
+ *   - PELAKU AKSI (dari SESSION)
+ * 
  * File   : /PROJECT/api/email/send-rejected.php
- * 
- * Cara panggil setelah update status:
- *   require_once __DIR__ . '/../email/send-rejected.php';
- *   sendRejectedEmail($conn, $peminjaman_id);
- * 
- * Atau via browser untuk test:
- *   http://localhost/PROJECT/api/email/send-rejected.php?id=123
  * 
  * ============================================================
  */
@@ -19,7 +18,7 @@
 require_once __DIR__ . '/email-functions.php';
 
 /**
- * Kirim email notifikasi peminjaman ditolak ke user
+ * Kirim email notifikasi peminjaman ditolak ke SEMUA pihak terkait
  *
  * @param mysqli $conn            Koneksi database
  * @param int    $peminjamanId    ID peminjaman
@@ -42,27 +41,59 @@ function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Peminjaman') {
     $tglPinjam   = date('d F Y', strtotime($data['tanggal_pinjam']));
     $tglKembali  = !empty($data['rencana_kembali']) ? date('d F Y', strtotime($data['rencana_kembali'])) : '-';
 
-    // Validasi email
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        error_log("[EMAIL] send-rejected: Email tidak valid untuk peminjaman #{$peminjamanId}: '{$email}'");
+    // ============================================================
+    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // ============================================================
+    $recipients = [];
+
+    // 1. USER (pemilik peminjaman)
+    $recipients[] = ['email' => $email, 'nama' => $nama];
+
+    // 2. SEMUA ADMIN
+    $admins = getAdminEmails($conn);
+    foreach ($admins as $admin) {
+        $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
+    }
+
+    // 3. SEMUA PIC_BARANG
+    $pics = getPicBarangEmails($conn);
+    foreach ($pics as $pic) {
+        $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
+    }
+
+    // 4. PELAKU AKSI (dari SESSION)
+    $actor = getActorEmail($conn);
+    if ($actor) {
+        $recipients[] = ['email' => $actor['email'], 'nama' => $actor['nama']];
+    }
+
+    // DEDUPLIKASI
+    $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
+
+    if (empty($recipients)) {
+        error_log("[EMAIL] send-rejected: Tidak ada penerima valid untuk peminjaman #{$peminjamanId}");
         return false;
     }
 
     // Buat body email
     $bodyHtml = '
-        <p>Halo <strong>' . htmlspecialchars($nama) . '</strong>,</p>
+        <p>Halo,</p>
         
         <div class="warning-box">
             <strong>❌ ' . htmlspecialchars($konteks) . ' Ditolak</strong><br>
-            Mohon maaf, permintaan ' . htmlspecialchars(strtolower($konteks)) . ' Anda telah ditolak.
+            Permintaan ' . htmlspecialchars(strtolower($konteks)) . ' dari <strong>' . htmlspecialchars($nama) . '</strong> telah ditolak.
         </div>
         
-        <p>Berikut detail ' . htmlspecialchars(strtolower($konteks)) . ' Anda:</p>
+        <p>Berikut detail ' . htmlspecialchars(strtolower($konteks)) . ':</p>
         
         <table class="info-table">
             <tr>
                 <td>Kode Peminjaman</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
+            </tr>
+            <tr>
+                <td>Nama Peminjam</td>
+                <td>' . htmlspecialchars($nama) . '</td>
             </tr>
             <tr>
                 <td>Tanggal Pinjam</td>
@@ -78,27 +109,30 @@ function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Peminjaman') {
             </tr>
         </table>
         
-        <p>Silakan hubungi admin untuk informasi lebih lanjut.</p>
-        
         <p>Terima kasih.</p>';
 
     $subject  = $konteks . ' Ditolak - ' . $kode;
     $fullHtml = buildEmailTemplate('❌ ' . $konteks . ' Ditolak', $bodyHtml);
 
-    $result = sendEmail($email, $subject, $fullHtml, $nama);
-
-    if ($result) {
-        error_log("[EMAIL] send-rejected: Berhasil kirim ke {$email} untuk peminjaman #{$peminjamanId} ({$konteks})");
-        echo "EMAIL PENOLAKAN TERKIRIM";
-    } else {
-        error_log("[EMAIL] send-rejected: Gagal kirim ke {$email} untuk peminjaman #{$peminjamanId} ({$konteks})");
+    // ============================================================
+    // KIRIM EMAIL MENGGUNAKAN LOOP KE SEMUA PENERIMA
+    // ============================================================
+    $totalSent = 0;
+    foreach ($recipients as $r) {
+        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
+            error_log("[EMAIL] send-rejected: EMAIL TERKIRIM KE: " . $r['email']);
+            $totalSent++;
+        } else {
+            error_log("[EMAIL] send-rejected: EMAIL GAGAL KE: " . $r['email']);
+        }
     }
 
-    return $result;
+    error_log("[EMAIL] send-rejected: Total terkirim {$totalSent}/" . count($recipients) . " untuk peminjaman #{$peminjamanId} ({$konteks})");
+    return $totalSent > 0;
 }
 
 // ============================================================
-// TEST MODE: Jalankan langsung via browser/CLI dengan ?id=xxx
+// TEST MODE
 // ============================================================
 if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-rejected.php') {
     if (php_sapi_name() === 'cli') {
@@ -115,7 +149,7 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-rejected.php') {
         exit;
     }
 
-    echo "Mengirim email rejected untuk peminjaman #{$id} ({$konteks})...\n";
+    echo "Mengirim email rejected untuk peminjaman #{$id} ({$konteks}) ke SEMUA pihak...\n";
     $result = sendRejectedEmail($conn, (int)$id, $konteks);
-    echo $result ? "\n✅ Email berhasil dikirim!\n" : "\n❌ Email gagal dikirim.\n";
+    echo $result ? "✅ Email berhasil dikirim ke semua pihak!\n" : "❌ Email gagal dikirim.\n";
 }

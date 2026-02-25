@@ -53,8 +53,6 @@ $lokasi = [];
 // Generate values yang akan digunakan
 $kode = "PMJ-" . time();
 
-error_log("POST data: " . print_r($_POST, true));
-
 if (isset($_POST['barang']) && is_array($_POST['barang'])) {
     foreach ($_POST['barang'] as $id => $val) {
         $barang[intval($id)] = intval($val);
@@ -80,10 +78,9 @@ foreach ($_POST as $key => $value) {
 
 // Validasi data required
 if (empty($user_id) || empty($nama_peminjam) || empty($nrp) || empty($rencana_pinjam) || empty($rencana_kembali)) {
-    error_log("DEBUG: Missing required data - user_id=$user_id, nama=$nama_peminjam, nrp=$nrp, pinjam=$rencana_pinjam, kembali=$rencana_kembali");
     echo json_encode([
         "status" => false,
-        "message" => "Data required tidak lengkap: user_id=$user_id, nama=$nama_peminjam, nrp=$nrp, pinjam=$rencana_pinjam, kembali=$rencana_kembali"
+        "message" => "Data required tidak lengkap. Pastikan semua field terisi."
     ]);
     exit;
 }
@@ -109,10 +106,9 @@ if (strtotime($rencana_kembali) < strtotime($rencana_pinjam)) {
 
 // Validasi ada minimal 1 barang
 if (empty($barang) || array_sum($barang) == 0) {
-    error_log("DEBUG: Barang array is empty or sum is 0. Barang: " . print_r($barang, true));
     echo json_encode([
         "status" => false,
-        "message" => "Pilih minimal 1 barang untuk dipinjam. Barang diterima: " . json_encode($barang)
+        "message" => "Pilih minimal 1 barang untuk dipinjam."
     ]);
     exit;
 }
@@ -131,8 +127,6 @@ try {
     }
 
     $status = "Menunggu Persetujuan";
-    error_log("DEBUG: Attempting to bind params - kode=$kode, user_id=$user_id, nama=$nama_peminjam, nrp=$nrp, lokasi=$lokasi_umum, pinjam=$rencana_pinjam, kembali=$rencana_kembali, status=$status");
-    
     $stmt->bind_param("sisssssss", $kode, $user_id, $nama_peminjam, $nrp, $lokasi_umum, $rencana_pinjam, $rencana_kembali, $status, $catatan);
     
     if (!$stmt->execute()) {
@@ -199,6 +193,18 @@ try {
     }
 
     $conn->commit();
+    
+    // ============================================================
+    // Kirim email notifikasi setelah peminjaman berhasil dibuat
+    // ============================================================
+    try {
+        require_once __DIR__ . '/../email/send-pinjam-request.php';
+        sendPinjamRequestEmail($conn, $peminjaman_id);
+    } catch (Exception $emailEx) {
+        error_log("[EMAIL ERROR] request-peminjaman: " . $emailEx->getMessage());
+        // Email error tidak perlu menggagalkan response, hanya log saja
+    }
+    
     echo json_encode(["status" => true]);
 } catch (Exception $e) {
     error_log("ERROR in request-peminjaman.php: " . $e->getMessage());

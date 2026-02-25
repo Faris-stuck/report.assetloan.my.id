@@ -851,14 +851,17 @@
         // Helper function to get status badge class
         function getStatusBadgeClass(status) {
             if (status === 'Overdue' || status === 'Due Today') return 'danger';
-            if (status === 'Due Tomorrow' || status.startsWith('Due in')) return 'warning';
+            if (status.startsWith('Due In') || status.startsWith('Due in')) return 'warning';
             const statusMap = {
                 'Menunggu Persetujuan': 'warning',
                 'Disetujui': 'info',
                 'Ditolak': 'danger',
                 'Sedang Dipinjam': 'primary',
                 'Dikembalikan': 'success',
-                'Proses Return': 'secondary'
+                'Sebagian Dikembalikan': 'warning',
+                'Proses Return': 'info',
+                'Sebagian Rusak': 'warning',
+                'Semua Rusak': 'danger'
             };
             return statusMap[status] || 'light';
         }

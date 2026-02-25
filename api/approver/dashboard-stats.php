@@ -49,7 +49,7 @@ try {
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
         FROM peminjaman 
-        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
+        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')
     ");
     $stmt->execute();
     $result = $stmt->get_result();
@@ -73,7 +73,7 @@ try {
             'kode' => $row['kode_peminjaman'],
             'nama' => $row['nama_peminjam'],
             'nrp' => $row['nrp'],
-            'status' => $row['status'],
+            'status' => computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']),
             'tanggal_pinjam' => date('d/m/Y', strtotime($row['tanggal_pinjam'])),
             'rencana_kembali' => date('d/m/Y', strtotime($row['rencana_kembali']))
         ];

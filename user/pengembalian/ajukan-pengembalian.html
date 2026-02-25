@@ -500,9 +500,9 @@
 
     <!-- Return Confirmation Modal -->
 
-    <!-- Modal: Request Extend -->
+    <!-- Modal: Request Extend with Items -->
     <div class="modal fade" id="modalExtend" tabindex="-1" aria-labelledby="modalExtendLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-warning">
                     <h5 class="modal-title" id="modalExtendLabel">
@@ -512,16 +512,47 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="extendPeminjamanId">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Tanggal Kembali Saat Ini</label>
-                        <input type="text" class="form-control" id="extendCurrentDate" readonly
-                            style="background-color: #f5f5f5;">
+
+                    <!-- Return Date Section -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tanggal Kembali Saat Ini</label>
+                            <input type="text" class="form-control" id="extendCurrentDate" readonly
+                                style="background-color: #f5f5f5;">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tanggal Perpanjangan Baru <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="extendNewDate" required>
+                        </div>
                     </div>
+
+                    <!-- Items Table Section -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Tanggal Perpanjangan Baru <span
+                        <label class="form-label fw-semibold">Unit Barang yang Diperpanjang <span
                                 class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="extendNewDate" required>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 40px;" class="text-center">No</th>
+                                        <th>Barang</th>
+                                        <th style="width: 80px;" class="text-center">Unit</th>
+                                        <th style="width: 80px;" class="text-center">Qty</th>
+                                        <th style="width: 160px;" class="text-center">Expected Return / Status</th>
+                                        <th style="width: 50px;" class="text-center">Pilih</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="extendItemsTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-3">Loading items...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+
+                    <!-- Reason Section -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Alasan Perpanjangan <span
                                 class="text-danger">*</span></label>
@@ -681,22 +712,36 @@
                     itemsToReturn.forEach(p => {
                         // Determine status badge color
                         let statusBadgeClass = "badge bg-secondary";
-                        if (p.status === "Sedang Dipinjam") {
-                            statusBadgeClass = "badge bg-info";
-                        } else if (p.status === "Overdue" || p.status === "Due Today") {
+                        if (p.status === "Overdue" || p.status === "Due Today") {
                             statusBadgeClass = "badge bg-danger";
                         } else if (p.status && p.status.startsWith("Due")) {
                             statusBadgeClass = "badge bg-warning text-dark";
+                        } else if (p.status === "Sedang Dipinjam") {
+                            statusBadgeClass = "badge bg-primary";
                         } else if (p.status === "Sebagian Dikembalikan") {
                             statusBadgeClass = "badge bg-warning";
+                        } else if (p.status === "Proses Return") {
+                            statusBadgeClass = "badge bg-info";
+                        } else if (p.status === "Dikembalikan") {
+                            statusBadgeClass = "badge bg-success";
                         } else if (p.status === "Dipinjam Kembali") {
                             statusBadgeClass = "badge bg-secondary";
                         } else if (p.status && p.status.includes("Rusak")) {
                             statusBadgeClass = "badge bg-danger";
                         }
 
-                        // Determine if extend button should be shown
-                        const canExtend = p.status === "Sedang Dipinjam" || p.status === "Disetujui" || p.status === "Sebagian Dikembalikan" || p.status === "Overdue" || (p.status && p.status.startsWith("Due"));
+                        // Determine button visibility based on can_extend from API
+                        const extendButtonDisplay = p.can_extend ? 'inline-block' : 'none';
+
+                        // Render extend badge inline using latest_extend_status from API
+                        let extendBadgeHtml = '';
+                        if (p.latest_extend_status === 'Pending') {
+                            extendBadgeHtml = '<br><span class="badge bg-warning text-dark mt-1"><i class="feather-clock"></i> Extend Pending</span>';
+                        } else if (p.latest_extend_status === 'Approved') {
+                            extendBadgeHtml = '<br><span class="badge bg-success mt-1"><i class="feather-check"></i> Extend Approved</span>';
+                        } else if (p.latest_extend_status === 'Rejected') {
+                            extendBadgeHtml = '<br><span class="badge bg-danger mt-1"><i class="feather-x"></i> Extend Rejected</span>';
+                        }
 
                         html += `
         <tr>
@@ -706,7 +751,7 @@
             <td>${p.rencana_kembali || '-'}</td>
             <td>
                 <span class="${statusBadgeClass}">${p.status || '-'}</span>
-                <span id="extend-badge-${p.id}"></span>
+                <span id="extend-badge-${p.id}">${extendBadgeHtml}</span>
             </td>
             <td>
                 <div class="d-flex gap-1 flex-wrap">
@@ -715,12 +760,13 @@
                         title="Request return for this borrowing">
                         <i class="feather-undo"></i> Return
                     </button>
-                    ${canExtend ? `<button class="btn btn-warning btn-sm" 
+                    <button class="btn btn-warning btn-sm" 
                         onclick="openExtendModal(${p.id}, '${p.rencana_kembali || ''}')" 
                         title="Request extend for this borrowing"
-                        id="btn-extend-${p.id}">
+                        id="btn-extend-${p.id}"
+                        style="display: ${extendButtonDisplay};">
                         <i class="feather-calendar"></i> Extend
-                    </button>` : ''}
+                    </button>
                 </div>
             </td>
         </tr>`;
@@ -733,9 +779,13 @@
                     console.log("Rendering HTML with", itemsToReturn.length, "items");
                     document.getElementById("kembaliTable").innerHTML = html;
 
-                    // Load extend status for each item
+                    // Extend badge already rendered inline from latest_extend_status.
+                    // Call loadExtendStatus only for items that had no inline data
+                    // (e.g., very new extends created after page load).
                     itemsToReturn.forEach(p => {
-                        loadExtendStatus(p.id);
+                        if (p.latest_extend_status === null || p.latest_extend_status === undefined) {
+                            loadExtendStatus(p.id);
+                        }
                     });
                 })
                 .catch(err => {
@@ -797,7 +847,7 @@
                         const sisaPinjam = qtyPinjam - sudahDikembalikan;
 
                         return `
-                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtyPinjam}" data-sisa="${sudahDikembalikan}">
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtyPinjam}" data-remain-db="${sisaDikembalikan}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
@@ -831,64 +881,68 @@
                             const qtyReturnInput = tr.querySelector('.inp-qty-return');
                             const goodCondInput = tr.querySelector('.inp-good-condition');
                             const damagedInput = tr.querySelector('.inp-damaged');
-                            const qtReturn = Number(qtyReturnInput.value || 0);
-                            const goodCond = Number(goodCondInput.value || 0);
-                            const damaged = Number(damagedInput.value || 0);
-                            const qtPinjam = Number(tr.getAttribute('data-qty-pinjam') || 0);
-                            const sisa = Number(tr.getAttribute('data-sisa') || 0);
+                            const remainInput = tr.querySelector('.inp-remain');
 
-                            // Jika qty return kosong atau 0, disable good condition dan damaged
+                            // SUMBER KEBENARAN: remain dari database, disimpan di data-remain-db
+                            // Nilai ini TIDAK PERNAH berubah selama modal terbuka
+                            const remainDB = Number(tr.getAttribute('data-remain-db') || 0);
+
+                            const qtReturn = Number(qtyReturnInput.value || 0);
+
+                            // Jika qty return kosong atau 0, reset row
                             if (qtReturn === 0 || qtyReturnInput.value === '') {
                                 goodCondInput.disabled = true;
                                 damagedInput.disabled = true;
                                 goodCondInput.value = '';
                                 damagedInput.value = '';
-                                tr.querySelector('.inp-remain').value = sisa;
+                                // Kembalikan remain ke nilai database (base remain)
+                                remainInput.value = remainDB;
                                 recalcTotal();
                                 return;
                             }
 
-                            // Jika qty return diisi, enable good condition dan damaged
+                            // Validasi: qty return tidak boleh melebihi remain dari database
+                            if (qtReturn > remainDB) {
+                                qtyReturnInput.value = remainDB;
+                            }
+
+                            // Re-read qty return setelah koreksi
+                            const qtReturnFinal = Number(qtyReturnInput.value || 0);
+
+                            // Enable good condition dan damaged
                             goodCondInput.disabled = false;
                             damagedInput.disabled = false;
 
-                            // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
-                            if (qtReturn > sisa) {
-                                qtyReturnInput.value = sisa;
-                            }
-
-                            // Validasi: good condition tidak boleh melebihi sisa
-                            if (goodCond > sisa) {
-                                goodCondInput.value = sisa;
-                                alert(`Good condition tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
-                            }
-
-                            // Validasi: damaged tidak boleh melebihi sisa
-                            if (damaged > sisa) {
-                                damagedInput.value = sisa;
-                                alert(`Damaged tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
-                            }
-
-                            // Re-read values after corrections
-                            const qtReturnUpdated = Number(qtyReturnInput.value || 0);
-                            const goodCondUpdated = Number(goodCondInput.value || 0);
-                            const damagedUpdated = Number(damagedInput.value || 0);
+                            // Re-read good/damaged
+                            let goodCond = Number(goodCondInput.value || 0);
+                            let damaged = Number(damagedInput.value || 0);
 
                             // Validasi: good condition tidak boleh melebihi qty return
-                            if (goodCondUpdated > qtReturnUpdated && qtReturnUpdated > 0) {
-                                goodCondInput.value = qtReturnUpdated;
-                                alert(`Good condition tidak boleh melebihi QTY Return (${qtReturnUpdated})`);
+                            if (goodCond > qtReturnFinal) {
+                                goodCondInput.value = qtReturnFinal;
+                                goodCond = qtReturnFinal;
                             }
 
                             // Validasi: damaged tidak boleh melebihi qty return
-                            if (damagedUpdated > qtReturnUpdated && qtReturnUpdated > 0) {
-                                damagedInput.value = qtReturnUpdated;
-                                alert(`Damaged tidak boleh melebihi QTY Return (${qtReturnUpdated})`);
+                            if (damaged > qtReturnFinal) {
+                                damagedInput.value = qtReturnFinal;
+                                damaged = qtReturnFinal;
                             }
 
-                            // Calculate remain items: sisa - qty return
-                            const remainItems = sisa - qtReturnUpdated;
-                            tr.querySelector('.inp-remain').value = remainItems;
+                            // Validasi: good + damaged tidak boleh melebihi qty return
+                            if (goodCond + damaged > qtReturnFinal) {
+                                if (this === damagedInput) {
+                                    goodCondInput.value = Math.max(0, qtReturnFinal - damaged);
+                                } else {
+                                    damagedInput.value = Math.max(0, qtReturnFinal - goodCond);
+                                }
+                            }
+
+                            // KALKULASI REMAIN YANG BENAR:
+                            // remain = remain_database - qty_return_input
+                            // BUKAN: qty_pinjam - qty_return_input
+                            const remainNow = remainDB - qtReturnFinal;
+                            remainInput.value = remainNow;
 
                             recalcTotal();
                         });
@@ -915,7 +969,7 @@
             rows.forEach(tr => {
                 const barang_id = Number(tr.getAttribute('data-barang-id'));
                 const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
-                const sisa = Number(tr.getAttribute('data-sisa'));
+                const remainDB = Number(tr.getAttribute('data-remain-db') || 0);
                 const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
                 const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
                 const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
@@ -934,9 +988,9 @@
                     return;
                 }
 
-                // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
-                if (qty_return > sisa) {
-                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
+                // Validasi: qty return tidak boleh melebihi remain dari database
+                if (qty_return > remainDB) {
+                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${remainDB})`);
                     hasError = true;
                     return;
                 }
@@ -956,30 +1010,16 @@
                     }
                 }
 
-                // Validasi: good condition tidak boleh melebihi sisa
-                if (good_condition > sisa) {
-                    alert(`Good condition tidak boleh melebihi sisa (${sisa})`);
-                    hasError = true;
-                    return;
-                }
-
-                // Validasi: damaged tidak boleh melebihi sisa
-                if (damaged > sisa) {
-                    alert(`Damaged tidak boleh melebihi sisa (${sisa})`);
-                    hasError = true;
-                    return;
-                }
-
                 // Validasi: good condition tidak boleh melebihi qty return
-                if (good_condition > qty_return && qty_return > 0) {
-                    alert(`Good condition (${good_condition}) tidak boleh melebihi QTY Return (${qty_return})`);
+                if (good_condition > qty_return) {
+                    alert(`Good condition tidak boleh melebihi QTY Return (${qty_return})`);
                     hasError = true;
                     return;
                 }
 
                 // Validasi: damaged tidak boleh melebihi qty return
-                if (damaged > qty_return && qty_return > 0) {
-                    alert(`Damaged (${damaged}) tidak boleh melebihi QTY Return (${qty_return})`);
+                if (damaged > qty_return) {
+                    alert(`Damaged tidak boleh melebihi QTY Return (${qty_return})`);
                     hasError = true;
                     return;
                 }
@@ -1087,27 +1127,33 @@
         // Extend (Perpanjang) Functions
         // ═══════════════════════════════════════════════════════
         function loadExtendStatus(peminjamanId) {
+            // Fetches the LATEST extend status from API and updates the badge.
+            // Uses ORDER BY id DESC on the server to always get the true latest record.
+            // This is called as a fallback when inline data was not available at render time.
+
             fetch(API_EXTEND + '/status.php?peminjaman_id=' + encodeURIComponent(peminjamanId), { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    if (!res.status || !res.has_extend) return;
-                    const ext = res.data;
+                    if (!res.status) return;
+
                     const badgeEl = document.getElementById('extend-badge-' + peminjamanId);
-                    const btnEl = document.getElementById('btn-extend-' + peminjamanId);
                     if (!badgeEl) return;
 
-                    if (ext.extend_status === 'Pending') {
-                        badgeEl.innerHTML = '<br><span class="badge bg-warning text-dark mt-1"><i class="feather-clock"></i> Extend Pending</span>';
-                        if (btnEl) btnEl.style.display = 'none';
-                    } else if (ext.extend_status === 'Approved') {
-                        badgeEl.innerHTML = '<br><span class="badge bg-success mt-1"><i class="feather-check"></i> Extend Approved</span>';
-                        if (btnEl) btnEl.style.display = 'none';
-                    } else if (ext.extend_status === 'Rejected') {
-                        badgeEl.innerHTML = '<br><span class="badge bg-danger mt-1"><i class="feather-x"></i> Extend Rejected</span>';
-                        // Allow re-request after rejection
+                    if (res.has_extend && res.data) {
+                        const extStatus = res.data.extend_status;
+                        if (extStatus === 'Pending') {
+                            badgeEl.innerHTML = '<br><span class="badge bg-warning text-dark mt-1"><i class="feather-clock"></i> Extend Pending</span>';
+                        } else if (extStatus === 'Approved') {
+                            badgeEl.innerHTML = '<br><span class="badge bg-success mt-1"><i class="feather-check"></i> Extend Approved</span>';
+                        } else if (extStatus === 'Rejected') {
+                            badgeEl.innerHTML = '<br><span class="badge bg-danger mt-1"><i class="feather-x"></i> Extend Rejected</span>';
+                        }
+                    } else {
+                        // No extend record exists - clear any stale badge
+                        badgeEl.innerHTML = '';
                     }
                 })
-                .catch(() => { });
+                .catch(() => console.log('Failed to load extend status for peminjaman', peminjamanId));
         }
 
         function openExtendModal(peminjamanId, currentReturnDate) {
@@ -1127,8 +1173,83 @@
                 }
             }
 
-            if (!modalExtend) modalExtend = new bootstrap.Modal(document.getElementById('modalExtend'));
-            modalExtend.show();
+            // Fetch per-unit items for this peminjaman
+            document.getElementById('extendItemsTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">Loading units...</td></tr>';
+
+            fetch(API + '/get_extend_units.php?peminjaman_id=' + encodeURIComponent(peminjamanId), { credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.status || !res.data) {
+                        throw new Error(res.message || 'Failed to load units');
+                    }
+
+                    const data = res.data;
+                    const units = data.units || [];
+
+                    if (units.length === 0) {
+                        document.getElementById('extendItemsTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No items found</td></tr>';
+                        if (!modalExtend) modalExtend = new bootstrap.Modal(document.getElementById('modalExtend'));
+                        modalExtend.show();
+                        return;
+                    }
+
+                    // Build per-unit items table
+                    let rowNo = 1;
+                    const html = units.map(unit => {
+                        // Badge shows LATEST extend status per unit
+                        let statusBadge = '';
+                        if (unit.sudah_dikembalikan) {
+                            statusBadge = '<span class="badge bg-success">✓ Dikembalikan</span>';
+                        } else if (unit.extend_status === 'Pending') {
+                            statusBadge = `<span class="badge bg-warning text-dark"><i class="feather-clock"></i> Extend Pending hingga ${unit.extend_date || '-'}</span>`;
+                        } else if (unit.extend_status === 'Approved') {
+                            statusBadge = `<span class="badge bg-info">✓ Diperpanjang hingga ${unit.extend_date || '-'}</span>`;
+                        } else if (unit.extend_status === 'Rejected') {
+                            statusBadge = `<span class="badge bg-danger"><i class="feather-x"></i> Extend Ditolak</span>`;
+                        }
+
+                        return `
+                        <tr data-unit-id="${unit.unit_id}" data-detail-id="${unit.detail_peminjaman_id}" data-unit-num="${unit.unit_number}" data-can-extend="${unit.can_extend ? 'true' : 'false'}">
+                            <td class="text-center fw-semibold">${rowNo++}</td>
+                            <td>
+                                <div class="fw-semibold">${unit.nama_barang}</div>
+                                <div class="small text-muted"><code>${unit.kode_barang}</code></div>
+                            </td>
+                            <td class="text-center">Unit ${unit.unit_display}</td>
+                            <td class="text-center">
+                                <strong>1</strong>
+                                <div class="small text-muted">${unit.kondisi_pinjam}</div>
+                            </td>
+                            <td class="text-center">
+                                <div>${unit.expected_return}</div>
+                                ${statusBadge}
+                            </td>
+                            <td class="text-center">
+                                ${unit.can_extend ? `<input type="checkbox" class="extend-unit-checkbox" data-unit-id="${unit.unit_id}">` : '<span class="text-muted">-</span>'}
+                            </td>
+                        </tr>
+                        `;
+                    }).join('');
+
+                    document.getElementById('extendItemsTableBody').innerHTML = html;
+
+                    // Add event listeners to checkboxes
+                    const checkboxes = document.querySelectorAll('.extend-unit-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', function () {
+                            // Just manage selection, no qty input needed for per-unit
+                            //updateExtendSummary();
+                        });
+                    });
+
+                    if (!modalExtend) modalExtend = new bootstrap.Modal(document.getElementById('modalExtend'));
+                    modalExtend.show();
+                })
+                .catch(err => {
+                    document.getElementById('extendItemsTableBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">' + (err.message || 'Failed to load units') + '</td></tr>';
+                    if (!modalExtend) modalExtend = new bootstrap.Modal(document.getElementById('modalExtend'));
+                    modalExtend.show();
+                });
         }
 
         function submitExtendRequest() {
@@ -1145,12 +1266,31 @@
                 return;
             }
 
-            if (!confirm('Ajukan perpanjangan masa peminjaman?\n\nTanggal baru: ' + newDate + '\nAlasan: ' + alasan)) return;
+            // Collect selected units (per-unit format)
+            const rows = document.querySelectorAll('#extendItemsTableBody tr[data-unit-id]');
+            const selectedUnits = [];
+
+            rows.forEach(tr => {
+                const checkbox = tr.querySelector('.extend-unit-checkbox');
+                if (checkbox && checkbox.checked) {
+                    const unitId = tr.getAttribute('data-unit-id');
+                    selectedUnits.push(unitId);
+                }
+            });
+
+            // Validate: at least one unit must be selected
+            if (selectedUnits.length === 0) {
+                alert('Pilih minimal 1 unit untuk diperpanjang');
+                return;
+            }
+
+            if (!confirm('Ajukan perpanjangan masa peminjaman?\n\nTanggal baru: ' + newDate + '\nJumlah unit: ' + selectedUnits.length + '\nAlasan: ' + alasan)) return;
 
             const fd = new FormData();
             fd.append('peminjaman_id', peminjamanId);
             fd.append('tanggal_perpanjang', newDate);
             fd.append('alasan', alasan);
+            fd.append('units', JSON.stringify(selectedUnits));  // New per-unit format
 
             fetch(API_EXTEND + '/request.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
@@ -1161,7 +1301,7 @@
                         loadPeminjamanList();
                     }
                 })
-                .catch(() => alert('Connection error'));
+                .catch(err => alert('Connection error: ' + (err.message || 'Unknown error')));
         }
 
         // ═══════════════════════════════════════════════════════

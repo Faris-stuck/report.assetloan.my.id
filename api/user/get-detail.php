@@ -163,6 +163,10 @@ if ($agg_result) {
     }
 }
 
+// REAL-TIME DUE STATUS (use nearest expected return considering extends)
+$display_status = computeDueStatus($display_status, getNearestExpectedReturn($conn, $peminjaman['id']) ?? $peminjaman['rencana_kembali']);
+$display_status_en = $display_status;
+
 echo json_encode([
     "status" => true,
     "data" => [
@@ -170,8 +174,8 @@ echo json_encode([
         'kode_peminjaman' => $peminjaman['kode_peminjaman'],
         'nama' => $peminjaman['nama'],
         'nrp' => $peminjaman['nrp'],
-        'tanggal_pinjam' => $peminjaman['tanggal_pinjam'],
-        'rencana_kembali' => $peminjaman['rencana_kembali'],
+        'tanggal_pinjam' => $peminjaman['tanggal_pinjam'] ? date('d/m/Y', strtotime($peminjaman['tanggal_pinjam'])) : '-',
+        'rencana_kembali' => $peminjaman['rencana_kembali'] ? date('d/m/Y', strtotime($peminjaman['rencana_kembali'])) : '-',
         'status' => $display_status,
         'status_en' => $display_status_en,
         'catatan' => $peminjaman['catatan'],

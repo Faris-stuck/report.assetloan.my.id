@@ -14,7 +14,7 @@ try {
     $stats = [];
 
     // Sedang Dipinjam
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')");
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')");
     $stmt->execute();
     $stats['sedang_dipinjam'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -47,7 +47,7 @@ try {
     $stmt = $conn->prepare("
         SELECT id, kode_peminjaman, nama_peminjam, status, tanggal_pinjam, rencana_kembali
         FROM peminjaman
-        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
+        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')
         ORDER BY rencana_kembali ASC
         LIMIT 5
     ");
@@ -59,7 +59,7 @@ try {
             'id' => $row['id'],
             'kode' => $row['kode_peminjaman'],
             'nama_peminjam' => $row['nama_peminjam'],
-            'status' => $row['status'],
+            'status' => computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']),
             'tanggal_pinjam' => $row['tanggal_pinjam'],
             'rencana_kembali' => $row['rencana_kembali']
         ];

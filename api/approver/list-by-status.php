@@ -97,6 +97,9 @@ try {
             }
         }
 
+        // REAL-TIME DUE STATUS (use nearest expected return considering extends)
+        $row['status'] = computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']);
+
         $data[] = [
             'id' => $row['id'],
             'kode' => $row['kode_peminjaman'],

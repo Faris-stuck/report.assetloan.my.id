@@ -51,6 +51,10 @@ try {
             $badgeColor = "bg-danger";
         } elseif (strpos($status, "Due") === 0) {
             $badgeColor = "bg-warning text-dark";
+        } elseif ($status === "Sebagian Dikembalikan") {
+            $badgeColor = "bg-warning text-dark";
+        } elseif ($status === "Proses Return") {
+            $badgeColor = "bg-warning";
         }
         
         $statuses[] = [

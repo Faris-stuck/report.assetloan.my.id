@@ -4,6 +4,7 @@
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
     <script src="../../assets/js/base-url.js"></script>
+    <script src="../../assets/js/date-format.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -369,15 +370,18 @@
                     } else {
                         res.data.forEach((p, index) => {
                             let statusBadge = 'bg-secondary';
-                            if (p.status === 'Menunggu Persetujuan') statusBadge = 'bg-warning';
-                            if (p.status === 'Sedang Dipinjam') statusBadge = 'bg-primary';
-                            if (p.status === 'Overdue' || p.status === 'Due Today') statusBadge = 'bg-danger';
-                            else if (p.status.startsWith('Due')) statusBadge = 'bg-warning';
-                            if (p.status === 'Dikembalikan') statusBadge = 'bg-success';
-                            if (p.status === 'Ditolak') statusBadge = 'bg-danger';
+                            if (p.status === 'Menunggu Persetujuan') statusBadge = 'bg-warning text-dark';
+                            else if (p.status === 'Disetujui') statusBadge = 'bg-info';
+                            else if (p.status === 'Sedang Dipinjam') statusBadge = 'bg-primary';
+                            else if (p.status === 'Overdue' || p.status === 'Due Today') statusBadge = 'bg-danger';
+                            else if (p.status.startsWith('Due')) statusBadge = 'bg-warning text-dark';
+                            else if (p.status === 'Sebagian Dikembalikan') statusBadge = 'bg-warning text-dark';
+                            else if (p.status === 'Proses Return') statusBadge = 'bg-info text-dark';
+                            else if (p.status === 'Dikembalikan') statusBadge = 'bg-success';
+                            else if (p.status === 'Ditolak') statusBadge = 'bg-danger';
 
-                            const tanggalPinjam = new Date(p.tanggal_pinjam).toLocaleDateString('id-ID');
-                            const rencanaKembali = new Date(p.rencana_kembali).toLocaleDateString('id-ID');
+                            const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
+                            const rencanaKembali = formatTanggal(p.rencana_kembali);
 
                             content += `<tr><td>${index + 1}</td><td><strong>${p.kode_peminjaman || '-'}</strong></td>`;
                             content += `<td>${p.nama_peminjam || '-'}</td><td>${p.nrp || '-'}</td>`;

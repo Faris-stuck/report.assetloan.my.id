@@ -36,6 +36,7 @@ while ($row = $q->fetch_assoc()) {
 $peminjam = [];
 $q = $conn->query("
   SELECT 
+    pm.id AS peminjaman_id,
     pm.kode_peminjaman,
     u.nama,
     dp.jumlah,
@@ -50,6 +51,7 @@ $q = $conn->query("
 ");
 
 while ($row = $q->fetch_assoc()) {
+    $row['status'] = computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['peminjaman_id']) ?? $row['rencana_kembali']);
     $peminjam[] = $row;
 }
 

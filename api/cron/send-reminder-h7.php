@@ -120,7 +120,16 @@ if ($totalRows === 0) {
 }
 
 // ============================================================
-// 6. LOOP & KIRIM EMAIL
+// 6. AMBIL DAFTAR ADMIN + PIC_BARANG (1x saja, dipakai untuk semua peminjaman)
+// ============================================================
+$adminList = getAdminEmails($conn);
+$picList   = getPicBarangEmails($conn);
+
+echo "[INFO] Admin ditemukan: " . count($adminList) . " orang\n";
+echo "[INFO] PIC Barang ditemukan: " . count($picList) . " orang\n\n";
+
+// ============================================================
+// 7. LOOP & KIRIM EMAIL KE SEMUA PIHAK (USER + ADMIN + PIC)
 // ============================================================
 $berhasil = 0;
 $gagal    = 0;
@@ -140,23 +149,57 @@ while ($row = $result->fetch_assoc()) {
     echo "         Status: {$statusPinjaman} | Sisa: {$sisaHari} hari\n";
     echo "         Pinjam: {$tanggalPinjam} → Kembali: {$tanggalKembali}\n";
 
-    // Validasi email
-    if (empty($emailUser) || !filter_var($emailUser, FILTER_VALIDATE_EMAIL)) {
-        echo "[SKIP]   Email tidak valid: '{$emailUser}'\n\n";
+    // ============================================================
+    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // ============================================================
+    $recipients = [];
+
+    // 1. USER (pemilik peminjaman)
+    if (!empty($emailUser) && filter_var($emailUser, FILTER_VALIDATE_EMAIL)) {
+        $recipients[] = ['email' => $emailUser, 'nama' => $namaUser];
+    }
+
+    // 2. SEMUA ADMIN
+    foreach ($adminList as $admin) {
+        $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
+    }
+
+    // 3. SEMUA PIC_BARANG
+    foreach ($picList as $pic) {
+        $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
+    }
+
+    // DEDUPLIKASI
+    $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
+
+    if (empty($recipients)) {
+        echo "[SKIP]   Tidak ada penerima valid untuk peminjaman #{$peminjaman_id}\n\n";
         $gagal++;
         continue;
     }
 
+    echo "         Penerima: " . count($recipients) . " orang (user + admin + PIC)\n";
+
     // ---------------------------------------------------------
-    // Kirim email menggunakan sendEmail() dari email-functions.php
-    // Email penerima dari database, bukan hardcode
+    // Kirim email ke SEMUA penerima menggunakan LOOP
     // ---------------------------------------------------------
-    $subject  = 'Pengingat Pengembalian Barang - ' . $kodePeminjaman;
-    $htmlBody = buildReminderEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
+    $subject   = 'Pengingat Pengembalian Barang - ' . $kodePeminjaman;
+    $htmlBody  = buildReminderEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
     $plainBody = buildReminderEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
 
-    if (sendEmail($emailUser, $subject, $htmlBody, $namaUser, $plainBody)) {
-        echo "<span style='color: #a6e3a1;'>[OK]     Reminder terkirim ke: {$emailUser}</span>\n";
+    $sentCount = 0;
+    foreach ($recipients as $r) {
+        if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'], $plainBody)) {
+            error_log("[EMAIL] send-reminder-h7: EMAIL TERKIRIM KE: " . $r['email'] . " untuk {$kodePeminjaman}");
+            echo "<span style='color: #a6e3a1;'>[OK]     Reminder terkirim ke: {$r['email']}</span>\n";
+            $sentCount++;
+        } else {
+            error_log("[EMAIL] send-reminder-h7: EMAIL GAGAL KE: " . $r['email'] . " untuk {$kodePeminjaman}");
+            echo "<span style='color: #f38ba8;'>[GAGAL]  Email gagal dikirim ke: {$r['email']}</span>\n";
+        }
+    }
+
+    if ($sentCount > 0) {
         $berhasil++;
 
         // Update last_reminder_date agar tidak kirim ulang hari ini
@@ -164,9 +207,10 @@ while ($row = $result->fetch_assoc()) {
         $stmtUpdate->bind_param("i", $peminjaman_id);
         $stmtUpdate->execute();
         $stmtUpdate->close();
-        echo "         last_reminder_date diupdate ke: " . date('Y-m-d') . "\n\n";
+        echo "         last_reminder_date diupdate ke: " . date('Y-m-d') . "\n";
+        echo "         Total terkirim: {$sentCount}/" . count($recipients) . " penerima\n\n";
     } else {
-        echo "<span style='color: #f38ba8;'>[GAGAL]  Email gagal dikirim ke: {$emailUser}</span>\n\n";
+        echo "<span style='color: #f38ba8;'>[GAGAL]  Semua email gagal untuk: {$kodePeminjaman}</span>\n\n";
         $gagal++;
     }
 }

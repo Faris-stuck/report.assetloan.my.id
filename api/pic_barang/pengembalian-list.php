@@ -19,7 +19,8 @@ try {
 $stmt = $conn->prepare("
     SELECT p.id, p.kode_peminjaman, p.nama_peminjam, p.nrp, p.tanggal_pinjam, p.rencana_kembali, p.status, p.catatan
     FROM peminjaman p
-    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' 
+           OR p.status = 'Sebagian Dikembalikan' OR p.status = 'Proses Return')
     ORDER BY p.rencana_kembali ASC
 ");
 $stmt->execute();
@@ -28,6 +29,8 @@ $list = [];
 while ($row = $result->fetch_assoc()) {
     $row['tanggal_pinjam_f'] = date('d/m/Y', strtotime($row['tanggal_pinjam']));
     $row['rencana_kembali_f'] = date('d/m/Y', strtotime($row['rencana_kembali']));
+    // REAL-TIME DUE STATUS (use nearest expected return considering extends)
+    $row['status'] = computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']);
     $list[] = $row;
 }
 

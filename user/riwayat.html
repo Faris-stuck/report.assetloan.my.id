@@ -4,6 +4,7 @@
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
     <script src="../assets/js/base-url.js"></script>
+    <script src="../assets/js/date-format.js"></script>
     <script src="../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../assets/js/auth/page-guard.js"></script>
@@ -499,7 +500,7 @@
                         return;
                     }
                     const rows = data.map(rw => {
-                        const date = rw.tanggal_pinjam ? (new Date(rw.tanggal_pinjam)).toLocaleDateString('id-ID') : '-';
+                        const date = formatTanggal(rw.tanggal_pinjam);
                         const status = (rw.status || '').toLowerCase();
                         const status_en = (rw.status_en || '').toLowerCase();
                         let display = rw.status_en || rw.status || '-';
@@ -515,10 +516,14 @@
                         }
                         let badge = '<span class="badge bg-secondary">' + display + '</span>';
                         if (status.includes('menunggu') || status.includes('pending')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
-                        else if (status.includes('disetujui') || status.includes('approved')) badge = '<span class="badge bg-success">' + display + '</span>';
+                        else if (status === 'overdue' || status === 'due today') badge = '<span class="badge bg-danger">' + display + '</span>';
+                        else if (status.startsWith('due')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        else if (status.includes('disetujui') || status.includes('approved')) badge = '<span class="badge bg-info">' + display + '</span>';
                         else if (status.includes('ditolak') || status.includes('rejected')) badge = '<span class="badge bg-danger">' + display + '</span>';
-                        else if (status.includes('dipinjam') || status.includes('borrowed') || status.includes('ongoing')) badge = '<span class="badge bg-info text-dark">' + display + '</span>';
+                        else if (status.includes('dipinjam') || status.includes('borrowed') || status.includes('ongoing')) badge = '<span class="badge bg-primary">' + display + '</span>';
                         else if (status.includes('sebagian dikembalikan')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        else if (status.includes('proses return') || status.includes('return in progress')) badge = '<span class="badge bg-info">' + display + '</span>';
+                        else if (status.includes('dikembalikan') || status.includes('returned')) badge = '<span class="badge bg-success">' + display + '</span>';
                         else if ((status.includes('semua') && status.includes('rusak')) || status_en.includes('fully')) badge = '<span class="badge bg-danger">' + display + '</span>';
                         else if (status.includes('dicek') || status.includes('diproses') || status.includes('proses')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
 

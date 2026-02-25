@@ -42,24 +42,44 @@ try {
     $stmt_update->bind_param("si", $status, $id);
     $stmt_update->execute();
     
-    // Jika dikembalikan, kembalikan stok barang (cap at stok_total)
+    // Jika dikembalikan, kembalikan stok barang (aggregate-aware: only restore remaining items)
     if ($status === 'Dikembalikan') {
         $tanggal_kembali = date('Y-m-d');
         $stmt_tgl = $conn->prepare("UPDATE peminjaman SET tanggal_kembali=? WHERE id=?");
         $stmt_tgl->bind_param("si", $tanggal_kembali, $id);
         $stmt_tgl->execute();
         
-        $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
-        $stmt_detail->bind_param("i", $id);
+        // Get per-barang with already-returned aggregate
+        $stmt_detail = $conn->prepare("
+            SELECT dp.barang_id, dp.jumlah,
+                COALESCE((
+                    SELECT SUM(dr.jumlah_kembali) FROM detail_pengembalian dr
+                    JOIN pengembalian p ON dr.pengembalian_id = p.id
+                    WHERE p.peminjaman_id = ? AND dr.barang_id = dp.barang_id AND p.status = 'Selesai'
+                ), 0) as already_returned
+            FROM detail_peminjaman dp
+            WHERE dp.peminjaman_id = ?
+        ");
+        $stmt_detail->bind_param("ii", $id, $id);
         $stmt_detail->execute();
         $detail_query = $stmt_detail->get_result();
         while ($detail = $detail_query->fetch_assoc()) {
             $barang_id = intval($detail['barang_id']);
             $jumlah = intval($detail['jumlah']);
-            $stmt_restore = $conn->prepare("UPDATE barang SET stok_tersedia = LEAST(stok_total, stok_tersedia + ?) WHERE id = ?");
-            $stmt_restore->bind_param("ii", $jumlah, $barang_id);
-            $stmt_restore->execute();
+            $already_returned = intval($detail['already_returned']);
+            // Only restore items not yet returned via pengembalian flow
+            $remaining = $jumlah - $already_returned;
+            if ($remaining > 0) {
+                $stmt_restore = $conn->prepare("UPDATE barang SET stok_tersedia = LEAST(stok_total, stok_tersedia + ?) WHERE id = ?");
+                $stmt_restore->bind_param("ii", $remaining, $barang_id);
+                $stmt_restore->execute();
+            }
         }
+        
+        // Finalize any pending pengembalian records
+        $stmt_finalize = $conn->prepare("UPDATE pengembalian SET status = 'Selesai', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek')");
+        $stmt_finalize->bind_param("i", $id);
+        $stmt_finalize->execute();
     }
     // Jika ditolak, kembalikan stok barang (cap at stok_total)
     if ($status === 'Ditolak') {

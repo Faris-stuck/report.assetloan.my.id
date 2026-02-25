@@ -642,18 +642,31 @@
         // Helper function to get badge class based on status
         function getStatusBadgeClass(status, statusEn) {
             if (!status && !statusEn) return 'light';
-            const s = (status || '').toString().toLowerCase();
+            const s = (status || '').toString();
+            // Exact matches first (priority order)
+            if (s === 'Overdue' || s === 'Due Today') return 'danger';
+            if (s.startsWith('Due In') || s.startsWith('Due in')) return 'warning';
+            const statusMap = {
+                'Menunggu Persetujuan': 'warning',
+                'Disetujui': 'info',
+                'Sedang Dipinjam': 'primary',
+                'Sebagian Dikembalikan': 'warning',
+                'Proses Return': 'info',
+                'Dikembalikan': 'success',
+                'Ditolak': 'danger',
+                'Sebagian Rusak': 'warning',
+                'Semua Rusak': 'danger'
+            };
+            if (statusMap[s]) return statusMap[s];
+            // Fallback fuzzy match for English statuses
+            const sl = s.toLowerCase();
             const se = (statusEn || '').toString().toLowerCase();
-            if (s.includes('menunggu') || s.includes('pending')) return 'warning';
-            if (s === 'overdue' || s === 'due today') return 'danger';
-            if (s.startsWith('due')) return 'warning';
-            if (s.includes('disetujui') || s.includes('approved')) return 'info';
-            if (s.includes('dicek') || s.includes('diproses') || s.includes('proses')) return 'info';
-            if (s.includes('sedang') || s.includes('dipinjam') || s.includes('borrowed') || s.includes('ongoing')) return 'success';
-            if (s.includes('ditolak') || s.includes('rejected')) return 'danger';
-            if (s.includes('sebagian dikembalikan')) return 'warning';
-            if (s.includes('dikembalikan') || s.includes('returned')) return 'secondary';
-            if (se.includes('partially') || s.includes('sebagian')) return 'warning';
+            if (sl.includes('menunggu') || sl.includes('pending')) return 'warning';
+            if (sl.includes('approved')) return 'info';
+            if (sl.includes('borrowed') || sl.includes('ongoing')) return 'primary';
+            if (sl.includes('rejected')) return 'danger';
+            if (sl.includes('returned') || se.includes('returned')) return 'success';
+            if (se.includes('partially') || sl.includes('sebagian')) return 'warning';
             if (se.includes('fully') && se.includes('damaged')) return 'danger';
             return 'light';
         }

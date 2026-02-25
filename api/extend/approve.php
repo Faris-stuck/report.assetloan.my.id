@@ -71,6 +71,35 @@ try {
     $stmt->bind_param("si", $extend['tanggal_perpanjang'], $extend['peminjaman_id']);
     $stmt->execute();
 
+    // ─── SINGLE SOURCE OF TRUTH ───────────────────────────────────────────────
+    // Update detail_peminjaman.expected_return so all APIs read from one place.
+    // If this extend has per-unit items, update only the referenced detail rows.
+    // If it is a blanket extend (no items), update all detail rows for this peminjaman.
+    $item_stmt = $conn->prepare("
+        SELECT DISTINCT detail_peminjaman_id
+        FROM extend_peminjaman_items
+        WHERE extend_peminjaman_id = ? AND detail_peminjaman_id IS NOT NULL
+    ");
+    $item_stmt->bind_param("i", $extend_id);
+    $item_stmt->execute();
+    $affected_details = $item_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    if (!empty($affected_details)) {
+        // Per-unit/detail extend: update only the referenced detail_peminjaman rows
+        $upd_stmt = $conn->prepare("UPDATE detail_peminjaman SET expected_return = ? WHERE id = ?");
+        foreach ($affected_details as $det) {
+            $det_id = (int)$det['detail_peminjaman_id'];
+            $upd_stmt->bind_param("si", $extend['tanggal_perpanjang'], $det_id);
+            $upd_stmt->execute();
+        }
+    } else {
+        // Blanket extend: update all detail_peminjaman rows for this peminjaman
+        $upd_stmt = $conn->prepare("UPDATE detail_peminjaman SET expected_return = ? WHERE peminjaman_id = ?");
+        $upd_stmt->bind_param("si", $extend['tanggal_perpanjang'], $extend['peminjaman_id']);
+        $upd_stmt->execute();
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     $conn->commit();
 
     // Kirim email notifikasi ke user bahwa perpanjangan disetujui

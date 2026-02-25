@@ -55,6 +55,7 @@ try {
     }
 
     // Query untuk mengambil semua data peminjaman dengan detail
+    // Embed latest extend status via subquery (ORDER BY id DESC = latest first)
     $stmt = $conn->prepare("
         SELECT
             p.id,
@@ -65,8 +66,19 @@ try {
             p.tanggal_pinjam,
             p.rencana_kembali,
             p.status,
-            p.catatan
+            p.catatan,
+            latest_ext.extend_status AS latest_extend_status,
+            latest_ext.tanggal_perpanjang AS latest_extend_date
         FROM peminjaman p
+        LEFT JOIN (
+            SELECT e1.peminjaman_id, e1.status AS extend_status, e1.tanggal_perpanjang
+            FROM extend_peminjaman e1
+            WHERE e1.id = (
+                SELECT MAX(e2.id)
+                FROM extend_peminjaman e2
+                WHERE e2.peminjaman_id = e1.peminjaman_id
+            )
+        ) latest_ext ON latest_ext.peminjaman_id = p.id
         $where_clause
         ORDER BY p.tanggal_pinjam DESC
     ");
@@ -146,11 +158,17 @@ try {
         $hk = $qk->get_result()->fetch_assoc();
         $pengembalian_status = null;
         $has_pengembalian = false;
+        $has_active_return = false;  // NEW: Track if there's an ACTIVE (non-Selesai) return
         
         if ($hk) {
             $has_pengembalian = true;
             $peng_id = (int)$hk['id'];
             $pengembalian_status = $hk['status'];
+            
+            // Check if this return is ACTIVE (not yet finalized)
+            if (in_array($pengembalian_status, ['Diajukan', 'Dicek', 'Sebagian Dikembalikan', 'Sebagian Rusak'])) {
+                $has_active_return = true;
+            }
             
             // Get detail from latest pengembalian for display in barang_list
             $sd = $conn->prepare("SELECT barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
@@ -186,8 +204,8 @@ try {
             $row['status_en'] = 'Partially Returned';
         } else if ($total_kembali === 0 && $total_items > 0) {
             // No items have been finalized/approved yet
-            if ($has_pengembalian && $pengembalian_status && strtolower($pengembalian_status) !== 'selesai') {
-                // But there's a pending return submission
+            if ($has_active_return) {
+                // FIX: Only set 'Proses Return' if there's an ACTIVE return request status
                 $row['status'] = 'Proses Return';
                 $row['status_en'] = 'Return In Progress';
             } else {
@@ -202,6 +220,21 @@ try {
             }
         }
 
+        // ========================================
+        // REAL-TIME DUE STATUS: Hitung dari nearest expected_return (per-unit data)
+        // ========================================
+        // Get nearest expected_return considering extends and per-unit data
+        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
+        $expected_for_status = $nearest_expected ?? $row['rencana_kembali'];
+        $row['status'] = computeDueStatus($row['status'], $expected_for_status);
+
+        // ========================================
+        // DETERMINE CAN_EXTEND based on peminjaman status
+        // ========================================
+        // Status final/selesai yang TIDAK memungkinkan extend
+        $final_statuses = ['Dikembalikan', 'Returned', 'Completed', 'Closed', 'Rejected', 'Ditolak', 'Batal'];
+        $can_extend = !in_array($row['status'], $final_statuses);
+
         $data[] = [
             'id' => $row['id'],
             'kode' => $row['kode_peminjaman'],
@@ -212,7 +245,10 @@ try {
             'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
             'status' => $row['status'],
             'barang' => implode(', ', array_map(function($x){ return $x['jumlah'] . 'x ' . $x['nama'] . ' (' . $x['lokasi'] . ')'; }, $barang_list)),
-            'catatan' => $row['catatan'] ?: ''
+            'catatan' => $row['catatan'] ?: '',
+            'can_extend' => $can_extend,
+            'latest_extend_status' => $row['latest_extend_status'] ?? null,
+            'latest_extend_date' => ($row['latest_extend_date'] ? date('d/m/Y', strtotime($row['latest_extend_date'])) : null)
         ];
         // Include pengembalian status and flag
         if (isset($pengembalian_status)) $data[count($data)-1]['pengembalian_status'] = $pengembalian_status;

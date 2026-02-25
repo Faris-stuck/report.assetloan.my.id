@@ -308,6 +308,82 @@ function sendEmailToRole($conn, $role, $subject, $htmlBody) {
 }
 
 /**
+ * Ambil data pelaku aksi dari SESSION (user yang sedang login)
+ * Diambil dari database berdasarkan $_SESSION['user_id']
+ *
+ * @param mysqli $conn   Koneksi database
+ * @return array|null    ['nama' => ..., 'email' => ...] atau null jika gagal
+ */
+function getActorEmail($conn) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    $actor_id = $_SESSION['user_id'] ?? null;
+    if (!$actor_id) return null;
+
+    $stmt = $conn->prepare("SELECT nama, email FROM users WHERE id = ?");
+    if (!$stmt) return null;
+    $stmt->bind_param('i', $actor_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    if ($row && !empty($row['email']) && filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
+        return $row;
+    }
+    return null;
+}
+
+/**
+ * Bangun array $recipients dari semua pihak terkait (TANPA DUPLIKASI)
+ * Menggabungkan user peminjam, admin, pic_barang, dan pelaku aksi
+ *
+ * @param array  $sources  Array of ['nama'=>..., 'email'=>...] items
+ * @return array           Deduplicated recipients array
+ */
+function buildUniqueRecipients(...$sources) {
+    $recipients = [];
+    $seen = [];
+    foreach ($sources as $source) {
+        if (is_null($source)) continue;
+        // Jika single item (bukan array of arrays), wrap it
+        if (isset($source['email'])) {
+            $source = [$source];
+        }
+        foreach ($source as $item) {
+            if (empty($item['email']) || !filter_var($item['email'], FILTER_VALIDATE_EMAIL)) continue;
+            $emailLower = strtolower($item['email']);
+            if (!isset($seen[$emailLower])) {
+                $seen[$emailLower] = true;
+                $recipients[] = $item;
+            }
+        }
+    }
+    return $recipients;
+}
+
+/**
+ * Kirim email ke semua recipients menggunakan LOOP
+ * WAJIB: Setiap penerima mendapat panggilan sendEmail() sendiri
+ *
+ * @param array  $recipients  Array of ['nama'=>..., 'email'=>...]
+ * @param string $subject     Subject email
+ * @param string $htmlBody    Full HTML body email
+ * @return int                Jumlah email berhasil dikirim
+ */
+function sendEmailToAll($recipients, $subject, $htmlBody) {
+    $totalSent = 0;
+    foreach ($recipients as $r) {
+        if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'])) {
+            error_log("[EMAIL] EMAIL TERKIRIM KE: " . $r['email'] . " (" . $r['nama'] . ")");
+            $totalSent++;
+        } else {
+            error_log("[EMAIL] EMAIL GAGAL KE: " . $r['email'] . " (" . $r['nama'] . ")");
+        }
+    }
+    return $totalSent;
+}
+
+/**
  * Helper: Ambil data peminjaman + user dari database
  *
  * @param mysqli $conn           Koneksi database

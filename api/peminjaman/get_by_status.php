@@ -62,6 +62,11 @@ try {
             $barang_list[] = $detail_row['item'];
         }
 
+        // REAL-TIME DUE STATUS: Hitung dari nearest expected_return (per-unit data)
+        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
+        $expected_for_status = $nearest_expected ?? $row['rencana_kembali'];
+        $realTimeStatus = computeDueStatus($row['status'], $expected_for_status);
+
         $data[] = [
             'id' => $row['id'],
             'kode' => $row['kode_peminjaman'],
@@ -69,7 +74,7 @@ try {
             'nrp' => $row['nrp'],
             'tanggal' => ($row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-'),
             'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
-            'status' => $row['status'],
+            'status' => $realTimeStatus,
             'barang' => implode(', ', $barang_list),
             'catatan' => $row['catatan']
         ];

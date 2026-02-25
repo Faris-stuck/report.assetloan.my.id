@@ -4,6 +4,7 @@
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
     <script src="../../assets/js/base-url.js"></script>
+    <script src="../../assets/js/date-format.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -403,7 +404,7 @@
 
                     <div class="card stretch stretch-full">
                         <div class="card-header">
-                            <h5 class="mb-0 text-danger">Borrowing Details (Rejected)</h5>
+                            <h5 class="mb-0" id="detail-title">Detail Peminjaman</h5>
                         </div>
                         <div class="card-body" id="detail-content">
                             <!-- diisi oleh JS -->
@@ -515,16 +516,21 @@
                     'Sedang Dipinjam': 'primary',
                     'Dikembalikan': 'success',
                     'Ditolak': 'danger',
-                    'Proses Return': 'secondary',
+                    'Proses Return': 'info',
+                    'Sebagian Dikembalikan': 'warning',
                     'Overdue': 'danger',
                     'Due Today': 'danger',
                     'Due Tomorrow': 'warning'
                 };
-                let badgeClass = statusColor[data.status] || (data.status.startsWith('Due') ? 'warning' : 'secondary');
+                let badgeClass = statusColor[data.status] || (data.status && data.status.startsWith('Due') ? 'warning' : 'secondary');
+
+                // Update page title dynamically
+                const titleEl = document.getElementById('detail-title');
+                if (titleEl) titleEl.textContent = 'Detail Peminjaman - ' + data.kode_peminjaman;
 
                 // Format dates
-                const tanggalPinjam = new Date(data.tanggal_pinjam).toLocaleDateString('id-ID');
-                const rencanaKembali = new Date(data.rencana_kembali).toLocaleDateString('id-ID');
+                const tanggalPinjam = formatTanggal(data.tanggal_pinjam);
+                const rencanaKembali = formatTanggal(data.rencana_kembali);
 
                 // Build HTML
                 let html = `

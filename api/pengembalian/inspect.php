@@ -90,7 +90,13 @@ try {
         WHERE pengembalian_id = ? AND barang_id = ?
     ");
 
-    // Reset stok return effect first by not supporting re-inspect after completion.
+    // Ensure barang has stok_rusak column (check once outside loop)
+    $col = $conn->query("SHOW COLUMNS FROM barang LIKE 'stok_rusak'");
+    if ($col->num_rows === 0) {
+        $conn->query("ALTER TABLE barang ADD COLUMN stok_rusak INT NOT NULL DEFAULT 0");
+    }
+
+    // Process each item in the inspection
     foreach ($items as $it) {
         $barang_id = (int)($it['barang_id'] ?? 0);
         $jumlah_kembali = max(0, (int)($it['jumlah_kembali'] ?? 0));
@@ -109,14 +115,11 @@ try {
         if ($kondisi === 'Rusak') {
             $has_rusak = 1;
             $total_ganti_rugi += $biaya;
-            // Ensure barang has stok_rusak column
-            $col = $conn->query("SHOW COLUMNS FROM barang LIKE 'stok_rusak'");
-            if ($col->num_rows === 0) {
-                $conn->query("ALTER TABLE barang ADD COLUMN stok_rusak INT NOT NULL DEFAULT 0");
-            }
             // Increment stok_rusak by jumlah_rusak for this barang
             if ($jumlah_rusak > 0) {
-                $conn->query("UPDATE barang SET stok_rusak = stok_rusak + $jumlah_rusak WHERE id = " . (int)$barang_id);
+                $stmtRusak = $conn->prepare("UPDATE barang SET stok_rusak = stok_rusak + ? WHERE id = ?");
+                $stmtRusak->bind_param("ii", $jumlah_rusak, $barang_id);
+                $stmtRusak->execute();
             }
         }
 
@@ -178,9 +181,20 @@ try {
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ?, tanggal_kembali = CURDATE() WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     } else if ($total_returned > 0) {
-        // Partial return - some items still out
-        // Use 'Proses Return' to indicate inspection/return process is ongoing
-        $final_status = 'Proses Return';
+        // Partial return - some items still out but this inspection batch is finalized
+        // Check if there are still PENDING return requests for this peminjaman
+        $chkPending = $conn->prepare("SELECT COUNT(*) as cnt FROM pengembalian WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek') AND id != ?");
+        $chkPending->bind_param("ii", $peminjaman_id, $pengembalian_id);
+        $chkPending->execute();
+        $pendingCount = (int)($chkPending->get_result()->fetch_assoc()['cnt'] ?? 0);
+        
+        if ($pendingCount > 0) {
+            // There are still pending return requests → keep as 'Proses Return'
+            $final_status = 'Proses Return';
+        } else {
+            // All returns finalized, but items remain → 'Sebagian Dikembalikan'
+            $final_status = 'Sebagian Dikembalikan';
+        }
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     } else {

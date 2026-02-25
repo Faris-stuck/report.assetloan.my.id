@@ -35,18 +35,15 @@ $catatan_user = trim((string)($_POST['catatan_user'] ?? ''));
 $items_json = trim((string)($_POST['items'] ?? ''));
 $items_array = [];
 
-// Debug logging
-error_log("DEBUG return.php: user_id={$user_id}, peminjaman_id={$peminjaman_id}, items_json={$items_json}");
-
 if (!$user_id) {
     http_response_code(403);
-    echo json_encode(["status" => false, "message" => "User tidak terdeteksi. Silahkan login kembali.", "debug" => "user_id is empty"]);
+    echo json_encode(["status" => false, "message" => "User tidak terdeteksi. Silahkan login kembali."]);
     exit;
 }
 
 if (!$peminjaman_id) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "peminjaman_id wajib", "debug" => "peminjaman_id is empty"]);
+    echo json_encode(["status" => false, "message" => "peminjaman_id wajib"]);
     exit;
 }
 
@@ -112,11 +109,7 @@ if (!$peminjaman_id) {
         http_response_code(400);
         echo json_encode([
             "status" => false, 
-            "message" => "Anda sudah memiliki pengajuan pengembalian yang menunggu persetujuan. Silakan menunggu PIC/Admin memeriksa pengajuan sebelumnya.",
-            "debug" => [
-                "peminjaman_id" => $peminjaman_id,
-                "pending_count" => $pending_count
-            ]
+            "message" => "Anda sudah memiliki pengajuan pengembalian yang menunggu persetujuan. Silakan menunggu PIC/Admin memeriksa pengajuan sebelumnya."
         ]);
         exit;
     }
@@ -127,14 +120,7 @@ if (!$peminjaman_id) {
         http_response_code(400);
         echo json_encode([
             "status" => false, 
-            "message" => "Semua barang sudah dikembalikan. Total: $total_items, Sudah dikembalikan: $total_returned",
-            "debug" => [
-                "peminjaman_id" => $peminjaman_id,
-                "total_items" => $total_items,
-                "total_returned" => $total_returned,
-                "sisa" => $sisa_dikembalikan,
-                "peminjaman_status" => $p['status']
-            ]
+            "message" => "Semua barang sudah dikembalikan. Total: $total_items, Sudah dikembalikan: $total_returned"
         ]);
         exit;
     }
@@ -237,13 +223,7 @@ try {
     http_response_code(400);
     echo json_encode([
         "status" => false, 
-        "message" => $e->getMessage(),
-        "debug" => [
-            "user_id" => $user_id,
-            "peminjaman_id" => $peminjaman_id,
-            "items_submitted" => count($items_array),
-            "error_type" => "exception"
-        ]
+        "message" => $e->getMessage()
     ]);
 }
 

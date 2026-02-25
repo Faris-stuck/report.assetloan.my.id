@@ -37,6 +37,8 @@ try {
         throw new Exception("Peminjaman sudah berstatus '{$current['status']}', tidak dapat diproses lagi");
     }
     
+    $successMessage = '';
+
     if ($status === 'Disetujui') {
         // Manager approve: change status directly to Sedang Dipinjam (Currently Borrowed)
         // No admin approval needed - borrowing starts immediately
@@ -44,7 +46,7 @@ try {
         $stmt_approve = $conn->prepare("UPDATE peminjaman SET status='Sedang Dipinjam', tanggal_disetujui=? WHERE id=?");
         $stmt_approve->bind_param("si", $tanggal_disetujui, $id);
         $stmt_approve->execute();
-        echo json_encode(["status" => true, "message" => "Peminjaman disetujui dan status berubah menjadi Sedang Dipinjam."]);
+        $successMessage = "Peminjaman disetujui dan status berubah menjadi Sedang Dipinjam.";
     } elseif ($status === 'Ditolak') {
         // Manager reject - store rejection reason in catatan field
         $rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';
@@ -69,12 +71,13 @@ try {
             $stmt_restore->execute();
         }
         
-        echo json_encode(["status" => true, "message" => "Peminjaman ditolak oleh Manager. Stok barang berhasil dikembalikan."]);
+        $successMessage = "Peminjaman ditolak oleh Manager. Stok barang berhasil dikembalikan.";
     } else {
         throw new Exception("Status tidak valid: $status");
     }
     
     $conn->commit();
+    echo json_encode(["status" => true, "message" => $successMessage]);
 
     // Kirim email notifikasi setelah berhasil
     if ($status === 'Disetujui') {

@@ -521,21 +521,22 @@
                 'Menunggu Persetujuan': 'warning',
                 'Menunggu Admin': 'warning',
                 'Disetujui': 'info',
-                'Currently Borrowed': 'success',
-                'Sedang Dipinjam': 'success',
+                'Sedang Dipinjam': 'primary',
+                'Currently Borrowed': 'primary',
                 'Overdue': 'danger',
                 'Due Today': 'danger',
-                'Due Tomorrow': 'warning',
                 'Ditolak': 'danger',
-                'Dikembalikan': 'secondary',
+                'Dikembalikan': 'success',
+                'Returned': 'success',
+                'Sebagian Dikembalikan': 'warning',
+                'Proses Return': 'info',
                 'Sebagian Rusak': 'warning',
                 'Semua Rusak': 'danger',
                 'Partially Damaged': 'warning',
-                'Fully Damaged': 'danger',
-                'Returned': 'secondary'
+                'Fully Damaged': 'danger'
             };
             const key = statusEn || status;
-            if (key.startsWith('Due in')) return 'warning';
+            if (key.startsWith('Due In') || key.startsWith('Due in')) return 'warning';
             return statusMap[key] || 'light';
         }
 

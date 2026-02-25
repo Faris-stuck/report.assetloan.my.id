@@ -87,14 +87,14 @@ while ($row = $result_detail->fetch_assoc()) {
     ];
 }
 
-// Ambil aggregate pengembalian dari database
+// Ambil aggregate pengembalian dari database (ONLY finalized/Selesai records)
 $agg_q = $conn->prepare("
     SELECT 
         SUM(dp.jumlah_kembali) as total_kembali,
         SUM(dp.jumlah_rusak) as total_rusak
     FROM detail_pengembalian dp
     JOIN pengembalian p ON dp.pengembalian_id = p.id
-    WHERE p.peminjaman_id = ?
+    WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
 ");
 
 if (!$agg_q) {
@@ -119,7 +119,7 @@ foreach ($detail_barang as $dbi) {
     $total_items += (int)$dbi['jumlah'];
 }
 
-// Get aggregate per barang from ALL pengembalian records
+// Get aggregate per barang from FINALIZED pengembalian records only (status='Selesai')
 $per_barang = $conn->prepare("
     SELECT 
         barang_id,
@@ -128,7 +128,7 @@ $per_barang = $conn->prepare("
         MAX(kondisi_kembali) as kondisi_kembali
     FROM detail_pengembalian
     WHERE pengembalian_id IN (
-        SELECT id FROM pengembalian WHERE peminjaman_id = ?
+        SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Selesai'
     )
     GROUP BY barang_id
 ");
@@ -189,6 +189,10 @@ if ($agg_result) {
     }
 }
 
+// REAL-TIME DUE STATUS (use nearest expected return considering extends)
+$display_status = computeDueStatus($display_status, getNearestExpectedReturn($conn, $peminjaman['id']) ?? $peminjaman['rencana_kembali']);
+$display_status_en = $display_status;
+
 echo json_encode([
     "status" => true,
     "data" => [
@@ -196,8 +200,8 @@ echo json_encode([
         'kode_peminjaman' => $peminjaman['kode_peminjaman'],
         'nama' => $peminjaman['nama'],
         'nrp' => $peminjaman['nrp'],
-        'tanggal_pinjam' => $peminjaman['tanggal_pinjam'],
-        'rencana_kembali' => $peminjaman['rencana_kembali'],
+        'tanggal_pinjam' => $peminjaman['tanggal_pinjam'] ? date('d/m/Y', strtotime($peminjaman['tanggal_pinjam'])) : '-',
+        'rencana_kembali' => $peminjaman['rencana_kembali'] ? date('d/m/Y', strtotime($peminjaman['rencana_kembali'])) : '-',
         'status' => $display_status,
         'status_en' => $display_status_en,
         'catatan' => $peminjaman['catatan'],

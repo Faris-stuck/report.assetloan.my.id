@@ -84,48 +84,88 @@ try {
         // Initialize status_en
         $row['status_en'] = $row['status'];
 
-        // Merge pengembalian inspection info if exists
+        // Merge pengembalian inspection info using AGGREGATE from ALL finalized pengembalian
         $qk = $conn->prepare("SELECT id, status FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
         $qk->bind_param("i", $row['id']);
         $qk->execute();
         $hk = $qk->get_result()->fetch_assoc();
         $pengembalian_status = null;
         $has_pengembalian = false;
+        
         if ($hk) {
             $has_pengembalian = true;
-            $peng_id = (int)$hk['id'];
             $pengembalian_status = $hk['status'];
-            $sd = $conn->prepare("SELECT barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
-            $sd->bind_param("i", $peng_id);
-            $sd->execute();
-            $rd = $sd->get_result();
-            $map = [];
-            while ($r = $rd->fetch_assoc()) {
-                $map[(int)$r['barang_id']] = $r;
+        }
+        
+        // Get AGGREGATE return data from ALL finalized pengembalian (status='Selesai')
+        $agg_per_barang = $conn->prepare("
+            SELECT dr.barang_id, 
+                   SUM(dr.jumlah_kembali) as total_kembali, 
+                   SUM(dr.jumlah_rusak) as total_rusak,
+                   MAX(dr.kondisi_kembali) as kondisi_kembali
+            FROM detail_pengembalian dr
+            JOIN pengembalian p ON dr.pengembalian_id = p.id
+            WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
+            GROUP BY dr.barang_id
+        ");
+        $agg_per_barang->bind_param("i", $row['id']);
+        $agg_per_barang->execute();
+        $agg_result = $agg_per_barang->get_result();
+        $agg_map = [];
+        while ($r = $agg_result->fetch_assoc()) {
+            $agg_map[(int)$r['barang_id']] = $r;
+        }
+        
+        $total_items = 0;
+        $total_kembali_agg = 0;
+        $total_rusak_agg = 0;
+        foreach ($barang_list as &$bi) {
+            $bid = (int)$bi['barang_id'];
+            $total_items += $bi['jumlah'];
+            if (isset($agg_map[$bid])) {
+                $bi['jumlah_kembali'] = (int)$agg_map[$bid]['total_kembali'];
+                $bi['jumlah_rusak'] = (int)$agg_map[$bid]['total_rusak'];
+                $bi['kondisi_kembali'] = $agg_map[$bid]['kondisi_kembali'];
+                $total_kembali_agg += (int)$agg_map[$bid]['total_kembali'];
+                $total_rusak_agg += (int)$agg_map[$bid]['total_rusak'];
             }
-            $total_items = 0;
-            $total_rusak = 0;
-            foreach ($barang_list as &$bi) {
-                $bid = (int)$bi['barang_id'];
-                $total_items += $bi['jumlah'];
-                if (isset($map[$bid])) {
-                    $bi['jumlah_kembali'] = (int)$map[$bid]['jumlah_kembali'];
-                    $bi['jumlah_rusak'] = (int)$map[$bid]['jumlah_rusak'];
-                    $bi['kondisi_kembali'] = $map[$bid]['kondisi_kembali'];
-                    $total_rusak += (int)$map[$bid]['jumlah_rusak'];
-                }
-            }
-            // compute a user-friendly status override
-            if ($total_rusak > 0) {
-                if ($total_rusak < $total_items) {
-                    $row['status'] = 'Sebagian Rusak';
-                    $row['status_en'] = 'Partially Damaged';
+        }
+        unset($bi);
+        
+        // Compute user-friendly status override based on aggregate data
+        if ($total_kembali_agg > 0) {
+            $sisa = $total_items - $total_kembali_agg;
+            if ($sisa <= 0 && $total_items > 0) {
+                // All items returned
+                if ($total_rusak_agg > 0) {
+                    if ($total_rusak_agg >= $total_items) {
+                        $row['status'] = 'Semua Rusak';
+                        $row['status_en'] = 'Fully Damaged';
+                    } else {
+                        $row['status'] = 'Sebagian Rusak';
+                        $row['status_en'] = 'Partially Damaged';
+                    }
                 } else {
-                    $row['status'] = 'Semua Rusak';
-                    $row['status_en'] = 'Fully Damaged';
+                    $row['status'] = 'Dikembalikan';
+                    $row['status_en'] = 'Returned';
+                }
+            } else if ($sisa > 0) {
+                // Partial return
+                if ($has_pengembalian && in_array($pengembalian_status, ['Diajukan', 'Dicek'])) {
+                    $row['status'] = 'Proses Return';
+                    $row['status_en'] = 'Return In Progress';
+                } else {
+                    $row['status'] = 'Sebagian Dikembalikan';
+                    $row['status_en'] = 'Partially Returned';
                 }
             }
         }
+
+        // REAL-TIME DUE STATUS: Hitung dari nearest expected_return (per-unit data)
+        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
+        $expected_for_status = $nearest_expected ?? $row['rencana_kembali'];
+        $row['status'] = computeDueStatus($row['status'], $expected_for_status);
+        $row['status_en'] = $row['status'];
 
         $data[] = [
             'id' => $row['id'],
@@ -133,9 +173,9 @@ try {
             'user_id' => $row['user_id'],
             'nama_peminjam' => $row['nama_peminjam'],
             'nrp' => $row['nrp'],
-            'tanggal_pinjam' => $row['tanggal_pinjam'],
-            'rencana_kembali' => $row['rencana_kembali'],
-            'tanggal_kembali' => $row['tanggal_kembali'],
+            'tanggal_pinjam' => $row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-',
+            'rencana_kembali' => $row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-',
+            'tanggal_kembali' => $row['tanggal_kembali'] ? date('d/m/Y', strtotime($row['tanggal_kembali'])) : '-',
             'status' => $row['status'],
             'status_en' => $row['status_en'],
             'catatan' => $row['catatan'],

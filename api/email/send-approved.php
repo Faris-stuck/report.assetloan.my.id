@@ -4,14 +4,17 @@
  * EMAIL: Peminjaman Disetujui (Status → Disetujui)
  * ============================================================
  * 
+ * Email dikirim ke SEMUA pihak terkait:
+ *   - USER (pemilik peminjaman)
+ *   - ADMIN (semua admin)
+ *   - PIC_BARANG (semua PIC)
+ *   - PELAKU AKSI (dari SESSION)
+ * 
  * File   : /PROJECT/api/email/send-approved.php
  * 
  * Cara panggil setelah update status:
  *   require_once __DIR__ . '/../email/send-approved.php';
  *   sendApprovedEmail($conn, $peminjaman_id);
- * 
- * Atau via browser untuk test:
- *   http://localhost/PROJECT/api/email/send-approved.php?id=123
  * 
  * ============================================================
  */
@@ -19,7 +22,7 @@
 require_once __DIR__ . '/email-functions.php';
 
 /**
- * Kirim email notifikasi peminjaman disetujui ke user
+ * Kirim email notifikasi peminjaman disetujui ke SEMUA pihak terkait
  *
  * @param mysqli $conn            Koneksi database
  * @param int    $peminjamanId    ID peminjaman
@@ -40,27 +43,59 @@ function sendApprovedEmail($conn, $peminjamanId) {
     $tglPinjam  = date('d F Y', strtotime($data['tanggal_pinjam']));
     $tglKembali = date('d F Y', strtotime($data['rencana_kembali']));
 
-    // Validasi email
-    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        error_log("[EMAIL] send-approved: Email tidak valid untuk peminjaman #{$peminjamanId}: '{$email}'");
+    // ============================================================
+    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // ============================================================
+    $recipients = [];
+
+    // 1. USER (pemilik peminjaman) — dari database
+    $recipients[] = ['email' => $email, 'nama' => $nama];
+
+    // 2. SEMUA ADMIN — dari database
+    $admins = getAdminEmails($conn);
+    foreach ($admins as $admin) {
+        $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
+    }
+
+    // 3. SEMUA PIC_BARANG — dari database
+    $pics = getPicBarangEmails($conn);
+    foreach ($pics as $pic) {
+        $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
+    }
+
+    // 4. PELAKU AKSI — dari SESSION (user yang meng-approve)
+    $actor = getActorEmail($conn);
+    if ($actor) {
+        $recipients[] = ['email' => $actor['email'], 'nama' => $actor['nama']];
+    }
+
+    // DEDUPLIKASI — hilangkan email duplikat
+    $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
+
+    if (empty($recipients)) {
+        error_log("[EMAIL] send-approved: Tidak ada penerima valid untuk peminjaman #{$peminjamanId}");
         return false;
     }
 
     // Buat body email
     $bodyHtml = '
-        <p>Halo <strong>' . htmlspecialchars($nama) . '</strong>,</p>
+        <p>Halo,</p>
         
         <div class="success-box">
             <strong>✅ Peminjaman Disetujui!</strong><br>
-            Permintaan peminjaman Anda telah disetujui.
+            Permintaan peminjaman dari <strong>' . htmlspecialchars($nama) . '</strong> telah disetujui.
         </div>
         
-        <p>Berikut detail peminjaman Anda:</p>
+        <p>Berikut detail peminjaman:</p>
         
         <table class="info-table">
             <tr>
                 <td>Kode Peminjaman</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
+            </tr>
+            <tr>
+                <td>Nama Peminjam</td>
+                <td>' . htmlspecialchars($nama) . '</td>
             </tr>
             <tr>
                 <td>Tanggal Pinjam</td>
@@ -72,20 +107,26 @@ function sendApprovedEmail($conn, $peminjamanId) {
             </tr>
         </table>
         
-        <p>Silakan mengambil barang sesuai jadwal yang telah ditentukan.</p>
-        
         <p>Terima kasih.</p>';
 
     $subject  = 'Peminjaman Disetujui - ' . $kode;
     $fullHtml = buildEmailTemplate('✅ Peminjaman Disetujui', $bodyHtml);
 
-    $result = sendEmail($email, $subject, $fullHtml, $nama);
-
-    if ($result) {
-        error_log("[EMAIL] send-approved: Berhasil kirim ke {$email} untuk peminjaman #{$peminjamanId}");
+    // ============================================================
+    // KIRIM EMAIL MENGGUNAKAN LOOP KE SEMUA PENERIMA
+    // ============================================================
+    $totalSent = 0;
+    foreach ($recipients as $r) {
+        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
+            error_log("[EMAIL] send-approved: EMAIL TERKIRIM KE: " . $r['email']);
+            $totalSent++;
+        } else {
+            error_log("[EMAIL] send-approved: EMAIL GAGAL KE: " . $r['email']);
+        }
     }
 
-    return $result;
+    error_log("[EMAIL] send-approved: Total terkirim {$totalSent}/" . count($recipients) . " untuk peminjaman #{$peminjamanId}");
+    return $totalSent > 0;
 }
 
 // ============================================================
@@ -105,7 +146,7 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-approved.php') {
         exit;
     }
 
-    echo "Mengirim email approved untuk peminjaman #{$id}...\n";
+    echo "Mengirim email approved untuk peminjaman #{$id} ke SEMUA pihak...\n";
     $result = sendApprovedEmail($conn, (int)$id);
-    echo $result ? "✅ Email berhasil dikirim!\n" : "❌ Email gagal dikirim.\n";
+    echo $result ? "✅ Email berhasil dikirim ke semua pihak!\n" : "❌ Email gagal dikirim.\n";
 }

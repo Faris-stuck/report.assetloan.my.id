@@ -354,12 +354,15 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
                     let statusBadge = "bg-secondary";
-                    if (p.status === "Menunggu Persetujuan") statusBadge = "bg-warning";
-                    if (p.status === "Sedang Dipinjam") statusBadge = "bg-primary";
                     if (p.status === "Overdue" || p.status === "Due Today") statusBadge = "bg-danger";
-                    else if (p.status.startsWith("Due")) statusBadge = "bg-warning";
-                    if (p.status === "Dikembalikan") statusBadge = "bg-success";
-                    if (p.status === "Ditolak") statusBadge = "bg-danger";
+                    else if (p.status.startsWith("Due")) statusBadge = "bg-warning text-dark";
+                    else if (p.status === "Menunggu Persetujuan") statusBadge = "bg-warning";
+                    else if (p.status === "Disetujui") statusBadge = "bg-info";
+                    else if (p.status === "Sedang Dipinjam") statusBadge = "bg-primary";
+                    else if (p.status === "Sebagian Dikembalikan") statusBadge = "bg-warning text-dark";
+                    else if (p.status === "Proses Return") statusBadge = "bg-info text-dark";
+                    else if (p.status === "Dikembalikan") statusBadge = "bg-success";
+                    else if (p.status === "Ditolak") statusBadge = "bg-danger";
 
                     tbody.innerHTML += `
                     <tr>

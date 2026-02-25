@@ -50,7 +50,7 @@ try {
             'nrp' => $row['nrp'],
             'tanggal_pinjam' => date('d/m/Y', strtotime($row['tanggal_pinjam'])),
             'rencana_kembali' => date('d/m/Y', strtotime($row['rencana_kembali'])),
-            'status' => $row['status'],
+            'status' => computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']),
             'catatan' => $row['catatan']
         ];
     }

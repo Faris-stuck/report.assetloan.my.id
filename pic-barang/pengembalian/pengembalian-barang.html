@@ -361,6 +361,7 @@
                         const s = (status || '').toString().toLowerCase();
                         let badge = `<span class="badge bg-secondary">${status}</span>`;
                         if (s.includes('menunggu') || s.includes('pending')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
+                        else if (s.includes('diajukan') || s.includes('submitted')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
                         else if (s.includes('sebagian') || s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
                         else if (s.includes('selesai') && !s.includes('sebagian')) badge = `<span class="badge bg-success text-white">${status}</span>`;
                         else if (s.includes('diproses') || s.includes('dicek')) badge = `<span class="badge bg-info text-dark">${status}</span>`;
@@ -429,7 +430,7 @@
                         const remainItems = sisaDikembalikan - qtReturnThisSubmission;
 
                         return `
-                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-sisa="${sudahDikembalikan}">
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-remain-db="${sisaDikembalikan}">
                             <td>
                                 <div class="fw-semibold">${it.nama_barang}</div>
                                 <div class="small text-muted"><code>${it.kode_barang}</code></div>
@@ -463,15 +464,16 @@
                             const qtReturn = Number(tr.querySelector('.inp-qty-return').value || 0);
                             const goodCond = Number(tr.querySelector('.inp-good-condition').value || 0);
                             const damaged = Number(tr.querySelector('.inp-damaged').value || 0);
-                            const sisa = Number(tr.getAttribute('data-sisa') || 0);
+                            const remainDB = Number(tr.getAttribute('data-remain-db') || 0);
 
-                            // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
-                            if (qtReturn > sisa) {
-                                tr.querySelector('.inp-qty-return').value = sisa;
+                            // Validasi: qty return tidak boleh melebihi remain dari database
+                            if (qtReturn > remainDB) {
+                                tr.querySelector('.inp-qty-return').value = remainDB;
                             }
 
-                            // Calculate remain items: sisa - qty return
-                            const remainItems = sisa - qtReturn;
+                            // Calculate remain items: remain_database - qty return
+                            const qtReturnFinal = Number(tr.querySelector('.inp-qty-return').value || 0);
+                            const remainItems = remainDB - qtReturnFinal;
                             tr.querySelector('.inp-remain').value = remainItems;
 
                             // Validasi: good condition + damaged tidak boleh melebihi qty return
@@ -505,7 +507,7 @@
             rows.forEach(tr => {
                 const barang_id = Number(tr.getAttribute('data-barang-id'));
                 const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
-                const sisa = Number(tr.getAttribute('data-sisa'));
+                const remainDB = Number(tr.getAttribute('data-remain-db') || 0);
                 const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
                 const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
                 const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
@@ -518,8 +520,8 @@
                 }
 
                 // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
-                if (qty_return > sisa) {
-                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${sisa})`);
+                if (qty_return > remainDB) {
+                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${remainDB})`);
                     hasError = true;
                     return;
                 }

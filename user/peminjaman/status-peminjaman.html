@@ -4,6 +4,7 @@
 <head>
     <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
     <script src="../../assets/js/base-url.js"></script>
+    <script src="../../assets/js/date-format.js"></script>
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
@@ -592,7 +593,7 @@
 
     <!-- Modal Detail Peminjaman -->
     <div class="modal fade" id="modalDetail" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Borrowing Details</h5>
@@ -600,34 +601,29 @@
                 </div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-6">
+                        <div class="col-md-6">
                             <p><strong>Code:</strong> <span id="detailKode"></span></p>
-                        </div>
-                        <div class="col-6">
                             <p><strong>Name:</strong> <span id="detailNama"></span></p>
-                        </div>
-                        <div class="col-6">
                             <p><strong>NRP:</strong> <span id="detailNrp"></span></p>
                         </div>
-                        <div class="col-6">
+                        <div class="col-md-6">
                             <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-                        </div>
-                        <div class="col-12">
                             <p><strong>Borrow Date:</strong> <span id="detailTanggalPinjam"></span></p>
-                        </div>
-                        <div class="col-12">
                             <p><strong>Expected Return:</strong> <span id="detailRencanaKembali"></span></p>
                         </div>
                     </div>
                     <hr>
-                    <h6 class="mb-3"><strong>Borrowed Items</strong></h6>
+                    <h6 class="mb-3"><strong>Borrowed Items (Per Unit)</strong></h6>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered">
                             <thead class="table-light">
                                 <tr>
-                                    <th>No.</th>
+                                    <th style="width:40px" class="text-center">No</th>
                                     <th>Item</th>
-                                    <th>Quantity</th>
+                                    <th style="width:80px" class="text-center">Unit</th>
+                                    <th style="width:50px" class="text-center">Qty</th>
+                                    <th style="width:140px" class="text-center">Return Status</th>
+                                    <th style="width:120px" class="text-center">Expected Return</th>
                                 </tr>
                             </thead>
                             <tbody id="detailBarangTable"></tbody>
@@ -706,6 +702,9 @@
                     return 'Ditolak';
                 case 'Proses Return':
                     return 'Proses Return';
+
+                case 'Sebagian Dikembalikan':
+                    return 'Sebagian Dikembalikan';
                 default:
                     return dbStatus;
             }
@@ -735,6 +734,8 @@
                     return 'badge bg-danger';
                 case 'Proses Return':
                     return 'badge bg-info text-dark';
+                case 'Sebagian Dikembalikan':
+                    return 'badge bg-warning text-dark';
                 default:
                     if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
                     if (displayStatus.startsWith('Due')) return 'badge bg-warning text-dark';
@@ -750,7 +751,7 @@
             let displayStatus;
             let statusBadge;
             // If there is an active pengembalian in Diajukan/Dicek/Sebagian Dikembalikan, treat as "Proses Return"
-            if (peminjaman.pengembalian_status && ['Diajukan', 'Dicek', 'Sebagian Dikembalikan'].includes(peminjaman.pengembalian_status)) {
+            if (peminjaman.pengembalian_status && ['Diajukan', 'Dicek'].includes(peminjaman.pengembalian_status)) {
                 displayStatus = 'Proses Return';
                 statusBadge = 'badge bg-warning text-dark';
             } else {
@@ -782,8 +783,8 @@
             return `
         <tr>
             <td><strong>${escapeHtml(peminjaman.kode_peminjaman)}</strong></td>
-            <td>${new Date(peminjaman.tanggal_pinjam).toLocaleDateString('id-ID')}</td>
-            <td>${new Date(peminjaman.rencana_kembali).toLocaleDateString('id-ID')}</td>
+            <td>${formatTanggal(peminjaman.tanggal_pinjam)}</td>
+            <td>${formatTanggal(peminjaman.rencana_kembali)}</td>
             <td><span class="${statusBadge}">${escapeHtml(displayStatus)}</span></td>
             <td>${actionBtn}</td>
         </tr>
@@ -809,9 +810,9 @@
             return `
         <tr>
             <td><strong>${escapeHtml(peminjaman.kode_peminjaman)}</strong></td>
-            <td>${new Date(peminjaman.tanggal_pinjam).toLocaleDateString('id-ID')}</td>
-            <td>${peminjaman.tanggal_kembali ? new Date(peminjaman.tanggal_kembali).toLocaleDateString('id-ID') : '-'}</td>
-            <td>${new Date(peminjaman.rencana_kembali).toLocaleDateString('id-ID')}</td>
+            <td>${formatTanggal(peminjaman.tanggal_pinjam)}</td>
+            <td>${formatTanggal(peminjaman.tanggal_kembali)}</td>
+            <td>${formatTanggal(peminjaman.rencana_kembali)}</td>
             <td><span class="${statusBadge}">${escapeHtml(displayStatus)}</span></td>
             <td>${detailBtn}</td>
         </tr>
@@ -856,7 +857,7 @@
                 const menunggu = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Menunggu Persetujuan');
                 const dipinjam = userPeminjaman.filter(p => {
                     const ds = getDisplayStatus(p.status, p.status_en);
-                    return ds === 'Sedang Dipinjam' || ds.startsWith('Due') || ds === 'Overdue' || ds === 'Proses Return';
+                    return ds === 'Sedang Dipinjam' || ds.startsWith('Due') || ds === 'Overdue' || ds === 'Proses Return' || ds === 'Sebagian Dikembalikan';
                 });
                 const dikembalikan = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Dikembalikan');
                 const ditolak = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Ditolak');
@@ -941,32 +942,45 @@
 
         // Fungsi untuk lihat detail
         function lihatDetail(peminjamanId) {
-            fetch(`${BASE_URL}/api/user/get-detail.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
+            fetch(`${BASE_URL}/api/peminjaman/get_detail_units.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
                     if (res.status && res.data) {
                         const p = res.data;
                         document.getElementById('detailKode').textContent = escapeHtml(p.kode_peminjaman);
-                        document.getElementById('detailNama').textContent = escapeHtml(p.nama_peminjam || p.nama);
+                        document.getElementById('detailNama').textContent = escapeHtml(p.nama_peminjam);
                         document.getElementById('detailNrp').textContent = escapeHtml(p.nrp);
-                        const displayStatus = getDisplayStatus(p.status, p.status_en);
-                        document.getElementById('detailStatus').innerHTML = `<span class="${getStatusBadge(p.status, p.status_en)}">${escapeHtml(displayStatus)}</span>`;
-                        document.getElementById('detailTanggalPinjam').textContent = new Date(p.tanggal_pinjam).toLocaleDateString('id-ID');
-                        document.getElementById('detailRencanaKembali').textContent = new Date(p.rencana_kembali).toLocaleDateString('id-ID');
+                        const displayStatus = getDisplayStatus(p.status, p.status);
+                        document.getElementById('detailStatus').innerHTML = `<span class="${getStatusBadge(p.status, p.status)}">${escapeHtml(displayStatus)}</span>`;
+                        document.getElementById('detailTanggalPinjam').textContent = p.tanggal_pinjam || '-';
+                        document.getElementById('detailRencanaKembali').textContent = p.expected_return_nearest || p.rencana_kembali || '-';
 
-                        // Tampilkan barang
-                        const barangHtml = (p.detail_barang || []).map((item, i) => `
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${escapeHtml(item.nama_barang || item.barang || '-')}</td>
-                                <td class="text-center">${escapeHtml(item.jumlah)}</td>
-                            </tr>
-                        `).join('');
-                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="3" class="text-center">Tidak ada barang</td></tr>';
+                        // Render per-unit rows
+                        const units = p.units || [];
+                        const barangHtml = units.map((u, i) => {
+                            let badgeClass = 'bg-secondary';
+                            if (u.return_status === 'Dikembalikan') badgeClass = 'bg-success';
+                            else if (u.return_status === 'Rusak') badgeClass = 'bg-warning text-dark';
+                            else if (u.return_status === 'Ditolak') badgeClass = 'bg-danger';
+                            else if (u.return_status === 'Overdue' || u.return_status === 'Due Today') badgeClass = 'bg-danger';
+                            else if (u.return_status && u.return_status.startsWith('Due')) badgeClass = 'bg-warning text-dark';
 
-                        // Tampilkan catatan jika ada (khusus untuk ditolak)
-                        const displayStatus2 = getDisplayStatus(p.status, p.status_en);
-                        if (displayStatus2 === 'Ditolak' && p.catatan) {
+                            return `<tr>
+                                <td class="text-center">${i + 1}</td>
+                                <td>
+                                    <div class="fw-semibold">${escapeHtml(u.nama_barang)}</div>
+                                    <div class="small text-muted"><code>${escapeHtml(u.kode_barang)}</code></div>
+                                </td>
+                                <td class="text-center"><span class="badge bg-light text-dark">Unit ${escapeHtml(u.unit_display)}</span></td>
+                                <td class="text-center">1</td>
+                                <td class="text-center"><span class="badge ${badgeClass}">${escapeHtml(u.return_status)}</span></td>
+                                <td class="text-center">${escapeHtml(u.expected_return)}</td>
+                            </tr>`;
+                        }).join('');
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">Tidak ada barang</td></tr>';
+
+                        // Notes section
+                        if (p.status === 'Ditolak' && p.catatan) {
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
                         } else {

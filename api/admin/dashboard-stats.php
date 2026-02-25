@@ -105,7 +105,7 @@ try {
             'id' => (int)$row['id'],
             'kode' => $row['kode_peminjaman'],
             'nama' => $row['nama_peminjam'],
-            'status' => $row['status'],
+            'status' => computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']),
             'tanggal_pinjam' => ($row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-'),
             'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-')
         ];
