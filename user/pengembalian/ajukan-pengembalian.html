@@ -691,18 +691,29 @@
 
                     console.log("Total items in API response:", res.data.length);
 
-                    // Filter untuk menampilkan peminjaman yang belum dikembalikan sepenuhnya
-                    // Hanya tampilkan items milik user dengan status belum final
+                    // Filter untuk menampilkan HANYA peminjaman yang sudah aktif dipinjam
+                    // JANGAN tampilkan: Pending Approval, Menunggu Persetujuan, Ditolak, dll
+                    // HANYA tampilkan: Sedang Dipinjam, Sebagian Dikembalikan, Due*, Overdue, Proses Return
+                    const allowedStatus = [
+                        "Sedang Dipinjam",
+                        "Sebagian Dikembalikan",
+                        "Proses Return"
+                    ];
+
                     const itemsToReturn = res.data.filter(p => {
-                        // Debug setiap item
                         const userMatch = (p.user_id == USER_ID);
-                        const statusMatch = p.status && !["Selesai", "Ditolak", "Batal", "Dikembalikan"].includes(p.status);
+
+                        // Check if status is in allowed list OR is a "Due" status OR is "Overdue"
+                        const isBorrowedStatus =
+                            allowedStatus.includes(p.status) ||
+                            (p.status && p.status.startsWith("Due")) ||
+                            p.status === "Overdue";
 
                         if (p.user_id == USER_ID) {
-                            console.log(`  - Item: ${p.kode}, user_id=${p.user_id}, status=${p.status}, userMatch=${userMatch}, statusMatch=${statusMatch}`);
+                            console.log(`  - Item: ${p.kode}, user_id=${p.user_id}, status=${p.status}, userMatch=${userMatch}, isBorrowedStatus=${isBorrowedStatus}`);
                         }
 
-                        return userMatch && statusMatch;
+                        return userMatch && isBorrowedStatus;
                     });
 
                     console.log("Items to display (filtered):", itemsToReturn.length);
