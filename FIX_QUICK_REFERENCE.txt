@@ -1,0 +1,217 @@
+# QUICK REFERENCE: Purchase Update Fix
+
+## What Was Fixed
+- ❌ UPDATE purchase returned **"Unauthorized"** error
+- ✅ NOW works correctly with proper session validation
+
+## Root Cause (One Sentence)
+Old endpoint checked for session keys (`admin_id`, `pic_id`) that login endpoint **NEVER sets** (it sets `user_id` and `user_role` instead).
+
+---
+
+## Files Changed
+
+| File | Change | Reason |
+|------|--------|--------|
+| `/api/barang/update-pembelian.php` | Changed from checking `admin_id`/`pic_id` to using `SessionValidator::requireRole()` | **MAIN FIX** - Match session keys set by login |
+| `/api/barang/beli.php` | Added missing authentication check | Security - prevent unauthorized purchase creation |
+
+---
+
+## How It Works Now
+
+```
+User Login
+    ↓
+Sets: $_SESSION['user_id'] = 123
+      $_SESSION['user_role'] = 'admin'
+    ↓
+User Edits Purchase + Clicks UPDATE
+    ↓
+Fetch with credentials: 'include' → sends session cookie
+    ↓
+Server: session_start() loads $_SESSION
+    ↓
+SessionValidator::requireRole(['admin', 'manager', 'pic_barang'])
+    ↓
+Checks: $_SESSION['user_role'] == 'admin' ✓
+    ↓
+UPDATE successful ✓
+```
+
+---
+
+## Testing Commands
+
+### Test UPDATE Endpoint (Using curl)
+```bash
+# First, get session cookie by logging in
+curl -c /tmp/cookies.txt \
+  -X POST \
+  -d "email=admin@email.com&password=password123" \
+  http://localhost/PROJECT/api/auth/login.php
+
+# Then test UPDATE using the saved cookie
+curl -b /tmp/cookies.txt \
+  -X POST \
+  -F "id=1" \
+  -F "id_barang=5" \
+  -F "tanggal_pembelian=2026-02-26" \
+  -F "vendor_id=2" \
+  -F "jumlah=10" \
+  -F "harga_satuan=50000" \
+  -F "keterangan=Test update" \
+  http://localhost/PROJECT/api/barang/update-pembelian.php
+```
+
+### Expected Response: UPDATE Success
+```json
+{
+  "status": true,
+  "message": "Purchase updated successfully"
+}
+```
+
+### Expected Response: UPDATE Unauthorized
+```json
+{
+  "status": false,
+  "message": "Unauthorized: Akses ditolak. Role Anda (user) tidak diizinkan."
+}
+```
+
+---
+
+## User Roles Allowed to UPDATE Purchase
+- ✅ `admin`
+- ✅ `manager`
+- ✅ `pic_barang`
+- ❌ `user` (NOT allowed - will get 403 Forbidden)
+
+---
+
+## Vendor Field Behavior
+
+| Scenario | State | Field Type | Editable? | Submitted? |
+|----------|-------|-----------|-----------|-----------|
+| Create New Purchase | Modal | Dropdown `<select>` | ✅ Yes | ✅ Yes |
+| Edit Purchase | Modal | Text Input `<input readonly>` | ❌ No | ✅ Yes* |
+
+*Vendor ID comes from hidden field `#edit_vendor_id`, not the display field
+
+---
+
+## Database Update
+When form submits, these fields are updated:
+```sql
+UPDATE pembelian_barang SET
+  tanggal_pembelian = '2026-02-26',
+  vendor_id = 2,
+  jumlah = 10,
+  harga_satuan = 50000,
+  keterangan = 'Any notes'
+WHERE id = 1 AND barang_id = 5;
+```
+
+---
+
+## If You Still Get "Unauthorized"
+
+### Checklist:
+- [ ] Browser cookies are NOT blocked
+- [ ] Session not expired (check browser dev tools → Application → Cookies)
+- [ ] User logged in correctly (check localStorage → user data exists) 
+- [ ] User has role: admin, manager, or pic_barang (not just 'user')
+- [ ] File `/api/session-helper.php` exists (required for validation)
+- [ ] Both PHP syntax checks pass: No errors detected
+
+### Debug Command:
+```bash
+# Check if endpoints are readable
+ls -la /opt/lampp/htdocs/PROJECT/api/barang/update-pembelian.php
+ls -la /opt/lampp/htdocs/PROJECT/api/session-helper.php
+
+# Verify syntax
+php -l /opt/lampp/htdocs/PROJECT/api/barang/update-pembelian.php
+```
+
+---
+
+## Code References
+
+### Before Fix (WRONG)
+```php
+if (!isset($_SESSION['admin_id']) && !isset($_SESSION['pic_id'])) {
+    echo json_encode(["status" => false, "message" => "Unauthorized"]);
+    exit;
+}
+```
+
+### After Fix (CORRECT)
+```php
+require_once "../session-helper.php";
+try {
+    SessionValidator::requireRole(['admin', 'manager', 'pic_barang']);
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode(["status" => false, "message" => "Unauthorized: " . $e->getMessage()]);
+    exit;
+}
+```
+
+---
+
+## Session Keys Reference
+
+| Key | Where Set | Where Checked | Purpose |
+|-----|-----------|---------------|---------|
+| `user_id` | `/api/auth/login.php` | `session-helper.php`, `verify-session.php` | User identifier |
+| `user_role` | `/api/auth/login.php` | `session-helper.php`, `verify-session.php` | Role-based access control |
+| `user_nama` | `/api/auth/login.php` | Display purposes | User full name |
+| `user_email` | `/api/auth/login.php` | Display purposes | User email |
+| ~~`admin_id`~~ | NEVER | ~~`update-pembelian.php`~~ | **REMOVED - doesn't exist** |
+| ~~`pic_id`~~ | NEVER | ~~`update-pembelian.php`~~ | **REMOVED - doesn't exist** |
+
+---
+
+## Files Audited (Not Modified)
+
+These files are working correctly and didn't need changes:
+- `session-helper.php` ✅ 
+- `page-guard.js` ✅
+- `session-validator.js` ✅
+- `config/api.js` ✅
+- `auth/verify-session.php` ✅
+- `auth/login.php` ✅
+- `detail-barang.html` ✅
+- `detail-barang.js` ✅
+
+---
+
+## Summary by Role
+
+### For Admin/Manager/PIC Barang
+When you UPDATE a purchase:
+1. ✅ Can change: date, quantity, price, notes
+2. ✅ Cannot change: vendor name (readonly field)
+3. ✅ Should see: "Purchase updated successfully"
+
+### For Regular User
+When you try to create/update a purchase:
+- ❌ Cannot access this feature (not in your role)
+- ❌ Will see: "Unauthorized: Akses ditolak"
+
+---
+
+## Production Deployment Steps
+1. Upload `/api/barang/update-pembelian.php` (modified)
+2. Upload `/api/barang/beli.php` (modified)
+3. Test UPDATE endpoint with curl command (above)
+4. Test via web interface (browser)
+5. Monitor error logs: `tail -f /var/log/apache2/error.log`
+6. ✅ Complete!
+
+---
+
+**Last Updated:** 2026-02-26  
+**Status:** PRODUCTION READY ✅

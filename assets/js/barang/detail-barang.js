@@ -18,6 +18,9 @@ function formatDollar(angka) {
 }
 
 
+// Global variable to store purchase data for modal editing
+let currentBarangPurchases = [];
+
 document.addEventListener("DOMContentLoaded", function () {
 
     /* =====================
@@ -259,12 +262,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
             fetch(`${API_BASE_URL}/barang/beli.php`, {
                 method: "POST",
-                body: data
+                body: data,
+                credentials: 'include'  // Send session cookies for authentication
             })
                 .then(res => res.json())
                 .then(res => {
                     alert(res.message);
-                    if (res.status) location.reload();
+                    if (res.status) {
+                        location.reload();
+                    }
                 })
                 .catch(err => {
                     console.error(err);
@@ -292,17 +298,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
+                // Store purchase data for modal lookups
+                currentBarangPurchases = res.data;
+
                 res.data.forEach(p => {
                     const hargaSatuan = parseFloat(p.harga_satuan);
                     const total = parseFloat(p.total);
-                    const purchaseData = JSON.stringify({
-                        id: p.id,
-                        vendor_id: p.vendor_id,
-                        tanggal_pembelian: p.tanggal_pembelian,
-                        jumlah: p.jumlah,
-                        harga_satuan: p.harga_satuan,
-                        keterangan: p.keterangan || ''
-                    });
 
                     tbody.innerHTML += `
                     <tr>
@@ -312,9 +313,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         <td>${formatDollar(hargaSatuan)}</td>
                         <td><strong>${formatDollar(total)}</strong></td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-warning" 
-                                onclick="openEditModalFromData('${purchaseData.replace(/'/g, "\\'")}')">
-                                <i class="fas fa-edit"></i> Edit
+                            <button type="button" class="btn btn-sm btn-warning" onclick="editPembelian(${p.id})">
+                                EDIT
                             </button>
                         </td>
                     </tr>
@@ -394,6 +394,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ==================== EDIT PURCHASE FUNCTIONS ====================
+    // Edit purchase by ID - fetches data from stored list and opens edit modal
+    window.editPembelian = function (purchaseId) {
+        const purchase = currentBarangPurchases.find(p => p.id == purchaseId);
+        if (!purchase) {
+            alert("Pembelian tidak ditemukan");
+            return;
+        }
+        openEditModal(
+            purchase.id,
+            purchase.vendor_id,
+            purchase.tanggal_pembelian,
+            purchase.jumlah,
+            purchase.harga_satuan,
+            purchase.keterangan,
+            purchase.nama_vendor  // Pass vendor name for display
+        );
+    };
+
     window.openEditModalFromData = function (jsonStr) {
         try {
             const data = JSON.parse(jsonStr);
@@ -404,28 +422,11 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    window.openEditModal = function (id, vendor_id, tanggal, jumlah, harga, keterangan) {
+    window.openEditModal = function (id, vendor_id, tanggal, jumlah, harga, keterangan, namaVendor) {
 
-        // Load vendors dropdown if empty
-        const vendorSelect = document.getElementById("edit_vendor");
-        if (vendorSelect.options.length <= 1) {
-            fetch(`${API_BASE_URL}/vendor/get.php`)
-                .then(res => res.json())
-                .then(res => {
-                    if (res.status && res.data) {
-                        res.data.forEach(v => {
-                            const opt = document.createElement("option");
-                            opt.value = v.id;
-                            opt.textContent = v.nama_vendor;
-                            vendorSelect.appendChild(opt);
-                        });
-                    }
-                    // Set selected vendor
-                    vendorSelect.value = vendor_id;
-                });
-        } else {
-            vendorSelect.value = vendor_id;
-        }
+        // Populate vendor field (readonly display) and hidden vendor_id
+        document.getElementById("edit_vendor").value = namaVendor || '';
+        document.getElementById("edit_vendor_id").value = vendor_id;
 
         // Populate form fields
         document.getElementById("edit_id_pembelian").value = id;
@@ -451,7 +452,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const id = document.getElementById("edit_id_pembelian").value;
         const tanggal = document.getElementById("edit_tanggal_pembelian").value;
-        const vendor_id = document.getElementById("edit_vendor").value;
+        const vendor_id = document.getElementById("edit_vendor_id").value;  // Use hidden vendor_id
         const jumlah = document.getElementById("edit_jumlah").value;
         const harga_satuan = document.getElementById("edit_harga_satuan").value;
         const keterangan = document.getElementById("edit_keterangan").value;
@@ -474,7 +475,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fetch(`${API_BASE_URL}/barang/update-pembelian.php`, {
             method: "POST",
-            body: formData
+            body: formData,
+            credentials: 'include'  // Send session cookies for authentication
         })
             .then(res => res.json())
             .then(res => {
@@ -490,7 +492,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Error:", err);
                 alert("Failed to update purchase");
             });
-    });
+    })
 
     // Helper function to get current barang ID from page
     function getCurrentIdBarang() {
@@ -504,22 +506,15 @@ document.addEventListener("DOMContentLoaded", function () {
     if (modalEditVendor) {
         modalEditVendor.addEventListener("show.bs.modal", function () {
             loadVendorTable();
-            cancelVendorEdit();
         });
     }
 
-    // Load vendor table
+    // Load vendor table - USING api/vendor/get.php for vendor data
     function loadVendorTable() {
         const tbody = document.getElementById("vendorTableBody");
         tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>`;
 
-        const formData = new FormData();
-        formData.append("action", "get_all");
-
-        fetch(`${API_BASE_URL}/vendor/update.php`, {
-            method: "POST",
-            body: formData
-        })
+        fetch(`${API_BASE_URL}/vendor/get.php`)
             .then(res => res.json())
             .then(res => {
                 tbody.innerHTML = "";
@@ -529,7 +524,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 res.data.forEach((v, i) => {
-                    const vendorJson = JSON.stringify(v).replace(/'/g, "\\'");
                     tbody.innerHTML += `
                     <tr>
                         <td>${i + 1}</td>
@@ -537,11 +531,8 @@ document.addEventListener("DOMContentLoaded", function () {
                         <td>${v.alamat || '-'}</td>
                         <td>${v.kontak || '-'}</td>
                         <td>
-                            <button type="button" class="btn btn-sm btn-warning me-1" onclick="editVendorRow('${vendorJson}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-danger" onclick="deleteVendor(${v.id}, '${v.nama_vendor.replace(/'/g, "\\'")}')">
-                                <i class="fas fa-trash"></i>
+                            <button type="button" class="btn btn-sm btn-warning" onclick="editVendor(${v.id})">
+                                EDIT
                             </button>
                         </td>
                     </tr>`;
@@ -553,54 +544,54 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // Edit vendor - populate form
-    window.editVendorRow = function (jsonStr) {
-        try {
-            const v = JSON.parse(jsonStr);
-            document.getElementById("vendorEditId").value = v.id;
-            document.getElementById("vendorEditNama").value = v.nama_vendor;
-            document.getElementById("vendorEditAlamat").value = v.alamat || '';
-            document.getElementById("vendorEditKontak").value = v.kontak || '';
-            document.getElementById("vendorFormTitle").textContent = "Edit Vendor: " + v.nama_vendor;
-            document.getElementById("btnCancelEditVendor").style.display = "inline-block";
-            document.getElementById("btnSaveVendor").innerHTML = '<i class="feather-save"></i> Update Vendor';
-        } catch (err) {
-            console.error("Error parsing vendor data:", err);
-        }
+    // Edit vendor - fetch data and show edit form
+    window.editVendor = function (vendorId) {
+        fetch(`${API_BASE_URL}/vendor/get.php`)
+            .then(res => res.json())
+            .then(res => {
+                if (!res.status || !res.data) {
+                    alert("Gagal memuat data vendor");
+                    return;
+                }
+
+                // Find the specific vendor
+                const vendor = res.data.find(v => v.id == vendorId);
+                if (!vendor) {
+                    alert("Vendor tidak ditemukan");
+                    return;
+                }
+
+                // Populate edit form
+                document.getElementById("vendorEditId").value = vendor.id;
+                document.getElementById("vendorEditNama").value = vendor.nama_vendor;
+                document.getElementById("vendorEditAlamat").value = vendor.alamat || '';
+                document.getElementById("vendorEditKontak").value = vendor.kontak || '';
+                document.getElementById("vendorFormTitle").textContent = "Edit Vendor: " + vendor.nama_vendor;
+                document.getElementById("btnCancelEditVendor").style.display = "inline-block";
+                document.getElementById("btnSaveVendor").textContent = 'Update Vendor';
+
+                // Scroll to form
+                const formSection = document.getElementById("vendorEditSection");
+                if (formSection) {
+                    formSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            })
+            .catch(err => {
+                console.error("Error fetching vendor:", err);
+                alert("Gagal memuat data vendor");
+            });
     };
 
-    // Cancel edit - reset form
+    // Cancel vendor edit
     window.cancelVendorEdit = function () {
         document.getElementById("vendorEditId").value = "";
         document.getElementById("vendorEditNama").value = "";
         document.getElementById("vendorEditAlamat").value = "";
         document.getElementById("vendorEditKontak").value = "";
         document.getElementById("vendorFormTitle").textContent = "Add New Vendor";
+        document.getElementById("formVendorEdit").reset();
         document.getElementById("btnCancelEditVendor").style.display = "none";
-        document.getElementById("btnSaveVendor").innerHTML = '<i class="feather-save"></i> Save Vendor';
-    };
-
-    // Delete vendor
-    window.deleteVendor = function (id, name) {
-        if (!confirm(`Yakin ingin menghapus vendor "${name}"?`)) return;
-
-        const formData = new FormData();
-        formData.append("action", "delete");
-        formData.append("id", id);
-
-        fetch(`${API_BASE_URL}/vendor/update.php`, {
-            method: "POST",
-            body: formData
-        })
-            .then(res => res.json())
-            .then(res => {
-                alert(res.message);
-                if (res.status) loadVendorTable();
-            })
-            .catch(err => {
-                console.error("Error:", err);
-                alert("Gagal menghapus vendor");
-            });
+        document.getElementById("btnSaveVendor").textContent = 'Save Vendor';
     };
 
     // Submit vendor form (add or update)
@@ -617,6 +608,11 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+        // Konfirmasi sebelum save
+        if (!confirm("Apakah Anda yakin data vendor sudah benar?")) {
+            return;
+        }
+
         const formData = new FormData();
         formData.append("action", vendorId ? "update" : "add");
         formData.append("nama_vendor", nama);
@@ -626,7 +622,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fetch(`${API_BASE_URL}/vendor/update.php`, {
             method: "POST",
-            body: formData
+            body: formData,
+            credentials: 'include'  // Send session cookies for authentication
         })
             .then(res => res.json())
             .then(res => {
@@ -634,8 +631,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (res.status) {
                     cancelVendorEdit();
                     loadVendorTable();
-                    // Also refresh the vendor dropdown in add purchase modal
-                    refreshVendorDropdown();
+                    // Also refresh vendor dropdowns
+                    refreshVendorDropdowns();
                 }
             })
             .catch(err => {
@@ -645,33 +642,31 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Refresh vendor dropdowns after vendor changes
-    function refreshVendorDropdown() {
+    function refreshVendorDropdowns() {
         fetch(`${API_BASE_URL}/vendor/get.php`)
             .then(res => res.json())
             .then(res => {
                 // Refresh "Add Purchase" vendor dropdown
                 const vendorSelect = document.getElementById("vendor");
-                if (vendorSelect) {
+                if (vendorSelect && res.status && res.data) {
+                    const currentVal = vendorSelect.value;
                     vendorSelect.innerHTML = `
                         <option value="">Select Vendor</option>
                         <option value="baru">+ Tambah Vendor Baru</option>
                     `;
-                    if (res.status && res.data) {
-                        res.data.forEach(v => {
-                            vendorSelect.innerHTML += `<option value="${v.id}">${v.nama_vendor}</option>`;
-                        });
-                    }
+                    res.data.forEach(v => {
+                        vendorSelect.innerHTML += `<option value="${v.id}">${v.nama_vendor}</option>`;
+                    });
+                    vendorSelect.value = currentVal;
                 }
                 // Refresh "Edit Purchase" vendor dropdown
                 const editVendorSelect = document.getElementById("edit_vendor");
-                if (editVendorSelect) {
+                if (editVendorSelect && res.status && res.data) {
                     const currentVal = editVendorSelect.value;
                     editVendorSelect.innerHTML = `<option value="">Select Vendor</option>`;
-                    if (res.status && res.data) {
-                        res.data.forEach(v => {
-                            editVendorSelect.innerHTML += `<option value="${v.id}">${v.nama_vendor}</option>`;
-                        });
-                    }
+                    res.data.forEach(v => {
+                        editVendorSelect.innerHTML += `<option value="${v.id}">${v.nama_vendor}</option>`;
+                    });
                     editVendorSelect.value = currentVal;
                 }
             });

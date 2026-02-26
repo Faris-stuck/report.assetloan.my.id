@@ -1,12 +1,22 @@
 <?php
 require_once "../koneksi.php";
+header("Content-Type: application/json");
 
-// Check if user is logged in and has appropriate role
-session_start();
-if (!isset($_SESSION['admin_id']) && !isset($_SESSION['pic_id'])) {
+// Server-side session validation using proper session keys
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once "../session-helper.php";
+
+// Validate session and require authorized roles
+try {
+    SessionValidator::requireRole(['admin', 'manager', 'pic_barang']);
+} catch (Exception $e) {
+    http_response_code(401);
     echo json_encode([
         "status" => false,
-        "message" => "Unauthorized"
+        "message" => "Unauthorized: " . $e->getMessage()
     ]);
     exit;
 }

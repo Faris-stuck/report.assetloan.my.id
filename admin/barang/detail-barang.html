@@ -621,6 +621,13 @@
                                     <input type="text" id="vendorBaru" class="form-control"
                                         placeholder="Masukkan nama vendor baru" style="display:none;">
 
+
+                                    <input type="text" id="alamat_vendor" class="form-control mb-2"
+                                        placeholder="Alamat Vendor" style="display:none;">
+
+                                    <input type="text" id="kontak_vendor" class="form-control mb-2"
+                                        placeholder="Kontak Vendor" style="display:none;">
+
                                 </div>
 
                                 <div class="mb-2">
@@ -640,11 +647,6 @@
                                 </div>
                             </div>
 
-                            <input type="text" id="alamat_vendor" class="form-control mb-2" placeholder="Alamat Vendor"
-                                style="display:none;">
-
-                            <input type="text" id="kontak_vendor" class="form-control mb-2" placeholder="Kontak Vendor"
-                                style="display:none;">
 
                             <div class="modal-footer">
                                 <button type="submit" class="btn btn-primary">Save</button>
@@ -679,9 +681,8 @@
 
                                 <div class="mb-2">
                                     <label>Vendor</label>
-                                    <select id="edit_vendor" class="form-select mb-2">
-                                        <option value="">Select Vendor</option>
-                                    </select>
+                                    <input type="text" id="edit_vendor" class="form-control" readonly>
+                                    <input type="hidden" id="edit_vendor_id">
                                 </div>
 
                                 <div class="mb-2">
@@ -741,34 +742,36 @@
                             </div>
 
                             <hr>
-                            <!-- Form edit/add vendor -->
-                            <h6 id="vendorFormTitle">Add New Vendor</h6>
-                            <form id="formVendorEdit">
-                                <input type="hidden" id="vendorEditId" value="">
-                                <div class="row">
-                                    <div class="col-md-4 mb-2">
-                                        <label>Nama Vendor</label>
-                                        <input type="text" id="vendorEditNama" class="form-control" required>
+                            <!-- Edit/Add Vendor Form -->
+                            <div id="vendorEditSection">
+                                <h6 id="vendorFormTitle">Add New Vendor</h6>
+                                <form id="formVendorEdit">
+                                    <input type="hidden" id="vendorEditId" value="">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <label>Nama Vendor</label>
+                                            <input type="text" id="vendorEditNama" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Alamat</label>
+                                            <input type="text" id="vendorEditAlamat" class="form-control">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Kontak</label>
+                                            <input type="text" id="vendorEditKontak" class="form-control">
+                                        </div>
                                     </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label>Alamat</label>
-                                        <input type="text" id="vendorEditAlamat" class="form-control">
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button type="submit" class="btn btn-primary btn-sm" id="btnSaveVendor">
+                                            Save Vendor
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditVendor"
+                                            style="display:none;" onclick="cancelVendorEdit()">
+                                            Cancel
+                                        </button>
                                     </div>
-                                    <div class="col-md-4 mb-2">
-                                        <label>Kontak</label>
-                                        <input type="text" id="vendorEditKontak" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="d-flex gap-2 mt-2">
-                                    <button type="submit" class="btn btn-primary btn-sm" id="btnSaveVendor">
-                                        <i class="feather-save"></i> Save Vendor
-                                    </button>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditVendor"
-                                        style="display:none;" onclick="cancelVendorEdit()">
-                                        Cancel Edit
-                                    </button>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

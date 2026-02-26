@@ -1,7 +1,7 @@
 <?php
 require_once "../koneksi.php";
 
-$q = $conn->query("SELECT id, nama_vendor FROM vendor");
+$q = $conn->query("SELECT id, nama_vendor, alamat, kontak FROM vendor ORDER BY nama_vendor ASC");
 
 $data = [];
 

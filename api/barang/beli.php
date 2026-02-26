@@ -2,6 +2,25 @@
 header('Content-Type: application/json');
 require_once "../koneksi.php";
 
+// Server-side session validation
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once "../session-helper.php";
+
+// Validate session and require authorized roles for creating purchases
+try {
+    SessionValidator::requireRole(['admin', 'manager', 'pic_barang']);
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode([
+        "status" => false,
+        "message" => "Unauthorized: " . $e->getMessage()
+    ]);
+    exit;
+}
+
 $id_barang = $_POST['id_barang'] ?? null;
 
 if(!$id_barang){
