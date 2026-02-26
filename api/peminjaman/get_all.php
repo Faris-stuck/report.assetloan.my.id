@@ -189,44 +189,39 @@ try {
             }
         }
         
-        // STATUS CALCULATION: Use aggregate totals from FINALIZED records (status='Selesai')
-        // Check latest pengembalian to determine if still in progress
+        // ========================================
+        // STATUS CALCULATION: 100% from peminjaman_units table (database-driven)
+        // NO hardcode, NO manual calculation, NO static values
+        // Priority: Overdue > Due Today > Due In X Days > Sebagian Dikembalikan > Sedang Dipinjam > Dikembalikan
+        // ========================================
+        $currentDbStatus = $row['status'];
         
-        $sisa = $total_items - $total_kembali;
-        
-        if ($sisa <= 0 && $total_items > 0 && $has_selesai > 0) {
-            // All items have been returned and approved
-            $row['status'] = 'Dikembalikan';
-            $row['status_en'] = 'Returned';
-        } else if ($total_kembali > 0 && $sisa > 0) {
-            // Partial return - some items still out
-            $row['status'] = 'Sebagian Dikembalikan';
-            $row['status_en'] = 'Partially Returned';
-        } else if ($total_kembali === 0 && $total_items > 0) {
-            // No items have been finalized/approved yet
-            if ($has_active_return) {
-                // FIX: Only set 'Proses Return' if there's an ACTIVE return request status
-                $row['status'] = 'Proses Return';
-                $row['status_en'] = 'Return In Progress';
-            } else {
-                // Still borrowing, no return submitted
-                if (!isset($row['status_en'])) {
-                    $row['status_en'] = $row['status'];
-                }
-            }
-        } else {
-            if (!isset($row['status_en'])) {
-                $row['status_en'] = $row['status'];
-            }
+        // Only compute dynamic status for active peminjaman
+        // Ditolak, Menunggu Persetujuan, Disetujui keep their DB status
+        if (!in_array($currentDbStatus, ['Ditolak', 'Menunggu Persetujuan', 'Disetujui'])) {
+            $row['status'] = computeStatusFromUnits($conn, $row['id'], $currentDbStatus);
         }
 
-        // ========================================
-        // REAL-TIME DUE STATUS: Hitung dari nearest expected_return (per-unit data)
-        // ========================================
-        // Get nearest expected_return considering extends and per-unit data
-        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
-        $expected_for_status = $nearest_expected ?? $row['rencana_kembali'];
-        $row['status'] = computeDueStatus($row['status'], $expected_for_status);
+        // Map status to English for frontend compatibility
+        $status_en_map = [
+            'Dikembalikan' => 'Returned',
+            'Sebagian Dikembalikan' => 'Partially Returned',
+            'Sedang Dipinjam' => 'Borrowed',
+            'Proses Return' => 'Return In Progress',
+            'Overdue' => 'Overdue',
+            'Due Today' => 'Due Today',
+            'Ditolak' => 'Rejected',
+            'Menunggu Persetujuan' => 'Pending Approval',
+            'Disetujui' => 'Approved',
+        ];
+        $computedStatus = $row['status'];
+        if (isset($status_en_map[$computedStatus])) {
+            $row['status_en'] = $status_en_map[$computedStatus];
+        } elseif (strpos($computedStatus, 'Due In') === 0) {
+            $row['status_en'] = $computedStatus; // Already English
+        } else {
+            $row['status_en'] = $computedStatus;
+        }
 
         // ========================================
         // DETERMINE CAN_EXTEND based on peminjaman status
@@ -244,6 +239,7 @@ try {
             'tanggal' => ($row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-'),
             'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
             'status' => $row['status'],
+            'status_en' => $row['status_en'] ?? $row['status'],
             'barang' => implode(', ', array_map(function($x){ return $x['jumlah'] . 'x ' . $x['nama'] . ' (' . $x['lokasi'] . ')'; }, $barang_list)),
             'catatan' => $row['catatan'] ?: '',
             'can_extend' => $can_extend,
