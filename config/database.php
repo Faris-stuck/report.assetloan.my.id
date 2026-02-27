@@ -24,7 +24,7 @@ if ($is_local) {
 
     // VPS
     $db_user = 'peminjaman_app';
-    $db_pass = 'PASSWORD_VPS_KAMU';
+    $db_pass = '';
 
 }
 
