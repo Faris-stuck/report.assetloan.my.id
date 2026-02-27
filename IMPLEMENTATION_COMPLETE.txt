@@ -157,7 +157,7 @@ Testing:
    Database: localhost MySQL (laptop)
 
 ✅ VPS Domain
-   https://komatsuloan.my.id/
+   https://assetloan.my.id/
    Database: localhost MySQL (VPS)
 
 ✅ VPS IP

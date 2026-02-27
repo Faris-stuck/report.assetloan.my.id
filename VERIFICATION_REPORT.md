@@ -132,7 +132,7 @@ ENVIRONMENT 1: Laptop
 └─ Config changes needed: NONE ✅
 
 ENVIRONMENT 2: VPS Domain
-├─ Access URL: https://komatsuloan.my.id
+├─ Access URL: https://assetloan.my.id
 ├─ MySQL: localhost (VPS)
 ├─ Detection: AUTO via $_SERVER['HTTP_HOST']
 └─ Config changes needed: NONE ✅
@@ -169,7 +169,7 @@ Check localhost:
 curl http://localhost/PROJECT/verify-database.php
 
 Check domain:
-curl https://komatsuloan.my.id/verify-database.php
+curl https://assetloan.my.id/verify-database.php
 
 Check IP:
 curl http://43.157.205.89/verify-database.php

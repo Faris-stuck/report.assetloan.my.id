@@ -106,7 +106,7 @@ require_once 'api/koneksi.php';
 | Access URL | HTTP_HOST | MySQL Server | Status |
 |------------|-----------|--------------|--------|
 | http://localhost/PROJECT | localhost | localhost (laptop) | ✅ |
-| https://komatsuloan.my.id | komatsuloan.my.id | localhost (VPS) | ✅ |
+| https://assetloan.my.id | assetloan.my.id | localhost (VPS) | ✅ |
 | http://43.157.205.89 | 43.157.205.89 | localhost (VPS) | ✅ |
 
 **Database always:** `peminjaman` on local `localhost`

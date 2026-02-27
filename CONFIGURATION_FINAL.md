@@ -26,7 +26,7 @@ require_once __DIR__ . '/../config/database.php';
 ```
 Environment Detection:
 - $_SERVER['HTTP_HOST'] = "localhost"         → Laptop DB
-- $_SERVER['HTTP_HOST'] = "komatsuloan.my.id" → VPS DB
+- $_SERVER['HTTP_HOST'] = "assetloan.my.id" → VPS DB
 - $_SERVER['HTTP_HOST'] = "43.157.205.89"     → VPS DB
 
 Database Connection (ALL environments):
@@ -53,7 +53,7 @@ Database Connection (ALL environments):
 ```
 URL Detection:
 - http://localhost/PROJECT → BASE_URL = "http://localhost/PROJECT"
-- https://komatsuloan.my.id → BASE_URL = "https://komatsuloan.my.id"
+- https://assetloan.my.id → BASE_URL = "https://assetloan.my.id"
 - http://43.157.205.89 → BASE_URL = "http://43.157.205.89"
 ```
 
