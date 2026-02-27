@@ -1,37 +1,11 @@
 <?php
 /**
- * Database Connection — Auto-detect localhost vs VPS
- * Timezone: Asia/Jakarta (WAJIB untuk konsistensi due-status)
+ * Database Connection Bridge
+ * Requires centralized config/database.php
  */
 
-// ============================================================
-// TIMEZONE: Wajib Asia/Jakarta untuk seluruh sistem
-// ============================================================
-date_default_timezone_set('Asia/Jakarta');
-
-$host = "localhost";
-$database = "peminjaman";
-
-if ($_SERVER['HTTP_HOST'] == "localhost" || strpos($_SERVER['HTTP_HOST'], 'localhost') !== false) {
-    // Localhost / XAMPP
-    $user = "root";
-    $password = "";
-} else {
-    // VPS / Production — sesuaikan credentials di sini
-    $user = "root";
-    $password = "";
-}
-
-$conn = new mysqli($host, $user, $password, $database);
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["error" => "Koneksi DB gagal"]);
-    exit;
-}
-
-// Set MySQL session timezone ke Asia/Jakarta (+07:00)
-// KRITIS: agar CURDATE(), NOW(), DATEDIFF() konsisten dengan PHP
-$conn->query("SET time_zone = '+07:00'");
+// Include centralized database configuration
+require_once __DIR__ . '/../config/database.php';
 
 // ============================================================
 // HELPER: Hitung status due secara REAL-TIME dari rencana_kembali

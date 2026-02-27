@@ -4,16 +4,13 @@
  * Shows what returns are in which status
  */
 
-// Setup minimal database for direct query
-$conn_direct = new mysqli("localhost", "root", "", "peminjaman");
-if ($conn_direct->connect_error) {
-    die("Connection failed: " . $conn_direct->connect_error);
-}
+// Setup database connection using centralized configuration
+require_once __DIR__ . '/config/database.php';
 
 echo "=== Pengembalian Status Summary ===\n";
 echo "All returns in database with their statuses:\n\n";
 
-$result = $conn_direct->query(
+$result = $conn->query(
     "SELECT id, kode_pengembalian, status, diajukan_at 
      FROM pengembalian 
      ORDER BY id DESC 
@@ -21,7 +18,7 @@ $result = $conn_direct->query(
 );
 
 if (!$result) {
-    die("Query error: " . $conn_direct->error);
+    die("Query error: " . $conn->error);
 }
 
 $statuses = [];
@@ -65,9 +62,9 @@ $sql = "
 
 echo "SQL: $sql\n\n";
 
-$stmt = $conn_direct->prepare($sql);
+$stmt = $conn->prepare($sql);
 if (!$stmt) {
-    die("Prepare error: " . $conn_direct->error);
+    die("Prepare error: " . $conn->error);
 }
 
 $types = str_repeat('s', count($statuses_test));
@@ -91,4 +88,4 @@ while ($row = $queryResult->fetch_assoc()) {
     echo "  - " . $row['kode_pengembalian'] . " (" . $row['status'] . ")\n";
 }
 
-$conn_direct->close();
+// Connection will be closed automatically

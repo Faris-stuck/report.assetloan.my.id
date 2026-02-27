@@ -6,16 +6,7 @@
 
 header('Content-Type: application/json');
 
-$conn = new mysqli("localhost", "root", "", "peminjaman");
-
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => false,
-        'error' => 'Database Connection Failed: ' . $conn->connect_error
-    ]);
-    exit;
-}
+require_once __DIR__ . '/../koneksi.php';
 
 $report = [
     'connection' => [

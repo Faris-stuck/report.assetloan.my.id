@@ -1,12 +1,6 @@
 <?php
-// Verify database has test data
-
-$conn = new mysqli('localhost', 'root', '', 'peminjaman');
-
-if ($conn->connect_error) {
-    echo "❌ Database Connection Failed: " . $conn->connect_error . "\n";
-    exit;
-}
+// Use centralized database configuration
+require_once __DIR__ . '/config/database.php';
 
 echo "✅ Database Connected\n\n";
 

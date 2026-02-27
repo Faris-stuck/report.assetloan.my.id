@@ -7,17 +7,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Simulate database connection
-$localhost = 'localhost';
-$db_user = 'root';
-$db_password = '';
-$db_name = 'peminjaman';
-
-$conn = new mysqli($localhost, $db_user, $db_password, $db_name);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+// Use centralized database configuration
+require_once __DIR__ . '/../koneksi.php';
 
 $results = [];
 

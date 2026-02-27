@@ -4,16 +4,8 @@
  * Access: http://localhost/PROJECT/debug-return.php?peminjaman_id=81&user_id=1
  */
 
-// Buat koneksi MySQL langsung
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db = "peminjaman";
-
-$conn = @mysqli_connect($host, $user, $pass, $db);
-if (!$conn) {
-    die("Database connection failed: " . mysqli_connect_error());
-}
+// Use centralized database configuration
+require_once __DIR__ . '/config/database.php';
 
 $peminjaman_id = $_GET['peminjaman_id'] ?? 81;
 $user_id = $_GET['user_id'] ?? 1;
