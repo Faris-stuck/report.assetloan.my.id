@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Waktu pembuatan: 25 Feb 2026 pada 10.59
+-- Waktu pembuatan: 27 Feb 2026 pada 01.27
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.1.25
 
@@ -47,7 +47,7 @@ CREATE TABLE `barang` (
 --
 
 INSERT INTO `barang` (`id`, `kode_barang`, `nama_barang`, `kategori`, `lokasi`, `stok_total`, `stok_tersedia`, `safety_stock`, `kondisi`, `keterangan`, `created_at`, `stok_rusak`) VALUES
-(144, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 65, 50, 1, 'Baik', '', '2026-02-13 08:09:53', 3),
+(144, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 65, 45, 1, 'Baik', '', '2026-02-13 08:09:53', 3),
 (145, 'ADC-KEYB-01', 'Keyboard Fantech', 'Keyboard', 'ICT - MAIN OFFICE', 11, 6, 5, 'Baik', 'Keperluan Keyboard', '2026-02-13 08:24:52', 0),
 (146, 'ADC-LAP-02', 'Laptop Lenovo Ideapad Slim 3', 'Laptop', 'ICT - MAIN OFFICE', 9, 7, 1, 'Baik', '', '2026-02-13 15:09:29', 1),
 (147, 'ADC-LAP-03', 'Laptop Lenovo IDeapad Slim 5', 'Laptop', 'ICT - MAIN OFFICE', 9, 9, 1, 'Baik', '', '2026-02-13 15:10:01', 0),
@@ -103,7 +103,8 @@ INSERT INTO `detail_peminjaman` (`id`, `peminjaman_id`, `barang_id`, `lokasi`, `
 (121, 88, 144, 'ICT - MAIN OFFICE', 5, '2026-03-04', 'Baik', '2026-02-24 07:47:48'),
 (122, 89, 144, 'ICT - MAIN OFFICE', 5, '2026-02-25', 'Baik', '2026-02-24 07:48:32'),
 (123, 90, 144, 'ICT - MAIN OFFICE', 5, '2026-02-25', 'Baik', '2026-02-24 16:19:36'),
-(126, 93, 144, 'ICT - MAIN OFFICE', 5, '2026-02-27', 'Baik', '2026-02-25 10:32:26');
+(126, 93, 144, 'ICT - MAIN OFFICE', 5, '2026-02-27', 'Baik', '2026-02-25 10:32:26'),
+(127, 94, 144, 'ICT - MAIN OFFICE', 5, NULL, 'Baik', '2026-02-26 07:13:18');
 
 -- --------------------------------------------------------
 
@@ -260,7 +261,7 @@ CREATE TABLE `pembelian_barang` (
 --
 
 INSERT INTO `pembelian_barang` (`id`, `barang_id`, `vendor_id`, `tanggal_pembelian`, `jumlah`, `harga_satuan`, `keterangan`, `created_at`) VALUES
-(41, 144, 15, '2026-02-13', 3, 1.00, '', '2026-02-13 09:21:52'),
+(41, 144, 15, '2026-02-13', 3, 1.25, '0', '2026-02-13 09:21:52'),
 (42, 144, 15, '2026-02-13', 2, 3.00, '', '2026-02-13 09:23:06'),
 (43, 145, 15, '2026-02-13', 2, 0.17, '', '2026-02-13 09:34:13');
 
@@ -309,10 +310,11 @@ INSERT INTO `peminjaman` (`id`, `kode_peminjaman`, `user_id`, `nama_peminjam`, `
 (85, 'PMJ-1771830231', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'HYDRAULIC', '2026-02-23', '2026-02-27', '2026-02-23', 'Dikembalikan', '', '2026-02-23 14:03:51', '2026-02-24', NULL),
 (86, 'PMJ-1771893186', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'ogug', '2026-02-24', '2026-03-05', '2026-02-24', 'Sebagian Dikembalikan', '', '2026-02-24 07:33:06', NULL, NULL),
 (87, 'PMJ-1771893523', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'sjcd', '2026-02-24', '2026-03-31', '2026-02-24', 'Sebagian Dikembalikan', '', '2026-02-24 07:38:43', NULL, NULL),
-(88, 'PMJ-1771894068', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'w', '2026-02-24', '2026-03-04', '2026-02-24', 'Due Tomorrow', '', '2026-02-24 07:47:48', NULL, '2026-02-25'),
+(88, 'PMJ-1771894068', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'w', '2026-02-24', '2026-03-04', '2026-02-24', 'Due Tomorrow', '', '2026-02-24 07:47:48', NULL, '2026-02-27'),
 (89, 'PMJ-1771894112', 1004, 'Muhammad Faris Azmiarif', '1323241224', '', '2026-02-24', '2026-02-25', NULL, 'Ditolak', 'weaef', '2026-02-24 07:48:32', NULL, NULL),
 (90, 'PMJ-1771924776', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'jhgfd', '2026-02-24', '2026-02-25', NULL, 'Ditolak', 'acasc', '2026-02-24 16:19:36', NULL, NULL),
-(93, 'PMJ-1771990346', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'dzeaeesaaffa', '2026-02-25', '2026-02-27', NULL, 'Ditolak', 'tes tolak', '2026-02-25 10:32:26', NULL, NULL);
+(93, 'PMJ-1771990346', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'dzeaeesaaffa', '2026-02-25', '2026-02-27', NULL, 'Ditolak', 'tes tolak', '2026-02-25 10:32:26', NULL, NULL),
+(94, 'PMJ-1772064798', 1004, 'Muhammad Faris Azmiarif', '1323241224', 'qwdfgh', '2026-02-26', '2026-02-28', NULL, 'Menunggu Persetujuan', '', '2026-02-26 07:13:18', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -611,7 +613,8 @@ CREATE TABLE `vendor` (
 --
 
 INSERT INTO `vendor` (`id`, `nama_vendor`, `alamat`, `kontak`, `created_at`) VALUES
-(15, 'PT Kemas Indah Maju Kim ', NULL, NULL, '2026-02-13 08:24:03');
+(15, 'PT Kemas Indah Maju Kim', 'Rorotan Jakarta Pusat', '08578273827364', '2026-02-13 08:24:03'),
+(16, 'TES ADD NEW VENDOR', 'TES ALAMAT', 'TES KONTAK', '2026-02-26 10:54:19');
 
 --
 -- Indexes for dumped tables
@@ -746,7 +749,7 @@ ALTER TABLE `barang`
 -- AUTO_INCREMENT untuk tabel `detail_peminjaman`
 --
 ALTER TABLE `detail_peminjaman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=127;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_pengembalian`
@@ -782,7 +785,7 @@ ALTER TABLE `pembelian_barang`
 -- AUTO_INCREMENT untuk tabel `peminjaman`
 --
 ALTER TABLE `peminjaman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
 
 --
 -- AUTO_INCREMENT untuk tabel `peminjaman_units`
@@ -818,7 +821,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT untuk tabel `vendor`
 --
 ALTER TABLE `vendor`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)
