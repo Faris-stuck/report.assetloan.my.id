@@ -17,6 +17,29 @@ try {
     // Get kategori filter parameter
     $kategoriFilter = $_GET['kategori'] ?? '';
     
+    // Get date range filter parameters for Status Peminjaman
+    $tanggalAwal = $_GET['tanggal_awal'] ?? '';
+    $tanggalAkhir = $_GET['tanggal_akhir'] ?? '';
+    
+    // Build date range WHERE clause if dates are provided
+    $dateWhereClause = '';
+    $dateParams = [];
+    $dateParamTypes = '';
+    
+    if (!empty($tanggalAwal) && !empty($tanggalAkhir)) {
+        $dateWhereClause = " AND tanggal_pinjam BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)";
+        $dateParams = [$tanggalAwal, $tanggalAkhir];
+        $dateParamTypes = 'ss';
+    } elseif (!empty($tanggalAwal)) {
+        $dateWhereClause = " AND tanggal_pinjam >= ?";
+        $dateParams = [$tanggalAwal];
+        $dateParamTypes = 's';
+    } elseif (!empty($tanggalAkhir)) {
+        $dateWhereClause = " AND tanggal_pinjam <= DATE_ADD(?, INTERVAL 1 DAY)";
+        $dateParams = [$tanggalAkhir];
+        $dateParamTypes = 's';
+    }
+    
     $stats = [];
     
     /**
@@ -37,11 +60,13 @@ try {
      */
     
     // 1. Menunggu Persetujuan (pending approval)
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Menunggu Persetujuan'
-    ");
+    $query1 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Menunggu Persetujuan'" . $dateWhereClause;
+    $stmt = $conn->prepare($query1);
     if (!$stmt) {
         throw new Exception("Query 1 Error: " . $conn->error);
+    }
+    if (!empty($dateParams)) {
+        $stmt->bind_param($dateParamTypes, ...$dateParams);
     }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -50,14 +75,13 @@ try {
     $stmt->close();
     
     // 2. Sedang Dipinjam (active loans - includes Due patterns and partial returns)
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as total FROM peminjaman 
-        WHERE status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return') 
-        OR status LIKE 'Due%' 
-        OR status = 'Overdue'
-    ");
+    $query2 = "SELECT COUNT(*) as total FROM peminjaman WHERE (status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return') OR status LIKE 'Due%' OR status = 'Overdue')" . $dateWhereClause;
+    $stmt = $conn->prepare($query2);
     if (!$stmt) {
         throw new Exception("Query 2 Error: " . $conn->error);
+    }
+    if (!empty($dateParams)) {
+        $stmt->bind_param($dateParamTypes, ...$dateParams);
     }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -66,12 +90,13 @@ try {
     $stmt->close();
     
     // 3. Dikembalikan (all time aggregate - includes all returned items regardless of condition)
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as total FROM peminjaman 
-        WHERE status IN ('Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Selesai')
-    ");
+    $query3 = "SELECT COUNT(*) as total FROM peminjaman WHERE status IN ('Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Selesai')" . $dateWhereClause;
+    $stmt = $conn->prepare($query3);
     if (!$stmt) {
         throw new Exception("Query 3 Error: " . $conn->error);
+    }
+    if (!empty($dateParams)) {
+        $stmt->bind_param($dateParamTypes, ...$dateParams);
     }
     $stmt->execute();
     $result = $stmt->get_result();
@@ -80,11 +105,13 @@ try {
     $stmt->close();
     
     // 4. Ditolak
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Ditolak'
-    ");
+    $query4 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Ditolak'" . $dateWhereClause;
+    $stmt = $conn->prepare($query4);
     if (!$stmt) {
         throw new Exception("Query 4 Error: " . $conn->error);
+    }
+    if (!empty($dateParams)) {
+        $stmt->bind_param($dateParamTypes, ...$dateParams);
     }
     $stmt->execute();
     $result = $stmt->get_result();

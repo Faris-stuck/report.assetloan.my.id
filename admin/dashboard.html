@@ -393,7 +393,14 @@
                     <div class="col-xxl-6 col-lg-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header">
-                                <h5 class="card-title">Status Peminjaman</h5>
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title mb-0">Status Peminjaman</h5>
+                                    <!-- Report Range Picker for Status Peminjaman -->
+                                    <div id="reportrangeStatus" class="reportrange-picker d-flex align-items-center"
+                                        style="cursor: pointer; padding: 5px 10px; border: 1px solid #d9d9d9; border-radius: 4px; background: white; min-width: 220px;">
+                                        <span class="reportrange-picker-field"></span>
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div id="statusChart" style="height: 350px;"></div>
@@ -1050,8 +1057,133 @@
             };
             return statusMap[status] || 'light';
         }
-    </script>
 
+        // ===== DATE RANGE FILTER FOR STATUS PEMINJAMAN =====
+
+        // Global variables for Status Peminjaman date range
+        let startDateStatus = null;
+        let endDateStatus = null;
+
+        // Initialize report range picker for Status Peminjaman AFTER page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(initStatusReportRangePicker, 500);
+        });
+
+        function initStatusReportRangePicker() {
+            // Check if required libraries are loaded
+            if (typeof jQuery === 'undefined') {
+                console.error('jQuery not loaded!');
+                return;
+            }
+            if (typeof moment === 'undefined') {
+                console.error('moment.js not loaded!');
+                return;
+            }
+            if (typeof $.fn.daterangepicker === 'undefined') {
+                console.error('daterangepicker not loaded!');
+                return;
+            }
+
+            console.log('Initializing report range picker for Status Peminjaman');
+
+            try {
+                // Default: Last 30 days
+                var start = moment().clone().subtract(29, 'days');
+                var end = moment();
+
+                $('#reportrangeStatus').daterangepicker({
+                    startDate: start,
+                    endDate: end,
+                    locale: {
+                        format: 'YYYY-MM-DD'
+                    },
+                    ranges: {
+                        'Today': [moment(), moment()],
+                        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                        'This Month': [moment().startOf('month'), moment().endOf('month')],
+                        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                        'All Time': [moment('2020-01-01'), moment()]
+                    }
+                });
+
+                console.log('DateRangePicker for Status Peminjaman initialized successfully');
+
+                // Update display dengan tanggal awal
+                var displayText = start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+                document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML = displayText;
+
+                // Set initial date variables
+                startDateStatus = start.format('YYYY-MM-DD');
+                endDateStatus = end.format('YYYY-MM-DD');
+                console.log('Initial date range for Status:', startDateStatus, 'to', endDateStatus);
+
+                // Trigger initial chart load with date range
+                updateStatusChartByDateRange();
+
+                // Event listener untuk apply date range
+                $('#reportrangeStatus').on('apply.daterangepicker', function (ev, picker) {
+                    console.log('✓ Date range applied for Status Peminjaman');
+                    console.log('  New dates:', picker.startDate.format('YYYY-MM-DD'), 'to', picker.endDate.format('YYYY-MM-DD'));
+
+                    startDateStatus = picker.startDate.format('YYYY-MM-DD');
+                    endDateStatus = picker.endDate.format('YYYY-MM-DD');
+
+                    var displayText = picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                    document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML = displayText;
+
+                    updateStatusChartByDateRange();
+                });
+
+            } catch (error) {
+                console.error('Error initializing report range picker for Status Peminjaman:', error);
+            }
+        }
+
+        // Update chart based on selected date range for Status Peminjaman (INDEPENDEN)
+        async function updateStatusChartByDateRange() {
+            try {
+                let url = BASE_URL + '/api/admin/dashboard-stats.php';
+
+                // Add date parameters if provided
+                const params = new URLSearchParams();
+                if (startDateStatus) {
+                    params.append('tanggal_awal', startDateStatus);
+                }
+                if (endDateStatus) {
+                    params.append('tanggal_akhir', endDateStatus);
+                }
+
+                if (params.toString()) {
+                    url += '?' + params.toString();
+                }
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    // Update Status Peminjaman Chart ONLY
+                    const statusData = {
+                        'Menunggu Persetujuan': result.data.menunggu_persetujuan || 0,
+                        'Sedang Dipinjam': result.data.sedang_dipinjam || 0,
+                        'Dikembalikan': result.data.dikembalikan || 0,
+                        'Ditolak': result.data.ditolak || 0
+                    };
+                    renderStatusChart(statusData);
+                    console.log('Status chart updated with date range:', startDateStatus, '-', endDateStatus);
+                } else {
+                    console.error('Error loading data:', result.message);
+                }
+            } catch (error) {
+                console.error('Error updating Status Peminjaman chart by date range:', error);
+            }
+        }
+    </script>
+    <!--! BEGIN: Vendors JS for DateRangePicker !-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="../assets/vendors/js/daterangepicker.min.js"></script>
+    <!--! END: Vendors JS for DateRangePicker !-->
 </body>
 
 </html>
