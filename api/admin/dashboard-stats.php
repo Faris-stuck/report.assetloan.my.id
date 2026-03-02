@@ -19,6 +19,23 @@ try {
     
     $stats = [];
     
+    /**
+     * STATUS PEMINJAMAN CHART
+     * 
+     * Counts transactions (rows in peminjaman table), NOT distinct users
+     * Each peminjaman record = 1 transaction
+     * 
+     * Examples:
+     * - If user A has 2 loans in "Sedang Dipinjam" status = count 2 (not 1)
+     * - If user B has 3 loans in "Ditolak" status = count 3 (not 1)
+     * 
+     * Status mapping to display categories:
+     * - "Menunggu Persetujuan": Only status = 'Menunggu Persetujuan'
+     * - "Sedang Dipinjam": 'Sedang Dipinjam' + 'Sebagian Dikembalikan' + 'Proses Return' + 'Due*' + 'Overdue'
+     * - "Dikembalikan": 'Dikembalikan' + 'Sebagian Rusak' + 'Semua Rusak' + 'Selesai'
+     * - "Ditolak": Only status = 'Ditolak'
+     */
+    
     // 1. Menunggu Persetujuan (pending approval)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Menunggu Persetujuan'
@@ -32,9 +49,12 @@ try {
     $stats['menunggu_persetujuan'] = (int)($row['total'] ?? 0);
     $stmt->close();
     
-    // 2. Sedang Dipinjam (active loans)
+    // 2. Sedang Dipinjam (active loans - includes Due patterns and partial returns)
     $stmt = $conn->prepare("
-        SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
+        SELECT COUNT(*) as total FROM peminjaman 
+        WHERE status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return') 
+        OR status LIKE 'Due%' 
+        OR status = 'Overdue'
     ");
     if (!$stmt) {
         throw new Exception("Query 2 Error: " . $conn->error);
@@ -45,10 +65,10 @@ try {
     $stats['sedang_dipinjam'] = (int)($row['total'] ?? 0);
     $stmt->close();
     
-    // 3. Dikembalikan (all time aggregate, not just today)
+    // 3. Dikembalikan (all time aggregate - includes all returned items regardless of condition)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE status = 'Dikembalikan'
+        WHERE status IN ('Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Selesai')
     ");
     if (!$stmt) {
         throw new Exception("Query 3 Error: " . $conn->error);
