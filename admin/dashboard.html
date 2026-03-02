@@ -651,7 +651,7 @@
                 },
                 colors: colors,
                 series: [{
-                    name: 'Jumlah Peminjaman',
+                    name: '',
                     data: values
                 }],
                 xaxis: {
@@ -676,7 +676,15 @@
                     }
                 },
                 tooltip: {
-                    y: { formatter: val => val + ' peminjaman' }
+                    y: {
+                        formatter: (val, { series, seriesIndex, dataPointIndex, w }) => {
+                            // Get category label from xaxis (Status label)
+                            const categories = w.config.xaxis.categories;
+                            const statusLabel = categories[dataPointIndex];
+                            // Return formatted tooltip: "Jumlah [Status]: [Count]"
+                            return `Jumlah ${statusLabel}: ${val}`;
+                        }
+                    }
                 }
             };
 
