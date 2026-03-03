@@ -154,97 +154,12 @@
                             </a>
                         </div>
                     </div>
-                    <div class="dropdown nxl-h-item">
-                        <a href="javascript:void(0);" data-bs-toggle="dropdown" role="button"
-                            data-bs-auto-close="outside">
-                            <img src="../assets/images/avatar/1.png" alt="user-image"
-                                class="img-fluid user-avtar me-0" />
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end nxl-h-dropdown nxl-user-dropdown">
-                            <div class="dropdown-header">
-                                <div class="d-flex align-items-center">
-                                    <img src="../assets/images/avatar/1.png" alt="user-image"
-                                        class="img-fluid user-avtar" />
-                                    <div>
-                                        <h6 class="text-dark mb-0">Approver <span
-                                                class="badge bg-soft-info text-info ms-1">Approver</span></h6>
-                                        <span class="fs-12 fw-medium text-muted">manager@example.com</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="dropdown">
-                                <a href="javascript:void(0);" class="dropdown-item" data-bs-toggle="dropdown">
-                                    <span class="hstack">
-                                        <i
-                                            class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
-                                        <span>Active</span>
-                                    </span>
-                                    <i class="feather-chevron-right ms-auto me-0"></i>
-                                </a>
-                                <div class="dropdown-menu">
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <span class="hstack">
-                                            <i
-                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-warning rounded-circle me-2"></i>
-                                            <span>Always</span>
-                                        </span>
-                                    </a>
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <span class="hstack">
-                                            <i
-                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-success rounded-circle me-2"></i>
-                                            <span>Active</span>
-                                        </span>
-                                    </a>
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <span class="hstack">
-                                            <i
-                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-danger rounded-circle me-2"></i>
-                                            <span>Bussy</span>
-                                        </span>
-                                    </a>
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <span class="hstack">
-                                            <i
-                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-info rounded-circle me-2"></i>
-                                            <span>Inactive</span>
-                                        </span>
-                                    </a>
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <span class="hstack">
-                                            <i
-                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-dark rounded-circle me-2"></i>
-                                            <span>Disabled</span>
-                                        </span>
-                                    </a>
-                                    <div class="dropdown-divider"></div>
-                                    <a href="javascript:void(0);" class="dropdown-item">
-                                        <span class="hstack">
-                                            <i
-                                                class="wd-10 ht-10 border border-2 border-gray-1 bg-primary rounded-circle me-2"></i>
-                                            <span>Cutomization</span>
-                                        </span>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <a href="javascript:void(0);" class="dropdown-item">
-                                <i class="feather-user"></i>
-                                <span>Profile Details</span>
-                            </a>
-                            <a href="javascript:void(0);" class="dropdown-item">
-                                <i class="feather-activity"></i>
-                                <span>Activity Feed</span>
-                            </a>
-                            <a href="javascript:void(0);" class="dropdown-item">
-                                <i class="feather-bell"></i>
-                                <span>Notifications</span>
-                            </a>
-                            <a href="javascript:void(0);" class="dropdown-item">
-                                <i class="feather-settings"></i>
-                                <span>Account Settings</span>
-                            </a>
-                            <div class="dropdown-divider"></div>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                        <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
+                            <div class="user-name" data-user-name>Loading...</div>
+                            <div class="user-email" data-user-email></div>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end user-profile-dropdown">
                             <a href="javascript:void(0);" data-logout class="dropdown-item">
                                 <i class="feather-log-out"></i>
                                 <span>Logout</span>
@@ -253,7 +168,8 @@
                     </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -298,105 +214,83 @@
             <!-- [ Main Content ] start -->
             <div class="main-content">
                 <div class="row">
-                    <!-- Statistics Cards -->
-                    <div class="col-xxl-3 col-md-6 mb-3">
+                    <!-- Chart: Status Peminjaman Keseluruhan -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
                         <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Pending Approval</p>
-                                        <h4 class="mb-0" id="stat-menunggu">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-warning rounded-2">
-                                        <i class="feather-clock text-warning"></i>
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title mb-0">Status Peminjaman</h5>
+                                    <!-- Report Range Picker and Reset Button for Status -->
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div id="reportrangeStatus"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetStatus">Reset</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-3 col-md-6 mb-3">
-                        <div class="card stretched-card">
                             <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Approved</p>
-                                        <h4 class="mb-0" id="stat-disetujui">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-info rounded-2">
-                                        <i class="feather-check-circle text-info"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-3 col-md-6 mb-3">
-                        <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Rejected</p>
-                                        <h4 class="mb-0" id="stat-ditolak">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-danger rounded-2">
-                                        <i class="feather-x-circle text-danger"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xxl-3 col-md-6 mb-3">
-                        <div class="card stretched-card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-end justify-content-between">
-                                    <div>
-                                        <p class="fs-13 fw-medium text-muted mb-2">Currently Borrowed</p>
-                                        <h4 class="mb-0" id="stat-sedang-dipinjam">0</h4>
-                                    </div>
-                                    <div class="badge bg-light-success rounded-2">
-                                        <i class="feather-check text-success"></i>
-                                    </div>
-                                </div>
+                                <div id="statusChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Recent Peminjaman -->
-                    <div class="col-xl-8 mb-3">
+                    <!-- Chart: Top Barang Dipinjam (Inventory) -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header">
-                                <h5 class="card-title">Latest Borrowing Requests</h5>
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title mb-0">Top Barang Dipinjam</h5>
+                                    <!-- Dropdown Kategori Filter for Top Barang -->
+                                    <div class="dropdown" style="width: 200px;">
+                                        <button
+                                            class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                            type="button" id="topKategoriDropdownBtn" data-bs-toggle="dropdown"
+                                            aria-expanded="false" style="max-width: 200px;">
+                                            <span id="topKategoriSelected">Semua Kategori</span>
+                                        </button>
+                                        <div class="dropdown-menu" id="topKategoriDropdownMenu"
+                                            style="width: 200px; max-height: 300px; overflow-y: auto;">
+                                            <input type="text" class="form-control form-control-sm m-2"
+                                                id="topKategoriSearch" placeholder="Cari kategori..."
+                                                onclick="event.stopPropagation()" style="width: calc(100% - 1rem);">
+                                            <hr class="dropdown-divider m-1">
+                                            <a class="dropdown-item" href="#"
+                                                onclick="selectTopKategori('all'); return false;">
+                                                <small>Semua Kategori</small>
+                                            </a>
+                                            <div id="topKategoriList"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="card-body table-responsive">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Kode</th>
-                                            <th>Borrower</th>
-                                            <th>Status</th>
-                                            <th>Borrow Date</th>
-                                            <th>Return Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="table-recent">
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Loading...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="card-body">
+                                <div id="inventoryChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Top Pending -->
-                    <div class="col-xl-4 mb-3">
+                    <!-- Chart: Top User Peminjam -->
+                    <div class="col-xxl-12 col-lg-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header">
-                                <h5 class="card-title">Top Borrowers (Pending)</h5>
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title mb-0">Top User Peminjam</h5>
+                                    <!-- Report Range Picker and Reset Button for Top User (Independent) -->
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div id="reportrangeTopUser"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetDateTopUser">Reset</button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="card-body">
-                                <div id="top-pending" class="list-group">
-                                    <span class="text-muted">Loading...</span>
-                                </div>
+                                <div id="perUserChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
@@ -431,18 +325,22 @@
     <!--! ================================================================ !-->
     <!--! BEGIN: Vendors JS !-->
     <script src="../assets/vendors/js/vendors.min.js"></script>
-    <!-- vendors.min.js {always must need to be top} -->
     <script src="../assets/vendors/js/daterangepicker.min.js"></script>
     <script src="../assets/vendors/js/apexcharts.min.js"></script>
-    <script src="../assets/vendors/js/circle-progress.min.js"></script>
     <!--! END: Vendors JS !-->
-    <!--! BEGIN: Apps Init  !-->
+    <!--! BEGIN: Apps Init !-->
     <script src="../assets/js/auth/logout.js"></script>
+    <script src="../assets/js/profile-header.js"></script>
     <script src="../assets/js/common-init.min.js"></script>
     <script src="../assets/js/dashboard-init.min.js"></script>
     <!--! END: Apps Init !-->
 
     <script>
+        // Store chart instances globally
+        let statusChartInstance = null;
+        let inventoryChartInstance = null;
+        let perUserChartInstance = null;
+
         // Validasi role - hanya manager yang boleh akses manager dashboard
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         if (!userData.id) {
@@ -457,97 +355,459 @@
             }
         }
 
-        // Load Dashboard Statistics
+        // ===== FILTER STATE VARIABLES (SEPARATE & INDEPENDENT) =====
+
+        // Status Filter (Date Range)
+        let statusStartDate = null;
+        let statusEndDate = null;
+
+        // Top Barang Filter (Kategori)
+        let selectedKategoriTopBarang = 'all';
+
+        // Top User Filter (Date Range - INDEPENDENT)
+        let startDateTopUser = null;
+        let endDateTopUser = null;
+
+        // Load Dashboard Chart Data
         document.addEventListener('DOMContentLoaded', async () => {
+            // Load initial data
+            await loadStatusChart();
+            await loadTopBarangChart();
+            await loadTopUserChart();
+
+            // Setup daterange pickers and filters
+            setTimeout(initStatusDateRangePicker, 500);
+            setTimeout(initDateRangePickerTopUser, 500);
+            setTimeout(loadCategories, 500);
+        });
+
+        // ===== LOAD INITIAL DATA =====
+
+        async function loadStatusChart() {
             try {
-                const response = await fetch(BASE_URL + '/api/approver/dashboard-stats.php');
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (statusStartDate) params.append('tanggal_awal', statusStartDate);
+                if (statusEndDate) params.append('tanggal_akhir', statusEndDate);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
                 const result = await response.json();
 
                 if (result.status && result.data) {
-                    const data = result.data;
+                    const statusData = {
+                        'Menunggu Persetujuan': result.data.menunggu_persetujuan || 0,
+                        'Sedang Dipinjam': result.data.sedang_dipinjam || 0,
+                        'Dikembalikan': result.data.dikembalikan || 0,
+                        'Ditolak': result.data.ditolak || 0
+                    };
+                    renderStatusChart(statusData);
+                }
+            } catch (error) {
+                console.error('Error loading status chart:', error);
+            }
+        }
 
-                    // Update statistics cards
-                    document.getElementById('stat-menunggu').textContent = data.menunggu_persetujuan || 0;
-                    document.getElementById('stat-disetujui').textContent = data.disetujui || 0;
-                    document.getElementById('stat-ditolak').textContent = data.ditolak || 0;
-                    document.getElementById('stat-sedang-dipinjam').textContent = data.sedang_dipinjam || 0;
+        async function loadTopBarangChart() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (selectedKategoriTopBarang && selectedKategoriTopBarang !== 'all') {
+                    params.append('kategori', selectedKategoriTopBarang);
+                }
+                if (params.toString()) url += '?' + params.toString();
 
-                    // Populate recent peminjaman table
-                    const recentList = data.recent_peminjaman || [];
-                    const tableBody = document.getElementById('table-recent');
+                const response = await fetch(url);
+                const result = await response.json();
 
-                    if (recentList.length > 0) {
-                        // API returns pre-formatted date strings and fields named 'kode' and 'nama'
-                        tableBody.innerHTML = recentList.map(item => `
-                            <tr>
-                                <td><code>${item.kode || item.kode_peminjaman || '—'}</code></td>
-                                <td>${item.nama || item.nama_peminjam || '—'}</td>
-                                <td><span class="badge bg-${getStatusBadgeClass(item.status, item.status_en)}">${item.status_en || item.status}</span></td>
-                                <td>${item.tanggal_pinjam || formatDate(item.tanggal_pinjam)}</td>
-                                <td>${item.rencana_kembali || '-'}</td>
-                            </tr>
-                        `).join('');
+                if (result.status && result.data) {
+                    const topBarang = result.data.per_barang || [];
+                    if (topBarang.length > 0) {
+                        renderInventoryChart(topBarang);
                     } else {
-                        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No data found</td></tr>';
-                    }
-
-                    // Populate top pending
-                    const topPending = data.top_pending || [];
-                    const topContainer = document.getElementById('top-pending');
-
-                    if (topPending.length > 0) {
-                        topContainer.innerHTML = topPending.map((item, idx) => `
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h6 class="mb-0">${item.nama || item.nama_peminjam || '—'}</h6>
-                                    <small class="text-muted">${item.kodes || item.nrp || ''}</small>
-                                </div>
-                                <span class="badge bg-warning">${item.jumlah || item.pending_count || 0} Pending</span>
-                            </div>
-                        `).join('');
-                    } else {
-                        topContainer.innerHTML = '<span class="text-muted">No data found</span>';
+                        document.getElementById('inventoryChart').innerHTML =
+                            '<div class="text-center text-muted py-5">Belum ada data peminjaman</div>';
                     }
                 }
             } catch (error) {
-                console.error('Error loading dashboard:', error);
-                document.getElementById('table-recent').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading data</td></tr>';
+                console.error('Error loading top barang chart:', error);
             }
-        });
-
-        // Helper function to get badge class based on status
-        function getStatusBadgeClass(status, statusEn) {
-            const statusMap = {
-                'Menunggu Persetujuan': 'warning',
-                'Menunggu Admin': 'warning',
-                'Disetujui': 'info',
-                'Sedang Dipinjam': 'primary',
-                'Currently Borrowed': 'primary',
-                'Overdue': 'danger',
-                'Due Today': 'danger',
-                'Ditolak': 'danger',
-                'Dikembalikan': 'success',
-                'Returned': 'success',
-                'Sebagian Dikembalikan': 'warning',
-                'Proses Return': 'info',
-                'Sebagian Rusak': 'warning',
-                'Semua Rusak': 'danger',
-                'Partially Damaged': 'warning',
-                'Fully Damaged': 'danger'
-            };
-            const key = statusEn || status;
-            if (key.startsWith('Due In') || key.startsWith('Due in')) return 'warning';
-            return statusMap[key] || 'light';
         }
 
-        // Helper function to format date
-        function formatDate(dateString) {
-            if (!dateString) return '-';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+        async function loadTopUserChart() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (startDateTopUser) params.append('tanggal_awal_user', startDateTopUser);
+                if (endDateTopUser) params.append('tanggal_akhir_user', endDateTopUser);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    const perUser = result.data.per_user || [];
+                    if (perUser.length > 0) {
+                        renderPerUserChart(perUser);
+                    } else {
+                        document.getElementById('perUserChart').innerHTML =
+                            '<div class="text-center text-muted py-5">Belum ada data peminjaman per user</div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading top user chart:', error);
+            }
+        }
+
+        // ===== CHART RENDERING FUNCTIONS =====
+
+        // Chart: Status Peminjaman
+        function renderStatusChart(statusData) {
+            if (statusChartInstance) {
+                statusChartInstance.destroy();
+                statusChartInstance = null;
+            }
+
+            const labels = Object.keys(statusData);
+            const values = Object.values(statusData);
+            const colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: colors,
+                series: [{
+                    name: '',
+                    data: values
+                }],
+                xaxis: {
+                    categories: labels,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Jumlah' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '60%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val, { dataPointIndex, w }) => {
+                            const statusLabel = w.config.xaxis.categories[dataPointIndex];
+                            return 'Jumlah ' + statusLabel + ': ' + val;
+                        }
+                    }
+                }
+            };
+
+            if (window.ApexCharts) {
+                statusChartInstance = new ApexCharts(document.querySelector('#statusChart'), options);
+                statusChartInstance.render();
+            }
+        }
+
+        // Chart: Top Barang Dipinjam
+        function renderInventoryChart(topBarang) {
+            if (inventoryChartInstance) {
+                inventoryChartInstance.destroy();
+                inventoryChartInstance = null;
+            }
+
+            const names = topBarang.map(item => item.nama);
+            const peminjaman = topBarang.map(item => parseInt(item.jumlah_peminjaman) || 0);
+            const stokTersedia = topBarang.map(item => parseInt(item.stok_tersedia) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998', '#66BB6A'],
+                series: [
+                    { name: 'Dipinjam', data: peminjaman },
+                    { name: 'Tersedia', data: stokTersedia }
+                ],
+                xaxis: {
+                    categories: names,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Jumlah' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' unit' }
+                },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'right'
+                }
+            };
+
+            if (window.ApexCharts) {
+                inventoryChartInstance = new ApexCharts(document.querySelector('#inventoryChart'), options);
+                inventoryChartInstance.render();
+            }
+        }
+
+        // Chart: Top User Peminjam
+        function renderPerUserChart(perUser) {
+            if (perUserChartInstance) {
+                perUserChartInstance.destroy();
+                perUserChartInstance = null;
+            }
+
+            const names = perUser.map(item => item.nama);
+            const counts = perUser.map(item => parseInt(item.jumlah) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998'],
+                series: [{
+                    name: 'Peminjaman',
+                    data: counts
+                }],
+                xaxis: {
+                    categories: names,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Jumlah' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' peminjaman' }
+                }
+            };
+
+            if (window.ApexCharts) {
+                perUserChartInstance = new ApexCharts(document.querySelector('#perUserChart'), options);
+                perUserChartInstance.render();
+            }
+        }
+
+        // ===== FILTER 1: STATUS DATE RANGE (INDEPENDENT) =====
+
+        function initStatusDateRangePicker() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+
+            var start = moment().clone().subtract(29, 'days');
+            var end = moment();
+
+            $('#reportrangeStatus').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: { format: 'YYYY-MM-DD' },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'All Time': [moment('2020-01-01'), moment()]
+                }
+            });
+
+            document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML =
+                start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+
+            statusStartDate = start.format('YYYY-MM-DD');
+            statusEndDate = end.format('YYYY-MM-DD');
+
+            $('#reportrangeStatus').on('apply.daterangepicker', function (ev, picker) {
+                statusStartDate = picker.startDate.format('YYYY-MM-DD');
+                statusEndDate = picker.endDate.format('YYYY-MM-DD');
+                document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML =
+                    picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                loadStatusChart();
+            });
+
+            document.getElementById('btnResetStatus').addEventListener('click', function () {
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+                $('#reportrangeStatus').data('daterangepicker').setStartDate(newStart);
+                $('#reportrangeStatus').data('daterangepicker').setEndDate(newEnd);
+                document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML =
+                    newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                statusStartDate = newStart.format('YYYY-MM-DD');
+                statusEndDate = newEnd.format('YYYY-MM-DD');
+                loadStatusChart();
+            });
+        }
+
+        // ===== FILTER 2: TOP BARANG KATEGORI DROPDOWN (INDEPENDENT) =====
+
+        // Load categories into dropdown
+        async function loadCategories() {
+            try {
+                const response = await fetch(BASE_URL + '/api/approver/dashboard-chart-data.php');
+                const result = await response.json();
+
+                if (result.status && result.data && result.data.categories) {
+                    populateTopBarangCategories(result.data.categories);
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        function populateTopBarangCategories(categories) {
+            const kategoriBtnContainer = document.getElementById('topKategoriList');
+            if (!kategoriBtnContainer) return;
+
+            kategoriBtnContainer.innerHTML = '';
+            categories.forEach(kategori => {
+                const link = document.createElement('a');
+                link.className = 'dropdown-item';
+                link.href = '#';
+                link.innerHTML = '<small>' + kategori + '</small>';
+                link.onclick = function (e) {
+                    e.preventDefault();
+                    selectTopKategori(kategori);
+                };
+                kategoriBtnContainer.appendChild(link);
+            });
+
+            setupTopKategoriSearch(categories);
+        }
+
+        // Handler untuk pemilihan kategori Top Barang
+        async function selectTopKategori(kategori) {
+            selectedKategoriTopBarang = kategori || 'all';
+
+            // Update button label
+            const selectedBtn = document.getElementById('topKategoriSelected');
+            selectedBtn.textContent = kategori === 'all' ? 'Semua Kategori' : kategori;
+
+            // Hide dropdown
+            const dropdownBtn = document.getElementById('topKategoriDropdownBtn');
+            const dropdown = bootstrap.Dropdown.getInstance(dropdownBtn);
+            if (dropdown) dropdown.hide();
+
+            // Update HANYA Top Barang Chart (INDEPENDENT)
+            await loadTopBarangChart();
+        }
+
+        function setupTopKategoriSearch(categories) {
+            const searchInput = document.getElementById('topKategoriSearch');
+            const kategoriBtnContainer = document.getElementById('topKategoriList');
+
+            if (!searchInput) return;
+
+            searchInput.addEventListener('input', function () {
+                const searchValue = this.value.toLowerCase();
+                const items = kategoriBtnContainer.querySelectorAll('.dropdown-item');
+
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(searchValue) ? 'block' : 'none';
+                });
+            });
+        }
+
+        // ===== FILTER 3: TOP USER DATE RANGE (INDEPENDENT) =====
+
+        function initDateRangePickerTopUser() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+
+            var start = moment().clone().subtract(29, 'days');
+            var end = moment();
+
+            $('#reportrangeTopUser').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: { format: 'YYYY-MM-DD' },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'All Time': [moment('2020-01-01'), moment()]
+                }
+            });
+
+            document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+
+            startDateTopUser = start.format('YYYY-MM-DD');
+            endDateTopUser = end.format('YYYY-MM-DD');
+
+            $('#reportrangeTopUser').on('apply.daterangepicker', function (ev, picker) {
+                startDateTopUser = picker.startDate.format('YYYY-MM-DD');
+                endDateTopUser = picker.endDate.format('YYYY-MM-DD');
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                loadTopUserChart();
+            });
+
+            document.getElementById('btnResetDateTopUser').addEventListener('click', function () {
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+                $('#reportrangeTopUser').data('daterangepicker').setStartDate(newStart);
+                $('#reportrangeTopUser').data('daterangepicker').setEndDate(newEnd);
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                startDateTopUser = newStart.format('YYYY-MM-DD');
+                endDateTopUser = newEnd.format('YYYY-MM-DD');
+                loadTopUserChart();
+            });
         }
     </script>
-
+    <!--! BEGIN: Vendors JS for DateRangePicker !-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="../assets/vendors/js/daterangepicker.min.js"></script>
+    <!--! END: Vendors JS for DateRangePicker !-->
 </body>
 
 </html>

@@ -423,3 +423,160 @@ body {
         box-shadow: none;
     }
 }
+
+/* ============================= */
+/* REPORTRANGE PICKER STYLING */
+/* ============================= */
+
+/* Style reportrange-picker in card context */
+.reportrange-picker {
+    cursor: pointer;
+    width: max-content;
+}
+
+.reportrange-picker .reportrange-picker-field {
+    color: #283c50;
+    padding: 10px 15px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    border: 1px solid #dcdee4;
+    border-radius: 5px;
+    background: white;
+    display: block;
+}
+
+/* ============================= */
+/* STANDARDIZED PROFILE HEADER */
+/* ============================= */
+
+/* Profile header container */
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Profile info container (name and email) */
+.user-profile-info {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.user-profile-info:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* User name - bold */
+.user-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #283c50;
+    line-height: 1.2;
+    display: inline-block;
+}
+
+/* User email - smaller, lighter */
+.user-email {
+    font-weight: 400;
+    font-size: 11px;
+    color: #6c757d;
+    line-height: 1;
+    display: inline-block;
+    margin-top: 2px;
+}
+
+/* Dropdown menu styling */
+.user-profile-dropdown {
+    min-width: 180px;
+}
+
+.user-profile-dropdown .dropdown-item {
+    padding: 10px 16px;
+    font-size: 13px;
+}
+
+.user-profile-dropdown .dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.user-profile-dropdown .dropdown-item i {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+/* Fullscreen button styling */
+.full-screen-switcher i {
+    color: #000 !important;
+}
+
+
+
+/* ============================= */
+/* FIX HEADER PIC BARANG FINAL */
+/* ============================= */
+
+/* Paksa header tampil normal */
+.nxl-header,
+.header-wrapper,
+.header-right,
+.nxl-h-item {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Fix warna profile */
+.user-profile-header .user-name {
+    color: #000000 !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+}
+
+.user-profile-header .user-email {
+    color: #6c757d !important;
+    font-size: 11px !important;
+}
+
+/* Fix dropdown */
+.user-profile-dropdown {
+    background: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.user-profile-dropdown .dropdown-item {
+    color: #000000 !important;
+}
+
+/* Fix fullscreen icon */
+.full-screen-switcher {
+    display: block !important;
+}
+
+.full-screen-switcher i {
+    color: #000000 !important;
+    font-size: 18px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Fix header text opacity bug */
+.header-right * {
+    opacity: 1 !important;
+}
+
+/* Fix khusus PIC Barang header text putih */
+.pic-barang .user-name,
+.pic-barang .user-email {
+    color: #000000 !important;
+}
+
+/* Fix dropdown double bug */
+.dropdown-menu {
+    z-index: 9999 !important;
+}

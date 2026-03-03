@@ -7,6 +7,12 @@
  * - Works with Bootstrap dropdowns
  */
 
+// Ensure BASE_URL is defined
+if (typeof BASE_URL === 'undefined') {
+    console.warn('⚠️ BASE_URL is not defined. Ensure assets/js/base-url.js is loaded first.');
+    window.BASE_URL = window.location.origin;
+}
+
 // Function to setup logout event listeners
 function setupLogoutListeners() {
     const logoutElements = document.querySelectorAll('[data-logout]');
