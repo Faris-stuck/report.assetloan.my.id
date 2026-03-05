@@ -31,11 +31,11 @@ try {
     $current = $stmt_check->get_result()->fetch_assoc();
     
     if (!$current) {
-        throw new Exception("Peminjaman tidak ditemukan");
+        throw new Exception("Borrowing not found");
     }
     
     if ($current['status'] === 'Dikembalikan') {
-        throw new Exception("Peminjaman sudah dikembalikan, tidak dapat diproses lagi");
+        throw new Exception("Borrowing already returned, cannot be processed again");
     }
     
     $stmt_update = $conn->prepare("UPDATE peminjaman SET status=? WHERE id=?");
@@ -112,13 +112,13 @@ try {
     if ($status === 'Ditolak') {
         try {
             require_once __DIR__ . '/../email/send-rejected.php';
-            sendRejectedEmail($conn, $id, 'Pengembalian');
+            sendRejectedEmail($conn, $id, 'Return');
         } catch (Exception $emailEx) {
             error_log("[EMAIL ERROR] admin/process-return-reject: " . $emailEx->getMessage());
         }
     }
 
-    echo json_encode(["status" => true, "success" => true, "message" => "Status berhasil diupdate"]);    
+    echo json_encode(["status" => true, "success" => true, "message" => "Status updated successfully"]);    
 } catch (Exception $e) {
     $conn->rollback();
     http_response_code(500);

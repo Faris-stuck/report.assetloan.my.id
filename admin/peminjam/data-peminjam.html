@@ -226,7 +226,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -238,10 +238,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -260,11 +260,11 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Data Peminjam</h5>
+                        <h5 class="m-b-10">Borrower Data</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Home</a></li>
-                        <li class="breadcrumb-item">Data Peminjam</li>
+                        <li class="breadcrumb-item">Borrower Data</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -291,18 +291,18 @@
                     <div class="col-lg-12">
                         <div class="card stretch stretch-full">
                             <div class="card-header">
-                                <h6 class="mb-0">Daftar Peminjam</h6>
+                                <h6 class="mb-0">Borrower List</h6>
                             </div>
                             <div class="card-body table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
-                                            <th>Nama</th>
+                                            <th>Name</th>
                                             <th>NRP</th>
                                             <th>Email</th>
                                             <th>Role</th>
-                                            <th>Total Peminjaman</th>
+                                            <th>Total Borrowings</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tablePeminjam">
@@ -367,7 +367,7 @@
                     tbody.innerHTML = '';
 
                     if (!res.status || !res.data || res.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Tidak ada data peminjam</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No borrower data</td></tr>';
                         return;
                     }
 

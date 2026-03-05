@@ -30,7 +30,7 @@ $peminjaman_id = (int)($_GET['peminjaman_id'] ?? 0);
 
 if (!$peminjaman_id) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "peminjaman_id wajib"]);
+    echo json_encode(["status" => false, "message" => "peminjaman_id is required"]);
     exit;
 }
 
@@ -55,7 +55,7 @@ try {
 
     if (!$header) {
         http_response_code(404);
-        echo json_encode(["status" => false, "message" => "Peminjaman tidak ditemukan atau bukan milik user"]);
+        echo json_encode(["status" => false, "message" => "Borrowing not found or does not belong to this user"]);
         exit;
     }
 

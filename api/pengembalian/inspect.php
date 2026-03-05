@@ -44,14 +44,14 @@ $items_json = (string)($_POST['items'] ?? '');
 
 if (!$pengembalian_id || $items_json === '') {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "pengembalian_id dan items wajib"]);
+    echo json_encode(["status" => false, "message" => "pengembalian_id and items are required"]);
     exit;
 }
 
 $items = json_decode($items_json, true);
 if (!is_array($items) || count($items) === 0) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "Format items tidak valid"]);
+    echo json_encode(["status" => false, "message" => "Invalid items format"]);
     exit;
 }
 
@@ -63,11 +63,11 @@ try {
     $h->execute();
     $header = $h->get_result()->fetch_assoc();
     if (!$header) {
-        throw new Exception("Pengembalian tidak ditemukan");
+        throw new Exception("Return not found");
     }
     // If already finished, nothing to do
     if ($header['status'] === 'Selesai') {
-        echo json_encode(["status" => true, "message" => "Pengembalian sudah selesai diproses"]);
+        echo json_encode(["status" => true, "message" => "Return already processed"]);
         $conn->commit();
         exit;
     }
@@ -125,7 +125,7 @@ try {
 
         $upd->bind_param("isidsii", $jumlah_kembali, $kondisi, $jumlah_rusak, $biaya, $catatan, $pengembalian_id, $barang_id);
         if (!$upd->execute()) {
-            throw new Exception("Gagal update detail pengembalian: " . $upd->error);
+            throw new Exception("Failed to update return detail: " . $upd->error);
         }
     }
 
@@ -206,7 +206,7 @@ try {
     }
     
     if (!$upd_peminjaman->execute()) {
-        throw new Exception("Gagal update peminjaman status: " . $upd_peminjaman->error);
+        throw new Exception("Failed to update borrowing status: " . $upd_peminjaman->error);
     }
 
     // Update header pengembalian
@@ -224,7 +224,7 @@ try {
     ");
     $u->bind_param("ssiidi", $catatan_petugas, $role, $checker_user_id, $has_rusak, $total_ganti_rugi, $pengembalian_id);
     if (!$u->execute()) {
-        throw new Exception("Gagal update header pengembalian: " . $u->error);
+        throw new Exception("Failed to update return header: " . $u->error);
     }
 
     $conn->commit();
@@ -241,7 +241,7 @@ try {
 
     echo json_encode([
         "status" => true,
-        "message" => $has_rusak ? "Selesai. Ada barang rusak, user wajib ganti rugi." : "Selesai. Pengembalian dalam kondisi baik.",
+        "message" => $has_rusak ? "Complete. Damaged items found, user must pay compensation." : "Complete. All returned items are in good condition.",
         "has_rusak" => (int)$has_rusak,
         "total_ganti_rugi" => $total_ganti_rugi
     ]);

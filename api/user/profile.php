@@ -17,5 +17,5 @@ $result = $stmt->get_result();
 if ($row = $result->fetch_assoc()) {
     echo json_encode($row);
 } else {
-    echo json_encode(["error" => "User tidak ditemukan"]);
+    echo json_encode(["error" => "User not found"]);
 }

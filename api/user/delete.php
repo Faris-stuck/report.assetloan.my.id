@@ -34,7 +34,7 @@ if ($check_stmt) {
     
     if ($count_row['count'] > 0) {
         http_response_code(400);
-        echo json_encode(["status" => false, "message" => "User tidak dapat dihapus karena memiliki data peminjaman. Silakan hapus data peminjaman terlebih dahulu."]);
+        echo json_encode(["status" => false, "message" => "User cannot be deleted because they have borrowing data. Please delete borrowing data first."]);
         exit;
     }
     $check_stmt->close();
@@ -51,14 +51,14 @@ if (!$stmt) {
 $stmt->bind_param("i", $id);
 if ($stmt->execute()) {
     if ($stmt->affected_rows > 0) {
-        echo json_encode(["status" => true, "message" => "User berhasil dihapus"]);
+        echo json_encode(["status" => true, "message" => "User successfully deleted"]);
     } else {
         http_response_code(404);
-        echo json_encode(["status" => false, "message" => "User tidak ditemukan"]);
+        echo json_encode(["status" => false, "message" => "User not found"]);
     }
 } else {
     http_response_code(500);
-    echo json_encode(["status" => false, "message" => "Gagal menghapus user"]);
+    echo json_encode(["status" => false, "message" => "Failed to delete user"]);
 }
 
 $stmt->close();

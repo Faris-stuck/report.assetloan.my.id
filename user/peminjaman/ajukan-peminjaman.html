@@ -115,7 +115,7 @@
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-at-sign"></i></span>
-                            <span class="nxl-mtext">Riwayat</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">History</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
@@ -125,11 +125,11 @@
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
-                            <span class="nxl-mtext">Profil</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">Profile</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../profil.html">Profil</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../profil.html">Profile</a></li>
                         </ul>
                     </li>
 
@@ -194,7 +194,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -206,10 +206,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -660,7 +660,7 @@
                         renderTable(res.data);
                     } else {
                         console.error("Error loading data:", res.message);
-                        const emptyMsg = '<tr><td colspan="6" class="text-center text-muted">Tidak ada data peminjaman</td></tr>';
+                        const emptyMsg = '<tr><td colspan="6" class="text-center text-muted">No borrowing data</td></tr>';
                         document.getElementById("tableSemua").innerHTML = emptyMsg;
                         document.getElementById("tableMenunggu").innerHTML = emptyMsg;
                         document.getElementById("tableDipinjam").innerHTML = emptyMsg;
@@ -670,7 +670,7 @@
                 })
                 .catch(error => {
                     console.error("Network error:", error);
-                    const errorMsg = '<tr><td colspan="6" class="text-center text-danger">Gagal memuat data</td></tr>';
+                    const errorMsg = '<tr><td colspan="6" class="text-center text-danger">Failed to load data</td></tr>';
                     document.getElementById("tableSemua").innerHTML = errorMsg;
                     document.getElementById("tableMenunggu").innerHTML = errorMsg;
                     document.getElementById("tableDipinjam").innerHTML = errorMsg;
@@ -692,7 +692,7 @@
                     <td class="align-middle">${b.nama_barang}</td>
                     <td class="align-middle text-center"><span class="stok-display" data-barang-id="${b.id}">${b.stok_tersedia}</span></td>
                     <td class="align-middle">
-                        <input class="form-control" type="text" name="lokasi[${b.id}]" placeholder="Lokasi dari database" value="${b.lokasi || ''}" readonly style="min-width: 250px; background-color: #e9ecef;">
+                        <input class="form-control" type="text" name="lokasi[${b.id}]" placeholder="Location from database" value="${b.lokasi || ''}" readonly style="min-width: 250px; background-color: #e9ecef;">
                     </td>
                     <td class="align-middle">
                         <input class="form-control text-center qty-input" type="number" name="barang[${b.id}]" min="0" max="${b.stok_tersedia}" placeholder="0" style="min-width: 80px;" data-stok="${b.stok_tersedia}" data-nama="${b.nama_barang}">
@@ -711,7 +711,7 @@
 
                             if (qty > maxStok) {
                                 this.value = maxStok;
-                                alert(`Jumlah pinjam untuk '${namaBarang}' tidak boleh melebihi stok tersedia (${maxStok})`);
+                                alert(`Borrow quantity for '${namaBarang}' cannot exceed available stock (${maxStok})`);
                             }
                             if (qty < 0) {
                                 this.value = 0;
@@ -951,7 +951,7 @@
                     // Jika tanggal kembali sudah diisi dan kurang dari tanggal pinjam, reset
                     if (kembaliInput.value && kembaliInput.value < pinjamDate) {
                         kembaliInput.value = '';
-                        alert('Tanggal pengembalian tidak boleh kurang dari tanggal peminjaman. Silakan pilih ulang.');
+                        alert('Return date cannot be earlier than loan date. Please reselect.');
                     }
                 } else {
                     kembaliInput.setAttribute('min', today);
@@ -962,7 +962,7 @@
             kembaliInput.addEventListener('change', function () {
                 const pinjamDate = pinjamInput.value;
                 if (pinjamDate && this.value < pinjamDate) {
-                    alert('Tanggal pengembalian tidak boleh kurang dari tanggal peminjaman.');
+                    alert('Return date cannot be earlier than loan date.');
                     this.value = '';
                 }
             });
@@ -978,12 +978,12 @@
             const kembaliDate = document.querySelector('#requestBorrowingModal input[name="rencana_kembali"]').value;
 
             if (pinjamDate < today) {
-                alert("Tanggal peminjaman tidak boleh kurang dari hari ini (" + today + ")");
+                alert("Loan date cannot be earlier than today (" + today + ")");;
                 return;
             }
 
             if (kembaliDate < pinjamDate) {
-                alert("Tanggal pengembalian tidak boleh kurang dari tanggal peminjaman");
+                alert("Return date cannot be earlier than loan date");
                 return;
             }
 
@@ -1000,13 +1000,13 @@
                 if (qty > max) {
                     const row = input.closest('tr');
                     const namaBarang = row ? row.querySelector('td').textContent : 'Unknown';
-                    alert("Jumlah pinjam untuk '" + namaBarang + "' (" + qty + ") melebihi stok tersedia (" + max + ")");
+                    alert("Borrow quantity for '" + namaBarang + "' (" + qty + ") exceeds available stock (" + max + ")");
                     hasError = true;
                 }
 
                 // Validasi jumlah tidak negatif
                 if (qty < 0) {
-                    alert("Jumlah pinjam tidak boleh negatif");
+                    alert("Borrow quantity cannot be negative");
                     hasError = true;
                 }
             });
@@ -1100,7 +1100,7 @@
         // Helper function untuk render baris tabel
         function renderTableRows(data) {
             if (data.length === 0) {
-                return '<tr><td colspan="6" class="text-center">Tidak ada data</td></tr>';
+                return '<tr><td colspan="6" class="text-center">No data</td></tr>';
             }
 
             return data.map((item, index) => {
@@ -1120,6 +1120,7 @@
                 else if (item.status_en === "Return In Progress") badgeClass = 'bg-info text-dark';
                 else if (item.status === "Sebagian Rusak") badgeClass = "bg-danger";
                 else if (item.status === "Semua Rusak") badgeClass = "bg-danger";
+                else if (item.status === "Partial Approved") badgeClass = "bg-info";
 
                 const displayStatus = item.status_en || item.status;
                 const borrowerName = item.nama_peminjam || item.nama || '-';
@@ -1149,27 +1150,29 @@
         function getDisplayStatus(dbStatus, statusEn) {
             if (statusEn) {
                 const en_lower = statusEn.toLowerCase();
-                if (en_lower.includes('return in progress')) return 'Proses Return';
+                if (en_lower.includes('return in progress')) return 'Return In Progress';
                 if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
             }
             switch (dbStatus) {
                 case 'Menunggu Persetujuan':
                 case 'Disetujui':
-                    return 'Menunggu Persetujuan';
+                    return 'Pending Approval';
+                case 'Partial Approved':
+                    return 'Partial Approved';
                 case 'Sebagian Dikembalikan':
-                    return 'Sebagian Dikembalikan';
+                    return 'Partially Returned';
                 case 'Sebagian Rusak':
-                    return 'Sebagian Rusak';
+                    return 'Partially Damaged';
                 case 'Semua Rusak':
                     return 'Fully Damaged';
                 case 'Sedang Dipinjam':
-                    return 'Sedang Dipinjam';
+                    return 'Currently Borrowed';
                 case 'Dikembalikan':
-                    return 'Dikembalikan';
+                    return 'Returned';
                 case 'Ditolak':
-                    return 'Ditolak';
+                    return 'Rejected';
                 case 'Proses Return':
-                    return 'Proses Return';
+                    return 'Return In Progress';
                 default:
                     return dbStatus;
             }
@@ -1180,22 +1183,24 @@
             if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
             if (displayStatus.startsWith('Due In') || displayStatus.startsWith('Due in')) return 'badge bg-warning';
             switch (displayStatus) {
-                case 'Menunggu Persetujuan':
+                case 'Pending Approval':
                     return 'badge bg-warning';
                 case 'Disetujui':
                     return 'badge bg-info';
-                case 'Sedang Dipinjam':
+                case 'Currently Borrowed':
                     return 'badge bg-primary';
-                case 'Sebagian Dikembalikan':
+                case 'Partially Returned':
                     return 'badge bg-warning';
-                case 'Proses Return':
+                case 'Return In Progress':
                 case 'Return In Progress':
                     return 'badge bg-info';
-                case 'Dikembalikan':
+                case 'Returned':
                     return 'badge bg-success';
-                case 'Ditolak':
+                case 'Rejected':
                     return 'badge bg-danger';
-                case 'Sebagian Rusak':
+                case 'Partial Approved':
+                    return 'badge bg-info';
+                case 'Partially Damaged':
                 case 'Fully Damaged':
                 case 'Semua Rusak':
                     return 'badge bg-danger';
@@ -1232,6 +1237,7 @@
                             if (u.return_status === 'Dikembalikan') badgeClass = 'bg-success';
                             else if (u.return_status === 'Rusak') badgeClass = 'bg-warning text-dark';
                             else if (u.return_status === 'Ditolak') badgeClass = 'bg-danger';
+                            else if (u.return_status === 'Menunggu Persetujuan') badgeClass = 'bg-warning text-dark';
                             else if (u.return_status === 'Overdue' || u.return_status === 'Due Today') badgeClass = 'bg-danger';
                             else if (u.return_status && u.return_status.startsWith('Due')) badgeClass = 'bg-warning text-dark';
 
@@ -1247,10 +1253,14 @@
                                 <td class="text-center">${escapeHtml(u.expected_return)}</td>
                             </tr>`;
                         }).join('');
-                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">Tidak ada barang</td></tr>';
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
-                        // Notes section (for rejected)
-                        if (p.status === 'Ditolak' && p.catatan) {
+                        // Notes / Rejection reason section
+                        const reason = p.rejection_reason || p.catatan || '';
+                        if ((p.status === 'Ditolak' || p.status === 'Partial Approved') && reason) {
+                            document.getElementById('detailCatatanDiv').style.display = 'block';
+                            document.getElementById('detailCatatan').textContent = escapeHtml(reason);
+                        } else if (p.status === 'Ditolak' && p.catatan) {
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
                         } else {
@@ -1259,12 +1269,12 @@
 
                         new bootstrap.Modal(document.getElementById('modalDetail')).show();
                     } else {
-                        alert('Gagal memuat detail peminjaman');
+                        alert('Failed to load borrowing details');
                     }
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert('Error memuat detail');
+                    alert('Error loading details');
                 });
         }
     </script>

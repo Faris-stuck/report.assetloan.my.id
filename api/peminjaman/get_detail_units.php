@@ -41,7 +41,7 @@ $session_role = SessionValidator::getRole();
 
 if (!$peminjaman_id) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "peminjaman_id wajib"]);
+    echo json_encode(["status" => false, "message" => "peminjaman_id is required"]);
     exit;
 }
 
@@ -51,7 +51,9 @@ try {
     // ================================================================
     $stmt = $conn->prepare("
         SELECT p.id, p.kode_peminjaman, p.user_id, p.tanggal_pinjam, p.rencana_kembali,
-               p.status, p.catatan, u.nama AS nama_peminjam, u.nrp
+               p.status, p.catatan, p.rejection_reason AS peminjaman_rejection_reason,
+               p.lokasi_umum,
+               u.nama AS nama_peminjam, u.nrp
         FROM peminjaman p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = ?
@@ -63,14 +65,14 @@ try {
 
     if (!$peminjaman) {
         http_response_code(404);
-        echo json_encode(["status" => false, "message" => "Peminjaman tidak ditemukan"]);
+        echo json_encode(["status" => false, "message" => "Borrowing not found"]);
         exit;
     }
 
     // Security: if role is user, ensure the peminjaman belongs to the session user.
     if ($session_role === 'user' && (int)$peminjaman['user_id'] !== $session_user_id) {
         http_response_code(403);
-        echo json_encode(["status" => false, "message" => "Akses ditolak untuk peminjaman ini"]);
+        echo json_encode(["status" => false, "message" => "Access denied for this borrowing"]);
         exit;
     }
 
@@ -89,6 +91,8 @@ try {
             pu.expected_return,
             pu.kondisi_kembali,
             pu.tanggal_kembali,
+            pu.approval_status,
+            pu.rejection_reason AS unit_rejection_reason,
             b.kode_barang,
             b.nama_barang,
             dp.kondisi_pinjam
@@ -101,6 +105,55 @@ try {
     $stmt->bind_param("i", $peminjaman_id);
     $stmt->execute();
     $unit_rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    // ================================================================
+    // FALLBACK: For Pending Approval - if no units exist yet, get from detail_peminjaman
+    // ================================================================
+    if (empty($unit_rows) && $peminjaman['status'] === 'Menunggu Persetujuan') {
+        $stmt = $conn->prepare("
+            SELECT 
+                dp.id AS detail_peminjaman_id,
+                dp.barang_id,
+                dp.jumlah,
+                dp.kondisi_pinjam,
+                b.kode_barang,
+                b.nama_barang,
+                p.rencana_kembali
+            FROM detail_peminjaman dp
+            JOIN barang b ON b.id = dp.barang_id
+            JOIN peminjaman p ON p.id = dp.peminjaman_id
+            WHERE dp.peminjaman_id = ?
+            ORDER BY dp.id
+        ");
+        $stmt->bind_param("i", $peminjaman_id);
+        $stmt->execute();
+        $detail_rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Convert detail_peminjaman rows to unit-like rows for pending approval display
+        $unit_counter = 1;
+        foreach ($detail_rows as $detail) {
+            $qty = (int)$detail['jumlah'];
+            // Generate N rows (one per unit in requested quantity)
+            for ($i = 1; $i <= $qty; $i++) {
+                $unit_rows[] = [
+                    'unit_id' => null,  // No unit_id yet, still pending
+                    'detail_peminjaman_id' => (int)$detail['detail_peminjaman_id'],
+                    'barang_id' => (int)$detail['barang_id'],
+                    'unit_number' => $i,
+                    'unit_display' => 'Unit ' . $i . ' of ' . $qty,
+                    'return_status' => 'Menunggu Persetujuan',  // Show pending approval status
+                    'expected_return' => $detail['rencana_kembali'] ? date('d/m/Y', strtotime($detail['rencana_kembali'])) : '-',
+                    'kondisi_kembali' => null,
+                    'tanggal_kembali' => null,
+                    'kode_barang' => $detail['kode_barang'],
+                    'nama_barang' => $detail['nama_barang'],
+                    'kondisi_pinjam' => $detail['kondisi_pinjam'],
+                    'approval_status' => null,
+                    'unit_rejection_reason' => null
+                ];
+            }
+        }
+    }
 
     // ================================================================
     // 3. Build units array from database rows (NO manual calculation)
@@ -125,19 +178,33 @@ try {
         // Read return_status directly from database
         $db_return_status = $row['return_status'];
         $expected_return_raw = $row['expected_return'];
-        $is_returned = in_array($db_return_status, ['Dikembalikan', 'Rusak']);
+        $approval_status = $row['approval_status'] ?? null;
+        
+        // For Pending Approval, treat as not returned (hasn't been approved yet)
+        // For rejected units (approval_status = Ditolak), treat as final
+        // For others, check if item was actually returned
+        $is_rejected_unit = ($approval_status === 'Ditolak');
+        $is_returned = in_array($db_return_status, ['Dikembalikan', 'Rusak']) && $db_return_status !== 'Menunggu Persetujuan';
 
-        if ($is_returned) {
+        if ($is_returned || $is_rejected_unit) {
             $total_returned++;
         }
 
         // Determine display return_status:
+        // - For Menunggu Persetujuan → show as-is (pending approval)
         // - For final statuses (Dikembalikan, Rusak, Ditolak, Proses Return, etc.) → use DB value directly
         // - For active/unreturned units (Dipinjam, Belum Dikembalikan) → compute due-proximity
         //   using per-unit expected_return FROM DATABASE (not global rencana_kembali)
         $display_return_status = $db_return_status;
 
-        if ($master_is_final) {
+        // If unit was rejected during partial approval, show as Ditolak regardless
+        if ($is_rejected_unit) {
+            $display_return_status = 'Ditolak';
+        }
+        // If status is Menunggu Persetujuan, keep it as-is (don't compute due-proximity)
+        elseif ($db_return_status === 'Menunggu Persetujuan') {
+            $display_return_status = 'Menunggu Persetujuan';
+        } elseif ($master_is_final) {
             // Master peminjaman is Ditolak/Dikembalikan → all units inherit master status
             if (!$is_returned) {
                 $display_return_status = $master_status;
@@ -182,11 +249,12 @@ try {
             'unit_display'         => $row['unit_display'],      // FROM DATABASE
             'qty'                  => 1,
             'return_status'        => $display_return_status,     // FROM DATABASE + due proximity
+            'approval_status'      => $approval_status,           // FROM DATABASE (Disetujui/Ditolak/null)
             'expected_return'      => $expected_return_raw ? date('d/m/Y', strtotime($expected_return_raw)) : '-', // FROM DATABASE
             'kondisi_pinjam'       => $row['kondisi_pinjam'],
             'kondisi_kembali'      => $row['kondisi_kembali'],    // FROM DATABASE
             'tanggal_kembali'      => $row['tanggal_kembali'],    // FROM DATABASE
-            'sudah_dikembalikan'   => $is_returned
+            'sudah_dikembalikan'   => $is_returned || $is_rejected_unit
         ];
     }
 
@@ -196,6 +264,29 @@ try {
     $display_status = $master_status;
     if ($master_is_final) {
         // Ditolak or Dikembalikan: keep as-is
+    } elseif ($master_status === 'Partial Approved') {
+        // For Partial Approved, keep that status unless there are due-proximity concerns
+        // Check for overdue among approved (non-rejected) units
+        $has_overdue_pa = false;
+        $min_due_days_pa = PHP_INT_MAX;
+        foreach ($units as $unit) {
+            if ($unit['approval_status'] !== 'Ditolak' && !$unit['sudah_dikembalikan']) {
+                $rs = $unit['return_status'];
+                if ($rs === 'Overdue') $has_overdue_pa = true;
+                elseif ($rs === 'Due Today' && 0 < $min_due_days_pa) $min_due_days_pa = 0;
+                elseif ($rs === 'Due In 1 Day' && 1 < $min_due_days_pa) $min_due_days_pa = 1;
+                elseif (preg_match('/^Due In (\d+) Days$/', $rs, $m) && (int)$m[1] < $min_due_days_pa) $min_due_days_pa = (int)$m[1];
+            }
+        }
+        if ($has_overdue_pa) {
+            $display_status = 'Overdue';
+        } elseif ($min_due_days_pa !== PHP_INT_MAX) {
+            if ($min_due_days_pa === 0) $display_status = 'Due Today';
+            elseif ($min_due_days_pa === 1) $display_status = 'Due In 1 Day';
+            else $display_status = 'Due In ' . $min_due_days_pa . ' Days';
+        } else {
+            $display_status = 'Partial Approved';
+        }
     } elseif ($total_returned >= $total_items && $total_items > 0) {
         $display_status = 'Dikembalikan';
     } else {
@@ -251,6 +342,8 @@ try {
             "expected_return_nearest" => $earliest_return ? date('d/m/Y', $earliest_return) : ($peminjaman['rencana_kembali'] ? date('d/m/Y', strtotime($peminjaman['rencana_kembali'])) : '-'),
             "status" => $display_status,
             "catatan" => $peminjaman['catatan'],
+            "rejection_reason" => $peminjaman['peminjaman_rejection_reason'] ?? null,
+            "lokasi_umum" => $peminjaman['lokasi_umum'] ?? null,
             "units" => $units,
             "total_items" => $total_items,
             "total_returned" => min($total_returned, $total_items)

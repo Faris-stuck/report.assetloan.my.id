@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- * EMAIL: Permintaan Perpanjangan Peminjaman
+ * EMAIL: Loan Extension Request
  * ============================================================
  * 
- * Email dikirim ke SEMUA pihak terkait:
- *   - USER (pemilik peminjaman)
- *   - ADMIN (semua admin)
- *   - PIC_BARANG (semua PIC)
- *   - PELAKU AKSI (dari SESSION)
+ * Email sent to ALL related parties:
+ *   - USER (loan owner)
+ *   - ADMIN (all admins)
+ *   - PIC_BARANG (all PICs)
+ *   - ACTOR (from SESSION)
  * 
  * File   : /PROJECT/api/email/send-extend-request.php
  * 
@@ -18,7 +18,7 @@
 require_once __DIR__ . '/email-functions.php';
 
 /**
- * Helper: Ambil data extend + peminjaman + user dari database
+ * Helper: Get extend + loan + user data from database
  */
 function getExtendWithPeminjamanAndUser($conn, $extendId) {
     $stmt = $conn->prepare("
@@ -41,7 +41,7 @@ function getExtendWithPeminjamanAndUser($conn, $extendId) {
     ");
 
     if (!$stmt) {
-        error_log("[EMAIL ERROR] getExtendWithPeminjamanAndUser prepare gagal: " . $conn->error);
+        error_log("[EMAIL ERROR] getExtendWithPeminjamanAndUser prepare failed: " . $conn->error);
         return null;
     }
 
@@ -57,18 +57,18 @@ function getExtendWithPeminjamanAndUser($conn, $extendId) {
 }
 
 /**
- * Kirim email notifikasi permintaan perpanjangan ke SEMUA pihak terkait
+ * Send extension request notification email to ALL related parties
  *
- * @param mysqli $conn      Koneksi database
- * @param int    $extendId  ID extend
- * @return bool             true jika berhasil, false jika gagal
+ * @param mysqli $conn      Database connection
+ * @param int    $extendId  Extension ID
+ * @return bool             true if successful, false if failed
  */
 function sendExtendRequestEmail($conn, $extendId) {
-    // Ambil data extend + peminjaman + user dari DATABASE
+    // Get extend + loan + user data from DATABASE
     $data = getExtendWithPeminjamanAndUser($conn, $extendId);
 
     if (!$data) {
-        error_log("[EMAIL] send-extend-request: Data extend #{$extendId} tidak ditemukan.");
+        error_log("[EMAIL] send-extend-request: Extend data #{$extendId} not found.");
         return false;
     }
 
@@ -79,95 +79,95 @@ function sendExtendRequestEmail($conn, $extendId) {
     $tglPerpanjang = date('d F Y', strtotime($data['tanggal_perpanjang']));
 
     // ============================================================
-    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // COLLECT ALL RECIPIENTS IN ARRAY
     // ============================================================
     $recipients = [];
 
-    // 1. USER (pemilik peminjaman)
+    // 1. USER (loan owner)
     $recipients[] = ['email' => $emailUser, 'nama' => $namaUser];
 
-    // 2. SEMUA ADMIN
+    // 2. ALL ADMINS
     $admins = getAdminEmails($conn);
     foreach ($admins as $admin) {
         $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
     }
 
-    // 3. SEMUA PIC_BARANG
+    // 3. ALL PIC_BARANG
     $pics = getPicBarangEmails($conn);
     foreach ($pics as $pic) {
         $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
     }
 
-    // 4. PELAKU AKSI (dari SESSION)
+    // 4. ACTOR (from SESSION)
     $actor = getActorEmail($conn);
     if ($actor) {
         $recipients[] = ['email' => $actor['email'], 'nama' => $actor['nama']];
     }
 
-    // DEDUPLIKASI
+    // DEDUPLICATION
     $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
 
     if (empty($recipients)) {
-        error_log("[EMAIL] send-extend-request: Tidak ada penerima valid untuk extend #{$extendId}");
+        error_log("[EMAIL] send-extend-request: No valid recipients for extend #{$extendId}");
         return false;
     }
 
-    $subject = 'Permintaan Perpanjangan - ' . $kode;
+    $subject = 'Extension Request - ' . $kode;
 
-    // Buat body email
+    // Build email body
     $bodyHtml = '
-        <p>Halo,</p>
+        <p>Hello,</p>
         
         <div class="warning-box">
-            <strong>⏱️ Permintaan Perpanjangan Baru</strong><br>
-            <strong>' . htmlspecialchars($namaUser) . '</strong> telah mengajukan permintaan perpanjangan peminjaman.
+            <strong>⏱️ New Extension Request</strong><br>
+            <strong>' . htmlspecialchars($namaUser) . '</strong> has submitted a loan extension request.
         </div>
         
-        <p>Detail permintaan perpanjangan:</p>
+        <p>Extension request details:</p>
         
         <table class="info-table">
             <tr>
-                <td>Kode Peminjaman</td>
+                <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
             <tr>
-                <td>Nama Peminjam</td>
+                <td>Borrower Name</td>
                 <td>' . htmlspecialchars($namaUser) . '</td>
             </tr>
             <tr>
-                <td>Email Peminjam</td>
+                <td>Borrower Email</td>
                 <td>' . htmlspecialchars($emailUser) . '</td>
             </tr>
             <tr>
-                <td>Tanggal Pinjam</td>
+                <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>
             </tr>
             <tr>
-                <td>Perpanjangan Sampai</td>
+                <td>Extended Until</td>
                 <td><strong>' . htmlspecialchars($tglPerpanjang) . '</strong></td>
             </tr>
         </table>
         
-        <p>Mohon segera melakukan review dan persetujuan permintaan perpanjangan ini.</p>
+        <p>Please review and approve this extension request promptly.</p>
         
-        <p>Terima kasih.</p>';
+        <p>Thank you.</p>';
 
-    $fullHtml = buildEmailTemplate('⏱️ Permintaan Perpanjangan Baru', $bodyHtml);
+    $fullHtml = buildEmailTemplate('⏱️ New Extension Request', $bodyHtml);
 
     // ============================================================
-    // KIRIM EMAIL MENGGUNAKAN LOOP KE SEMUA PENERIMA
+    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
     // ============================================================
     $totalSent = 0;
     foreach ($recipients as $r) {
         if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
-            error_log("[EMAIL] send-extend-request: EMAIL TERKIRIM KE: " . $r['email']);
+            error_log("[EMAIL] send-extend-request: EMAIL SENT TO: " . $r['email']);
             $totalSent++;
         } else {
-            error_log("[EMAIL] send-extend-request: EMAIL GAGAL KE: " . $r['email']);
+            error_log("[EMAIL] send-extend-request: EMAIL FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-extend-request: Total terkirim {$totalSent}/" . count($recipients) . " untuk extend #{$extendId}");
+    error_log("[EMAIL] send-extend-request: Total sent {$totalSent}/" . count($recipients) . " for extend #{$extendId}");
     return $totalSent > 0;
 }
 
@@ -188,7 +188,7 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-extend-request.php') {
         exit;
     }
 
-    echo "Mengirim email permintaan perpanjangan untuk extend #{$id} ke SEMUA pihak...\n";
+    echo "Sending extension request email for extend #{$id} to ALL parties...\n";
     $result = sendExtendRequestEmail($conn, (int)$id);
-    echo $result ? "✅ Email berhasil dikirim ke semua pihak!\n" : "❌ Email gagal dikirim.\n";
+    echo $result ? "✅ Email successfully sent to all parties!\n" : "❌ Email failed to send.\n";
 }

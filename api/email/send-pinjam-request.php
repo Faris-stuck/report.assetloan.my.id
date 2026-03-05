@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- * EMAIL: Permintaan Peminjaman (Status → Menunggu Persetujuan)
+ * EMAIL: Loan Request (Status → Pending Approval)
  * ============================================================
  * 
- * Email dikirim ke SEMUA pihak terkait:
- *   - USER (pemilik peminjaman, pelaku aksi)
- *   - ADMIN (semua admin)
- *   - PIC_BARANG (semua PIC)
- *   - PELAKU AKSI (dari SESSION)
+ * Email sent to ALL related parties:
+ *   - USER (loan owner, actor)
+ *   - ADMIN (all admins)
+ *   - PIC_BARANG (all PICs)
+ *   - ACTOR (from SESSION)
  * 
  * File   : /PROJECT/api/email/send-pinjam-request.php
  * 
@@ -18,18 +18,18 @@
 require_once __DIR__ . '/email-functions.php';
 
 /**
- * Kirim email notifikasi peminjaman baru ke SEMUA pihak terkait
+ * Send new loan request notification email to ALL related parties
  *
- * @param mysqli $conn            Koneksi database
- * @param int    $peminjamanId    ID peminjaman
- * @return bool                   true jika berhasil, false jika gagal
+ * @param mysqli $conn            Database connection
+ * @param int    $peminjamanId    Loan ID
+ * @return bool                   true if successful, false if failed
  */
 function sendPinjamRequestEmail($conn, $peminjamanId) {
-    // Ambil data peminjaman + user dari DATABASE
+    // Get loan + user data from DATABASE
     $data = getPeminjamanWithUser($conn, $peminjamanId);
 
     if (!$data) {
-        error_log("[EMAIL] send-pinjam-request: Data peminjaman #{$peminjamanId} tidak ditemukan.");
+        error_log("[EMAIL] send-pinjam-request: Loan data #{$peminjamanId} not found.");
         return false;
     }
 
@@ -40,99 +40,99 @@ function sendPinjamRequestEmail($conn, $peminjamanId) {
     $tglKembali = date('d F Y', strtotime($data['rencana_kembali']));
 
     // ============================================================
-    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // COLLECT ALL RECIPIENTS IN ARRAY
     // ============================================================
     $recipients = [];
 
-    // 1. USER (pemilik peminjaman)
+    // 1. USER (loan owner)
     $recipients[] = ['email' => $emailUser, 'nama' => $namaUser];
 
-    // 2. SEMUA ADMIN
+    // 2. ALL ADMINS
     $admins = getAdminEmails($conn);
     foreach ($admins as $admin) {
         $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
     }
 
-    // 3. SEMUA PIC_BARANG
+    // 3. ALL PIC_BARANG
     $pics = getPicBarangEmails($conn);
     foreach ($pics as $pic) {
         $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
     }
 
-    // 4. PELAKU AKSI (dari SESSION)
+    // 4. ACTOR (from SESSION)
     $actor = getActorEmail($conn);
     if ($actor) {
         $recipients[] = ['email' => $actor['email'], 'nama' => $actor['nama']];
     }
 
-    // DEDUPLIKASI
+    // DEDUPLICATION
     $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
 
     if (empty($recipients)) {
-        error_log("[EMAIL] send-pinjam-request: Tidak ada penerima valid untuk peminjaman #{$peminjamanId}");
+        error_log("[EMAIL] send-pinjam-request: No valid recipients for loan #{$peminjamanId}");
         return false;
     }
 
-    $subject = 'Permintaan Peminjaman Baru - ' . $kode;
+    $subject = 'New Loan Request - ' . $kode;
 
-    // Buat body email
+    // Build email body
     $bodyHtml = '
-        <p>Halo,</p>
+        <p>Hello,</p>
         
         <div class="info-box">
-            <strong>📋 Permintaan Peminjaman Baru</strong><br>
-            <strong>' . htmlspecialchars($namaUser) . '</strong> telah mengajukan permintaan peminjaman barang.
+            <strong>📋 New Loan Request</strong><br>
+            <strong>' . htmlspecialchars($namaUser) . '</strong> has submitted a new item loan request.
         </div>
         
-        <p>Detail permintaan peminjaman:</p>
+        <p>Loan request details:</p>
         
         <table class="info-table">
             <tr>
-                <td>Kode Peminjaman</td>
+                <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
             <tr>
-                <td>Nama Peminjam</td>
+                <td>Borrower Name</td>
                 <td>' . htmlspecialchars($namaUser) . '</td>
             </tr>
             <tr>
-                <td>Email Peminjam</td>
+                <td>Borrower Email</td>
                 <td>' . htmlspecialchars($emailUser) . '</td>
             </tr>
             <tr>
-                <td>Tanggal Pinjam</td>
+                <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>
             </tr>
             <tr>
-                <td>Rencana Kembali</td>
+                <td>Planned Return Date</td>
                 <td>' . htmlspecialchars($tglKembali) . '</td>
             </tr>
             <tr>
                 <td>Status</td>
-                <td><strong>Menunggu Persetujuan</strong></td>
+                <td><strong>Pending Approval</strong></td>
             </tr>
         </table>
         
-        <p>Mohon segera melakukan review dan persetujuan permintaan peminjaman ini.</p>
+        <p>Please review and approve this loan request promptly.</p>
         
-        <p>Terima kasih.</p>';
+        <p>Thank you.</p>';
 
-    $fullHtml = buildEmailTemplate('📋 Permintaan Peminjaman Baru', $bodyHtml);
+    $fullHtml = buildEmailTemplate('📋 New Loan Request', $bodyHtml);
 
     // ============================================================
-    // KIRIM EMAIL MENGGUNAKAN LOOP KE SEMUA PENERIMA
+    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
     // ============================================================
     $totalSent = 0;
     foreach ($recipients as $r) {
         if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
-            error_log("[EMAIL] send-pinjam-request: EMAIL TERKIRIM KE: " . $r['email']);
+            error_log("[EMAIL] send-pinjam-request: EMAIL SENT TO: " . $r['email']);
             $totalSent++;
         } else {
-            error_log("[EMAIL] send-pinjam-request: EMAIL GAGAL KE: " . $r['email']);
+            error_log("[EMAIL] send-pinjam-request: EMAIL FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-pinjam-request: Total terkirim {$totalSent}/" . count($recipients) . " untuk peminjaman #{$peminjamanId}");
+    error_log("[EMAIL] send-pinjam-request: Total sent {$totalSent}/" . count($recipients) . " for borrowing #{$peminjamanId}");
     return $totalSent > 0;
 }
 
@@ -153,7 +153,7 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-pinjam-request.php') {
         exit;
     }
 
-    echo "Mengirim email permintaan peminjaman untuk peminjaman #{$id} ke SEMUA pihak...\n";
+    echo "Sending loan request email for loan #{$id} to ALL parties...\n";
     $result = sendPinjamRequestEmail($conn, (int)$id);
-    echo $result ? "✅ Email berhasil dikirim ke semua pihak!\n" : "❌ Email gagal dikirim.\n";
+    echo $result ? "✅ Email successfully sent to all parties!\n" : "❌ Email failed to send.\n";
 }

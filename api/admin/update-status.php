@@ -21,7 +21,7 @@ $new_status = trim($_POST['status'] ?? '');
 if (!$id || !$new_status) {
     echo json_encode([
         "status" => false,
-        "message" => "ID dan status diperlukan"
+        "message" => "ID and status are required"
     ]);
     exit;
 }
@@ -32,7 +32,7 @@ $stmt_cur->bind_param("i", $id);
 $stmt_cur->execute();
 $res_cur = $stmt_cur->get_result();
 if (!$res_cur || $res_cur->num_rows === 0) {
-    echo json_encode(["status" => false, "message" => "Peminjaman tidak ditemukan"]);
+    echo json_encode(["status" => false, "message" => "Borrowing not found"]);
     exit;
 }
 $current = $res_cur->fetch_assoc()['status'];
@@ -40,11 +40,11 @@ $current = $res_cur->fetch_assoc()['status'];
 // Validasi alur untuk Admin
 if ($current === 'Disetujui') {
     if (!in_array($new_status, ['Sedang Dipinjam', 'Ditolak'], true)) {
-        echo json_encode(["status" => false, "message" => "Dari Disetujui hanya bisa diubah ke Sedang Dipinjam atau Ditolak"]);
+        echo json_encode(["status" => false, "message" => "From Approved, can only change to Active Borrowing or Rejected"]);
         exit;
     }
 } else {
-    echo json_encode(["status" => false, "message" => "Status saat ini tidak dapat diubah dari sini"]);
+    echo json_encode(["status" => false, "message" => "Current status cannot be changed from here"]);
     exit;
 }
 
@@ -97,7 +97,7 @@ try {
     if ($new_status === 'Ditolak') {
         try {
             require_once __DIR__ . '/../email/send-rejected.php';
-            sendRejectedEmail($conn, $id, 'Peminjaman');
+            sendRejectedEmail($conn, $id, 'Loan');
         } catch (Exception $emailEx) {
             error_log("[EMAIL ERROR] admin/update-status-reject: " . $emailEx->getMessage());
         }
@@ -105,7 +105,7 @@ try {
 
     echo json_encode([
         "status" => true,
-        "message" => "Status berhasil diperbarui"
+        "message" => "Status updated successfully"
     ]);
 
 } catch (Exception $e) {

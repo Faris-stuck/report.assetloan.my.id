@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- * EMAIL: Pengembalian Dikonfirmasi (Status → Dikembalikan)
+ * EMAIL: Return Confirmed (Status → Returned)
  * ============================================================
  * 
- * Email dikirim ke SEMUA pihak terkait:
- *   - USER (pemilik peminjaman)
- *   - ADMIN (semua admin)
- *   - PIC_BARANG (semua PIC)
- *   - PELAKU AKSI (dari SESSION)
+ * Email sent to ALL related parties:
+ *   - USER (loan owner)
+ *   - ADMIN (all admins)
+ *   - PIC_BARANG (all PICs)
+ *   - ACTOR (from SESSION)
  * 
  * File   : /PROJECT/api/email/send-return-confirmed.php
  * 
@@ -18,18 +18,18 @@
 require_once __DIR__ . '/email-functions.php';
 
 /**
- * Kirim email notifikasi pengembalian dikonfirmasi ke SEMUA pihak terkait
+ * Send return confirmed notification email to ALL related parties
  *
- * @param mysqli $conn            Koneksi database
- * @param int    $peminjamanId    ID peminjaman
- * @return bool                   true jika berhasil, false jika gagal
+ * @param mysqli $conn            Database connection
+ * @param int    $peminjamanId    Loan ID
+ * @return bool                   true if successful, false if failed
  */
 function sendReturnConfirmedEmail($conn, $peminjamanId) {
-    // Ambil data peminjaman + user
+    // Get loan + user data
     $data = getPeminjamanWithUser($conn, $peminjamanId);
 
     if (!$data) {
-        error_log("[EMAIL] send-return-confirmed: Data peminjaman #{$peminjamanId} tidak ditemukan.");
+        error_log("[EMAIL] send-return-confirmed: Loan data #{$peminjamanId} not found.");
         return false;
     }
 
@@ -40,88 +40,88 @@ function sendReturnConfirmedEmail($conn, $peminjamanId) {
     $tglKembali   = $data['tanggal_kembali'] ? date('d F Y', strtotime($data['tanggal_kembali'])) : date('d F Y');
 
     // ============================================================
-    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // COLLECT ALL RECIPIENTS IN ARRAY
     // ============================================================
     $recipients = [];
 
-    // 1. USER (pemilik peminjaman)
+    // 1. USER (loan owner)
     $recipients[] = ['email' => $email, 'nama' => $nama];
 
-    // 2. SEMUA ADMIN
+    // 2. ALL ADMINS
     $admins = getAdminEmails($conn);
     foreach ($admins as $admin) {
         $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
     }
 
-    // 3. SEMUA PIC_BARANG
+    // 3. ALL PIC_BARANG
     $pics = getPicBarangEmails($conn);
     foreach ($pics as $pic) {
         $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
     }
 
-    // 4. PELAKU AKSI (dari SESSION)
+    // 4. ACTOR (from SESSION)
     $actor = getActorEmail($conn);
     if ($actor) {
         $recipients[] = ['email' => $actor['email'], 'nama' => $actor['nama']];
     }
 
-    // DEDUPLIKASI
+    // DEDUPLICATION
     $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
 
     if (empty($recipients)) {
-        error_log("[EMAIL] send-return-confirmed: Tidak ada penerima valid untuk peminjaman #{$peminjamanId}");
+        error_log("[EMAIL] send-return-confirmed: No valid recipients for loan #{$peminjamanId}");
         return false;
     }
 
-    // Buat body email
+    // Build email body
     $bodyHtml = '
-        <p>Halo,</p>
+        <p>Hello,</p>
         
         <div class="success-box">
-            <strong>✅ Pengembalian Dikonfirmasi!</strong><br>
-            Pengembalian barang dari <strong>' . htmlspecialchars($nama) . '</strong> telah dikonfirmasi.
+            <strong>✅ Return Confirmed!</strong><br>
+            Item return from <strong>' . htmlspecialchars($nama) . '</strong> has been confirmed.
         </div>
         
-        <p>Detail peminjaman:</p>
+        <p>Loan details:</p>
         
         <table class="info-table">
             <tr>
-                <td>Kode Peminjaman</td>
+                <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
             <tr>
-                <td>Nama Peminjam</td>
+                <td>Borrower Name</td>
                 <td>' . htmlspecialchars($nama) . '</td>
             </tr>
             <tr>
-                <td>Tanggal Pinjam</td>
+                <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>
             </tr>
             <tr>
-                <td>Tanggal Dikembalikan</td>
+                <td>Date Returned</td>
                 <td><strong style="color: #059669;">' . htmlspecialchars($tglKembali) . '</strong></td>
             </tr>
         </table>
         
-        <p>Barang telah diterima dengan baik. Terima kasih.</p>';
+        <p>Items have been received in good condition. Thank you.</p>';
 
-    $subject  = 'Pengembalian Dikonfirmasi - ' . $kode;
-    $fullHtml = buildEmailTemplate('✅ Pengembalian Dikonfirmasi', $bodyHtml);
+    $subject  = 'Return Confirmed - ' . $kode;
+    $fullHtml = buildEmailTemplate('✅ Return Confirmed', $bodyHtml);
 
     // ============================================================
-    // KIRIM EMAIL MENGGUNAKAN LOOP KE SEMUA PENERIMA
+    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
     // ============================================================
     $totalSent = 0;
     foreach ($recipients as $r) {
         if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
-            error_log("[EMAIL] send-return-confirmed: EMAIL TERKIRIM KE: " . $r['email']);
+            error_log("[EMAIL] send-return-confirmed: EMAIL SENT TO: " . $r['email']);
             $totalSent++;
         } else {
-            error_log("[EMAIL] send-return-confirmed: EMAIL GAGAL KE: " . $r['email']);
+            error_log("[EMAIL] send-return-confirmed: EMAIL FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-return-confirmed: Total terkirim {$totalSent}/" . count($recipients) . " untuk peminjaman #{$peminjamanId}");
+    error_log("[EMAIL] send-return-confirmed: Total sent {$totalSent}/" . count($recipients) . " for borrowing #{$peminjamanId}");
     return $totalSent > 0;
 }
 
@@ -142,7 +142,7 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-return-confirmed.php')
         exit;
     }
 
-    echo "Mengirim email return confirmed untuk peminjaman #{$id} ke SEMUA pihak...\n";
+    echo "Sending return confirmed email for loan #{$id} to ALL parties...\n";
     $result = sendReturnConfirmedEmail($conn, (int)$id);
-    echo $result ? "✅ Email berhasil dikirim ke semua pihak!\n" : "❌ Email gagal dikirim.\n";
+    echo $result ? "✅ Email successfully sent to all parties!\n" : "❌ Email failed to send.\n";
 }

@@ -20,7 +20,7 @@ if (!$session->isLoggedIn()) {
 $peminjaman_id = isset($_GET['peminjaman_id']) ? (int)$_GET['peminjaman_id'] : 0;
 
 if ($peminjaman_id <= 0) {
-    echo json_encode(['status' => false, 'message' => 'Peminjaman ID tidak valid']);
+    echo json_encode(['status' => false, 'message' => 'Invalid Borrowing ID']);
     exit;
 }
 

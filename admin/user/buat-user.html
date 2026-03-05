@@ -216,7 +216,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -228,10 +228,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -348,7 +348,7 @@
                                                     <div class="spinner-border spinner-border-sm" role="status">
                                                         <span class="visually-hidden">Loading...</span>
                                                     </div>
-                                                    <div class="mt-2 text-muted">Memuat data...</div>
+                                                    <div class="mt-2 text-muted">Loading data...</div>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -393,7 +393,7 @@
                                                 class="text-danger">*</span></label>
                                         <select class="form-select" id="roleGroup" name="roleGroup"
                                             onchange="syncRole()">
-                                            <option value="">-- Pilih Role Group --</option>
+                                            <option value="">-- Select Role Group --</option>
                                             <!-- Options populated dynamically from database -->
                                         </select>
                                     </div>
@@ -410,7 +410,7 @@
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Role</label>
                                         <select class="form-select" id="role" name="role" required>
-                                            <option value="">-- Pilih Role --</option>
+                                            <option value="">-- Select Role --</option>
                                             <!-- Options populated dynamically from database -->
                                         </select>
                                     </div>
@@ -462,7 +462,7 @@
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">Select User</label>
                                     <select class="form-select" id="cpUserId" required>
-                                        <option value="">-- Pilih User --</option>
+                                        <option value="">-- Select User --</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
@@ -493,13 +493,13 @@
                     <div class="modal-content">
                         <form id="formEditRole">
                             <div class="modal-header">
-                                <h5 class="modal-title">Ubah Role User</h5>
+                                <h5 class="modal-title">Change User Role</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <input type="hidden" id="editUserId">
                                 <p class="mb-3">
-                                    Mengubah role user: <strong id="editUserName"></strong>
+                                    Changing role for user: <strong id="editUserName"></strong>
                                 </p>
                                 <div class="mb-3">
                                     <label class="form-label">Select New Role</label>
@@ -526,14 +526,14 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="modalTitle">Notifikasi</h5>
+                            <h5 class="modal-title" id="modalTitle">Notification</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <p id="modalMessage">Pesan akan ditampilkan di sini</p>
+                            <p id="modalMessage">Message will be displayed here</p>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>

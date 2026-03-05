@@ -26,7 +26,7 @@ $id_barang = $_POST['id_barang'] ?? null;
 if(!$id_barang){
     echo json_encode([
         "status"=>false,
-        "message"=>"ID barang tidak ada"
+        "message"=>"Item ID not found"
     ]);
     exit;
 }
@@ -43,7 +43,7 @@ $today = date('Y-m-d');
 if (strtotime($tanggal) < strtotime($today)) {
     echo json_encode([
         "status"=>false,
-        "message"=>"Tanggal pembelian tidak boleh kurang dari tanggal hari ini ($today)"
+        "message"=>"Purchase date cannot be earlier than today ($today)"
     ]);
     exit;
 }
@@ -52,7 +52,7 @@ if (strtotime($tanggal) < strtotime($today)) {
 if ($jumlah <= 0) {
     echo json_encode([
         "status"=>false,
-        "message"=>"Jumlah pembelian harus lebih dari 0"
+        "message"=>"Purchase quantity must be greater than 0"
     ]);
     exit;
 }
@@ -61,7 +61,7 @@ if ($jumlah <= 0) {
 if ($harga <= 0) {
     echo json_encode([
         "status"=>false,
-        "message"=>"Harga satuan harus lebih dari 0"
+        "message"=>"Unit price must be greater than 0"
     ]);
     exit;
 }
@@ -101,5 +101,5 @@ $stmtStok->execute();
 
 echo json_encode([
     "status"=>true,
-    "message"=>"Pembelian berhasil"
+    "message"=>"Purchase successful"
 ]);

@@ -11,7 +11,7 @@
  * 5. VERIFIKASI SESSION SERVER secara SINKRON → jika invalid → redirect login
  * 6. Jika semua lolos → hapus layar hitam, tampilkan konten
  * 
- * Proteksi: layar tetap hitam selama validasi, data tidak terlihat.
+ * Protection: screen stays black during validation, data not visible.
  * Session server = sumber kebenaran tunggal (1 role per browser).
  */
 (function () {

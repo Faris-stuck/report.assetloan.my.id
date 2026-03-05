@@ -80,8 +80,8 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik /
-                                    Informasi</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Chart /
+                                    Information</a>
                             </li>
                         </ul>
                     </li>
@@ -226,7 +226,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -238,10 +238,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -260,11 +260,11 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Laporan Stok</h5>
+                        <h5 class="m-b-10">Stock Report</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Home</a></li>
-                        <li class="breadcrumb-item">Laporan Stok</li>
+                        <li class="breadcrumb-item">Stock Report</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -291,21 +291,21 @@
                     <div class="col-lg-12">
                         <div class="card stretch stretch-full">
                             <div class="card-header">
-                                <h6 class="mb-0">Data Stok Barang</h6>
+                                <h6 class="mb-0">Item Stock Data</h6>
                             </div>
                             <div class="card-body table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
-                                            <th>Kode Barang</th>
-                                            <th>Nama Barang</th>
-                                            <th>Kategori</th>
-                                            <th>Lokasi</th>
-                                            <th>Stok Total</th>
-                                            <th>Stok Tersedia</th>
-                                            <th>Stok Rusak</th>
-                                            <th>Kondisi</th>
+                                            <th>Item Code</th>
+                                            <th>Item Name</th>
+                                            <th>Category</th>
+                                            <th>Location</th>
+                                            <th>Total Stock</th>
+                                            <th>Available Stock</th>
+                                            <th>Damaged Stock</th>
+                                            <th>Condition</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
@@ -371,20 +371,20 @@
                     tbody.innerHTML = '';
 
                     if (!res.status || !res.data || res.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">Tidak ada data stok</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No stock data</td></tr>';
                         return;
                     }
 
                     res.data.forEach((barang, index) => {
                         let statusBadge = 'bg-success';
-                        let statusText = 'Tersedia';
+                        let statusText = 'Available';
 
                         if (barang.stok_tersedia <= 0) {
                             statusBadge = 'bg-danger';
-                            statusText = 'Habis';
+                            statusText = 'Out of Stock';
                         } else if (barang.stok_tersedia <= barang.safety_stock) {
                             statusBadge = 'bg-warning';
-                            statusText = 'Menipis';
+                            statusText = 'Low Stock';
                         }
 
                         let kondisiBadge = barang.kondisi === 'Rusak' ? 'bg-danger' : 'bg-success';

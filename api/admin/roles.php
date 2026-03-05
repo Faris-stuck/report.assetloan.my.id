@@ -91,7 +91,7 @@ try {
             $deskripsi = trim($_POST['deskripsi'] ?? '');
 
             if (empty($roleName)) {
-                throw new Exception("Nama role wajib diisi");
+                throw new Exception("Role name is required");
             }
 
             // Sanitize role name: lowercase, replace spaces with underscores, alphanumeric only
@@ -99,11 +99,11 @@ try {
             $roleName = preg_replace('/_+/', '_', trim($roleName, '_'));
 
             if (strlen($roleName) < 2) {
-                throw new Exception("Nama role minimal 2 karakter");
+                throw new Exception("Role name must be at least 2 characters");
             }
 
             if (strlen($roleName) > 50) {
-                throw new Exception("Nama role maksimal 50 karakter");
+                throw new Exception("Role name must be at most 50 characters");
             }
 
             // Check if role already exists in roles table
@@ -111,7 +111,7 @@ try {
             $stmt->bind_param('s', $roleName);
             $stmt->execute();
             if ($stmt->get_result()->num_rows > 0) {
-                throw new Exception("Role '$roleName' sudah ada");
+                throw new Exception("Role '$roleName' already exists");
             }
 
             // Get current ENUM values from users table
@@ -138,7 +138,7 @@ try {
 
                 echo json_encode([
                     'status' => true,
-                    'message' => "Role '$roleName' berhasil ditambahkan"
+                    'message' => "Role '$roleName' added successfully"
                 ]);
                 exit;
             }
@@ -149,7 +149,7 @@ try {
             $alterSQL = "ALTER TABLE users MODIFY COLUMN role ENUM($enumStr) NOT NULL";
 
             if (!$conn->query($alterSQL)) {
-                throw new Exception("Gagal menambahkan role ke database: " . $conn->error);
+                throw new Exception("Failed to add role to database: " . $conn->error);
             }
 
             // Insert into roles metadata table
@@ -159,7 +159,7 @@ try {
 
             echo json_encode([
                 'status' => true,
-                'message' => "Role '$roleName' berhasil dibuat"
+                'message' => "Role '$roleName' created successfully"
             ]);
 
         } elseif ($postAction === 'delete_role') {
@@ -167,7 +167,7 @@ try {
             $roleName = trim($_POST['role_name'] ?? '');
 
             if (empty($roleName)) {
-                throw new Exception("Nama role wajib diisi");
+                throw new Exception("Role name is required");
             }
 
             // Check if role is protected (from database)
@@ -177,11 +177,11 @@ try {
             $roleData = $stmt->get_result()->fetch_assoc();
 
             if (!$roleData) {
-                throw new Exception("Role '$roleName' tidak ditemukan");
+                throw new Exception("Role '$roleName' not found");
             }
 
             if ((bool)$roleData['is_protected']) {
-                throw new Exception("Role '$roleName' adalah role bawaan dan tidak dapat dihapus");
+                throw new Exception("Role '$roleName' is a default role and cannot be deleted");
             }
 
             // Check if any users still have this role
@@ -191,7 +191,7 @@ try {
             $count = $stmt->get_result()->fetch_assoc()['cnt'];
 
             if ($count > 0) {
-                throw new Exception("Tidak dapat menghapus role '$roleName' karena masih ada $count user yang menggunakan role ini");
+                throw new Exception("Cannot delete role '$roleName' because $count users still use this role");
             }
 
             // Remove from ENUM
@@ -204,13 +204,13 @@ try {
             });
 
             if (count($newValues) === 0) {
-                throw new Exception("Tidak dapat menghapus semua role");
+                throw new Exception("Cannot delete all roles");
             }
 
             $enumStr = "'" . implode("','", $newValues) . "'";
             $alterSQL = "ALTER TABLE users MODIFY COLUMN role ENUM($enumStr) NOT NULL";
             if (!$conn->query($alterSQL)) {
-                throw new Exception("Gagal menghapus role dari database: " . $conn->error);
+                throw new Exception("Failed to remove role from database: " . $conn->error);
             }
 
             // Remove from roles table
@@ -220,7 +220,7 @@ try {
 
             echo json_encode([
                 'status' => true,
-                'message' => "Role '$roleName' berhasil dihapus"
+                'message' => "Role '$roleName' deleted successfully"
             ]);
 
         } else {
@@ -229,7 +229,7 @@ try {
             $new_role = $_POST['role'] ?? null;
 
             if (!$user_id || !$new_role) {
-                throw new Exception("user_id dan role wajib diisi");
+                throw new Exception("user_id and role are required");
             }
 
             // Get valid roles from roles table
@@ -240,13 +240,13 @@ try {
             }
 
             if (!in_array($new_role, $validRoles)) {
-                throw new Exception("Role tidak valid: $new_role");
+                throw new Exception("Invalid role: $new_role");
             }
 
             // Prevent admin from changing their own role
             $currentUserId = $_SESSION['user_id'] ?? null;
             if ($user_id == $currentUserId) {
-                throw new Exception("Anda tidak dapat mengubah role anda sendiri");
+                throw new Exception("You cannot change your own role");
             }
 
             // Check if user exists
@@ -256,7 +256,7 @@ try {
             $user = $stmt->get_result()->fetch_assoc();
 
             if (!$user) {
-                throw new Exception("User tidak ditemukan");
+                throw new Exception("User not found");
             }
 
             $oldRole = $user['role'];
@@ -268,7 +268,7 @@ try {
 
             echo json_encode([
                 'status' => true,
-                'message' => "Role '{$user['nama']}' berhasil diubah dari '$oldRole' ke '$new_role'"
+                'message' => "Role for '{$user['nama']}' changed from '$oldRole' to '$new_role'"
             ]);
         }
 

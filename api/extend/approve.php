@@ -26,14 +26,14 @@ if (!$session->isLoggedIn()) {
 $role = $session->getRole();
 if (!in_array($role, ['admin', 'pic_barang'])) {
     http_response_code(403);
-    echo json_encode(['status' => false, 'message' => 'Akses ditolak. Hanya admin dan PIC Barang yang dapat menyetujui']);
+    echo json_encode(['status' => false, 'message' => 'Access denied. Only admin and PIC Item can approve']);
     exit;
 }
 
 $extend_id = isset($_POST['extend_id']) ? (int)$_POST['extend_id'] : 0;
 
 if ($extend_id <= 0) {
-    echo json_encode(['status' => false, 'message' => 'Extend ID tidak valid']);
+    echo json_encode(['status' => false, 'message' => 'Invalid Extend ID']);
     exit;
 }
 
@@ -48,13 +48,13 @@ try {
 
     if (!$extend) {
         $conn->rollback();
-        echo json_encode(['status' => false, 'message' => 'Permintaan perpanjangan tidak ditemukan']);
+        echo json_encode(['status' => false, 'message' => 'Extension request not found']);
         exit;
     }
 
     if ($extend['status'] !== 'Pending') {
         $conn->rollback();
-        echo json_encode(['status' => false, 'message' => 'Permintaan sudah diproses (status: ' . $extend['status'] . ')']);
+        echo json_encode(['status' => false, 'message' => 'Request already processed (status: ' . $extend['status'] . ')']);
         exit;
     }
 
@@ -112,7 +112,7 @@ try {
 
     echo json_encode([
         'status' => true,
-        'message' => 'Perpanjangan disetujui. Tanggal kembali diperbarui ke ' . date('d/m/Y', strtotime($extend['tanggal_perpanjang']))
+        'message' => 'Extension approved. Return date updated to ' . date('d/m/Y', strtotime($extend['tanggal_perpanjang']))
     ]);
 
 } catch (Exception $e) {

@@ -580,3 +580,30 @@ body {
 .dropdown-menu {
     z-index: 9999 !important;
 }
+
+/* ============================= */
+/* HEADER BACKGROUND */
+/* ============================= */
+
+.nxl-header {
+    background-color: #021b6e !important;
+}
+
+/* ============================= */
+/* HEADER ELEMENT COLORS */
+/* ============================= */
+
+.user-profile-header .user-name,
+.user-profile-header .user-email {
+    color: #ffffff !important;
+}
+
+.full-screen-switcher i {
+    color: #ffffff !important;
+}
+
+.hamburger-inner,
+.hamburger-inner::before,
+.hamburger-inner::after {
+    background-color: #ffffff !important;
+}

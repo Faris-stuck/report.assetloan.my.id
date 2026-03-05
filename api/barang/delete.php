@@ -23,7 +23,7 @@ $id = $_GET['id'] ?? null;
 if (!$id) {
     echo json_encode([
         "status" => false,
-        "message" => "ID barang tidak ditemukan"
+        "message" => "Item ID not found"
     ]);
     exit;
 }
@@ -35,11 +35,11 @@ try {
 
     echo json_encode([
         "status" => true,
-        "message" => "Barang berhasil dihapus"
+        "message" => "Item deleted successfully"
     ]);
 } catch (mysqli_sql_exception $e) {
     echo json_encode([
         "status" => false,
-        "message" => "Barang tidak bisa dihapus karena sudah dipakai"
+        "message" => "Item cannot be deleted because it is in use"
     ]);
 }

@@ -242,7 +242,7 @@
                         <div class="card stretched-card">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                    <h5 class="card-title mb-0">Status Peminjaman</h5>
+                                    <h5 class="card-title mb-0">Borrowing Status</h5>
                                     <!-- Report Range Picker and Reset Button for Status Peminjaman -->
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <div id="reportrangeStatus"
@@ -265,24 +265,24 @@
                         <div class="card stretched-card">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                    <h5 class="card-title mb-0">Top Barang Dipinjam</h5>
+                                    <h5 class="card-title mb-0">Top Borrowed Items</h5>
                                     <!-- Dropdown Kategori Filter -->
                                     <div class="dropdown" style="width: 200px;">
                                         <button
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
                                             type="button" id="topKategoriDropdownBtn" data-bs-toggle="dropdown"
                                             aria-expanded="false" style="max-width: 200px;">
-                                            <span id="topKategoriSelected">Semua Kategori</span>
+                                            <span id="topKategoriSelected">All Categories</span>
                                         </button>
                                         <div class="dropdown-menu" id="topKategoriDropdownMenu"
                                             style="width: 200px; max-height: 300px; overflow-y: auto;">
                                             <input type="text" class="form-control form-control-sm m-2"
-                                                id="topKategoriSearch" placeholder="Cari kategori..."
+                                                id="topKategoriSearch" placeholder="Search category..."
                                                 onclick="event.stopPropagation()" style="width: calc(100% - 1rem);">
                                             <hr class="dropdown-divider m-1">
                                             <a class="dropdown-item" href="#"
                                                 onclick="selectTopKategori('all'); return false;">
-                                                <small>Semua Kategori</small>
+                                                <small>All Categories</small>
                                             </a>
                                             <div id="topKategoriList"></div>
                                         </div>
@@ -300,24 +300,24 @@
                         <div class="card stretched-card">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                    <h5 class="card-title">Data Barang</h5>
+                                    <h5 class="card-title">Item Data</h5>
                                     <!-- Dropdown Nama Barang Filter -->
                                     <div class="dropdown" style="width: 200px;">
                                         <button
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
                                             type="button" id="dataBarangDropdownBtn" data-bs-toggle="dropdown"
                                             aria-expanded="false" style="max-width: 200px;">
-                                            <span id="dataBarangSelected">Semua Barang</span>
+                                            <span id="dataBarangSelected">All Items</span>
                                         </button>
                                         <div class="dropdown-menu" id="dataBarangDropdownMenu"
                                             style="width: 200px; max-height: 300px; overflow-y: auto;">
                                             <input type="text" class="form-control form-control-sm m-2"
-                                                id="dataBarangSearch" placeholder="Cari barang..."
+                                                id="dataBarangSearch" placeholder="Search item..."
                                                 onclick="event.stopPropagation()" style="width: calc(100% - 1rem);">
                                             <hr class="dropdown-divider m-1">
                                             <a class="dropdown-item" href="#"
                                                 onclick="selectDataBarang('all'); return false;">
-                                                <small>Semua Barang</small>
+                                                <small>All Items</small>
                                             </a>
                                             <div id="dataBarangList"></div>
                                         </div>
@@ -411,12 +411,11 @@
 
                     // Render Status Peminjaman Chart
                     const statusData = {
-                        'Menunggu Persetujuan': data.menunggu_persetujuan || 0,
-                        'Sedang Dipinjam': data.sedang_dipinjam || 0,
-                        'Dikembalikan': data.dikembalikan || 0,
-                        'Ditolak': data.ditolak || 0
+                        'Pending Approval': data.menunggu_persetujuan || 0,
+                        'Currently Borrowed': data.sedang_dipinjam || 0,
+                        'Returned': data.dikembalikan || 0,
+                        'Rejected': data.ditolak || 0
                     };
-                    renderStatusChart(statusData);
 
                     // Populate kategori filter dropdown
                     const categories = data.categories || [];
@@ -450,7 +449,7 @@
                         renderInventoryChart(topBarang);
                     } else {
                         document.getElementById('inventoryChart').innerHTML =
-                            '<div class="text-center text-muted py-5">Belum ada data peminjaman</div>';
+                            '<div class="text-center text-muted py-5">No borrowing data yet</div>';
                     }
 
                     // Render Item Data Chart
@@ -459,7 +458,7 @@
                         renderItemDataChart(allBarang);
                     } else {
                         document.getElementById('itemDataChart').innerHTML =
-                            '<div class="text-center text-muted py-5">Belum ada data barang</div>';
+                            '<div class="text-center text-muted py-5">No item data yet</div>';
                     }
                 }
             } catch (error) {
@@ -497,7 +496,7 @@
                     }
                 },
                 yaxis: {
-                    title: { text: 'Jumlah' },
+                    title: { text: 'Quantity' },
                     labels: { formatter: val => Math.floor(val) }
                 },
                 dataLabels: {
@@ -516,7 +515,7 @@
                         formatter: (val, { series, seriesIndex, dataPointIndex, w }) => {
                             const categories = w.config.xaxis.categories;
                             const statusLabel = categories[dataPointIndex];
-                            return `Jumlah ${statusLabel}: ${val}`;
+                            return `Quantity ${statusLabel}: ${val}`;
                         }
                     }
                 }
@@ -548,15 +547,15 @@
                 },
                 colors: ['#3B5998', '#66BB6A'],
                 series: [
-                    { name: 'Dipinjam', data: peminjaman },
-                    { name: 'Tersedia', data: stokTersedia }
+                    { name: 'Borrowed', data: peminjaman },
+                    { name: 'Available', data: stokTersedia }
                 ],
                 xaxis: {
                     categories: names,
                     labels: { style: { fontSize: '12px' } }
                 },
                 yaxis: {
-                    title: { text: 'Jumlah' },
+                    title: { text: 'Quantity' },
                     labels: { formatter: val => Math.floor(val) }
                 },
                 dataLabels: {
@@ -605,15 +604,15 @@
                 },
                 colors: ['#3B5998', '#66BB6A'],
                 series: [
-                    { name: 'Dipinjam', data: peminjaman },
-                    { name: 'Tersedia', data: stokTersedia }
+                    { name: 'Borrowed', data: peminjaman },
+                    { name: 'Available', data: stokTersedia }
                 ],
                 xaxis: {
                     categories: names,
                     labels: { style: { fontSize: '12px' } }
                 },
                 yaxis: {
-                    title: { text: 'Jumlah' },
+                    title: { text: 'Quantity' },
                     labels: { formatter: val => Math.floor(val) }
                 },
                 dataLabels: {
@@ -648,7 +647,7 @@
         async function selectTopKategori(kategori) {
             selectedKategoriTopBarang = kategori || 'all';
             document.getElementById('topKategoriSelected').textContent =
-                kategori === 'all' ? 'Semua Kategori' : kategori;
+                kategori === 'all' ? 'All Categories' : kategori;
             const dropdownBtn = document.getElementById('topKategoriDropdownBtn');
             const dropdown = bootstrap.Dropdown.getInstance(dropdownBtn);
             if (dropdown) dropdown.hide();
@@ -661,7 +660,7 @@
         async function selectDataBarang(namaBarang) {
             selectedNamaBarangDataBarang = namaBarang || 'all';
             document.getElementById('dataBarangSelected').textContent =
-                namaBarang === 'all' ? 'Semua Barang' : namaBarang;
+                namaBarang === 'all' ? 'All Items' : namaBarang;
             const dropdownBtn = document.getElementById('dataBarangDropdownBtn');
             const dropdown = bootstrap.Dropdown.getInstance(dropdownBtn);
             if (dropdown) dropdown.hide();
@@ -707,7 +706,7 @@
                         renderInventoryChart(topBarang);
                     } else {
                         document.getElementById('inventoryChart').innerHTML =
-                            '<div class="text-center text-muted py-5">Tidak ada data untuk kategori terpilih</div>';
+                            '<div class="text-center text-muted py-5">No data for selected category</div>';
                     }
                 }
             } catch (error) {
@@ -729,7 +728,7 @@
                         renderItemDataChart(allBarang);
                     } else {
                         document.getElementById('itemDataChart').innerHTML =
-                            '<div class="text-center text-muted py-5">Tidak ada data untuk barang terpilih</div>';
+                            '<div class="text-center text-muted py-5">No data for selected item</div>';
                     }
                 }
             } catch (error) {
@@ -809,10 +808,10 @@
                 const result = await response.json();
                 if (result.status && result.data) {
                     const statusData = {
-                        'Menunggu Persetujuan': result.data.menunggu_persetujuan || 0,
-                        'Sedang Dipinjam': result.data.sedang_dipinjam || 0,
-                        'Dikembalikan': result.data.dikembalikan || 0,
-                        'Ditolak': result.data.ditolak || 0
+                        'Pending Approval': result.data.menunggu_persetujuan || 0,
+                        'Currently Borrowed': result.data.sedang_dipinjam || 0,
+                        'Returned': result.data.dikembalikan || 0,
+                        'Rejected': result.data.ditolak || 0
                     };
                     renderStatusChart(statusData);
                 }

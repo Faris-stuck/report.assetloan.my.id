@@ -1,24 +1,24 @@
 <?php
 /**
  * ============================================================
- * EMAIL REMINDER: Kirim Pengingat Harian H-7 sampai H-0
+ * EMAIL REMINDER: Send Daily Reminder D-7 to D-0
  * ============================================================
  * 
  * File   : /PROJECT/api/cron/send-reminder-h7.php
- * Akses  : http://localhost/PROJECT/api/cron/send-reminder-h7.php
+ * Access : http://localhost/PROJECT/api/cron/send-reminder-h7.php
  * 
- * Cara kerja:
- *   - Dibuka via browser (bukan cron job)
- *   - Cek peminjaman dengan rencana_kembali antara H-7 s/d H-0
- *   - Kirim email reminder 1x per hari per peminjaman
- *   - Tidak kirim ulang jika halaman di-refresh di hari yang sama
- *   - Menggunakan kolom last_reminder_date untuk tracking
+ * How it works:
+ *   - Opened via browser (not a cron job)
+ *   - Check borrowings with rencana_kembali between D-7 to D-0
+ *   - Send email reminder once per day per borrowing
+ *   - Do not resend if page is refreshed on the same day
+ *   - Uses the last_reminder_date column for tracking
  * 
  * ============================================================
  */
 
 // ============================================================
-// 1. KONFIGURASI SMTP — dari config/email.php (TIDAK HARDCODE)
+// 1. SMTP CONFIGURATION — from config/email.php (NOT HARDCODED)
 // ============================================================
 require_once __DIR__ . '/../../config/email.php';
 
@@ -31,12 +31,12 @@ if (php_sapi_name() !== 'cli') {
 }
 
 echo "============================================================\n";
-echo "  REMINDER: Email Pengingat Pengembalian Barang (H-7 s/d H-0)\n";
-echo "  Waktu eksekusi: " . date('Y-m-d H:i:s') . "\n";
+echo "  REMINDER: Item Return Reminder Email (D-7 to D-0)\n";
+echo "  Execution time: " . date('Y-m-d H:i:s') . "\n";
 echo "============================================================\n\n";
 
 // ============================================================
-// 3. KONEKSI DATABASE
+// 3. DATABASE CONNECTION
 // ============================================================
 if (php_sapi_name() === 'cli') {
     $_SERVER['HTTP_HOST'] = 'localhost';
@@ -45,11 +45,11 @@ if (php_sapi_name() === 'cli') {
 require_once __DIR__ . '/../koneksi.php';
 
 if ($conn->connect_error) {
-    echo "[ERROR] Koneksi database gagal: " . $conn->connect_error . "\n";
+    echo "[ERROR] Database connection failed: " . $conn->connect_error . "\n";
     exit(1);
 }
-echo "[OK] Koneksi database berhasil.\n";
-echo "[INFO] Tanggal hari ini: " . date('Y-m-d') . "\n\n";
+echo "[OK] Database connection successful.\n";
+echo "[INFO] Today's date: " . date('Y-m-d') . "\n\n";
 
 // ============================================================
 // 4. LOAD PHPMAILER & EMAIL FUNCTIONS
@@ -57,11 +57,11 @@ echo "[INFO] Tanggal hari ini: " . date('Y-m-d') . "\n\n";
 require_once __DIR__ . '/../email/email-functions.php';
 
 // ============================================================
-// 5. QUERY: Ambil peminjaman H-7 sampai H-0
+// 5. QUERY: Fetch borrowings D-7 to D-0
 //    - DATEDIFF(rencana_kembali, CURDATE()) BETWEEN 0 AND 7
-//    - last_reminder_date IS NULL OR != CURDATE() (anti duplikasi)
-//    - Status aktif (Sedang Dipinjam / Due* / Overdue)
-//    - JOIN users untuk email & nama
+//    - last_reminder_date IS NULL OR != CURDATE() (prevent duplicates)
+//    - Active status (Sedang Dipinjam / Due* / Overdue)
+//    - JOIN users for email & name
 // ============================================================
 $sql = "
     SELECT 
@@ -86,15 +86,15 @@ $sql = "
 $result = $conn->query($sql);
 
 if (!$result) {
-    echo "[ERROR] Query gagal: " . $conn->error . "\n";
+    echo "[ERROR] Query failed: " . $conn->error . "\n";
     exit(1);
 }
 
 $totalRows = $result->num_rows;
-echo "[INFO] Ditemukan {$totalRows} peminjaman yang perlu diingatkan.\n\n";
+echo "[INFO] Found {$totalRows} borrowings that need reminders.\n\n";
 
 // ============================================================
-// Cek juga berapa yang sudah dikirim hari ini (info saja)
+// Also check how many were already sent today (info only)
 // ============================================================
 $sqlSudah = "
     SELECT COUNT(*) AS cnt FROM peminjaman
@@ -108,11 +108,11 @@ if ($resSudah && $rowSudah = $resSudah->fetch_assoc()) {
     $sudahDikirim = (int) $rowSudah['cnt'];
 }
 if ($sudahDikirim > 0) {
-    echo "[INFO] {$sudahDikirim} peminjaman sudah dikirim reminder hari ini (dilewati).\n\n";
+    echo "[INFO] {$sudahDikirim} borrowings already sent reminders today (skipped).\n\n";
 }
 
 if ($totalRows === 0) {
-    echo "[INFO] Tidak ada email yang perlu dikirim saat ini.\n";
+    echo "[INFO] No emails need to be sent at this time.\n";
     if (php_sapi_name() !== 'cli') echo '</pre>';
     echo "\n============================================================\n";
     $conn->close();
@@ -120,16 +120,16 @@ if ($totalRows === 0) {
 }
 
 // ============================================================
-// 6. AMBIL DAFTAR ADMIN + PIC_BARANG (1x saja, dipakai untuk semua peminjaman)
+// 6. FETCH ADMIN + PIC_BARANG LIST (once only, used for all borrowings)
 // ============================================================
 $adminList = getAdminEmails($conn);
 $picList   = getPicBarangEmails($conn);
 
-echo "[INFO] Admin ditemukan: " . count($adminList) . " orang\n";
-echo "[INFO] PIC Barang ditemukan: " . count($picList) . " orang\n\n";
+echo "[INFO] Admins found: " . count($adminList) . " people\n";
+echo "[INFO] PIC Items found: " . count($picList) . " people\n\n";
 
 // ============================================================
-// 7. LOOP & KIRIM EMAIL KE SEMUA PIHAK (USER + ADMIN + PIC)
+// 7. LOOP & SEND EMAIL TO ALL PARTIES (USER + ADMIN + PIC)
 // ============================================================
 $berhasil = 0;
 $gagal    = 0;
@@ -150,67 +150,67 @@ while ($row = $result->fetch_assoc()) {
     echo "         Pinjam: {$tanggalPinjam} → Kembali: {$tanggalKembali}\n";
 
     // ============================================================
-    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // COLLECT ALL RECIPIENTS INTO ARRAY
     // ============================================================
     $recipients = [];
 
-    // 1. USER (pemilik peminjaman)
+    // 1. USER (borrowing owner)
     if (!empty($emailUser) && filter_var($emailUser, FILTER_VALIDATE_EMAIL)) {
         $recipients[] = ['email' => $emailUser, 'nama' => $namaUser];
     }
 
-    // 2. SEMUA ADMIN
+    // 2. ALL ADMINS
     foreach ($adminList as $admin) {
         $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
     }
 
-    // 3. SEMUA PIC_BARANG
+    // 3. ALL PIC_BARANG
     foreach ($picList as $pic) {
         $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
     }
 
-    // DEDUPLIKASI
+    // DEDUPLICATION
     $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
 
     if (empty($recipients)) {
-        echo "[SKIP]   Tidak ada penerima valid untuk peminjaman #{$peminjaman_id}\n\n";
+        echo "[SKIP]   No valid recipients for borrowing #{$peminjaman_id}\n\n";
         $gagal++;
         continue;
     }
 
-    echo "         Penerima: " . count($recipients) . " orang (user + admin + PIC)\n";
+    echo "         Recipients: " . count($recipients) . " people (user + admin + PIC)\n";
 
     // ---------------------------------------------------------
-    // Kirim email ke SEMUA penerima menggunakan LOOP
+    // Send email to ALL recipients using LOOP
     // ---------------------------------------------------------
-    $subject   = 'Pengingat Pengembalian Barang - ' . $kodePeminjaman;
+    $subject   = 'Item Return Reminder - ' . $kodePeminjaman;
     $htmlBody  = buildReminderEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
     $plainBody = buildReminderEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
 
     $sentCount = 0;
     foreach ($recipients as $r) {
         if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'], $plainBody)) {
-            error_log("[EMAIL] send-reminder-h7: EMAIL TERKIRIM KE: " . $r['email'] . " untuk {$kodePeminjaman}");
-            echo "<span style='color: #a6e3a1;'>[OK]     Reminder terkirim ke: {$r['email']}</span>\n";
+            error_log("[EMAIL] send-reminder-h7: EMAIL SENT TO: " . $r['email'] . " for {$kodePeminjaman}");
+            echo "<span style='color: #a6e3a1;'>[OK]     Reminder sent to: {$r['email']}</span>\n";
             $sentCount++;
         } else {
-            error_log("[EMAIL] send-reminder-h7: EMAIL GAGAL KE: " . $r['email'] . " untuk {$kodePeminjaman}");
-            echo "<span style='color: #f38ba8;'>[GAGAL]  Email gagal dikirim ke: {$r['email']}</span>\n";
+            error_log("[EMAIL] send-reminder-h7: EMAIL FAILED TO: " . $r['email'] . " for {$kodePeminjaman}");
+            echo "<span style='color: #f38ba8;'>[FAILED] Email failed to send to: {$r['email']}</span>\n";
         }
     }
 
     if ($sentCount > 0) {
         $berhasil++;
 
-        // Update last_reminder_date agar tidak kirim ulang hari ini
+        // Update last_reminder_date to prevent resending today
         $stmtUpdate = $conn->prepare("UPDATE peminjaman SET last_reminder_date = CURDATE() WHERE id = ?");
         $stmtUpdate->bind_param("i", $peminjaman_id);
         $stmtUpdate->execute();
         $stmtUpdate->close();
-        echo "         last_reminder_date diupdate ke: " . date('Y-m-d') . "\n";
-        echo "         Total terkirim: {$sentCount}/" . count($recipients) . " penerima\n\n";
+        echo "         last_reminder_date updated to: " . date('Y-m-d') . "\n";
+        echo "         Total sent: {$sentCount}/" . count($recipients) . " recipients\n\n";
     } else {
-        echo "<span style='color: #f38ba8;'>[GAGAL]  Semua email gagal untuk: {$kodePeminjaman}</span>\n\n";
+        echo "<span style='color: #f38ba8;'>[FAILED] All emails failed for: {$kodePeminjaman}</span>\n\n";
         $gagal++;
     }
 }
@@ -219,12 +219,12 @@ while ($row = $result->fetch_assoc()) {
 // 7. SUMMARY
 // ============================================================
 echo "============================================================\n";
-echo "  HASIL PENGIRIMAN REMINDER\n";
-echo "  Total perlu dikirim  : {$totalRows}\n";
-echo "  Berhasil dikirim     : {$berhasil}\n";
-echo "  Gagal / Dilewati     : {$gagal}\n";
-echo "  Sudah dikirim hari ini (sebelumnya): {$sudahDikirim}\n";
-echo "  Waktu selesai        : " . date('Y-m-d H:i:s') . "\n";
+echo "  REMINDER SEND RESULTS\n";
+echo "  Total to send         : {$totalRows}\n";
+echo "  Successfully sent     : {$berhasil}\n";
+echo "  Failed / Skipped      : {$gagal}\n";
+echo "  Already sent today (prior): {$sudahDikirim}\n";
+echo "  Completion time       : " . date('Y-m-d H:i:s') . "\n";
 echo "============================================================\n";
 
 if (php_sapi_name() !== 'cli') echo '</pre>';
@@ -234,31 +234,31 @@ exit(0);
 
 
 // ============================================================
-// FUNGSI: Template Email HTML — dinamis berdasarkan sisa hari
+// FUNCTION: HTML Email Template — dynamic based on remaining days
 // ============================================================
 function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari) {
-    // Pesan dinamis berdasarkan sisa hari
+    // Dynamic message based on remaining days
     if ($sisaHari <= 0) {
-        $pesanAlert = '<strong>⚠️ Perhatian!</strong> Masa peminjaman barang Anda <strong>sudah jatuh tempo hari ini</strong>. Mohon segera kembalikan.';
+        $pesanAlert = '<strong>⚠️ Warning!</strong> Your item borrowing period <strong>is due today</strong>. Please return immediately.';
         $alertBg    = '#fee2e2';
         $alertBorder = '#ef4444';
         $alertColor  = '#991b1b';
         $headerBg    = 'linear-gradient(135deg, #991b1b, #dc2626)';
-        $headerTitle = '🚨 Pengembalian Barang Jatuh Tempo!';
+        $headerTitle = '🚨 Item Return Due Today!';
     } elseif ($sisaHari === 1) {
-        $pesanAlert = '<strong>⚠️ Perhatian!</strong> Masa peminjaman barang Anda akan berakhir <strong>besok</strong>.';
+        $pesanAlert = '<strong>⚠️ Warning!</strong> Your item borrowing period will end <strong>tomorrow</strong>.';
         $alertBg    = '#fef3c7';
         $alertBorder = '#f59e0b';
         $alertColor  = '#92400e';
         $headerBg    = 'linear-gradient(135deg, #92400e, #d97706)';
-        $headerTitle = '⏰ Pengembalian Barang Besok!';
+        $headerTitle = '⏰ Item Return Tomorrow!';
     } else {
-        $pesanAlert = '<strong>Perhatian!</strong> Masa peminjaman barang Anda akan berakhir dalam <strong>' . $sisaHari . ' hari</strong>.';
+        $pesanAlert = '<strong>Warning!</strong> Your item borrowing period will end in <strong>' . $sisaHari . ' days</strong>.';
         $alertBg    = '#fef3c7';
         $alertBorder = '#f59e0b';
         $alertColor  = '#92400e';
         $headerBg    = 'linear-gradient(135deg, #1e3a8a, #2563eb)';
-        $headerTitle = '⚠️ Pengingat Pengembalian Barang';
+        $headerTitle = '⚠️ Item Return Reminder';
     }
 
     return '
@@ -354,50 +354,50 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
         <div class="container">
             <div class="header">
                 <h1>' . $headerTitle . '</h1>
-                <p>Komatsu Indonesia - Sistem Peminjaman</p>
+                <p>Komatsu Indonesia - Borrowing System</p>
             </div>
             <div class="body">
-                <p>Halo <strong>' . htmlspecialchars($nama) . '</strong>,</p>
+                <p>Hello <strong>' . htmlspecialchars($nama) . '</strong>,</p>
                 
                 <div class="alert-box">
                     ' . $pesanAlert . '
                 </div>
 
                 <div class="sisa-hari">
-                    ' . ($sisaHari <= 0 ? 'JATUH TEMPO HARI INI' : 'Sisa ' . $sisaHari . ' Hari') . '
+                    ' . ($sisaHari <= 0 ? 'DUE TODAY' : $sisaHari . ' Days Remaining') . '
                 </div>
                 
-                <p>Berikut adalah detail peminjaman Anda:</p>
+                <p>Here are your borrowing details:</p>
                 
                 <table class="info-table">
                     <tr>
-                        <td>Kode Peminjaman</td>
+                        <td>Borrowing Code</td>
                         <td><strong>' . htmlspecialchars($kode) . '</strong></td>
                     </tr>
                     <tr>
-                        <td>Tanggal Pinjam</td>
+                        <td>Borrow Date</td>
                         <td>' . htmlspecialchars($tglPinjam) . '</td>
                     </tr>
                     <tr>
-                        <td>Batas Pengembalian</td>
+                        <td>Return Deadline</td>
                         <td><strong style="color: #dc2626;">' . htmlspecialchars($tglKembali) . '</strong></td>
                     </tr>
                     <tr>
-                        <td>Sisa Hari</td>
-                        <td><strong style="color: ' . ($sisaHari <= 1 ? '#dc2626' : '#2563eb') . ';">' . ($sisaHari <= 0 ? 'Hari ini!' : $sisaHari . ' hari') . '</strong></td>
+                        <td>Days Remaining</td>
+                        <td><strong style="color: ' . ($sisaHari <= 1 ? '#dc2626' : '#2563eb') . ';">' . ($sisaHari <= 0 ? 'Today!' : $sisaHari . ' days') . '</strong></td>
                     </tr>
                 </table>
                 
-                <p>Mohon segera melakukan pengembalian barang sebelum tanggal tersebut untuk menghindari keterlambatan.</p>
+                <p>Please return the items before the above date to avoid late returns.</p>
                 
-                <p>Terima kasih atas perhatian dan kerjasamanya.</p>
+                <p>Thank you for your attention and cooperation.</p>
                 
                 <p style="margin-top: 24px; color: #6b7280; font-size: 13px;">
-                    <em>Email ini dikirim secara otomatis oleh sistem. Jika Anda sudah mengembalikan barang, mohon abaikan email ini.</em>
+                    <em>This email is sent automatically by the system. If you have already returned the items, please ignore this email.</em>
                 </p>
             </div>
             <div class="footer">
-                &copy; ' . date('Y') . ' ICT Komatsu Indonesia — Sistem Peminjaman Barang
+                &copy; ' . date('Y') . ' ICT Komatsu Indonesia — Item Borrowing System
             </div>
         </div>
     </body>
@@ -406,27 +406,27 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
 
 
 // ============================================================
-// FUNGSI: Template Email Plain Text — dinamis berdasarkan sisa hari
+// FUNCTION: Plain Text Email Template — dynamic based on remaining days
 // ============================================================
 function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari) {
     $pesanSisa = $sisaHari <= 0 
-        ? "Masa peminjaman barang Anda SUDAH JATUH TEMPO hari ini." 
-        : "Masa peminjaman barang Anda akan berakhir dalam {$sisaHari} hari (tanggal {$tglKembali}).";
+        ? "Your item borrowing period is DUE TODAY." 
+        : "Your item borrowing period will end in {$sisaHari} days (date {$tglKembali}).";
 
-    return "Halo {$nama},
+    return "Hello {$nama},
 
 {$pesanSisa}
 
-Detail Peminjaman:
-- Kode Peminjaman : {$kode}
-- Tanggal Pinjam  : {$tglPinjam}
-- Batas Kembali   : {$tglKembali}
-- Sisa Hari       : " . ($sisaHari <= 0 ? 'HARI INI!' : "{$sisaHari} hari") . "
+Borrowing Details:
+- Borrowing Code  : {$kode}
+- Borrow Date     : {$tglPinjam}
+- Return Deadline  : {$tglKembali}
+- Days Remaining   : " . ($sisaHari <= 0 ? 'TODAY!' : "{$sisaHari} days") . "
 
-Mohon segera melakukan pengembalian sebelum tanggal tersebut.
+Please return the items before the above date.
 
-Terima kasih.
+Thank you.
 
 ---
-Email ini dikirim otomatis oleh Sistem Peminjaman Komatsu Indonesia.";
+This email is sent automatically by the Komatsu Indonesia Borrowing System.";
 }

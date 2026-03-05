@@ -30,11 +30,11 @@ try {
     $current = $stmt_check->get_result()->fetch_assoc();
     
     if (!$current) {
-        throw new Exception("Peminjaman tidak ditemukan");
+        throw new Exception("Borrowing not found");
     }
     
-    if ($current['status'] === 'Ditolak' || $current['status'] === 'Dikembalikan') {
-        throw new Exception("Peminjaman sudah berstatus '{$current['status']}', tidak dapat diproses lagi");
+    if ($current['status'] === 'Ditolak' || $current['status'] === 'Dikembalikan' || $current['status'] === 'Partial Approved' || $current['status'] === 'Sedang Dipinjam') {
+        throw new Exception("Borrowing already has status '{$current['status']}', cannot be processed again");
     }
     
     $successMessage = '';
@@ -46,7 +46,7 @@ try {
         $stmt_approve = $conn->prepare("UPDATE peminjaman SET status='Sedang Dipinjam', tanggal_disetujui=? WHERE id=?");
         $stmt_approve->bind_param("si", $tanggal_disetujui, $id);
         $stmt_approve->execute();
-        $successMessage = "Peminjaman disetujui dan status berubah menjadi Sedang Dipinjam.";
+        $successMessage = "Borrowing approved and status changed to Currently Borrowed.";
     } elseif ($status === 'Ditolak') {
         // Manager reject - store rejection reason in catatan field
         $rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';
@@ -71,9 +71,9 @@ try {
             $stmt_restore->execute();
         }
         
-        $successMessage = "Peminjaman ditolak oleh Manager. Stok barang berhasil dikembalikan.";
+        $successMessage = "Borrowing rejected by Manager. Item stock successfully restored.";
     } else {
-        throw new Exception("Status tidak valid: $status");
+        throw new Exception("Invalid status: $status");
     }
     
     $conn->commit();
@@ -93,7 +93,7 @@ try {
     if ($status === 'Ditolak') {
         try {
             require_once __DIR__ . '/../email/send-rejected.php';
-            sendRejectedEmail($conn, $id, 'Peminjaman');
+            sendRejectedEmail($conn, $id, 'Loan');
         } catch (Exception $emailEx) {
             error_log("[EMAIL ERROR] approver/approve-reject: " . $emailEx->getMessage());
         }

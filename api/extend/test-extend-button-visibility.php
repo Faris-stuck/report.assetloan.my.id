@@ -158,8 +158,8 @@ if ($failed === 0) {
 
 echo "\n═══════════════════════════════════════════════════════════\n";
 echo "\nKEY POINTS:\n";
-echo "1. Tombol EXTEND ditampilkan berdasarkan peminjaman.status\n";
-echo "2. BUKAN berdasarkan ada/tidaknya extend atau status extend\n";
-echo "3. User bisa extend berkali-kali selama peminjaman aktif\n";
-echo "4. Status extend (Approved, Pending) hanya untuk informasi\n";
+echo "1. EXTEND Button displayed based on peminjaman.status\n";
+echo "2. NOT based on presence/absence of extend or extend status\n";
+echo "3. User can extend multiple times as long as borrowing is active\n";
+echo "4. Extend status (Approved, Pending) is for information only\n";
 echo "═══════════════════════════════════════════════════════════\n";

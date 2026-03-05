@@ -1,24 +1,24 @@
 <?php
 /**
  * ============================================================
- * CRON: Auto-Update Status Dinamis Pengembalian
+ * CRON: Auto-Update Dynamic Return Status
  * ============================================================
  * 
  * File   : /PROJECT/api/cron/update-due-status.php
- * Akses  : http://localhost/PROJECT/api/cron/update-due-status.php
+ * Access : http://localhost/PROJECT/api/cron/update-due-status.php
  * 
  * Logic:
- *   - Status aktif (Sedang Dipinjam / Due% / Overdue / Sebagian Dikembalikan / Proses Return)
- *     di-update berdasarkan sisa hari dari NEAREST expected return (mempertimbangkan extend):
- *     > 7 hari  → Tetap status asal (Sedang Dipinjam / Sebagian Dikembalikan / Proses Return)
- *     2-7 hari  → Due In X Days
- *     1 hari    → Due In 1 Day
- *     0 hari    → Due Today
- *     < 0 hari  → Overdue
- *   - Status non-aktif (Dikembalikan, Ditolak, dll) TIDAK diubah.
- *   - Menggunakan getNearestExpectedReturn() untuk akurasi dengan extend per-unit.
+ *   - Active status (Sedang Dipinjam / Due% / Overdue / Sebagian Dikembalikan / Proses Return)
+ *     updated based on remaining days from NEAREST expected return (considering extensions):
+ *     > 7 days  → Keep original status (Sedang Dipinjam / Sebagian Dikembalikan / Proses Return)
+ *     2-7 days  → Due In X Days
+ *     1 day     → Due In 1 Day
+ *     0 days    → Due Today
+ *     < 0 days  → Overdue
+ *   - Inactive status (Dikembalikan, Ditolak, etc.) NOT changed.
+ *   - Uses getNearestExpectedReturn() for accuracy with per-unit extensions.
  * 
- * Cron job (setiap hari jam 00:05):
+ * Cron job (every day at 00:05):
  *   5 0 * * * /opt/lampp/bin/php /opt/lampp/htdocs/PROJECT/api/cron/update-due-status.php >> /opt/lampp/htdocs/PROJECT/api/cron/due-status.log 2>&1
  * 
  * ============================================================
@@ -32,12 +32,12 @@ if (php_sapi_name() !== 'cli') {
 }
 
 echo "============================================================\n";
-echo "  CRON: Auto-Update Status Dinamis Pengembalian\n";
-echo "  Waktu eksekusi: " . date('Y-m-d H:i:s') . "\n";
+echo "  CRON: Auto-Update Dynamic Return Status\n";
+echo "  Execution time: " . date('Y-m-d H:i:s') . "\n";
 echo "============================================================\n\n";
 
 // ============================================================
-// 2. KONEKSI DATABASE
+// 2. DATABASE CONNECTION
 // ============================================================
 if (php_sapi_name() === 'cli') {
     $_SERVER['HTTP_HOST'] = 'localhost';
@@ -46,18 +46,18 @@ if (php_sapi_name() === 'cli') {
 require_once __DIR__ . '/../koneksi.php';
 
 if ($conn->connect_error) {
-    echo "[ERROR] Koneksi database gagal: " . $conn->connect_error . "\n";
+    echo "[ERROR] Database connection failed: " . $conn->connect_error . "\n";
     exit(1);
 }
-echo "[OK] Koneksi database berhasil.\n\n";
+echo "[OK] Database connection successful.\n\n";
 
 // ============================================================
-// 3. UPDATE DINAMIS: Semua peminjaman aktif
-//    Status aktif = 'Sedang Dipinjam' OR LIKE 'Due%' OR 'Overdue'
-//                   OR 'Sebagian Dikembalikan' OR 'Proses Return'
-//    Menggunakan getNearestExpectedReturn() agar extend diperhitungkan
+// 3. DYNAMIC UPDATE: All active borrowings
+//    Active status = 'Sedang Dipinjam' OR LIKE 'Due%' OR 'Overdue'
+//                    OR 'Sebagian Dikembalikan' OR 'Proses Return'
+//    Uses getNearestExpectedReturn() so extensions are accounted for
 // ============================================================
-echo "--- Update status dinamis berdasarkan sisa hari (nearest expected return) ---\n";
+echo "--- Dynamic status update based on remaining days (nearest expected return) ---\n";
 
 $sql_active = "
     SELECT id, kode_peminjaman, status, rencana_kembali
@@ -91,15 +91,15 @@ if ($active_result && $active_result->num_rows > 0) {
         }
     }
     $update_stmt->close();
-    echo "\n[OK] {$affected} peminjaman status diperbarui.\n\n";
+    echo "\n[OK] {$affected} borrowing statuses updated.\n\n";
 } else {
-    echo "[OK] Tidak ada peminjaman aktif untuk diupdate.\n\n";
+    echo "[OK] No active borrowings to update.\n\n";
 }
 
 // ============================================================
-// 4. TAMPILKAN DETAIL STATUS SAAT INI
+// 4. DISPLAY CURRENT STATUS DETAILS
 // ============================================================
-echo "--- Detail status peminjaman aktif ---\n";
+echo "--- Active borrowing status details ---\n";
 
 $sql_detail = "
     SELECT id, kode_peminjaman, status, rencana_kembali, 
@@ -116,7 +116,7 @@ if ($detail && $detail->num_rows > 0) {
         echo "  [{$row['kode_peminjaman']}] Status: {$row['status']} | Kembali: {$row['rencana_kembali']} | Sisa: {$row['sisa_hari']} hari\n";
     }
 } else {
-    echo "  Tidak ada peminjaman aktif.\n";
+    echo "  No active borrowings.\n";
 }
 
 // ============================================================
@@ -124,8 +124,8 @@ if ($detail && $detail->num_rows > 0) {
 // ============================================================
 echo "\n============================================================\n";
 echo "  SUMMARY:\n";
-echo "  - Total status diperbarui: " . ($affected ?? 0) . "\n";
-echo "  - Selesai: " . date('Y-m-d H:i:s') . "\n";
+echo "  - Total statuses updated: " . ($affected ?? 0) . "\n";
+echo "  - Completed: " . date('Y-m-d H:i:s') . "\n";
 echo "============================================================\n";
 
 $conn->close();

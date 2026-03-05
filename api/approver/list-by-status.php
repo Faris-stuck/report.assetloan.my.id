@@ -33,6 +33,7 @@ try {
         // Ambil detail barang untuk peminjaman ini
         $stmt_detail = $conn->prepare("
             SELECT
+                dp.id AS detail_peminjaman_id,
                 dp.barang_id,
                 b.nama_barang,
                 dp.jumlah,
@@ -50,6 +51,7 @@ try {
         while ($detail_row = $result_detail->fetch_assoc()) {
             $barang_list[] = $detail_row['nama_barang'];
             $detail_barang[] = [
+                'detail_peminjaman_id' => $detail_row['detail_peminjaman_id'],
                 'barang_id' => $detail_row['barang_id'],
                 'nama_barang' => $detail_row['nama_barang'],
                 'jumlah' => $detail_row['jumlah'],

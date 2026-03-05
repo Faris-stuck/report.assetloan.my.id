@@ -2493,7 +2493,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -2505,10 +2505,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -2617,9 +2617,9 @@
                     <div class="col-xl-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Daftar Role</h5>
+                                <h5 class="card-title mb-0">Role List</h5>
                                 <button class="btn btn-primary btn-sm" onclick="openModalTambahRole()">
-                                    <i class="feather-plus me-1"></i> Buat Role Baru
+                                    <i class="feather-plus me-1"></i> Create New Role
                                 </button>
                             </div>
                             <div class="card-body table-responsive">
@@ -2628,10 +2628,10 @@
                                         <tr>
                                             <th width="5%">No</th>
                                             <th width="15%">Role</th>
-                                            <th>Deskripsi</th>
-                                            <th width="12%">Jumlah User</th>
-                                            <th width="10%">Lihat</th>
-                                            <th width="10%">Hapus</th>
+                                            <th>Description</th>
+                                            <th width="12%">User Count</th>
+                                            <th width="10%">View</th>
+                                            <th width="10%">Delete</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabelRoles">
@@ -2649,13 +2649,13 @@
                         <div class="card stretched-card">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <h5 class="card-title mb-0">
-                                    Daftar User
+                                    User List
                                     <span id="filterRoleLabel" class="badge bg-primary ms-2"
                                         style="display:none;"></span>
                                 </h5>
                                 <div class="d-flex gap-2">
                                     <select class="form-select form-select-sm" id="filterRole" style="width: 160px;">
-                                        <option value="">Semua Role</option>
+                                        <option value="">All Roles</option>
                                         <!-- Options populated dynamically -->
                                     </select>
                                 </div>
@@ -2665,12 +2665,12 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th width="5%">No</th>
-                                            <th>Nama</th>
+                                            <th>Name</th>
                                             <th>NRP</th>
                                             <th>Email</th>
                                             <th width="14%">Role</th>
-                                            <th width="14%">Terdaftar</th>
-                                            <th width="10%">Aksi</th>
+                                            <th width="14%">Registered</th>
+                                            <th width="10%">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabelUsers">
@@ -2690,12 +2690,12 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Ubah Role User</h5>
+                            <h5 class="modal-title">Change User Role</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Nama</label>
+                                <label class="form-label fw-semibold">Name</label>
                                 <input type="text" class="form-control" id="editNama">
                             </div>
                             <div class="mb-3">
@@ -2715,9 +2715,9 @@
                             <input type="hidden" id="editUserId">
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="button" class="btn btn-primary" onclick="simpanRole()">
-                                <i class="feather-save me-1"></i> Simpan
+                                <i class="feather-save me-1"></i> Save
                             </button>
                         </div>
                     </div>
@@ -2729,25 +2729,26 @@
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title"><i class="feather-plus-circle me-2"></i>Buat Role Baru</h5>
+                            <h5 class="modal-title"><i class="feather-plus-circle me-2"></i>Create New Role</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Nama Role <span
+                                <label class="form-label fw-semibold">Role Name <span
                                         class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="inputRoleName"
                                     placeholder="Contoh: supervisor, teknisi, operator" autocomplete="off">
-                                <small class="text-muted">Nama role akan diubah ke lowercase dan spasi diganti
+                                <small class="text-muted">Role name will be converted to lowercase and spaces replaced
+                                    with
                                     underscore</small>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Deskripsi</label>
+                                <label class="form-label fw-semibold">Description</label>
                                 <textarea class="form-control" id="inputRoleDesc" rows="3"
-                                    placeholder="Deskripsi tugas dan akses untuk role ini"></textarea>
+                                    placeholder="Task description and access for this role"></textarea>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-semibold">Warna Badge</label>
+                                <label class="form-label fw-semibold">Badge Color</label>
                                 <select class="form-select" id="inputRoleBadge">
                                     <option value="primary">🔵 Primary (Biru)</option>
                                     <option value="secondary" selected>⚫ Secondary (Abu-abu)</option>
@@ -2760,9 +2761,9 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button type="button" class="btn btn-primary" onclick="simpanRoleBaru()">
-                                <i class="feather-save me-1"></i> Simpan
+                                <i class="feather-save me-1"></i> Save
                             </button>
                         </div>
                     </div>
@@ -2774,7 +2775,7 @@
                 <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">User dengan Role: <span id="modalRoleTitle"
+                            <h5 class="modal-title">Users with Role: <span id="modalRoleTitle"
                                     class="badge bg-primary"></span></h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
@@ -2783,7 +2784,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>No</th>
-                                        <th>Nama</th>
+                                        <th>Name</th>
                                         <th>NRP</th>
                                         <th>Email</th>
                                     </tr>
@@ -2871,13 +2872,13 @@
                     return r.json();
                 })
                 .then(res => {
-                    if (!res.status) throw new Error(res.message || 'Gagal memuat data');
+                    if (!res.status) throw new Error(res.message || 'Failed to load data');
 
                     allRolesData = res.data;
                     const tbody = document.getElementById('tabelRoles');
 
                     if (allRolesData.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Tidak ada data role</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No role data</td></tr>';
                         return;
                     }
 
@@ -2890,12 +2891,12 @@
                             <td class="text-center"><span class="fw-bold">${item.jumlah_user}</span></td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary" onclick="lihatUserByRole('${item.role}')">
-                                    <i class="feather-eye me-1"></i>Lihat
+                                    <i class="me-1"></i>View
                                 </button>
                             </td>
                             <td class="text-center">
-                                ${item.is_protected ? '<span class="text-muted fs-11"><i class="feather-lock me-1"></i>Bawaan</span>' : `<button class="btn btn-sm btn-outline-danger" onclick="hapusRole('${item.role}')">
-                                    <i class="feather-trash-2 me-1"></i>Hapus
+                                ${item.is_protected ? '<span class="text-muted fs-11"><i class="feather-lock me-1"></i>Default</span>' : `<button class="btn btn-sm btn-outline-danger" onclick="hapusRole('${item.role}')">
+                                    <i class="feather-trash-2 me-1"></i>Delete
                                 </button>`}
                             </td>
                         </tr>`;
@@ -2909,7 +2910,7 @@
                 .catch(err => {
                     console.error(err);
                     document.getElementById('tabelRoles').innerHTML =
-                        '<tr><td colspan="6" class="text-center text-danger">Gagal memuat data: ' + err.message + '</td></tr>';
+                        '<tr><td colspan="6" class="text-center text-danger">Failed to load data: ' + err.message + '</td></tr>';
                 });
         }
 
@@ -2917,7 +2918,7 @@
         function updateFilterRoleOptions() {
             const sel = document.getElementById('filterRole');
             const currentVal = sel.value;
-            sel.innerHTML = '<option value="">Semua Role</option>';
+            sel.innerHTML = '<option value="">All Roles</option>';
             allRolesData.forEach(r => {
                 sel.innerHTML += `<option value="${r.role}">${getRoleLabel(r.role)}</option>`;
             });
@@ -2943,13 +2944,13 @@
                     return r.json();
                 })
                 .then(res => {
-                    if (!res.status) throw new Error(res.message || 'Gagal memuat data');
+                    if (!res.status) throw new Error(res.message || 'Failed to load data');
                     renderUsersTable(res.data);
                 })
                 .catch(err => {
                     console.error(err);
                     document.getElementById('tabelUsers').innerHTML =
-                        '<tr><td colspan="7" class="text-center text-danger">Gagal memuat data: ' + err.message + '</td></tr>';
+                        '<tr><td colspan="7" class="text-center text-danger">Failed to load data: ' + err.message + '</td></tr>';
                 });
         }
 
@@ -2957,7 +2958,7 @@
             const tbody = document.getElementById('tabelUsers');
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Tidak ada user ditemukan</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>';
                 return;
             }
 
@@ -2991,7 +2992,7 @@
                 .then(r => r.json())
                 .then(res => {
                     if (!res.status || !res.data.length) {
-                        body.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Tidak ada user</td></tr>';
+                        body.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No users</td></tr>';
                         return;
                     }
                     body.innerHTML = res.data.map((u, i) => `
@@ -3004,7 +3005,7 @@
                     `).join('');
                 })
                 .catch(() => {
-                    body.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Gagal memuat</td></tr>';
+                    body.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load</td></tr>';
                 });
         }
 
@@ -3027,7 +3028,7 @@
             const oldRole = document.getElementById('editRoleLama').value;
 
             if (getRoleLabel(newRole) === oldRole) {
-                alert('Role tidak berubah');
+                alert('Role unchanged');
                 return;
             }
 
@@ -3051,14 +3052,14 @@
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
                         if (modalUbahRole) modalUbahRole.hide();
                         loadRoles();
                         loadUsers(document.getElementById('filterRole').value);
                     }
                 })
-                .catch(() => alert('Koneksi gagal'));
+                .catch(() => alert('Connection failed'));
         }
 
         // ─── Open Modal Tambah Role ──────────────────────
@@ -3077,13 +3078,13 @@
             const badgeColor = document.getElementById('inputRoleBadge').value;
 
             if (!roleName) {
-                alert('Nama role wajib diisi');
+                alert('Role name is required');
                 document.getElementById('inputRoleName').focus();
                 return;
             }
 
             if (roleName.length < 2) {
-                alert('Nama role minimal 2 karakter');
+                alert('Role name must be at least 2 characters');
                 return;
             }
 
@@ -3111,20 +3112,20 @@
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
                         if (modalTambahRole) modalTambahRole.hide();
                         loadRoles();
                         loadUsers(document.getElementById('filterRole').value);
                     }
                 })
-                .catch(() => alert('Koneksi gagal'));
+                .catch(() => alert('Connection failed'));
         }
 
         // ─── Hapus Role ──────────────────────────────────
         function hapusRole(roleName) {
             if (isRoleProtected(roleName)) {
-                alert('Role bawaan tidak dapat dihapus');
+                alert('Default role cannot be deleted');
                 return;
             }
 
@@ -3148,13 +3149,13 @@
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
                         loadRoles();
                         loadUsers(document.getElementById('filterRole').value);
                     }
                 })
-                .catch(() => alert('Koneksi gagal'));
+                .catch(() => alert('Connection failed'));
         }
 
         // ─── Helpers ─────────────────────────────────────
@@ -3188,7 +3189,7 @@
                 return;
             }
             if (userData.role !== 'admin') {
-                alert('Akses ditolak');
+                alert('Access denied');
                 window.location.href = '../index.html';
                 return;
             }

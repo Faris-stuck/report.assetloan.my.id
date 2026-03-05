@@ -39,7 +39,7 @@ function populateRoleDropdowns() {
     // Role Group dropdown in ADD USER modal
     const roleGroup = document.getElementById('roleGroup');
     if (roleGroup) {
-        roleGroup.innerHTML = '<option value="">-- Pilih Role Group --</option>';
+        roleGroup.innerHTML = '<option value="">-- Select Role Group --</option>';
         rolesData.forEach(r => {
             roleGroup.innerHTML += `<option value="${r.role}">${r.role.toUpperCase().replace(/_/g, ' ')}</option>`;
         });
@@ -48,7 +48,7 @@ function populateRoleDropdowns() {
     // Role dropdown in ADD USER modal
     const role = document.getElementById('role');
     if (role) {
-        role.innerHTML = '<option value="">-- Pilih Role --</option>';
+        role.innerHTML = '<option value="">-- Select Role --</option>';
         rolesData.forEach(r => {
             role.innerHTML += `<option value="${r.role}">${getRoleLabel(r.role).toUpperCase()}</option>`;
         });
@@ -126,12 +126,12 @@ function tambahUser() {
 
     // Validasi
     if (!nama || !nrp || !email || !password || !role) {
-        showFeedback('Semua field harus diisi', 'warning');
+        showFeedback('All fields are required', 'warning');
         return;
     }
 
     if (password.length < 6) {
-        showFeedback('Password minimal 6 karakter', 'warning');
+        showFeedback('Password must be at least 6 characters', 'warning');
         return;
     }
 
@@ -154,11 +154,11 @@ function tambahUser() {
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     if (modal) modal.hide();
                 }
-                showFeedback('✓ User berhasil dibuat!', 'success');
+                showFeedback('✓ User created successfully!', 'success');
                 document.getElementById('formTambahUser').reset();
                 setTimeout(() => loadUsers(), 500);
             } else {
-                showFeedback(data.message || 'Gagal membuat user', 'danger');
+                showFeedback(data.message || 'Failed to create user', 'danger');
             }
         })
         .catch(error => {
@@ -180,12 +180,12 @@ function loadUsers() {
                 applyFilters();
                 populateChangePasswordSelect(allUsers);
             } else {
-                document.getElementById('tableUsers').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Belum ada data user</td></tr>';
+                document.getElementById('tableUsers').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No user data yet</td></tr>';
                 updateShowingInfo(0, 0, 0);
             }
         })
         .catch(error => {
-            document.getElementById('tableUsers').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">❌ Gagal memuat data: ' + error.message + '</td></tr>';
+            document.getElementById('tableUsers').innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">❌ Failed to load data: ' + error.message + '</td></tr>';
         });
 }
 
@@ -308,7 +308,7 @@ function renderPagination(totalPages) {
 function renderUsersTable(users, startIndex) {
     const tbody = document.getElementById('tableUsers');
     if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Tidak ada data ditemukan</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No data found</td></tr>';
         return;
     }
     tbody.innerHTML = '';
@@ -337,7 +337,7 @@ function renderUsersTable(users, startIndex) {
                         <button class="btn btn-outline-warning" onclick="openEditRoleModal(${user.id}, '${escapedName}', '${user.role}')" title="Edit Role">
                             <i class="feather-edit-2"></i>
                         </button>
-                        <button class="btn btn-outline-danger" onclick="deleteUser(${user.id}, '${escapedName}')" title="Hapus">
+                        <button class="btn btn-outline-danger" onclick="deleteUser(${user.id}, '${escapedName}')" title="Delete">
                             <i class="feather-trash-2"></i>
                         </button>
                     </div>
@@ -370,11 +370,11 @@ function updateUserRole(userId, newRole) {
         })
         .then(data => {
             if (data.status) {
-                showFeedback('✓ Role berhasil diubah', 'success');
+                showFeedback('✓ Role updated successfully', 'success');
                 closeEditRoleModal();
                 loadUsers();
             } else {
-                showFeedback(data.message || 'Gagal mengubah role', 'danger');
+                showFeedback(data.message || 'Failed to update role', 'danger');
             }
         })
         .catch(error => showFeedback('❌ Error: ' + error.message, 'danger'));
@@ -383,7 +383,7 @@ function updateUserRole(userId, newRole) {
 // ═══════════════════════════════════════════════════════════════
 // Delete User
 function deleteUser(userId, userName) {
-    if (!confirm('Apakah Anda yakin ingin menghapus user: ' + userName + '?')) return;
+    if (!confirm('Are you sure you want to delete user: ' + userName + '?')) return;
     const formData = new FormData();
     formData.append('id', userId);
 
@@ -394,10 +394,10 @@ function deleteUser(userId, userName) {
         })
         .then(data => {
             if (data.status) {
-                showFeedback('✓ User berhasil dihapus', 'success');
+                showFeedback('✓ User deleted successfully', 'success');
                 loadUsers();
             } else {
-                showFeedback(data.message || 'Gagal menghapus user', 'danger');
+                showFeedback(data.message || 'Failed to delete user', 'danger');
             }
         })
         .catch(error => showFeedback('❌ Error: ' + error.message, 'danger'));
@@ -433,7 +433,7 @@ if (formEditRole) {
 function populateChangePasswordSelect(users) {
     const sel = document.getElementById('cpUserId');
     if (!sel) return;
-    sel.innerHTML = '<option value="">-- Pilih User --</option>';
+    sel.innerHTML = '<option value="">-- Select User --</option>';
     users.forEach(u => {
         sel.innerHTML += `<option value="${u.id}">${u.nama} (${u.nrp})</option>`;
     });
@@ -461,12 +461,12 @@ function openChangePasswordFromToolbar() {
     const checkedBoxes = document.querySelectorAll('.user-check:checked');
 
     if (checkedBoxes.length === 0) {
-        showFeedback('Pilih salah satu user dari tabel terlebih dahulu, atau klik tombol 🔒 di row user', 'warning');
+        showFeedback('Select a user from the table first, or click the 🔒 button on the user row', 'warning');
         return;
     }
 
     if (checkedBoxes.length > 1) {
-        showFeedback('Hanya pilih 1 user untuk change password', 'warning');
+        showFeedback('Select only 1 user for password change', 'warning');
         return;
     }
 
@@ -478,7 +478,7 @@ function openChangePasswordFromToolbar() {
     if (selectedUser) {
         openChangePasswordForUser(selectedUserId, selectedUser.nama);
     } else {
-        showFeedback('User tidak ditemukan', 'danger');
+        showFeedback('User not found', 'danger');
     }
 }
 
@@ -487,9 +487,9 @@ function changePassword() {
     const newPass = document.getElementById('cpNewPassword').value;
     const confirmPass = document.getElementById('cpConfirmPassword').value;
 
-    if (!userId) { showFeedback('Pilih user terlebih dahulu', 'warning'); return; }
-    if (!newPass || newPass.length < 6) { showFeedback('Password minimal 6 karakter', 'warning'); return; }
-    if (newPass !== confirmPass) { showFeedback('Password tidak cocok', 'warning'); return; }
+    if (!userId) { showFeedback('Select a user first', 'warning'); return; }
+    if (!newPass || newPass.length < 6) { showFeedback('Password must be at least 6 characters', 'warning'); return; }
+    if (newPass !== confirmPass) { showFeedback('Passwords do not match', 'warning'); return; }
 
     const fd = new FormData();
     fd.append('id', userId);
@@ -501,10 +501,10 @@ function changePassword() {
             if (res.status) {
                 const modalEl = document.getElementById('modalChangePassword');
                 if (modalEl) { const m = bootstrap.Modal.getInstance(modalEl); if (m) m.hide(); }
-                showFeedback('✓ Password berhasil diubah', 'success');
+                showFeedback('✓ Password changed successfully', 'success');
                 document.getElementById('formChangePassword').reset();
             } else {
-                showFeedback(res.message || 'Gagal mengubah password', 'danger');
+                showFeedback(res.message || 'Failed to change password', 'danger');
             }
         })
         .catch(err => showFeedback('❌ Error: ' + err.message, 'danger'));
@@ -514,7 +514,7 @@ function changePassword() {
 // Export CSV
 function exportUsersCSV() {
     if (!allUsers || allUsers.length === 0) {
-        showFeedback('Tidak ada data untuk di-export', 'warning');
+        showFeedback('No data to export', 'warning');
         return;
     }
     const header = ['No', 'Nama', 'NRP', 'Email', 'Role', 'Created'];
@@ -554,7 +554,7 @@ function getRoleLabel(role) {
 function showFeedback(message, type = 'info') {
     const modal = document.getElementById('modalFeedback');
     if (modal) {
-        document.getElementById('modalTitle').textContent = type === 'success' ? 'Berhasil' : type === 'warning' ? 'Peringatan' : 'Kesalahan';
+        document.getElementById('modalTitle').textContent = type === 'success' ? 'Success' : type === 'warning' ? 'Warning' : 'Error';
         document.getElementById('modalMessage').textContent = message;
 
         // Ubah warna modal berdasarkan tipe

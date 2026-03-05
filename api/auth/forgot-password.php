@@ -9,12 +9,12 @@ if (!$email || !$new_password) {
     http_response_code(400);
     echo json_encode([
         "status" => false,
-        "message" => "Email dan password diperlukan"
+        "message" => "Email and password are required"
     ]);
     exit;
 }
 
-// Cek apakah email ada di database
+// Check if email exists in database
 $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
 if (!$stmt) {
     http_response_code(500);
@@ -33,7 +33,7 @@ if (!$res || $res->num_rows === 0) {
     http_response_code(404);
     echo json_encode([
         "status" => false,
-        "message" => "Email tidak ditemukan dalam sistem"
+        "message" => "Email not found in the system"
     ]);
     exit;
 }
@@ -57,13 +57,13 @@ $update_stmt->bind_param("ss", $plain_password, $email);
 if ($update_stmt->execute()) {
     echo json_encode([
         "status" => true,
-        "message" => "Password berhasil direset"
+        "message" => "Password reset successfully"
     ]);
 } else {
     http_response_code(500);
     echo json_encode([
         "status" => false,
-        "message" => "Gagal memperbarui password"
+        "message" => "Failed to update password"
     ]);
 }
 

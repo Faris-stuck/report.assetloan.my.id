@@ -8,16 +8,16 @@
 require_once __DIR__ . '/../config/database.php';
 
 // ============================================================
-// HELPER: Hitung status due secara REAL-TIME dari rencana_kembali
+// HELPER: Calculate due status in REAL-TIME from expected return date
 // ============================================================
 /**
- * Menghitung status due peminjaman secara real-time.
- * Hanya override status jika status saat ini bersifat "active borrowing"
- * (Sedang Dipinjam / Due% / Overdue). Status non-aktif TIDAK diubah.
+ * Calculate loan due status in real-time.
+ * Only override status if current status is "active borrowing"
+ * (Sedang Dipinjam / Due% / Overdue). Non-active statuses are NOT changed.
  *
- * @param string $dbStatus        Status dari database
- * @param string $rencanaKembali  Tanggal expected return (Y-m-d, Y-m-d H:i:s, atau d/m/Y)
- * @return string Status real-time berdasarkan selisih hari
+ * @param string $dbStatus        Status from database
+ * @param string $rencanaKembali  Expected return date (Y-m-d, Y-m-d H:i:s, or d/m/Y)
+ * @return string Real-time status based on day difference
  */
 function computeDueStatus($dbStatus, $rencanaKembali) {
     if (empty($rencanaKembali) || $rencanaKembali === '-') {
@@ -42,7 +42,7 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
         return $dbStatus;
     }
 
-    // Parse tanggal — support Y-m-d, Y-m-d H:i:s, dan d/m/Y
+    // Parse date — support Y-m-d, Y-m-d H:i:s, and d/m/Y
     $tz = new DateTimeZone('Asia/Jakarta');
     $today = new DateTime('today', $tz);
 
@@ -61,7 +61,7 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
     $returnDate->setTime(0, 0, 0);
     $today->setTime(0, 0, 0);
 
-    // Hitung days_remaining = expected_return - today (dalam hari, tanpa jam)
+    // Calculate days_remaining = expected_return - today (in days, without time)
     $diff = $today->diff($returnDate);
     $daysRemaining = (int) $diff->format('%r%a');
 
@@ -187,7 +187,7 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
             continue;
         }
 
-        // Track proses return
+        // Track return process
         if ($rs === 'Proses Return') {
             $has_proses_return = true;
         }

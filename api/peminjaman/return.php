@@ -37,13 +37,13 @@ $items_array = [];
 
 if (!$user_id) {
     http_response_code(403);
-    echo json_encode(["status" => false, "message" => "User tidak terdeteksi. Silahkan login kembali."]);
+    echo json_encode(["status" => false, "message" => "User not detected. Please log in again."]);
     exit;
 }
 
 if (!$peminjaman_id) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "peminjaman_id wajib"]);
+    echo json_encode(["status" => false, "message" => "peminjaman_id is required"]);
     exit;
 }
 
@@ -60,7 +60,7 @@ if (!$peminjaman_id) {
 
     if (!$p) {
         http_response_code(404);
-        echo json_encode(["status" => false, "message" => "Peminjaman ID $peminjaman_id tidak ditemukan atau bukan milik user ini"]);
+        echo json_encode(["status" => false, "message" => "Borrowing ID $peminjaman_id not found or does not belong to this user"]);
         exit;
     }
     
@@ -109,7 +109,7 @@ if (!$peminjaman_id) {
         http_response_code(400);
         echo json_encode([
             "status" => false, 
-            "message" => "Anda sudah memiliki pengajuan pengembalian yang menunggu persetujuan. Silakan menunggu PIC/Admin memeriksa pengajuan sebelumnya."
+            "message" => "You already have a pending return request awaiting approval. Please wait for PIC/Admin to review the previous submission."
         ]);
         exit;
     }
@@ -120,7 +120,7 @@ if (!$peminjaman_id) {
         http_response_code(400);
         echo json_encode([
             "status" => false, 
-            "message" => "Semua barang sudah dikembalikan. Total: $total_items, Sudah dikembalikan: $total_returned"
+            "message" => "All items have been returned. Total: $total_items, Already returned: $total_returned"
         ]);
         exit;
     }
@@ -148,7 +148,7 @@ try {
     ");
     $ins->bind_param("siis", $kode_pengembalian, $peminjaman_id, $user_id, $catatan_user);
     if (!$ins->execute()) {
-        throw new Exception("Gagal membuat pengajuan pengembalian: " . $ins->error);
+        throw new Exception("Failed to create return request: " . $ins->error);
     }
     $pengembalian_id = (int)$conn->insert_id;
 
@@ -156,7 +156,7 @@ try {
     if (!empty($items_json)) {
         $items_array = json_decode($items_json, true);
         if (!is_array($items_array)) {
-            throw new Exception("Items JSON tidak valid: " . json_last_error_msg());
+            throw new Exception("Invalid Items JSON: " . json_last_error_msg());
         }
     }
 
@@ -186,21 +186,21 @@ try {
         if ($jumlah_kembali > 0) {
             $insd->bind_param("iiisii", $pengembalian_id, $barang_id, $jumlah_kembali, $kondisi_kembali, $jumlah_rusak, $sisa_dikembalikan);
             if (!$insd->execute()) {
-                throw new Exception("Gagal membuat detail pengembalian: " . $insd->error);
+                throw new Exception("Failed to create return detail: " . $insd->error);
             }
             $count++;
         }
     }
 
     if ($count === 0) {
-        throw new Exception("Belum ada item yang diajukan untuk pengembalian. Silahkan isi qty return minimal 1 item.");
+        throw new Exception("No items submitted for return. Please enter a return quantity for at least 1 item.");
     }
     
     // Set peminjaman status to 'Proses Return' to reflect return process in DB
     $upd_status = $conn->prepare("UPDATE peminjaman SET status = 'Proses Return' WHERE id = ?");
     $upd_status->bind_param("i", $peminjaman_id);
     if (!$upd_status->execute()) {
-        throw new Exception("Gagal update status peminjaman: " . $upd_status->error);
+        throw new Exception("Failed to update borrowing status: " . $upd_status->error);
     }
 
     $conn->commit();
@@ -215,7 +215,7 @@ try {
 
     echo json_encode([
         "status" => true,
-        "message" => "Pengembalian berhasil diajukan. Menunggu pengecekan Admin/PIC.",
+        "message" => "Return request successfully submitted. Awaiting Admin/PIC verification.",
         "pengembalian_id" => $pengembalian_id
     ]);
 } catch (Exception $e) {

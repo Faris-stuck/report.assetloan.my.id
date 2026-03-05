@@ -1,14 +1,14 @@
 <?php
 /**
  * ============================================================
- * EMAIL: Peminjaman Ditolak (Status → Ditolak)
+ * EMAIL: Loan Rejected (Status → Rejected)
  * ============================================================
  * 
- * Email dikirim ke SEMUA pihak terkait:
- *   - USER (pemilik peminjaman)
- *   - ADMIN (semua admin)
- *   - PIC_BARANG (semua PIC)
- *   - PELAKU AKSI (dari SESSION)
+ * Email sent to ALL related parties:
+ *   - USER (loan owner)
+ *   - ADMIN (all admins)
+ *   - PIC_BARANG (all PICs)
+ *   - ACTOR (from SESSION)
  * 
  * File   : /PROJECT/api/email/send-rejected.php
  * 
@@ -18,19 +18,19 @@
 require_once __DIR__ . '/email-functions.php';
 
 /**
- * Kirim email notifikasi peminjaman ditolak ke SEMUA pihak terkait
+ * Send loan rejected notification email to ALL related parties
  *
- * @param mysqli $conn            Koneksi database
- * @param int    $peminjamanId    ID peminjaman
- * @param string $konteks         Konteks penolakan (Peminjaman/Pengembalian)
- * @return bool                   true jika berhasil, false jika gagal
+ * @param mysqli $conn            Database connection
+ * @param int    $peminjamanId    Loan ID
+ * @param string $konteks         Rejection context (Loan/Return)
+ * @return bool                   true if successful, false if failed
  */
-function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Peminjaman') {
-    // Ambil data peminjaman + user
+function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Loan') {
+    // Get loan + user data
     $data = getPeminjamanWithUser($conn, $peminjamanId);
 
     if (!$data) {
-        error_log("[EMAIL] send-rejected: Data peminjaman #{$peminjamanId} tidak ditemukan.");
+        error_log("[EMAIL] send-rejected: Loan data #{$peminjamanId} not found.");
         return false;
     }
 
@@ -42,92 +42,92 @@ function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Peminjaman') {
     $tglKembali  = !empty($data['rencana_kembali']) ? date('d F Y', strtotime($data['rencana_kembali'])) : '-';
 
     // ============================================================
-    // KUMPULKAN SEMUA PENERIMA DALAM ARRAY
+    // COLLECT ALL RECIPIENTS IN ARRAY
     // ============================================================
     $recipients = [];
 
-    // 1. USER (pemilik peminjaman)
+    // 1. USER (loan owner)
     $recipients[] = ['email' => $email, 'nama' => $nama];
 
-    // 2. SEMUA ADMIN
+    // 2. ALL ADMINS
     $admins = getAdminEmails($conn);
     foreach ($admins as $admin) {
         $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
     }
 
-    // 3. SEMUA PIC_BARANG
+    // 3. ALL PIC_BARANG
     $pics = getPicBarangEmails($conn);
     foreach ($pics as $pic) {
         $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
     }
 
-    // 4. PELAKU AKSI (dari SESSION)
+    // 4. ACTOR (from SESSION)
     $actor = getActorEmail($conn);
     if ($actor) {
         $recipients[] = ['email' => $actor['email'], 'nama' => $actor['nama']];
     }
 
-    // DEDUPLIKASI
+    // DEDUPLICATION
     $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
 
     if (empty($recipients)) {
-        error_log("[EMAIL] send-rejected: Tidak ada penerima valid untuk peminjaman #{$peminjamanId}");
+        error_log("[EMAIL] send-rejected: No valid recipients for loan #{$peminjamanId}");
         return false;
     }
 
-    // Buat body email
+    // Build email body
     $bodyHtml = '
-        <p>Halo,</p>
+        <p>Hello,</p>
         
         <div class="warning-box">
-            <strong>❌ ' . htmlspecialchars($konteks) . ' Ditolak</strong><br>
-            Permintaan ' . htmlspecialchars(strtolower($konteks)) . ' dari <strong>' . htmlspecialchars($nama) . '</strong> telah ditolak.
+            <strong>❌ ' . htmlspecialchars($konteks) . ' Rejected</strong><br>
+            ' . htmlspecialchars($konteks) . ' request from <strong>' . htmlspecialchars($nama) . '</strong> has been rejected.
         </div>
         
-        <p>Berikut detail ' . htmlspecialchars(strtolower($konteks)) . ':</p>
+        <p>' . htmlspecialchars($konteks) . ' details:</p>
         
         <table class="info-table">
             <tr>
-                <td>Kode Peminjaman</td>
+                <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
             <tr>
-                <td>Nama Peminjam</td>
+                <td>Borrower Name</td>
                 <td>' . htmlspecialchars($nama) . '</td>
             </tr>
             <tr>
-                <td>Tanggal Pinjam</td>
+                <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>
             </tr>
             <tr>
-                <td>Rencana Kembali</td>
+                <td>Planned Return Date</td>
                 <td>' . htmlspecialchars($tglKembali) . '</td>
             </tr>
             <tr>
-                <td>Alasan Penolakan</td>
+                <td>Rejection Reason</td>
                 <td><strong style="color: #dc2626;">' . htmlspecialchars($catatan) . '</strong></td>
             </tr>
         </table>
         
-        <p>Terima kasih.</p>';
+        <p>Thank you.</p>';
 
-    $subject  = $konteks . ' Ditolak - ' . $kode;
-    $fullHtml = buildEmailTemplate('❌ ' . $konteks . ' Ditolak', $bodyHtml);
+    $subject  = $konteks . ' Rejected - ' . $kode;
+    $fullHtml = buildEmailTemplate('❌ ' . $konteks . ' Rejected', $bodyHtml);
 
     // ============================================================
-    // KIRIM EMAIL MENGGUNAKAN LOOP KE SEMUA PENERIMA
+    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
     // ============================================================
     $totalSent = 0;
     foreach ($recipients as $r) {
         if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
-            error_log("[EMAIL] send-rejected: EMAIL TERKIRIM KE: " . $r['email']);
+            error_log("[EMAIL] send-rejected: EMAIL SENT TO: " . $r['email']);
             $totalSent++;
         } else {
-            error_log("[EMAIL] send-rejected: EMAIL GAGAL KE: " . $r['email']);
+            error_log("[EMAIL] send-rejected: EMAIL FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-rejected: Total terkirim {$totalSent}/" . count($recipients) . " untuk peminjaman #{$peminjamanId} ({$konteks})");
+    error_log("[EMAIL] send-rejected: Total sent {$totalSent}/" . count($recipients) . " for borrowing #{$peminjamanId} ({$konteks})");
     return $totalSent > 0;
 }
 
@@ -142,14 +142,14 @@ if (basename($_SERVER['SCRIPT_FILENAME'] ?? '') === 'send-rejected.php') {
     require_once __DIR__ . '/../koneksi.php';
 
     $id = $_GET['id'] ?? ($argv[1] ?? null);
-    $konteks = $_GET['konteks'] ?? 'Peminjaman';
+    $konteks = $_GET['konteks'] ?? 'Loan';
 
     if (!$id) {
         echo "Usage: send-rejected.php?id=PEMINJAMAN_ID&konteks=Peminjaman\n";
         exit;
     }
 
-    echo "Mengirim email rejected untuk peminjaman #{$id} ({$konteks}) ke SEMUA pihak...\n";
+    echo "Sending rejected email for loan #{$id} ({$konteks}) to ALL parties...\n";
     $result = sendRejectedEmail($conn, (int)$id, $konteks);
-    echo $result ? "✅ Email berhasil dikirim ke semua pihak!\n" : "❌ Email gagal dikirim.\n";
+    echo $result ? "✅ Email successfully sent to all parties!\n" : "❌ Email failed to send.\n";
 }

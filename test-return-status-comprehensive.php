@@ -146,7 +146,7 @@ header('Content-Type: text/html; charset=utf-8');
                     <tr>
                         <td><code>Sedang Dipinjam</code></td>
                         <td>Not yet returned</td>
-                        <td>All items: "Belum Dikembalikan" [?]</td>
+                        <td>All items: "Not Yet Returned" [?]</td>
                     </tr>
                 </table>
             </div>

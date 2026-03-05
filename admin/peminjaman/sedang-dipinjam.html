@@ -226,7 +226,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -238,10 +238,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -293,7 +293,7 @@
 
                     <div class="card stretch stretch-full">
                         <div class="card-header">
-                            <h5 class="mb-0">Sedang Dipinjam</h5>
+                            <h5 class="mb-0">Currently Borrowed</h5>
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-bordered align-middle">
@@ -312,7 +312,7 @@
                                 </thead>
                                 <tbody id="tabelSedangDipinjam">
                                     <tr>
-                                        <td colspan="9" class="text-center">Memuat data...</td>
+                                        <td colspan="9" class="text-center">Loading data...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -441,13 +441,13 @@
                     } else {
                         console.error("Error loading data:", res.message);
                         document.getElementById("tabelSedangDipinjam").innerHTML =
-                            '<tr><td colspan="9" class="text-center">Gagal memuat data</td></tr>';
+                            '<tr><td colspan="9" class="text-center">Failed to load data</td></tr>';
                     }
                 })
                 .catch(error => {
                     console.error("Network error:", error);
                     document.getElementById("tabelSedangDipinjam").innerHTML =
-                        '<tr><td colspan="9" class="text-center">Error koneksi</td></tr>';
+                        '<tr><td colspan="9" class="text-center">Connection error</td></tr>';
                 });
         }
 
@@ -456,7 +456,7 @@
             const tbody = document.getElementById("tabelSedangDipinjam");
 
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada peminjaman yang sedang berlangsung</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">No active borrowings</td></tr>';
                 return;
             }
 
@@ -471,9 +471,9 @@
       <td>${item.rencana_kembali}</td>
       <td><span class="badge ${item.status === 'Overdue' || item.status === 'Due Today' ? 'bg-danger' : item.status.startsWith('Due') ? 'bg-warning text-dark' : 'bg-primary'}">${item.status}</span></td>
       <td>
-        <button class="btn btn-sm btn-info"
+        <button class="btn btn-sm btn-outline-primary"
           onclick="lihatDetail(${item.id})">
-          <i class="feather-eye"></i> Detail
+           Detail
         </button>
       </td>
     </tr>
@@ -510,6 +510,7 @@
                         else if (st === 'Sedang Dipinjam') badgeCls = 'bg-primary';
                         else if (st === 'Sebagian Dikembalikan') badgeCls = 'bg-warning text-dark';
                         else if (st === 'Proses Return') badgeCls = 'bg-info text-dark';
+                        else if (st === 'Partial Approved') badgeCls = 'bg-info';
                         document.getElementById('detailStatus').innerHTML = `<span class="badge ${badgeCls}">${escapeHtml(st)}</span>`;
 
                         // Render per-unit rows
@@ -534,11 +535,15 @@
                                 <td class="text-center">${escapeHtml(u.expected_return)}</td>
                             </tr>`;
                         }).join('');
-                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">Tidak ada barang</td></tr>';
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
-                        // Notes
+                        // Notes / Rejection reason
                         const catatanDiv = document.getElementById('detailCatatanDiv');
-                        if (p.catatan && p.catatan.trim() !== '') {
+                        const reason = p.rejection_reason || p.catatan || '';
+                        if ((p.status === 'Ditolak' || p.status === 'Partial Approved') && reason) {
+                            document.getElementById('detailCatatan').textContent = escapeHtml(reason);
+                            catatanDiv.style.display = 'block';
+                        } else if (p.catatan && p.catatan.trim() !== '') {
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
                             catatanDiv.style.display = 'block';
                         } else {
@@ -548,12 +553,12 @@
                         const modal = new bootstrap.Modal(document.getElementById('detailBorrowingModal'));
                         modal.show();
                     } else {
-                        alert('Gagal memuat detail peminjaman');
+                        alert('Failed to load borrowing details');
                     }
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert('Error memuat detail');
+                    alert('Error loading details');
                 });
         }
 

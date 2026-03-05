@@ -21,7 +21,7 @@ $role = $session->getRole();
 $allowed_roles = ['admin', 'pic_barang', 'manager'];
 if (!in_array($role, $allowed_roles)) {
     http_response_code(403);
-    echo json_encode(['status' => false, 'message' => 'Akses ditolak']);
+    echo json_encode(['status' => false, 'message' => 'Access denied']);
     exit;
 }
 

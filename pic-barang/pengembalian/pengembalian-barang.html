@@ -34,7 +34,7 @@
             </div>
             <div class="navbar-content">
                 <ul class="nxl-navbar">
-                    <li class="nxl-item nxl-caption"><label>PIC Barang</label></li>
+                    <li class="nxl-item nxl-caption"><label>PIC Item</label></li>
                     <li class="nxl-item">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-airplay"></i></span>
@@ -178,7 +178,7 @@
                 <!-- Extend Requests Section -->
                 <div class="card mt-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Extend Requests (Perpanjangan Peminjaman)</h5>
+                        <h5 class="card-title mb-0">Extend Requests (Loan Extension)</h5>
                         <div>
                             <select id="extendFilter" class="form-select form-select-sm"
                                 style="width:auto;display:inline-block;" onchange="loadExtendRequests()">
@@ -245,7 +245,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Item</th>
-                                    <th class="text-center" style="width: 90px;">QTY Pinjam</th>
+                                    <th class="text-center" style="width: 90px;">Borrow QTY</th>
                                     <th style="width: 120px;">QTY Return</th>
                                     <th class="text-center" style="width: 110px;">Good condition</th>
                                     <th class="text-end" style="width: 150px;">Damage Condicition</th>
@@ -358,7 +358,7 @@
                 })
                 .then(res => {
                     if (!res.status) {
-                        if (res.message && res.message.toLowerCase().includes('akses ditolak')) {
+                        if (res.message && res.message.toLowerCase().includes('access denied')) {
                             window.location.href = BASE_URL + '/index.html';
                             return;
                         }
@@ -417,7 +417,7 @@
                 })
                 .then(res => {
                     if (!res.status) {
-                        if (res.message && res.message.toLowerCase().includes('akses ditolak')) {
+                        if (res.message && res.message.toLowerCase().includes('access denied')) {
                             window.location.href = BASE_URL + '/index.html';
                             return;
                         }
@@ -453,7 +453,7 @@
                             </td>
                             <td class="text-center">
                                 <div><strong>${qtPinjam}</strong></div>
-                                ${sisaPinjam > 0 ? `<div class="small text-muted">Sisa: ${sisaPinjam}</div>` : ''}
+                                ${sisaPinjam > 0 ? `<div class="small text-muted">Remaining: ${sisaPinjam}</div>` : ''}
                             </td>
                             <td class="text-center">
                                 <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="${qtReturnThisSubmission}">
@@ -529,21 +529,21 @@
 
                 // Validasi: qty return >= 0
                 if (qty_return < 0) {
-                    alert('QTY Return tidak boleh negatif');
+                    alert('QTY Return cannot be negative');
                     hasError = true;
                     return;
                 }
 
                 // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
                 if (qty_return > remainDB) {
-                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${remainDB})`);
+                    alert(`QTY Return cannot exceed remaining items to return (${remainDB})`);
                     hasError = true;
                     return;
                 }
 
                 // Validasi: good condition + damaged = qty return
                 if (good_condition + damaged !== qty_return) {
-                    alert(`Good condition (${good_condition}) + Damaged (${damaged}) harus sama dengan QTY Return (${qty_return})`);
+                    alert(`Good condition (${good_condition}) + Damaged (${damaged}) must equal QTY Return (${qty_return})`);
                     hasError = true;
                     return;
                 }
@@ -675,7 +675,7 @@
         }
 
         function approveExtend(extendId) {
-            if (!confirm('Setujui perpanjangan peminjaman ini?\n\nTanggal kembali akan diperbarui ke tanggal yang diminta.')) return;
+            if (!confirm('Approve this loan extension?\n\nReturn date will be updated to the requested date.')) return;
 
             const fd = new FormData();
             fd.append('extend_id', extendId);
@@ -683,14 +683,14 @@
             fetch(API_EXTEND + '/approve.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) loadExtendRequests();
                 })
                 .catch(() => alert('Connection error'));
         }
 
         function rejectExtend(extendId) {
-            if (!confirm('Tolak perpanjangan peminjaman ini?')) return;
+            if (!confirm('Reject this loan extension?')) return;
 
             const fd = new FormData();
             fd.append('extend_id', extendId);
@@ -698,7 +698,7 @@
             fetch(API_EXTEND + '/reject.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) loadExtendRequests();
                 })
                 .catch(() => alert('Connection error'));

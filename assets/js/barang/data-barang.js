@@ -78,13 +78,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Validasi: stock harus >= 0
             if (stokTotalVal < 0) {
-                alert('Total Stock tidak boleh negatif');
+                alert('Total Stock cannot be negative');
                 return;
             }
 
             // Validasi: safety stock harus >= 1
             if (safetyStockVal < 1) {
-                alert('Safety Stock harus minimal 1');
+                alert('Safety Stock must be at least 1');
                 return;
             }
 
@@ -192,7 +192,7 @@ function loadBarang() {
                         </span>
                     </td>
                     <td class="text-center">
-                        <a href="detail-barang.html?id=${item.id}" class="btn btn-sm btn-primary">
+                        <a href="detail-barang.html?id=${item.id}" class="btn btn-sm btn-outline-primary">
                             Detail
                         </a>
                     </td>
@@ -261,12 +261,12 @@ function simpanEditBarang() {
     const safetyVal = parseInt(document.getElementById('edit_safety')?.value) || 0;
 
     if (stokVal < 0) {
-        alert('Stock tidak boleh negatif');
+        alert('Stock cannot be negative');
         return;
     }
 
     if (safetyVal < 1) {
-        alert('Safety Stock harus minimal 1');
+        alert('Safety Stock must be at least 1');
         return;
     }
 

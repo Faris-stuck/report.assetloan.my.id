@@ -216,7 +216,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -228,10 +228,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -289,45 +289,45 @@
                             <div class="row g-4">
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Kode Barang</small><br>
+                                    <small class="text-muted">Item Code</small><br>
                                     <span id="kodeBarang">-</span>
                                 </div>
                                 <div class="col-md-4">
-                                    <small class="text-muted">Nama Barang</small><br>
+                                    <small class="text-muted">Item Name</small><br>
                                     <span id="namaBarang">-</span>
                                 </div>
                                 <div class="col-md-4">
-                                    <small class="text-muted">Lokasi Barang</small><br>
+                                    <small class="text-muted">Item Location</small><br>
                                     <span id="lokasiBarang">-</span>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Keterangan</small><br>
+                                    <small class="text-muted">Description</small><br>
                                     <span id="keteranganBarang">-</span>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Stok Total</small><br>
+                                    <small class="text-muted">Total Stock</small><br>
                                     <span id="stokTotal" class="badge bg-secondary stokTotal">-</span>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Stok Tersedia</small><br>
+                                    <small class="text-muted">Available Stock</small><br>
                                     <span id="stokTersediaBadge" class="badge bg-secondary">-</span>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Stok Rusak</small><br>
+                                    <small class="text-muted">Damaged Stock</small><br>
                                     <span id="stokRusak" class="badge bg-danger">0</span>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Kondisi Barang</small><br>
+                                    <small class="text-muted">Item Condition</small><br>
                                     <span id="kondisiBarang" class="badge bg-secondary">-</span>
                                 </div>
 
                                 <div class="col-md-4">
-                                    <small class="text-muted">Status Barang</small><br>
+                                    <small class="text-muted">Item Status</small><br>
                                     <span id="statusBarang" class="badge bg-secondary">-</span>
                                 </div>
                                 <input type="hidden" id="id_barang">
@@ -341,7 +341,7 @@
                         <div class="col-md-4">
                             <div class="card text-center">
                                 <div class="card-body">
-                                    <small class="text-muted">Total Stok</small>
+                                    <small class="text-muted">Total Stock</small>
                                     <h4> <span class="stokTotal"></span> </h4>
                                 </div>
                             </div>
@@ -349,7 +349,7 @@
                         <div class="col-md-4">
                             <div class="card text-center">
                                 <div class="card-body">
-                                    <small class="text-muted">Tersedia</small>
+                                    <small class="text-muted">Available</small>
                                     <h4 class="text-success" id="stokTersedia">0</h4>
                                 </div>
                             </div>
@@ -357,7 +357,7 @@
                         <div class="col-md-4">
                             <div class="card text-center">
                                 <div class="card-body">
-                                    <small class="text-muted">Dipinjam</small>
+                                    <small class="text-muted">Borrowed</small>
                                     <h4 class="text-primary" id="stokDipinjam">0</h4>
                                 </div>
                             </div>
@@ -387,7 +387,7 @@
                                 <tbody id="tabelPeminjam">
                                     <tr>
                                         <td colspan="8" class="text-center text-muted">
-                                            Tidak ada data
+                                            No data
                                         </td>
                                     </tr>
                                 </tbody>
@@ -408,7 +408,7 @@
                             <h6 class="mb-0">Purchase History</h6>
                             <div class="d-flex gap-2">
                                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembelian">
-                                    <i class="feather-plus"></i> Tambah Pembelian
+                                    <i class="feather-plus"></i> Add Purchase
                                 </button>
                                 <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalEditVendor">
                                     <i class="feather-edit"></i> Edit Vendor
@@ -469,8 +469,7 @@
                                     <label>Purchase Date</label>
                                     <input type="date" id="tanggal_pembelian" name="tanggal_pembelian"
                                         class="form-control" required>
-                                    <small class="text-muted">Tanggal pembelian tidak boleh kurang dari tanggal hari
-                                        ini</small>
+                                    <small class="text-muted">Purchase date cannot be earlier than today</small>
                                 </div>
 
                                 <div class="mb-2">
@@ -478,18 +477,18 @@
 
                                     <select id="vendor" class="form-select mb-2">
                                         <option value="">Select Vendor</option>
-                                        <option value="baru">+ Tambah Vendor Baru</option>
+                                        <option value="baru">+ Add New Vendor</option>
                                     </select>
 
                                     <input type="text" id="vendorBaru" class="form-control"
-                                        placeholder="Masukkan nama vendor baru" style="display:none;">
+                                        placeholder="Enter new vendor name" style="display:none;">
 
 
                                     <input type="text" id="alamat_vendor" class="form-control mb-2"
-                                        placeholder="Alamat Vendor" style="display:none;">
+                                        placeholder="Vendor Address" style="display:none;">
 
                                     <input type="text" id="kontak_vendor" class="form-control mb-2"
-                                        placeholder="Kontak Vendor" style="display:none;">
+                                        placeholder="Vendor Contact" style="display:none;">
 
                                 </div>
 
@@ -590,9 +589,9 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
-                                            <th>Nama Vendor</th>
-                                            <th>Alamat</th>
-                                            <th>Kontak</th>
+                                            <th>Vendor Name</th>
+                                            <th>Address</th>
+                                            <th>Contact</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -612,15 +611,15 @@
                                     <input type="hidden" id="vendorEditId" value="">
                                     <div class="row">
                                         <div class="col-md-4 mb-2">
-                                            <label>Nama Vendor</label>
+                                            <label>Vendor Name</label>
                                             <input type="text" id="vendorEditNama" class="form-control" required>
                                         </div>
                                         <div class="col-md-4 mb-2">
-                                            <label>Alamat</label>
+                                            <label>Address</label>
                                             <input type="text" id="vendorEditAlamat" class="form-control">
                                         </div>
                                         <div class="col-md-4 mb-2">
-                                            <label>Kontak</label>
+                                            <label>Contact</label>
                                             <input type="text" id="vendorEditKontak" class="form-control">
                                         </div>
                                     </div>

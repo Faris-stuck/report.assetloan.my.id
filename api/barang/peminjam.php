@@ -7,7 +7,7 @@ $id_barang = $_GET['id_barang'] ?? 0;
 if (!$id_barang) {
     echo json_encode([
         "status" => false,
-        "message" => "ID barang diperlukan"
+        "message" => "Item ID is required"
     ]);
     exit;
 }

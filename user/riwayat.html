@@ -92,10 +92,10 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="peminjaman/ajukan-peminjaman.html">ajukan
-                                    peminjaman</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="peminjaman/ajukan-peminjaman.html">Request
+                                    Borrowing</a></li>
                             <li class="nxl-item">
-                                <a class="nxl-link" href="peminjaman/status-peminjaman.html">status peminjaman</a>
+                                <a class="nxl-link" href="peminjaman/status-peminjaman.html">Borrowing Status</a>
                             </li>
                         </ul>
                     </li>
@@ -106,28 +106,29 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="pengembalian/ajukan-pengembalian.html">ajukan
-                                    pengembalian</a></li>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="pengembalian/ajukan-pengembalian.html">Request
+                                    Return</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-at-sign"></i></span>
-                            <span class="nxl-mtext">Riwayat</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">History</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="riwayat.html">Riwayat peminjaman</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="riwayat.html">Borrowing History</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
-                            <span class="nxl-mtext">Profil</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">Profile</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="profil.html">Profil</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="profil.html">Profile</a></li>
                         </ul>
                     </li>
 
@@ -192,7 +193,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -204,10 +205,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -370,10 +371,10 @@
                         let display = rw.status_en || rw.status || '-';
                         // map internal 'Dicek' or damaged states to friendlier text
                         if (status.includes('dicek') || status.includes('diproses') || status.includes('proses')) {
-                            display = 'Sedang Diproses';
+                            display = 'Processing';
                         }
                         if (status.includes('sebagian dikembalikan')) {
-                            display = 'Sebagian Dikembalikan';
+                            display = 'Partially Returned';
                         }
                         if ((status.includes('semua') && status.includes('rusak')) || status_en.includes('fully')) {
                             display = 'Fully Damaged';

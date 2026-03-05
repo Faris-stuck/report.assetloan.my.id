@@ -26,7 +26,7 @@ try {
 $pengembalian_id = (int)($_GET['pengembalian_id'] ?? 0);
 if (!$pengembalian_id) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "pengembalian_id wajib"]);
+    echo json_encode(["status" => false, "message" => "pengembalian_id is required"]);
     exit;
 }
 
@@ -42,7 +42,7 @@ $h->execute();
 $header = $h->get_result()->fetch_assoc();
 if (!$header) {
     http_response_code(404);
-    echo json_encode(["status" => false, "message" => "Data pengembalian tidak ditemukan"]);
+    echo json_encode(["status" => false, "message" => "Return data not found"]);
     exit;
 }
 

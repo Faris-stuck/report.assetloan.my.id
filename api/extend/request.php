@@ -48,7 +48,7 @@ if ($is_per_unit) {
     // New per-unit format: array of unit_ids like ["detail_1_unit_1", "detail_1_unit_2"]
     $units = json_decode($units_json, true);
     if (!is_array($units)) {
-        echo json_encode(['status' => false, 'message' => 'Format units tidak valid']);
+        echo json_encode(['status' => false, 'message' => 'Invalid units format']);
         exit;
     }
     // Convert unit_ids to {detail_peminjaman_id, unit_number} format
@@ -72,7 +72,7 @@ if ($is_per_unit) {
 // Validate that at least one item/unit is selected
 if (count($items) === 0) {
     http_response_code(400);
-    echo json_encode(['status' => false, 'message' => 'Pilih minimal 1 barang/unit untuk diperpanjang']);
+    echo json_encode(['status' => false, 'message' => 'Select at least 1 item/unit to extend']);
     exit;
 }
 
@@ -84,7 +84,7 @@ try {
     $peminjaman = $stmt->get_result()->fetch_assoc();
 
     if (!$peminjaman) {
-        echo json_encode(['status' => false, 'message' => 'Peminjaman tidak ditemukan atau bukan milik Anda']);
+        echo json_encode(['status' => false, 'message' => 'Borrowing not found or does not belong to you']);
         exit;
     }
 
@@ -125,7 +125,7 @@ try {
     // 1. There are items still out (not fully returned)
     // 2. AND either NO active return request exists OR there are items not included in the pending return
     if ($itemsRemaining <= 0) {
-        echo json_encode(['status' => false, 'message' => 'Semua barang sudah dikembalikan, tidak dapat diperpanjang']);
+        echo json_encode(['status' => false, 'message' => 'All items already returned, cannot extend']);
         exit;
     }
 
@@ -154,7 +154,7 @@ try {
 
         // Reject only if ALL items are in an active return request
         if ($itemsInReturn >= $totalBorrowedItems && $totalBorrowedItems > 0) {
-            echo json_encode(['status' => false, 'message' => 'Peminjaman dalam proses pengembalian. Tunggu hingga proses selesai untuk memperpanjang.']);
+            echo json_encode(['status' => false, 'message' => 'Borrowing is in return process. Wait until the process is complete to extend.']);
             exit;
         }
     }
@@ -166,7 +166,7 @@ try {
                 || $currentStatus === 'Proses Return';  // Allow if there are items remaining
     
     if (!$isActive) {
-        echo json_encode(['status' => false, 'message' => 'Peminjaman dengan status "' . $currentStatus . '" tidak dapat diperpanjang']);
+        echo json_encode(['status' => false, 'message' => 'Borrowing with status "' . $currentStatus . '" cannot be extended']);
         exit;
     }
 
@@ -175,14 +175,14 @@ try {
     $stmt->bind_param("i", $peminjaman_id);
     $stmt->execute();
     if ($stmt->get_result()->num_rows > 0) {
-        echo json_encode(['status' => false, 'message' => 'Sudah ada permintaan perpanjangan yang sedang menunggu persetujuan']);
+        echo json_encode(['status' => false, 'message' => 'There is already a pending extension request awaiting approval']);
         exit;
     }
 
     // Validate new date is after current return date
     $current_return = $peminjaman['rencana_kembali'];
     if ($tanggal_perpanjang <= $current_return) {
-        echo json_encode(['status' => false, 'message' => 'Tanggal perpanjangan harus setelah tanggal kembali saat ini (' . date('d/m/Y', strtotime($current_return)) . ')']);
+        echo json_encode(['status' => false, 'message' => 'Extension date must be after the current return date (' . date('d/m/Y', strtotime($current_return)) . ')']);
         exit;
     }
 
@@ -197,7 +197,7 @@ try {
             $unit_num = (int)($item['unit_number'] ?? 0);
             
             if ($detail_id <= 0 || $unit_num <= 0) {
-                $errorItems[] = "Format unit tidak valid";
+                $errorItems[] = "Invalid unit format";
                 continue;
             }
             
@@ -208,13 +208,13 @@ try {
             $detail = $chk->get_result()->fetch_assoc();
             
             if (!$detail) {
-                $errorItems[] = "Detail item ID {$detail_id} tidak ditemukan";
+                $errorItems[] = "Detail item ID {$detail_id} not found";
                 continue;
             }
             
             // Verify unit_number is within qty range
             if ($unit_num > (int)$detail['jumlah']) {
-                $errorItems[] = "Unit {$unit_num} melebihi jumlah dipinjam (" . (int)$detail['jumlah'] . ")";
+                $errorItems[] = "Unit {$unit_num} exceeds borrowed quantity (" . (int)$detail['jumlah'] . ")";
             }
         }
     } else {
@@ -247,7 +247,7 @@ try {
             $detailRow = $stmtCheck->get_result()->fetch_assoc();
 
             if (!$detailRow) {
-                $errorItems[] = "Barang ID {$barang_id} tidak ditemukan dalam peminjaman ini";
+                $errorItems[] = "Item ID {$barang_id} not found in this borrowing";
                 continue;
             }
 
@@ -257,13 +257,13 @@ try {
 
             // QTY extend cannot exceed sisa yang belum dikembalikan
             if ($qty_extend > $sisa_untuk_extend) {
-                $errorItems[] = "Qty perpanjangan barang ID {$barang_id} ({$qty_extend}) melebihi sisa yang dapat diperpanjang ({$sisa_untuk_extend})";
+                $errorItems[] = "Extension qty for item ID {$barang_id} ({$qty_extend}) exceeds remaining extendable qty ({$sisa_untuk_extend})";
             }
         }
     }
 
     if (!empty($errorItems)) {
-        echo json_encode(['status' => false, 'message' => 'Validasi item gagal: ' . implode('; ', $errorItems)]);
+        echo json_encode(['status' => false, 'message' => 'Item validation failed: ' . implode('; ', $errorItems)]);
         exit;
     }
 
@@ -276,7 +276,7 @@ try {
         $stmt->bind_param("iisss", $peminjaman_id, $user_id, $current_return, $tanggal_perpanjang, $alasan);
 
         if (!$stmt->execute()) {
-            throw new Exception('Gagal menyimpan permintaan: ' . $conn->error);
+            throw new Exception('Failed to save request: ' . $conn->error);
         }
 
         $extend_id = $conn->insert_id;
@@ -297,7 +297,7 @@ try {
                 if ($detail_id > 0 && $unit_num > 0) {
                     $stmtItem->bind_param("iiis", $extend_id, $detail_id, $unit_num, $tanggal_perpanjang);
                     if (!$stmtItem->execute()) {
-                        throw new Exception('Gagal menyimpan item perpanjangan: ' . $conn->error);
+                        throw new Exception('Failed to save extension item: ' . $conn->error);
                     }
                 }
             }
@@ -325,7 +325,7 @@ try {
                         for ($u = 1; $u <= min($qty_extend, (int)$detRow['jumlah']); $u++) {
                             $stmtItem->bind_param("iiis", $extend_id, $detail_id, $u, $tanggal_perpanjang);
                             if (!$stmtItem->execute()) {
-                                throw new Exception('Gagal menyimpan item perpanjangan: ' . $conn->error);
+                                throw new Exception('Failed to save extension item: ' . $conn->error);
                             }
                         }
                     }
@@ -336,7 +336,7 @@ try {
         $conn->commit();
         
         // ============================================================
-        // Kirim email notifikasi setelah permintaan perpanjangan berhasil dibuat
+        // Send email notification after extension request is successfully created
         // ============================================================
         try {
             require_once __DIR__ . '/../email/send-extend-request.php';
@@ -346,11 +346,11 @@ try {
             // Email error tidak perlu menggagalkan response, hanya log saja
         }
         
-        echo json_encode(['status' => true, 'message' => 'Permintaan perpanjangan berhasil diajukan']);
+        echo json_encode(['status' => true, 'message' => 'Extension request submitted successfully']);
 
     } catch (Exception $e) {
         $conn->rollback();
-        echo json_encode(['status' => false, 'message' => 'Gagal menyimpan: ' . $e->getMessage()]);
+        echo json_encode(['status' => false, 'message' => 'Failed to save: ' . $e->getMessage()]);
     }
 
 } catch (Exception $e) {

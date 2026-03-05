@@ -20,7 +20,7 @@
     <meta name="author" content="flexilecode" />
     <!--! The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags !-->
     <!--! BEGIN: Apps Title-->
-    <title>Approver || Laporan Peminjaman</title>
+    <title>Approver || Borrowing Report</title>
     <!--! END:  Apps Title-->
     <!--! BEGIN: Favicon-->
     <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
@@ -86,15 +86,16 @@
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-check-circle"></i></span>
-                            <span class="nxl-mtext">Persetujuan</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">Approvals</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../persetujuan/menunggu-approval.html">Menunggu Approval</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/disetujui.html">Disetujui</a>
+                                    href="../persetujuan/menunggu-approval.html">Pending Approval</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/disetujui.html">Approved</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/ditolak.html">Ditolak</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/ditolak.html">Rejected</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -104,9 +105,9 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="laporan-peminjaman.html">Laporan
-                                    Peminjaman</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="laporan-stok.html">Laporan Stok</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="laporan-peminjaman.html">Borrowing
+                                    Report</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="laporan-stok.html">Stock Report</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -114,7 +115,7 @@
                     <div class="card-body">
                         <i class="feather-sunrise fs-4 text-dark"></i>
                         <h6 class="mt-4 text-dark fw-bolder">Approver Panel</h6>
-                        <p class="fs-11 my-3 text-dark">Kelola persetujuan dan pantau laporan peminjaman barang.</p>
+                        <p class="fs-11 my-3 text-dark">Manage approvals and monitor item borrowing reports.</p>
                     </div>
                 </div>
             </div>
@@ -164,7 +165,7 @@
                             </a>
                         </div>
                     </div>
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -176,10 +177,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -201,12 +202,12 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Laporan Peminjaman</h5>
+                        <h5 class="m-b-10">Borrowing Report</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../dashboard.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="#">Laporan</a></li>
-                        <li class="breadcrumb-item">Laporan Peminjaman</li>
+                        <li class="breadcrumb-item"><a href="#">Reports</a></li>
+                        <li class="breadcrumb-item">Borrowing Report</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -276,14 +277,14 @@
             fetch(API_BASE_URL + '/peminjaman/get_all.php', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
-                    let content = '<h4 class="mb-4">Laporan Peminjaman</h4>';
+                    let content = '<h4 class="mb-4">Borrowing Report</h4>';
                     content += '<table class="table table-hover table-striped"><thead class="table-light"><tr>';
-                    content += '<th>No</th><th>Kode Peminjaman</th><th>Nama Peminjam</th><th>NRP</th>';
-                    content += '<th>Tanggal Pinjam</th><th>Rencana Kembali</th><th>Status</th>';
+                    content += '<th>No</th><th>Loan Code</th><th>Borrower Name</th><th>NRP</th>';
+                    content += '<th>Loan Date</th><th>Expected Return</th><th>Status</th>';
                     content += '</tr></thead><tbody>';
 
                     if (!res.status || !res.data || res.data.length === 0) {
-                        content += '<tr><td colspan="7" class="text-center text-muted">Tidak ada data peminjaman</td></tr>';
+                        content += '<tr><td colspan="7" class="text-center text-muted">No borrowing data</td></tr>';
                     } else {
                         res.data.forEach((p, index) => {
                             let statusBadge = 'bg-secondary';
@@ -296,6 +297,7 @@
                             else if (p.status === 'Proses Return') statusBadge = 'bg-info text-dark';
                             else if (p.status === 'Dikembalikan') statusBadge = 'bg-success';
                             else if (p.status === 'Ditolak') statusBadge = 'bg-danger';
+                            else if (p.status === 'Partial Approved') statusBadge = 'bg-info';
 
                             const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
                             const rencanaKembali = formatTanggal(p.rencana_kembali);

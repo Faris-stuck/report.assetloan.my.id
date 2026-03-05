@@ -34,16 +34,16 @@ if ($res && $res->num_rows > 0) {
     // Verify password (plaintext comparison for development)
     if ($password !== $stored) {
         http_response_code(401);
-        echo json_encode(["error" => "Login gagal"]);
+        echo json_encode(["error" => "Login failed"]);
         exit;
     }
 
-    // Hapus session lama sebelum buat session baru
-    // Ini memastikan 1 browser = 1 role (tidak bisa multi-role)
+    // Clear old session before creating new one
+    // This ensures 1 browser = 1 role (cannot multi-role)
     $_SESSION = array();
-    session_regenerate_id(true); // Regenerate ID untuk keamanan
+    session_regenerate_id(true); // Regenerate ID for security
 
-    // Set session baru
+    // Set new session
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['user_role'] = $user['role'];
     $_SESSION['user_nama'] = $user['nama'];
@@ -54,6 +54,6 @@ if ($res && $res->num_rows > 0) {
     echo json_encode($user);
 } else {
     http_response_code(401);
-    echo json_encode(["error" => "Login gagal"]);
+    echo json_encode(["error" => "Login failed"]);
 }
 

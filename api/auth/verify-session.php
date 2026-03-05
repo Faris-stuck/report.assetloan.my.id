@@ -19,7 +19,7 @@ $server_role = $_SESSION['user_role'] ?? null;
 if (!$server_user_id || !$server_role) {
     // No session on server
     http_response_code(401);
-    echo json_encode(["error" => "Session tidak valid di server"]);
+    echo json_encode(["error" => "Session not valid on server"]);
     exit;
 }
 
@@ -40,7 +40,7 @@ $result = $stmt->get_result();
 if ($result->num_rows === 0) {
     // User deleted from database
     http_response_code(401);
-    echo json_encode(["error" => "User tidak ditemukan"]);
+    echo json_encode(["error" => "User not found"]);
     exit;
 }
 

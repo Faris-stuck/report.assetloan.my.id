@@ -27,7 +27,7 @@ $kondisi        = $_POST['kondisi'] ?? 'Baik';
 $keterangan     = $_POST['keterangan'] ?? null;
 
 if (!$id) {
-    echo json_encode(["status" => false, "message" => "ID barang wajib diisi"]);
+    echo json_encode(["status" => false, "message" => "Item ID is required"]);
     exit;
 }
 if ($stok_tersedia === null) {
@@ -50,7 +50,7 @@ if (!$stmt) {
 $stmt->bind_param("ssiiissi", $kategori, $lokasi, $stok_total, $stok_tersedia, $safety_stock, $kondisi, $keterangan, $id);
 
 if ($stmt->execute()) {
-    echo json_encode(["status" => true, "message" => "Barang berhasil diupdate"]);
+    echo json_encode(["status" => true, "message" => "Item updated successfully"]);
 } else {
-    echo json_encode(["status" => false, "message" => "Update barang gagal: " . $stmt->error]);
+    echo json_encode(["status" => false, "message" => "Item update failed: " . $stmt->error]);
 }

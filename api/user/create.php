@@ -26,7 +26,7 @@ if (!$nama || !$nrp || !$email || !$password) {
     http_response_code(400);
     echo json_encode([
         "status" => false,
-        "message" => "Semua field wajib diisi (nama, nrp, email, password)"
+        "message" => "All fields are required (nama, nrp, email, password)"
     ]);
     exit;
 }
@@ -59,7 +59,7 @@ if ($check_result && $check_result->num_rows > 0) {
     http_response_code(400);
     echo json_encode([
         "status" => false,
-        "message" => "Email sudah terdaftar. Gunakan email lain."
+        "message" => "Email already registered. Please use a different email."
     ]);
     exit;
 }
@@ -86,14 +86,14 @@ if ($insert_stmt->execute()) {
     $user_id = $conn->insert_id;
     echo json_encode([
         "status" => true,
-        "message" => "User berhasil dibuat.",
+        "message" => "User successfully created.",
         "user_id" => (int) $user_id
     ]);
 } else {
     http_response_code(500);
     echo json_encode([
         "status" => false,
-        "message" => "Gagal membuat user. Coba lagi nanti."
+        "message" => "Failed to create user. Please try again later."
     ]);
 }
 

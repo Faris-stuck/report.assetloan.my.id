@@ -38,11 +38,11 @@ try {
     http_response_code(200);
     echo json_encode([
         "status" => true,
-        "message" => "Password reset berhasil",
+        "message" => "Password reset successful",
         "details" => [
             "default_password" => $default_password,
             "users_updated" => $affected,
-            "note" => "Semua password telah direset ke plaintext mode"
+            "note" => "All passwords have been reset to plaintext mode"
         ]
     ]);
     
@@ -50,7 +50,7 @@ try {
     http_response_code(500);
     echo json_encode([
         "status" => false,
-        "message" => "Reset password gagal",
+        "message" => "Password reset failed",
         "error" => $e->getMessage()
     ]);
 }

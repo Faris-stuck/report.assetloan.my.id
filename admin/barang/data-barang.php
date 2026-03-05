@@ -7,11 +7,11 @@ $Message_Pesan = $_SESSION['Message_Pesan'] ?? '';
 /*  if (
     $status === 'success'
 ) {
-    echo "<script> alert('Input Data Sudah Sukses')</script>";
+    echo "<script> alert('Data Input Successful')</script>";
 } elseif (
     $status === 'gagal'
 ) {
-    echo "<script> alert('Input Data Sudah Sukses')</script>";
+    echo "<script> alert('Data Input Successful')</script>";
     unset($_SESSION['status'], $_SESSION['Message_Pesan']);
 }
 

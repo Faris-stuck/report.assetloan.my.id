@@ -83,10 +83,10 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../peminjaman/ajukan-peminjaman.html">ajukan
-                                    peminjaman</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../peminjaman/ajukan-peminjaman.html">Request
+                                    Borrowing</a></li>
                             <li class="nxl-item">
-                                <a class="nxl-link" href="../peminjaman/status-peminjaman.html">status peminjaman</a>
+                                <a class="nxl-link" href="../peminjaman/status-peminjaman.html">Borrowing Status</a>
                             </li>
                         </ul>
                     </li>
@@ -98,27 +98,27 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../pengembalian/ajukan-pengembalian.html">ajukan pengembalian</a></li>
+                                    href="../pengembalian/ajukan-pengembalian.html">Request Return</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-at-sign"></i></span>
-                            <span class="nxl-mtext">Riwayat</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">History</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../riwayat.html">Riwayat peminjaman</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../riwayat.html">Borrowing History</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
-                            <span class="nxl-mtext">Profil</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">Profile</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../profil.html">Profil</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../profil.html">Profile</a></li>
                         </ul>
                     </li>
 
@@ -183,7 +183,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -195,10 +195,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -251,11 +251,11 @@
                                     <thead>
                                         <tr>
                                             <th>Code</th>
-                                            <th>Barang</th>
+                                            <th>Item(s)</th>
                                             <th>Borrow Date</th>
                                             <th>Expected Return</th>
                                             <th>Status</th>
-                                            <th>Aksi</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody id="kembaliTable"></tbody>
@@ -330,7 +330,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th style="width: 30%">Item</th>
-                                    <th class="text-center" style="width: 10%">QTY Pinjam</th>
+                                    <th class="text-center" style="width: 10%">Borrow QTY</th>
                                     <th class="text-center" style="width: 10%">QTY Return</th>
                                     <th class="text-center" style="width: 10%">Good Condition</th>
                                     <th class="text-center" style="width: 10%">Damaged Condition</th>
@@ -370,7 +370,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-warning">
                     <h5 class="modal-title" id="modalExtendLabel">
-                        <i class="feather-calendar me-2"></i>Perpanjang Masa Peminjaman
+                        <i class="feather-calendar me-2"></i>Extend Borrowing Period
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -380,12 +380,12 @@
                     <!-- Return Date Section -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tanggal Kembali Saat Ini</label>
+                            <label class="form-label fw-semibold">Current Return Date</label>
                             <input type="text" class="form-control" id="extendCurrentDate" readonly
                                 style="background-color: #f5f5f5;">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Tanggal Perpanjangan Baru <span
+                            <label class="form-label fw-semibold">New Extension Date <span
                                     class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="extendNewDate" required>
                         </div>
@@ -393,18 +393,18 @@
 
                     <!-- Items Table Section -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Unit Barang yang Diperpanjang <span
+                        <label class="form-label fw-semibold">Extended Item Units <span
                                 class="text-danger">*</span></label>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">
                                     <tr>
                                         <th style="width: 40px;" class="text-center">No</th>
-                                        <th>Barang</th>
+                                        <th>Item</th>
                                         <th style="width: 80px;" class="text-center">Unit</th>
                                         <th style="width: 80px;" class="text-center">Qty</th>
                                         <th style="width: 160px;" class="text-center">Expected Return / Status</th>
-                                        <th style="width: 50px;" class="text-center">Pilih</th>
+                                        <th style="width: 50px;" class="text-center">Select</th>
                                     </tr>
                                 </thead>
                                 <tbody id="extendItemsTableBody">
@@ -418,16 +418,16 @@
 
                     <!-- Reason Section -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Alasan Perpanjangan <span
+                        <label class="form-label fw-semibold">Extension Reason <span
                                 class="text-danger">*</span></label>
                         <textarea class="form-control" id="extendAlasan" rows="3"
-                            placeholder="Jelaskan alasan perpanjangan masa peminjaman..." required></textarea>
+                            placeholder="Explain the reason for extending the borrowing period..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-warning" onclick="submitExtendRequest()">
-                        <i class="feather-send me-1"></i>Ajukan Perpanjangan
+                        <i class="feather-send me-1"></i>Submit Extension
                     </button>
                 </div>
             </div>
@@ -730,7 +730,7 @@
                             </td>
                             <td class="text-center">
                                 <div><strong>${qtyPinjam}</strong></div>
-                                ${sisaPinjam > 0 ? `<div class="small text-muted">Sisa: ${sisaPinjam}</div>` : ''}
+                                ${sisaPinjam > 0 ? `<div class="small text-muted">Remaining: ${sisaPinjam}</div>` : ''}
                             </td>
                             <td class="text-center">
                                 <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="" placeholder="0">
@@ -858,14 +858,14 @@
 
                 // Validasi: qty return >= 0
                 if (qty_return < 0) {
-                    alert('QTY Return tidak boleh negatif');
+                    alert('QTY Return cannot be negative');
                     hasError = true;
                     return;
                 }
 
                 // Validasi: qty return tidak boleh melebihi remain dari database
                 if (qty_return > remainDB) {
-                    alert(`QTY Return tidak boleh melebihi sisa yang perlu dikembalikan (${remainDB})`);
+                    alert(`QTY Return cannot exceed remaining items to return (${remainDB})`);
                     hasError = true;
                     return;
                 }
@@ -873,13 +873,13 @@
                 // Validasi: Jika qty return diisi, good condition dan damaged harus diisi dan total harus = qty return
                 if (qty_return > 0) {
                     if (good_condition === 0 && damaged === 0) {
-                        alert(`Untuk item yang dikembalikan, harus isi Good Condition atau Damaged`);
+                        alert(`For returned items, Good Condition or Damaged must be filled`);
                         hasError = true;
                         return;
                     }
 
                     if (good_condition + damaged !== qty_return) {
-                        alert(`Good condition (${good_condition}) + Damaged (${damaged}) harus sama dengan QTY Return (${qty_return})`);
+                        alert(`Good condition (${good_condition}) + Damaged (${damaged}) must equal QTY Return (${qty_return})`);
                         hasError = true;
                         return;
                     }
@@ -887,14 +887,14 @@
 
                 // Validasi: good condition tidak boleh melebihi qty return
                 if (good_condition > qty_return) {
-                    alert(`Good condition tidak boleh melebihi QTY Return (${qty_return})`);
+                    alert(`Good condition cannot exceed QTY Return (${qty_return})`);
                     hasError = true;
                     return;
                 }
 
                 // Validasi: damaged tidak boleh melebihi qty return
                 if (damaged > qty_return) {
-                    alert(`Damaged tidak boleh melebihi QTY Return (${qty_return})`);
+                    alert(`Damaged cannot exceed QTY Return (${qty_return})`);
                     hasError = true;
                     return;
                 }
@@ -1074,13 +1074,13 @@
                         // Badge shows LATEST extend status per unit
                         let statusBadge = '';
                         if (unit.sudah_dikembalikan) {
-                            statusBadge = '<span class="badge bg-success">✓ Dikembalikan</span>';
+                            statusBadge = '<span class="badge bg-success">✓ Returned</span>';
                         } else if (unit.extend_status === 'Pending') {
-                            statusBadge = `<span class="badge bg-warning text-dark"><i class="feather-clock"></i> Extend Pending hingga ${unit.extend_date || '-'}</span>`;
+                            statusBadge = `<span class="badge bg-warning text-dark"><i class="feather-clock"></i> Extend Pending until ${unit.extend_date || '-'}</span>`;
                         } else if (unit.extend_status === 'Approved') {
-                            statusBadge = `<span class="badge bg-info">✓ Diperpanjang hingga ${unit.extend_date || '-'}</span>`;
+                            statusBadge = `<span class="badge bg-info">✓ Extended until ${unit.extend_date || '-'}</span>`;
                         } else if (unit.extend_status === 'Rejected') {
-                            statusBadge = `<span class="badge bg-danger"><i class="feather-x"></i> Extend Ditolak</span>`;
+                            statusBadge = `<span class="badge bg-danger"><i class="feather-x"></i> Extend Rejected</span>`;
                         }
 
                         return `
@@ -1133,11 +1133,11 @@
             const alasan = document.getElementById('extendAlasan').value.trim();
 
             if (!newDate) {
-                alert('Tanggal perpanjangan harus diisi');
+                alert('Extension date is required');
                 return;
             }
             if (!alasan) {
-                alert('Alasan perpanjangan harus diisi');
+                alert('Extension reason is required');
                 return;
             }
 
@@ -1155,11 +1155,11 @@
 
             // Validate: at least one unit must be selected
             if (selectedUnits.length === 0) {
-                alert('Pilih minimal 1 unit untuk diperpanjang');
+                alert('Select at least 1 unit to extend');
                 return;
             }
 
-            if (!confirm('Ajukan perpanjangan masa peminjaman?\n\nTanggal baru: ' + newDate + '\nJumlah unit: ' + selectedUnits.length + '\nAlasan: ' + alasan)) return;
+            if (!confirm('Submit extension request for borrowing period?\n\nNew date: ' + newDate + '\nNumber of units: ' + selectedUnits.length + '\nReason: ' + alasan)) return;
 
             const fd = new FormData();
             fd.append('peminjaman_id', peminjamanId);
@@ -1170,7 +1170,7 @@
             fetch(API_EXTEND + '/request.php', { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Berhasil' : 'Gagal'));
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
                         if (modalExtend) modalExtend.hide();
                         loadPeminjamanList();

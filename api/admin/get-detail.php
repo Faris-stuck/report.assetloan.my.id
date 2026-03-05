@@ -16,7 +16,7 @@ if (!$peminjaman_id) {
     http_response_code(400);
     echo json_encode([
         "status" => false,
-        "message" => "peminjaman_id tidak ditemukan"
+        "message" => "peminjaman_id not found"
     ]);
     exit;
 }
@@ -48,7 +48,7 @@ if (!$peminjaman) {
     http_response_code(404);
     echo json_encode([
         "status" => false,
-        "message" => "Peminjaman tidak ditemukan"
+        "message" => "Borrowing not found"
     ]);
     exit;
 }

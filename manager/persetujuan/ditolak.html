@@ -19,7 +19,7 @@
     <meta name="author" content="flexilecode" />
     <!--! The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags !-->
     <!--! BEGIN: Apps Title-->
-    <title>Approver || Ditolak</title>
+    <title>Approver || Rejected</title>
     <!--! END:  Apps Title-->
     <!--! BEGIN: Favicon-->
     <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
@@ -85,14 +85,14 @@
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-check-circle"></i></span>
-                            <span class="nxl-mtext">Persetujuan</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">Approvals</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="menunggu-approval.html">Menunggu Approval</a>
+                            <li class="nxl-item"><a class="nxl-link" href="menunggu-approval.html">Pending Approval</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="disetujui.html">Disetujui</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="ditolak.html">Ditolak</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="disetujui.html">Approved</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="ditolak.html">Rejected</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -102,10 +102,10 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../laporan/laporan-peminjaman.html">Laporan
-                                    Peminjaman</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="../laporan/laporan-stok.html">Laporan
-                                    Stok</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../laporan/laporan-peminjaman.html">Borrowing
+                                    Report</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../laporan/laporan-stok.html">Stock
+                                    Report</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -113,7 +113,7 @@
                     <div class="card-body">
                         <i class="feather-sunrise fs-4 text-dark"></i>
                         <h6 class="mt-4 text-dark fw-bolder">Approver Panel</h6>
-                        <p class="fs-11 my-3 text-dark">Kelola persetujuan dan pantau laporan peminjaman barang.</p>
+                        <p class="fs-11 my-3 text-dark">Manage approvals and monitor item borrowing reports.</p>
                     </div>
                 </div>
             </div>
@@ -163,7 +163,7 @@
                             </a>
                         </div>
                     </div>
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -175,10 +175,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -200,12 +200,12 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Ditolak</h5>
+                        <h5 class="m-b-10">Rejected</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../dashboard.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="#">Persetujuan</a></li>
-                        <li class="breadcrumb-item">Ditolak</li>
+                        <li class="breadcrumb-item"><a href="#">Approvals</a></li>
+                        <li class="breadcrumb-item">Rejected</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -227,7 +227,7 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="mb-0">Ditolak</h5>
+                                <h5 class="mb-0">Rejected</h5>
                             </div>
                             <div class="card-body table-responsive">
                                 <table class="table table-bordered align-middle">
@@ -235,10 +235,10 @@
                                         <tr>
                                             <th>No</th>
                                             <th>Borrowing Code</th>
-                                            <th>Nama</th>
+                                            <th>Name</th>
                                             <th>NRP</th>
-                                            <th>Barang</th>
-                                            <th>Tanggal</th>
+                                            <th>Items</th>
+                                            <th>Date</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
@@ -297,12 +297,12 @@
             function readField(item, keys) { for (const k of keys) if (item[k] !== undefined) return item[k]; return ''; }
             async function load() {
                 const tbody = document.getElementById('tabelDitolak');
-                tbody.innerHTML = '<tr><td colspan="7">Memuat...</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Loading...</td></tr>';
                 try {
                     const res = await fetch(api);
                     const j = await res.json();
                     if (!j.status || !Array.isArray(j.data) || j.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7">Tidak ada data</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="7">No data</td></tr>';
                         return;
                     }
                     tbody.innerHTML = '';

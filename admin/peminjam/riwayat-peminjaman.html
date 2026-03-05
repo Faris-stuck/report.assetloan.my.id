@@ -227,7 +227,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -239,10 +239,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -261,11 +261,11 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Riwayat Peminjaman</h5>
+                        <h5 class="m-b-10">Borrowing History</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../../admin/dashboard.html">Home</a></li>
-                        <li class="breadcrumb-item">Riwayat Peminjaman</li>
+                        <li class="breadcrumb-item">Borrowing History</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -292,18 +292,18 @@
                     <div class="col-lg-12">
                         <div class="card stretch stretch-full">
                             <div class="card-header">
-                                <h6 class="mb-0">Riwayat Peminjaman Semua Data</h6>
+                                <h6 class="mb-0">All Borrowing History</h6>
                             </div>
                             <div class="card-body table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
-                                            <th>Kode Peminjaman</th>
-                                            <th>Peminjam</th>
+                                            <th>Loan Code</th>
+                                            <th>Borrower</th>
                                             <th>NRP</th>
-                                            <th>Tanggal Pinjam</th>
-                                            <th>Rencana Kembali</th>
+                                            <th>Loan Date</th>
+                                            <th>Expected Return</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
@@ -369,7 +369,7 @@
                     tbody.innerHTML = '';
 
                     if (!res.status || !res.data || res.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Tidak ada riwayat peminjaman</td></tr>';
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No borrowing history</td></tr>';
                         return;
                     }
 

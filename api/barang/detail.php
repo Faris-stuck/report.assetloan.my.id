@@ -5,7 +5,7 @@ require_once "../koneksi.php";
 
 $id = $_GET['id'] ?? null;
 if (!$id) {
-    echo json_encode(["status" => false, "message" => "ID kosong"]);
+    echo json_encode(["status" => false, "message" => "ID is empty"]);
     exit;
 }
 
@@ -15,7 +15,7 @@ SELECT * FROM `barang` WHERE ID = '$id'
 ")->fetch_assoc();
 
 if (!$barang) {
-    echo json_encode(["status" => false, "message" => "Barang tidak ditemukan"]);
+    echo json_encode(["status" => false, "message" => "Item not found"]);
     exit;
 }
 

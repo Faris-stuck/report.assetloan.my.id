@@ -1,36 +1,36 @@
 <?php
 /**
  * ============================================================
- * KONFIGURASI EMAIL - Sistem Peminjaman Komatsu Indonesia
+ * EMAIL CONFIGURATION - Komatsu Indonesia Borrowing System
  * ============================================================
  * 
- * File ini berisi:
- * - Konfigurasi SMTP Gmail
- * - Email admin untuk notifikasi
+ * This file contains:
+ * - Gmail SMTP configuration
+ * - Admin email for notifications
  * 
- * Digunakan oleh:
+ * Used by:
  * - api/email/email-functions.php
- * - api/cron/send-reminder-h7.php (opsional, bisa di-refactor)
+ * - api/cron/send-reminder-h7.php (optional, can be refactored)
  * 
  * ============================================================
  */
 
 // SMTP Gmail Configuration
-// Hanya konfigurasi SMTP di sini — TIDAK ADA hardcode email penerima
+// Only SMTP configuration here — NO hardcoded recipient emails
 $smtpConfig = [
     'host'     => 'smtp.gmail.com',
     'port'     => 587,
     'secure'   => 'tls',
     'username' => 'openclaaw@gmail.com',           // ← SMTP sender (App Gmail)
-    'password' => 'olok ffwy ojxx gyyj ',            // ← App Password Gmail (16 karakter)
-    'fromName' => 'Komatsu Indonesia - Sistem Peminjaman',
+    'password' => 'olok ffwy ojxx gyyj ',            // ← Gmail App Password (16 characters)
+    'fromName' => 'Komatsu Indonesia - Borrowing System',
 ];
 
 // ============================================================
-// TIDAK ADA HARDCODE EMAIL PENERIMA DI FILE INI
-// Semua email penerima diambil DINAMIS dari database:
+// NO HARDCODED RECIPIENT EMAILS IN THIS FILE
+// All recipient emails are retrieved DYNAMICALLY from the database:
 //   - Admin  : SELECT email FROM users WHERE role = 'admin'
 //   - Manager: SELECT email FROM users WHERE role = 'manager'
 //   - User   : JOIN peminjaman → users
-// Lihat: api/email/email-functions.php → getAdminEmails(), dll.
+// See: api/email/email-functions.php → getAdminEmails(), etc.
 // ============================================================

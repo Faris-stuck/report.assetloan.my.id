@@ -76,7 +76,7 @@ if (isset($_COOKIE['PHPSESSID'])) {
 http_response_code(200);
 echo json_encode([
     "status" => true,
-    "message" => "Logout berhasil. Session dihapus.",
+    "message" => "Logout successful. Session cleared.",
     "timestamp" => date('Y-m-d H:i:s')
 ]);
 ?>

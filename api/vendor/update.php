@@ -39,7 +39,7 @@ try {
         if (!$nama_vendor) {
             echo json_encode([
                 "status" => false,
-                "message" => "Nama vendor wajib diisi"
+                "message" => "Vendor name is required"
             ]);
             exit;
         }
@@ -53,7 +53,7 @@ try {
         if ($cek->num_rows > 0) {
             echo json_encode([
                 "status" => false,
-                "message" => "Vendor dengan nama ini sudah ada"
+                "message" => "A vendor with this name already exists"
             ]);
             exit;
         }
@@ -64,7 +64,7 @@ try {
         if ($stmt->execute()) {
             echo json_encode([
                 "status" => true,
-                "message" => "Vendor berhasil ditambahkan",
+                "message" => "Vendor successfully added",
                 "id" => $conn->insert_id
             ]);
         } else {
@@ -81,7 +81,7 @@ try {
         if (!$id || !$nama_vendor) {
             echo json_encode([
                 "status" => false,
-                "message" => "ID dan nama vendor wajib diisi"
+                "message" => "ID and vendor name are required"
             ]);
             exit;
         }
@@ -95,7 +95,7 @@ try {
         if ($cek->num_rows === 0) {
             echo json_encode([
                 "status" => false,
-                "message" => "Vendor tidak ditemukan"
+                "message" => "Vendor not found"
             ]);
             exit;
         }
@@ -109,7 +109,7 @@ try {
         if ($cek2->num_rows > 0) {
             echo json_encode([
                 "status" => false,
-                "message" => "Vendor dengan nama ini sudah ada"
+                "message" => "A vendor with this name already exists"
             ]);
             exit;
         }
@@ -120,7 +120,7 @@ try {
         if ($stmt->execute()) {
             echo json_encode([
                 "status" => true,
-                "message" => "Vendor berhasil diperbarui"
+                "message" => "Vendor successfully updated"
             ]);
         } else {
             throw new Exception("Failed to update vendor: " . $stmt->error);
@@ -133,7 +133,7 @@ try {
         if (!$id) {
             echo json_encode([
                 "status" => false,
-                "message" => "ID vendor wajib diisi"
+                "message" => "Vendor ID is required"
             ]);
             exit;
         }
@@ -147,7 +147,7 @@ try {
         if ($cek->num_rows === 0) {
             echo json_encode([
                 "status" => false,
-                "message" => "Vendor tidak ditemukan"
+                "message" => "Vendor not found"
             ]);
             exit;
         }
@@ -158,7 +158,7 @@ try {
         if ($stmt->execute()) {
             echo json_encode([
                 "status" => true,
-                "message" => "Vendor berhasil dihapus"
+                "message" => "Vendor successfully deleted"
             ]);
         } else {
             throw new Exception("Failed to delete vendor: " . $stmt->error);
@@ -181,7 +181,7 @@ try {
     } else {
         echo json_encode([
             "status" => false,
-            "message" => "Action tidak valid"
+            "message" => "Invalid action"
         ]);
     }
 

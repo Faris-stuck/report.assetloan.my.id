@@ -125,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             vendorSelect.innerHTML = `
                 <option value="">Select Vendor</option>
-                <option value="baru">+ Tambah Vendor Baru</option>
+                <option value="baru">+ Add New Vendor</option>
             `;
 
             res.data.forEach(v => {
@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const tanggalPembelian = document.getElementById('tanggal_pembelian');
         if (tanggalPembelian && tanggalPembelian.value < today) {
             tanggalPembelian.value = '';
-            alert('Tanggal pembelian tidak boleh kurang dari hari ini (' + today + ')');
+            alert('Purchase date cannot be earlier than today (' + today + ')');
         }
     }
 
@@ -232,20 +232,20 @@ document.addEventListener("DOMContentLoaded", function () {
             const tanggalPembelian = document.getElementById("tanggal_pembelian").value;
 
             if (tanggalPembelian < today) {
-                alert("Tanggal pembelian tidak boleh kurang dari hari ini (" + today + ")");
+                alert("Purchase date cannot be earlier than today (" + today + ")");
                 return;
             }
 
             // Validasi: jumlah harus positif
             const jumlah = parseInt(document.getElementById("jumlah").value) || 0;
             if (jumlah <= 0) {
-                alert('Jumlah pembelian harus lebih dari 0');
+                alert('Purchase quantity must be greater than 0');
                 return;
             }
 
             const vendor = document.getElementById("vendor").value;
             if (!vendor) {
-                alert('Pilih atau tambah vendor terlebih dahulu');
+                alert('Please select or add a vendor first');
                 return;
             }
 
@@ -292,7 +292,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     tbody.innerHTML = `
                     <tr>
                         <td colspan="6" class="text-center text-muted">
-                            Belum ada riwayat pembelian
+                            No purchase history yet
                         </td>
                     </tr>`;
                     return;
@@ -340,7 +340,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     tbody.innerHTML = `
                     <tr>
                         <td colspan="8" class="text-center text-muted">
-                            Belum ada yang meminjam barang ini
+                            No one has borrowed this item yet
                         </td>
                     </tr>`;
                     if (stokDipinjamEl) stokDipinjamEl.innerText = "0";
@@ -387,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 tbody.innerHTML = `
                 <tr>
                     <td colspan="8" class="text-center text-danger">
-                        Gagal memuat data peminjam
+                        Failed to load borrower data
                     </td>
                 </tr>`;
             });
@@ -398,7 +398,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.editPembelian = function (purchaseId) {
         const purchase = currentBarangPurchases.find(p => p.id == purchaseId);
         if (!purchase) {
-            alert("Pembelian tidak ditemukan");
+            alert("Purchase not found");
             return;
         }
         openEditModal(
@@ -519,7 +519,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(res => {
                 tbody.innerHTML = "";
                 if (!res.status || !res.data || res.data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Belum ada vendor</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No vendors yet</td></tr>`;
                     return;
                 }
 
@@ -540,7 +540,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(err => {
                 console.error("Error loading vendors:", err);
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Gagal memuat data vendor</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Failed to load vendor data</td></tr>`;
             });
     }
 
@@ -550,14 +550,14 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(res => res.json())
             .then(res => {
                 if (!res.status || !res.data) {
-                    alert("Gagal memuat data vendor");
+                    alert("Failed to load vendor data");
                     return;
                 }
 
                 // Find the specific vendor
                 const vendor = res.data.find(v => v.id == vendorId);
                 if (!vendor) {
-                    alert("Vendor tidak ditemukan");
+                    alert("Vendor not found");
                     return;
                 }
 
@@ -578,7 +578,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(err => {
                 console.error("Error fetching vendor:", err);
-                alert("Gagal memuat data vendor");
+                alert("Failed to load vendor data");
             });
     };
 
@@ -604,12 +604,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const kontak = document.getElementById("vendorEditKontak").value.trim();
 
         if (!nama) {
-            alert("Nama vendor wajib diisi");
+            alert("Vendor name is required");
             return;
         }
 
         // Konfirmasi sebelum save
-        if (!confirm("Apakah Anda yakin data vendor sudah benar?")) {
+        if (!confirm("Are you sure the vendor data is correct?")) {
             return;
         }
 
@@ -637,7 +637,7 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(err => {
                 console.error("Error:", err);
-                alert("Gagal menyimpan vendor");
+                alert("Failed to save vendor");
             });
     });
 
@@ -652,7 +652,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     const currentVal = vendorSelect.value;
                     vendorSelect.innerHTML = `
                         <option value="">Select Vendor</option>
-                        <option value="baru">+ Tambah Vendor Baru</option>
+                        <option value="baru">+ Add New Vendor</option>
                     `;
                     res.data.forEach(v => {
                         vendorSelect.innerHTML += `<option value="${v.id}">${v.nama_vendor}</option>`;

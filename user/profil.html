@@ -91,10 +91,10 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="peminjaman/ajukan-peminjaman.html">ajukan
-                                    peminjaman</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="peminjaman/ajukan-peminjaman.html">Request
+                                    Borrowing</a></li>
                             <li class="nxl-item">
-                                <a class="nxl-link" href="peminjaman/status-peminjaman.html">status peminjaman</a>
+                                <a class="nxl-link" href="peminjaman/status-peminjaman.html">Borrowing Status</a>
                             </li>
                         </ul>
                     </li>
@@ -105,18 +105,19 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="pengembalian/ajukan-pengembalian.html">ajukan
-                                    pengembalian</a></li>
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="pengembalian/ajukan-pengembalian.html">Request
+                                    Return</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-at-sign"></i></span>
-                            <span class="nxl-mtext">Riwayat</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">History</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="riwayat.html">Riwayat peminjaman</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="riwayat.html">Borrowing History</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -191,7 +192,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -203,10 +204,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -317,7 +318,7 @@
                                 document.getElementById('profileNrp').innerText = finalNrp ? ('NRP: ' + finalNrp) : '';
                                 document.getElementById('profileEmail').innerText = finalEmail;
                                 if (u.avatar) {
-                                    const avatarUrl = (u.avatar.indexOf('http') === 0) ? u.avatar : ( BASE_URL + '/' + u.avatar);
+                                    const avatarUrl = (u.avatar.indexOf('http') === 0) ? u.avatar : (BASE_URL + '/' + u.avatar);
                                     document.getElementById('profileAvatar').src = avatarUrl;
                                     // persist to localStorage user object
                                     try { const lu = JSON.parse(localStorage.getItem('user') || '{}'); lu.avatar = u.avatar; localStorage.setItem('user', JSON.stringify(lu)); } catch (e) { }
@@ -331,7 +332,7 @@
                                 document.getElementById('profileNrp').innerText = userData.nrp ? ('NRP: ' + userData.nrp) : '';
                                 document.getElementById('profileEmail').innerText = userData.email || '';
                                 if (userData.avatar) {
-                                    const avatarUrl = (userData.avatar.indexOf('http') === 0) ? userData.avatar : ( BASE_URL + '/' + userData.avatar);
+                                    const avatarUrl = (userData.avatar.indexOf('http') === 0) ? userData.avatar : (BASE_URL + '/' + userData.avatar);
                                     document.getElementById('profileAvatar').src = avatarUrl;
                                     if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
                                 }

@@ -47,7 +47,7 @@ $keterangan    = $_POST['keterangan'] ?? null;
 if ($stok_total !== null && $stok_total < 0) {
     echo json_encode([
         "status" => false,
-        "message" => "Stock tidak boleh negatif"
+        "message" => "Stock cannot be negative"
     ]);
     exit;
 }
@@ -56,7 +56,7 @@ if ($stok_total !== null && $stok_total < 0) {
 if ($safety_stock < 1) {
     echo json_encode([
         "status" => false,
-        "message" => "Safety Stock harus minimal 1"
+        "message" => "Safety Stock must be at least 1"
     ]);
     exit;
 }
@@ -72,7 +72,7 @@ if (!$id) {
     if (!$kode_barang || !$nama_barang) {
         echo json_encode([
             "status" => false,
-            "message" => "Kode dan nama barang wajib diisi"
+            "message" => "Item code and name are required"
         ]);
         exit;
     }
@@ -86,7 +86,7 @@ if (!$id) {
     if ($cek->num_rows > 0) {
         echo json_encode([
             "status" => false,
-            "message" => "Kode barang sudah digunakan"
+            "message" => "Item code already in use"
         ]);
         exit;
     }
@@ -100,7 +100,7 @@ if (!$id) {
     if ($cek2->num_rows > 0) {
         echo json_encode([
             "status" => false,
-            "message" => "Nama barang sudah digunakan"
+            "message" => "Item name already in use"
         ]);
         exit;
     }
@@ -144,14 +144,14 @@ if (!$id) {
     );
 
     if ($stmt->execute()) {
-        echo json_encode(["status" => true, "message" => "Data Barang berhasil ditambahkan"]);
+        echo json_encode(["status" => true, "message" => "Item data added successfully"]);
     } else {
         $errno = $stmt->errno ?: $conn->errno;
         $error_msg = $stmt->error ?: $conn->error;
         if ($errno == 1062) {
-            echo json_encode(["status" => false, "message" => "Duplikasi data: kode atau nama sudah ada", "sql_error" => $error_msg]);
+            echo json_encode(["status" => false, "message" => "Duplicate data: code or name already exists", "sql_error" => $error_msg]);
         } else {
-            echo json_encode(["status" => false, "message" => "Gagal menambahkan barang", "error_no" => $errno, "sql_error" => $error_msg]);
+            echo json_encode(["status" => false, "message" => "Failed to add item", "error_no" => $errno, "sql_error" => $error_msg]);
         }
     }
     exit;
@@ -193,15 +193,15 @@ $stmt->bind_param(
 if ($stmt->execute()) {
     echo json_encode([
         "status" => true,
-        "message" => "Barang berhasil diupdate"
+        "message" => "Item updated successfully"
     ]);
 } else {
     $errno = $stmt->errno ?: $conn->errno;
     $error_msg = $stmt->error ?: $conn->error;
     if ($errno == 1062) {
-        echo json_encode(["status" => false, "message" => "Duplikasi data saat update", "sql_error" => $error_msg]);
+        echo json_encode(["status" => false, "message" => "Duplicate data during update", "sql_error" => $error_msg]);
     } else {
-        echo json_encode(["status" => false, "message" => "Update barang gagal", "error_no" => $errno, "sql_error" => $error_msg]);
+        echo json_encode(["status" => false, "message" => "Item update failed", "error_no" => $errno, "sql_error" => $error_msg]);
     }
 }
 

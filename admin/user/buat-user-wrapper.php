@@ -11,7 +11,7 @@ if (!$user_role || !in_array($user_role, ['admin'])) {
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
         header('Content-Type: application/json');
         http_response_code(401);
-        echo json_encode(['status' => false, 'message' => 'Unauthorized: Silakan login sebagai admin']);
+        echo json_encode(['status' => false, 'message' => 'Unauthorized: Please log in as admin']);
         exit;
     }
     // Redirect ke login untuk page load biasa

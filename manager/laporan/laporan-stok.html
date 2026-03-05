@@ -19,7 +19,7 @@
     <meta name="author" content="flexilecode" />
     <!--! The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags !-->
     <!--! BEGIN: Apps Title-->
-    <title>Approver || Laporan Stok</title>
+    <title>Approver || Stock Report</title>
     <!--! END:  Apps Title-->
     <!--! BEGIN: Favicon-->
     <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
@@ -85,15 +85,16 @@
                     <li class="nxl-item nxl-hasmenu">
                         <a href="javascript:void(0);" class="nxl-link">
                             <span class="nxl-micon"><i class="feather-check-circle"></i></span>
-                            <span class="nxl-mtext">Persetujuan</span><span class="nxl-arrow"><i
+                            <span class="nxl-mtext">Approvals</span><span class="nxl-arrow"><i
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../persetujuan/menunggu-approval.html">Menunggu Approval</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/disetujui.html">Disetujui</a>
+                                    href="../persetujuan/menunggu-approval.html">Pending Approval</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/disetujui.html">Approved</a>
                             </li>
-                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/ditolak.html">Ditolak</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="../persetujuan/ditolak.html">Rejected</a>
+                            </li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -103,9 +104,9 @@
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="laporan-peminjaman.html">Laporan
-                                    Peminjaman</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="laporan-stok.html">Laporan Stok</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="laporan-peminjaman.html">Borrowing
+                                    Report</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="laporan-stok.html">Stock Report</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -113,7 +114,7 @@
                     <div class="card-body">
                         <i class="feather-sunrise fs-4 text-dark"></i>
                         <h6 class="mt-4 text-dark fw-bolder">Approver Panel</h6>
-                        <p class="fs-11 my-3 text-dark">Kelola persetujuan dan pantau laporan peminjaman barang.</p>
+                        <p class="fs-11 my-3 text-dark">Manage approvals and monitor item borrowing reports.</p>
                     </div>
                 </div>
             </div>
@@ -163,7 +164,7 @@
                             </a>
                         </div>
                     </div>
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -175,10 +176,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -200,12 +201,12 @@
             <div class="page-header">
                 <div class="page-header-left d-flex align-items-center">
                     <div class="page-header-title">
-                        <h5 class="m-b-10">Laporan Stok</h5>
+                        <h5 class="m-b-10">Stock Report</h5>
                     </div>
                     <ul class="breadcrumb">
                         <li class="breadcrumb-item"><a href="../dashboard.html">Dashboard</a></li>
-                        <li class="breadcrumb-item"><a href="#">Laporan</a></li>
-                        <li class="breadcrumb-item">Laporan Stok</li>
+                        <li class="breadcrumb-item"><a href="#">Reports</a></li>
+                        <li class="breadcrumb-item">Stock Report</li>
                     </ul>
                 </div>
                 <div class="page-header-right ms-auto">
@@ -273,12 +274,12 @@
             fetch(API_BASE_URL + '/barang/get.php', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
-                    let html = '<h4 class="mb-4">Laporan Stok Barang</h4><table class="table table-hover"><thead class="table-light"><tr>';
-                    html += '<th>No</th><th>Kode</th><th>Nama</th><th>Kategori</th><th>Total</th><th>Tersedia</th><th>Rusak</th><th>Status</th></tr></thead><tbody>';
+                    let html = '<h4 class="mb-4">Item Stock Report</h4><table class="table table-hover"><thead class="table-light"><tr>';
+                    html += '<th>No</th><th>Code</th><th>Name</th><th>Category</th><th>Total</th><th>Available</th><th>Damaged</th><th>Status</th></tr></thead><tbody>';
                     if (res.data && res.data.length > 0) {
                         res.data.forEach((b, i) => {
                             let badge = b.stok_tersedia <= 0 ? 'bg-danger' : (b.stok_tersedia <= b.safety_stock ? 'bg-warning' : 'bg-success');
-                            html += `<tr><td>${i + 1}</td><td>${b.kode_barang}</td><td>${b.nama_barang}</td><td>${b.kategori || '-'}</td><td>${b.stok_total}</td><td>${b.stok_tersedia}</td><td>${b.stok_rusak || 0}</td><td><span class="badge ${badge}">${b.stok_tersedia <= 0 ? 'Habis' : (b.stok_tersedia <= b.safety_stock ? 'Menipis' : 'OK')}</span></td></tr>`;
+                            html += `<tr><td>${i + 1}</td><td>${b.kode_barang}</td><td>${b.nama_barang}</td><td>${b.kategori || '-'}</td><td>${b.stok_total}</td><td>${b.stok_tersedia}</td><td>${b.stok_rusak || 0}</td><td><span class="badge ${badge}">${b.stok_tersedia <= 0 ? 'Out of Stock' : (b.stok_tersedia <= b.safety_stock ? 'Low Stock' : 'OK')}</span></td></tr>`;
                         });
                     } else {
                         html += '<tr><td colspan="8" class="text-center text-muted">No data</td></tr>';

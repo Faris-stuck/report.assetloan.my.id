@@ -24,7 +24,7 @@ $new_status = trim($_POST['status'] ?? '');
 if (!$id || !$new_status) {
     echo json_encode([
         "status" => false,
-        "message" => "ID dan status diperlukan"
+        "message" => "ID and status are required"
     ]);
     exit;
 }
@@ -35,7 +35,7 @@ $stmt_cur->bind_param("i", $id);
 $stmt_cur->execute();
 $res_cur = $stmt_cur->get_result();
 if (!$res_cur || $res_cur->num_rows === 0) {
-    echo json_encode(["status" => false, "message" => "Peminjaman tidak ditemukan"]);
+    echo json_encode(["status" => false, "message" => "Borrowing not found"]);
     exit;
 }
 $current = $res_cur->fetch_assoc()['status'];
@@ -46,24 +46,24 @@ $role = SessionValidator::getRole();
 // Menunggu Admin -> hanya Admin boleh set ke "Sedang Dipinjam" atau "Ditolak"
 if ($current === 'Menunggu Approver') {
     if (!in_array($new_status, ['Menunggu Admin', 'Ditolak'], true)) {
-        echo json_encode(["status" => false, "message" => "Dari Menunggu Approver hanya bisa diubah ke Menunggu Admin atau Ditolak"]);
+        echo json_encode(["status" => false, "message" => "From Awaiting Approver can only be changed to Awaiting Admin or Rejected"]);
         exit;
     }
     if (!in_array($role, ['manager', 'admin'], true)) {
-        echo json_encode(["status" => false, "message" => "Hanya Approver atau Admin yang boleh menyetujui/menolak tahap ini"]);
+        echo json_encode(["status" => false, "message" => "Only Approver or Admin can approve/reject at this stage"]);
         exit;
     }
 } elseif ($current === 'Menunggu Admin') {
     if (!in_array($new_status, ['Sedang Dipinjam', 'Ditolak'], true)) {
-        echo json_encode(["status" => false, "message" => "Dari Menunggu Admin hanya bisa diubah ke Sedang Dipinjam atau Ditolak"]);
+        echo json_encode(["status" => false, "message" => "From Awaiting Admin can only be changed to Currently Borrowed or Rejected"]);
         exit;
     }
     if ($role !== 'admin') {
-        echo json_encode(["status" => false, "message" => "Hanya Admin yang boleh menyetujui/menolak tahap Admin Approval"]);
+        echo json_encode(["status" => false, "message" => "Only Admin can approve/reject at Admin Approval stage"]);
         exit;
     }
 } else {
-    echo json_encode(["status" => false, "message" => "Status saat ini tidak dapat diubah dari sini"]);
+    echo json_encode(["status" => false, "message" => "Current status cannot be changed from here"]);
     exit;
 }
 
@@ -115,7 +115,7 @@ try {
 
     echo json_encode([
         "status" => true,
-        "message" => "Status berhasil diperbarui"
+        "message" => "Status successfully updated"
     ]);
 
 } catch (Exception $e) {

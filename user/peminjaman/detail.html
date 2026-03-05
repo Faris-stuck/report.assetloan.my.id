@@ -14,7 +14,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Detail Peminjaman</title>
+    <title>Borrowing Details</title>
     <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
     <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
     <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
@@ -24,27 +24,27 @@
 <body>
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3>Detail Peminjaman</h3>
-            <a class="btn btn-secondary" href="../riwayat.html">Kembali</a>
+            <h3>Borrowing Details</h3>
+            <a class="btn btn-secondary" href="../riwayat.html">Back</a>
         </div>
 
         <div id="alert" style="display:none" class="alert alert-danger"></div>
 
         <div id="meta" class="mb-3">
-            <p><strong>Kode:</strong> <span id="kode"></span></p>
-            <p><strong>Tanggal Pinjam:</strong> <span id="tanggal_pinjam"></span></p>
-            <p><strong>Rencana Kembali:</strong> <span id="rencana_kembali"></span></p>
+            <p><strong>Code:</strong> <span id="kode"></span></p>
+            <p><strong>Loan Date:</strong> <span id="tanggal_pinjam"></span></p>
+            <p><strong>Expected Return:</strong> <span id="rencana_kembali"></span></p>
             <p><strong>Status:</strong> <span id="status" class="badge bg-primary"></span></p>
         </div>
 
-        <h5>Daftar Barang</h5>
+        <h5>Item List</h5>
         <table class="table table-bordered">
             <thead>
                 <tr>
-                    <th>Nama Barang</th>
-                    <th>Jumlah</th>
-                    <th>Lokasi</th>
-                    <th>Kondisi Pinjam</th>
+                    <th>Item Name</th>
+                    <th>Quantity</th>
+                    <th>Location</th>
+                    <th>Loan Condition</th>
                 </tr>
             </thead>
             <tbody id="items-body">
@@ -66,7 +66,7 @@
         const id = getParam('id') || getParam('peminjaman_id');
         if (!id) {
             document.getElementById('alert').style.display = 'block';
-            document.getElementById('alert').innerText = 'ID peminjaman tidak ditemukan di query string.';
+            document.getElementById('alert').innerText = 'Borrowing ID not found in query string.';
         } else {
             fetch(`${BASE_URL}/api/user/get-detail.php?id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
                 .then(r => {
@@ -79,7 +79,7 @@
                 .then(data => {
                     if (!data.status) {
                         document.getElementById('alert').style.display = 'block';
-                        document.getElementById('alert').innerText = data.message || 'Gagal mengambil data.';
+                        document.getElementById('alert').innerText = data.message || 'Failed to load data.';
                         return;
                     }
                     const d = data.data;
@@ -90,10 +90,10 @@
                     const rawStatus_en = (d.status_en || '').toString();
                     let displayStatus = rawStatus_en || rawStatus || '-';
                     if (rawStatus.toLowerCase().includes('dicek') || rawStatus.toLowerCase().includes('diproses') || rawStatus.toLowerCase().includes('proses')) {
-                        displayStatus = 'Sedang Diproses';
+                        displayStatus = 'Processing';
                     }
                     if (rawStatus.toLowerCase().includes('sebagian dikembalikan')) {
-                        displayStatus = 'Sebagian Dikembalikan';
+                        displayStatus = 'Partially Returned';
                     }
                     if (rawStatus.toLowerCase().includes('sebagian') || rawStatus.toLowerCase().includes('seb') || rawStatus_en.toLowerCase().includes('partially')) {
                         displayStatus = 'Partially Damaged';

@@ -18,7 +18,7 @@ try {
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) {
-    echo json_encode(["status" => false, "message" => "ID tidak valid"]);
+    echo json_encode(["status" => false, "message" => "Invalid ID"]);
     exit;
 }
 
@@ -34,5 +34,5 @@ if ($row = $result->fetch_assoc()) {
     echo json_encode(["status" => true, "data" => $row]);
 } else {
     http_response_code(404);
-    echo json_encode(["status" => false, "message" => "Barang tidak ditemukan"]);
+    echo json_encode(["status" => false, "message" => "Item not found"]);
 }

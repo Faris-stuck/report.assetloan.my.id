@@ -19,7 +19,7 @@
     <meta name="author" content="flexilecode" />
     <!--! The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags !-->
     <!--! BEGIN: Apps Title-->
-    <title>Admin || Approval Peminjaman</title>
+    <title>Admin || Loan Approval</title>
     <!--! END:  Apps Title-->
     <!--! BEGIN: Favicon-->
     <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
@@ -181,7 +181,7 @@
                             </a>
                         </div>
                     </div>
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -193,10 +193,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -244,12 +244,12 @@
                                     <tr>
                                         <th>No</th>
                                         <th>Borrowing Code</th>
-                                        <th>Nama</th>
+                                        <th>Name</th>
                                         <th>NRP</th>
-                                        <th>Barang</th>
-                                        <th>Tanggal</th>
+                                        <th>Items</th>
+                                        <th>Date</th>
                                         <th>Status</th>
-                                        <th>Aksi</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tabelMenunggu">
@@ -258,7 +258,7 @@
                             </table>
 
                             <div class="modal fade" id="modalProses" tabindex="-1">
-                                <div class="modal-dialog modal-lg">
+                                <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h5 class="modal-title">Process Borrowing</h5>
@@ -279,12 +279,10 @@
                                                     <p><strong>Borrow Date:</strong> <span id="modalTanggal"></span></p>
                                                 </div>
                                                 <div class="col-12">
-                                                    <p><strong>Expected Return:</strong> <span id="modalRencana"></span>
-                                                    </p>
+                                                    <p><strong>Expected Return:</strong> <span id="modalRencana"></span></p>
                                                 </div>
                                                 <div class="col-12">
-                                                    <p><strong>Borrowing Location:</strong> <span
-                                                            id="modalLokasiUmum"></span></p>
+                                                    <p><strong>Borrowing Location:</strong> <span id="modalLokasiUmum"></span></p>
                                                 </div>
                                                 <div class="col-12">
                                                     <p><strong>Notes:</strong> <span id="modalCatatan"></span></p>
@@ -293,93 +291,45 @@
                                             <hr>
                                             <h6 class="mb-3"><strong>Borrowed Items</strong></h6>
                                             <div id="modalBarangList" class="table-responsive">
-                                                <table class="table table-sm table-bordered">
+                                                <table class="table table-sm table-bordered align-middle">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>No</th>
+                                                            <th style="width:40px" class="text-center">No</th>
                                                             <th>Item</th>
-                                                            <th>Quantity</th>
+                                                            <th style="width:50px" class="text-center">QTY</th>
                                                             <th>Location</th>
+                                                            <th style="width:180px" class="text-center">Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="barangTableBody"></tbody>
                                                 </table>
                                             </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                data-bs-dismiss="modal">Close</button>
-                                            <button type="button" class="btn btn-danger"
-                                                onclick="clickReject()">Reject</button>
-                                            <button type="button" class="btn btn-success"
-                                                onclick="clickApprove()">Approve</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Modal: Konfirmasi Approve -->
-                            <div class="modal fade" id="modalKonfirmasiApprove" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Konfirmasi Approve</h5>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Apakah Anda yakin ingin menyetujui peminjaman ini?</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                onclick="cancelApproveConfirm()">Cancel</button>
-                                            <button type="button" class="btn btn-success"
-                                                onclick="doApprove()">Approve</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Modal: Reject — Isi Alasan -->
-                            <div class="modal fade" id="modalReject" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Reject Peminjaman</h5>
-                                        </div>
-                                        <div class="modal-body">
-                                            <label class="form-label fw-bold">Rejection Reason <span
-                                                    class="text-danger">*</span></label>
-                                            <textarea id="rejectReasonTextarea" class="form-control" rows="4"
-                                                placeholder="Enter rejection reason..."></textarea>
-                                            <div id="rejectReasonError" class="text-danger small mt-1"
-                                                style="display:none;">
-                                                Rejection reason wajib diisi.
+                                            <div id="rejectionReasonSection" style="display:none;" class="mt-3">
+                                                <label class="form-label fw-bold">Rejection Reason <span class="text-danger">*</span></label>
+                                                <textarea id="rejectionReasonTextarea" class="form-control" rows="3" placeholder="Enter the reason for rejecting selected items..."></textarea>
+                                                <div id="rejectionReasonError" class="text-danger small mt-1" style="display:none;">Rejection reason is required when items are rejected.</div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                onclick="cancelRejectPopup()">Cancel</button>
-                                            <button type="button" class="btn btn-danger"
-                                                onclick="submitRejectReason()">Reject</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary" onclick="saveApprovalDecisions()">Save</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Modal: Konfirmasi Reject -->
-                            <div class="modal fade" id="modalKonfirmasiReject" tabindex="-1">
+                            <div class="modal fade" id="modalConfirmSave" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title">Konfirmasi Reject</h5>
+                                            <h5 class="modal-title">Confirm Save</h5>
                                         </div>
                                         <div class="modal-body">
-                                            <p>Apakah Anda yakin ingin menolak peminjaman ini?</p>
+                                            <p id="confirmSaveMessage">Are you sure you want to save these approval decisions?</p>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary"
-                                                onclick="cancelRejectConfirm()">Cancel</button>
-                                            <button type="button" class="btn btn-danger"
-                                                onclick="doReject()">Reject</button>
+                                            <button type="button" class="btn btn-secondary" onclick="cancelConfirmSave()">Cancel</button>
+                                            <button type="button" class="btn btn-primary" onclick="doSaveApproval()">Save</button>
                                         </div>
                                     </div>
                                 </div>
@@ -446,7 +396,7 @@
                 })
                 .catch(() => {
                     document.getElementById("tabelMenunggu").innerHTML =
-                        '<tr><td colspan="8" class="text-center">Error koneksi</td></tr>';
+                        '<tr><td colspan="8" class="text-center">Connection error</td></tr>';
                 });
         }
 
@@ -477,6 +427,8 @@
             return div.innerHTML;
         }
 
+        let unitDecisions = {};
+
         function openModal(id) {
             fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
                 .then(r => r.json())
@@ -484,6 +436,7 @@
                     if (!res.status || !res.data) return;
                     selectedPeminjaman = res.data.find(p => p.id == id);
                     if (!selectedPeminjaman) return;
+                    unitDecisions = {};
                     document.getElementById("modalKode").textContent = escapeHtml(selectedPeminjaman.kode);
                     document.getElementById("modalNama").textContent = escapeHtml(selectedPeminjaman.nama);
                     document.getElementById("modalNrp").textContent = escapeHtml(selectedPeminjaman.nrp);
@@ -492,23 +445,60 @@
                     document.getElementById("modalLokasiUmum").textContent = escapeHtml(selectedPeminjaman.lokasi_umum || '-');
                     document.getElementById("modalCatatan").textContent = escapeHtml(selectedPeminjaman.catatan || '-');
                     displayBarangList(selectedPeminjaman);
+                    document.getElementById("rejectionReasonSection").style.display = 'none';
+                    document.getElementById("rejectionReasonTextarea").value = '';
+                    document.getElementById("rejectionReasonError").style.display = 'none';
                     new bootstrap.Modal(document.getElementById("modalProses")).show();
                 });
         }
 
         function displayBarangList(peminjaman) {
             const tbody = document.getElementById("barangTableBody");
+            const location = peminjaman.lokasi_umum || '-';
+            let rows = '';
+            let rowNum = 1;
             if (peminjaman.detail_barang && Array.isArray(peminjaman.detail_barang)) {
-                tbody.innerHTML = peminjaman.detail_barang.map((item, i) => `
-                    <tr>
-                        <td>${i + 1}</td>
-                        <td>${escapeHtml(item.nama_barang || item.barang)}</td>
-                        <td class="text-center">${escapeHtml(String(item.jumlah))}</td>
-                        <td>${escapeHtml(item.lokasi || '-')}</td>
-                    </tr>
-                `).join('');
+                peminjaman.detail_barang.forEach(item => {
+                    const qty = parseInt(item.jumlah) || 1;
+                    const detailId = item.detail_peminjaman_id || item.id || 0;
+                    for (let u = 1; u <= qty; u++) {
+                        const key = detailId + '_' + u;
+                        unitDecisions[key] = null;
+                        rows += `<tr id="row_${key}">
+                            <td class="text-center">${rowNum++}</td>
+                            <td>${escapeHtml(item.nama_barang || item.barang)}</td>
+                            <td class="text-center">1</td>
+                            <td>${escapeHtml(location)}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-success me-1" id="btnApprove_${key}" onclick="setUnitDecision('${key}','Disetujui')">Approve</button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="btnReject_${key}" onclick="setUnitDecision('${key}','Ditolak')">Reject</button>
+                            </td>
+                        </tr>`;
+                    }
+                });
+            }
+            tbody.innerHTML = rows || `<tr><td colspan="5" class="text-center">No items found.</td></tr>`;
+        }
+
+        function setUnitDecision(key, decision) {
+            if (unitDecisions[key] === decision) {
+                unitDecisions[key] = null;
+                document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-outline-success me-1';
+                document.getElementById('btnReject_' + key).className = 'btn btn-sm btn-outline-danger';
             } else {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center">${escapeHtml(peminjaman.barang || '-')}</td></tr>`;
+                unitDecisions[key] = decision;
+                if (decision === 'Disetujui') {
+                    document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-success me-1';
+                    document.getElementById('btnReject_' + key).className = 'btn btn-sm btn-outline-danger';
+                } else {
+                    document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-outline-success me-1';
+                    document.getElementById('btnReject_' + key).className = 'btn btn-sm btn-danger';
+                }
+            }
+            const hasRejected = Object.values(unitDecisions).some(v => v === 'Ditolak');
+            document.getElementById('rejectionReasonSection').style.display = hasRejected ? 'block' : 'none';
+            if (!hasRejected) {
+                document.getElementById('rejectionReasonError').style.display = 'none';
             }
         }
 
@@ -526,93 +516,74 @@
             return bootstrap.Modal.getInstance(document.getElementById(id));
         }
 
-        // ── APPROVE FLOW ──────────────────────────────────────────
-        function clickApprove() {
-            const m = getModalInstance('modalProses');
-            if (m) m.hide();
-            new bootstrap.Modal(document.getElementById('modalKonfirmasiApprove')).show();
-        }
-
-        function cancelApproveConfirm() {
-            const m = getModalInstance('modalKonfirmasiApprove');
-            if (m) m.hide();
-            new bootstrap.Modal(document.getElementById('modalProses')).show();
-        }
-
-        function doApprove() {
-            if (!selectedPeminjaman) return;
-            const formData = new FormData();
-            formData.append('id', selectedPeminjaman.id);
-            formData.append('status', 'Disetujui');
-            fetch(BASE_URL + "/api/approver/approve.php", { method: "POST", body: formData, credentials: 'same-origin' })
-                .then(res => res.json())
-                .then(data => {
-                    const m = getModalInstance('modalKonfirmasiApprove');
-                    if (m) m.hide();
-                    if (data.status) {
-                        showSuccess('Peminjaman berhasil disetujui.');
-                        loadDataPeminjaman();
-                    } else {
-                        alert('Gagal memproses: ' + (data.message || 'Error tidak diketahui'));
-                    }
-                })
-                .catch(() => alert('Gagal terhubung ke server.'));
-        }
-
-        // ── REJECT FLOW ──────────────────────────────────────────
-        function clickReject() {
-            document.getElementById('rejectReasonTextarea').value = '';
-            document.getElementById('rejectReasonError').style.display = 'none';
-            const m = getModalInstance('modalProses');
-            if (m) m.hide();
-            new bootstrap.Modal(document.getElementById('modalReject')).show();
-        }
-
-        function cancelRejectPopup() {
-            const m = getModalInstance('modalReject');
-            if (m) m.hide();
-            new bootstrap.Modal(document.getElementById('modalProses')).show();
-        }
-
-        function submitRejectReason() {
-            const reason = document.getElementById('rejectReasonTextarea').value.trim();
-            if (!reason) {
-                document.getElementById('rejectReasonError').style.display = 'block';
+        // ── SAVE FLOW ──────────────────────────────────────────
+        function saveApprovalDecisions() {
+            const allKeys = Object.keys(unitDecisions);
+            const undecided = allKeys.filter(k => unitDecisions[k] === null);
+            if (undecided.length > 0) {
+                alert('Please approve or reject all items before saving. ' + undecided.length + ' item(s) remaining.');
                 return;
             }
-            document.getElementById('rejectReasonError').style.display = 'none';
-            const m = getModalInstance('modalReject');
+            const hasRejected = Object.values(unitDecisions).some(v => v === 'Ditolak');
+            if (hasRejected) {
+                const reason = document.getElementById('rejectionReasonTextarea').value.trim();
+                if (!reason) {
+                    document.getElementById('rejectionReasonError').style.display = 'block';
+                    document.getElementById('rejectionReasonTextarea').focus();
+                    return;
+                }
+                document.getElementById('rejectionReasonError').style.display = 'none';
+            }
+            const approvedCount = Object.values(unitDecisions).filter(v => v === 'Disetujui').length;
+            const rejectedCount = Object.values(unitDecisions).filter(v => v === 'Ditolak').length;
+            let msg = `You are about to:\n• Approve: ${approvedCount} unit(s)\n• Reject: ${rejectedCount} unit(s)\n\nProceed?`;
+            document.getElementById('confirmSaveMessage').textContent = msg;
+            const m = getModalInstance('modalProses');
             if (m) m.hide();
-            new bootstrap.Modal(document.getElementById('modalKonfirmasiReject')).show();
+            new bootstrap.Modal(document.getElementById('modalConfirmSave')).show();
         }
 
-        function cancelRejectConfirm() {
-            const m = getModalInstance('modalKonfirmasiReject');
+        function cancelConfirmSave() {
+            const m = getModalInstance('modalConfirmSave');
             if (m) m.hide();
-            new bootstrap.Modal(document.getElementById('modalReject')).show();
+            new bootstrap.Modal(document.getElementById('modalProses')).show();
         }
 
-        function doReject() {
+        function doSaveApproval() {
             if (!selectedPeminjaman) return;
-            const reason = document.getElementById('rejectReasonTextarea').value.trim();
-            if (!reason) return;
+            const items = [];
+            Object.keys(unitDecisions).forEach(key => {
+                const parts = key.split('_');
+                items.push({
+                    detail_peminjaman_id: parseInt(parts[0]),
+                    unit_number: parseInt(parts[1]),
+                    status: unitDecisions[key]
+                });
+            });
+            const hasRejected = items.some(i => i.status === 'Ditolak');
+            const reason = hasRejected ? document.getElementById('rejectionReasonTextarea').value.trim() : '';
             const formData = new FormData();
-            formData.append('id', selectedPeminjaman.id);
-            formData.append('status', 'Ditolak');
-            formData.append('rejection_reason', reason);
-            fetch(BASE_URL + "/api/approver/approve.php", { method: "POST", body: formData, credentials: 'same-origin' })
-                .then(res => res.json())
-                .then(data => {
-                    const m = getModalInstance('modalKonfirmasiReject');
-                    if (m) m.hide();
-                    if (data.status) {
-                        showSuccess('Peminjaman berhasil ditolak.');
-                        loadDataPeminjaman();
-                    } else {
-                        alert('Gagal memproses: ' + (data.message || 'Error tidak diketahui'));
-                    }
-                })
-                .catch(() => alert('Gagal terhubung ke server.'));
+            formData.append('peminjaman_id', selectedPeminjaman.id);
+            formData.append('items', JSON.stringify(items));
+            if (reason) formData.append('rejection_reason', reason);
+
+            fetch(BASE_URL + "/api/approver/approve-items.php", {
+                method: "POST",
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(res => res.json())
+            .then(data => {
+                const m = getModalInstance('modalConfirmSave');
+                if (m) m.hide();
+                if (data.status) {
+                    showSuccess(data.message || 'Approval decisions saved successfully.');
+                    loadDataPeminjaman();
+                } else {
+                    alert('Failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(() => alert('Failed to connect to server.'));
         }
 
         document.addEventListener("DOMContentLoaded", loadDataPeminjaman);

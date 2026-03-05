@@ -1,19 +1,19 @@
 <?php
 /**
  * ============================================================
- * EMAIL FUNCTIONS - Fungsi Reusable untuk Pengiriman Email
+ * EMAIL FUNCTIONS - Reusable Functions for Sending Email
  * ============================================================
  * 
  * File   : /PROJECT/api/email/email-functions.php
  * 
- * Cara pakai:
+ * Usage:
  *   require_once __DIR__ . '/email-functions.php';
  *   $result = sendEmail($emailFromDB, 'Subject', '<h1>Body HTML</h1>');
  * 
  * ============================================================
  */
 
-// Load konfigurasi email
+// Load email configuration
 require_once __DIR__ . '/../../config/email.php';
 
 // Load PHPMailer
@@ -25,14 +25,14 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 /**
- * Kirim email menggunakan PHPMailer + SMTP Gmail
+ * Send email using PHPMailer + SMTP Gmail
  *
- * @param string $to         Email penerima
- * @param string $subject    Subject email
- * @param string $htmlBody   Isi email dalam format HTML
- * @param string $toName     Nama penerima (opsional)
- * @param string $plainBody  Isi email plain text fallback (opsional)
- * @return bool              true jika berhasil, false jika gagal
+ * @param string $to         Recipient email
+ * @param string $subject    Email subject
+ * @param string $htmlBody   Email body in HTML format
+ * @param string $toName     Recipient name (optional)
+ * @param string $plainBody  Plain text email body fallback (optional)
+ * @return bool              true if successful, false if failed
  */
 function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
     global $smtpConfig;
@@ -66,16 +66,16 @@ function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
         return true;
 
     } catch (Exception $e) {
-        error_log("[EMAIL ERROR] Gagal kirim ke {$to}: " . $mail->ErrorInfo);
+        error_log("[EMAIL ERROR] Failed to send to {$to}: " . $mail->ErrorInfo);
         return false;
     }
 }
 
 /**
- * Buat template email HTML standar
+ * Create standard HTML email template
  *
- * @param string $title      Judul di header email
- * @param string $bodyHtml   Konten body (HTML)
+ * @param string $title      Title in email header
+ * @param string $bodyHtml   Body content (HTML)
  * @return string            Full HTML email
  */
 function buildEmailTemplate($title, $bodyHtml) {
@@ -185,16 +185,16 @@ function buildEmailTemplate($title, $bodyHtml) {
         <div class="container">
             <div class="header">
                 <h1>' . htmlspecialchars($title) . '</h1>
-                <p>Komatsu Indonesia - Sistem Peminjaman</p>
+                <p>Komatsu Indonesia - Borrowing System</p>
             </div>
             <div class="body">
                 ' . $bodyHtml . '
                 <p class="auto-note">
-                    <em>Email ini dikirim secara otomatis oleh sistem. Mohon tidak membalas email ini.</em>
+                    <em>This email was sent automatically by the system. Please do not reply to this email.</em>
                 </p>
             </div>
             <div class="footer">
-                &copy; ' . $year . ' ICT Komatsu Indonesia — Sistem Peminjaman Barang
+                &copy; ' . $year . ' ICT Komatsu Indonesia — Item Borrowing System
             </div>
         </div>
     </body>
@@ -203,15 +203,15 @@ function buildEmailTemplate($title, $bodyHtml) {
 
 /**
  * ============================================================
- * HELPER FUNCTIONS: Ambil email DINAMIS dari database
- * Tidak ada hardcode email — semua dari tabel users
+ * HELPER FUNCTIONS: Retrieve emails DYNAMICALLY from database
+ * No hardcoded emails — all from the users table
  * ============================================================
  */
 
 /**
- * Ambil semua admin dari database (role = 'admin')
+ * Get all admins from database (role = 'admin')
  *
- * @param mysqli $conn   Koneksi database
+ * @param mysqli $conn   Database connection
  * @return array         Array of ['nama' => ..., 'email' => ...]
  */
 function getAdminEmails($conn) {
@@ -228,9 +228,9 @@ function getAdminEmails($conn) {
 }
 
 /**
- * Ambil semua manager dari database (role = 'manager')
+ * Get all managers from database (role = 'manager')
  *
- * @param mysqli $conn   Koneksi database
+ * @param mysqli $conn   Database connection
  * @return array         Array of ['nama' => ..., 'email' => ...]
  */
 function getManagerEmails($conn) {
@@ -247,9 +247,9 @@ function getManagerEmails($conn) {
 }
 
 /**
- * Ambil semua PIC Barang dari database (role = 'pic_barang')
+ * Get all PIC Barang from database (role = 'pic_barang')
  *
- * @param mysqli $conn   Koneksi database
+ * @param mysqli $conn   Database connection
  * @return array         Array of ['nama' => ..., 'email' => ...]
  */
 function getPicBarangEmails($conn) {
@@ -266,9 +266,9 @@ function getPicBarangEmails($conn) {
 }
 
 /**
- * Ambil email berdasarkan role tertentu
+ * Get emails by a specific role
  *
- * @param mysqli $conn   Koneksi database
+ * @param mysqli $conn   Database connection
  * @param string $role   Role: 'admin', 'manager', 'pic_barang', 'user'
  * @return array         Array of ['nama' => ..., 'email' => ...]
  */
@@ -288,13 +288,13 @@ function getEmailsByRole($conn, $role) {
 }
 
 /**
- * Kirim email ke semua user dengan role tertentu
+ * Send email to all users with a specific role
  *
- * @param mysqli $conn      Koneksi database
+ * @param mysqli $conn      Database connection
  * @param string $role      Role target
  * @param string $subject   Subject email
  * @param string $htmlBody  Body HTML
- * @return int              Jumlah email berhasil dikirim
+ * @return int              Number of emails successfully sent
  */
 function sendEmailToRole($conn, $role, $subject, $htmlBody) {
     $users = getEmailsByRole($conn, $role);
@@ -308,11 +308,11 @@ function sendEmailToRole($conn, $role, $subject, $htmlBody) {
 }
 
 /**
- * Ambil data pelaku aksi dari SESSION (user yang sedang login)
- * Diambil dari database berdasarkan $_SESSION['user_id']
+ * Get actor data from SESSION (currently logged in user)
+ * Retrieved from database based on $_SESSION['user_id']
  *
- * @param mysqli $conn   Koneksi database
- * @return array|null    ['nama' => ..., 'email' => ...] atau null jika gagal
+ * @param mysqli $conn   Database connection
+ * @return array|null    ['nama' => ..., 'email' => ...] or null if failed
  */
 function getActorEmail($conn) {
     if (session_status() === PHP_SESSION_NONE) {
@@ -334,8 +334,8 @@ function getActorEmail($conn) {
 }
 
 /**
- * Bangun array $recipients dari semua pihak terkait (TANPA DUPLIKASI)
- * Menggabungkan user peminjam, admin, pic_barang, dan pelaku aksi
+ * Build $recipients array from all related parties (NO DUPLICATES)
+ * Combines borrower user, admin, pic_barang, and action actor
  *
  * @param array  $sources  Array of ['nama'=>..., 'email'=>...] items
  * @return array           Deduplicated recipients array
@@ -345,7 +345,7 @@ function buildUniqueRecipients(...$sources) {
     $seen = [];
     foreach ($sources as $source) {
         if (is_null($source)) continue;
-        // Jika single item (bukan array of arrays), wrap it
+        // If single item (not array of arrays), wrap it
         if (isset($source['email'])) {
             $source = [$source];
         }
@@ -362,33 +362,33 @@ function buildUniqueRecipients(...$sources) {
 }
 
 /**
- * Kirim email ke semua recipients menggunakan LOOP
- * WAJIB: Setiap penerima mendapat panggilan sendEmail() sendiri
+ * Send email to all recipients using LOOP
+ * REQUIRED: Each recipient gets their own sendEmail() call
  *
  * @param array  $recipients  Array of ['nama'=>..., 'email'=>...]
  * @param string $subject     Subject email
  * @param string $htmlBody    Full HTML body email
- * @return int                Jumlah email berhasil dikirim
+ * @return int                Number of emails successfully sent
  */
 function sendEmailToAll($recipients, $subject, $htmlBody) {
     $totalSent = 0;
     foreach ($recipients as $r) {
         if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'])) {
-            error_log("[EMAIL] EMAIL TERKIRIM KE: " . $r['email'] . " (" . $r['nama'] . ")");
+            error_log("[EMAIL] EMAIL SENT TO: " . $r['email'] . " (" . $r['nama'] . ")");
             $totalSent++;
         } else {
-            error_log("[EMAIL] EMAIL GAGAL KE: " . $r['email'] . " (" . $r['nama'] . ")");
+            error_log("[EMAIL] EMAIL FAILED TO: " . $r['email'] . " (" . $r['nama'] . ")");
         }
     }
     return $totalSent;
 }
 
 /**
- * Helper: Ambil data peminjaman + user dari database
+ * Helper: Get loan + user data from database
  *
- * @param mysqli $conn           Koneksi database
- * @param int    $peminjamanId   ID peminjaman
- * @return array|null            Data peminjaman + user, atau null jika tidak ditemukan
+ * @param mysqli $conn           Database connection
+ * @param int    $peminjamanId   Loan ID
+ * @return array|null            Loan + user data, or null if not found
  */
 function getPeminjamanWithUser($conn, $peminjamanId) {
     $stmt = $conn->prepare("
@@ -409,7 +409,7 @@ function getPeminjamanWithUser($conn, $peminjamanId) {
     ");
 
     if (!$stmt) {
-        error_log("[EMAIL ERROR] Prepare gagal: " . $conn->error);
+        error_log("[EMAIL ERROR] Prepare failed: " . $conn->error);
         return null;
     }
 

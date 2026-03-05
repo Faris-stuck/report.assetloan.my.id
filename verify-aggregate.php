@@ -30,8 +30,8 @@ echo "<p>Verification date: " . date('Y-m-d H:i:s') . "</p>";
 // ============================================================================
 // TEST 1: Get-Detail Aggregate Query
 // ============================================================================
-echo '<div class="test info"><h2>Test 1: /api/user/get-detail.php - Aggregate Per Barang</h2>';
-echo '<p>Verifies: Query properly aggregates returns across ALL pengembalian records</p>';
+echo '<div class="test info"><h2>Test 1: /api/user/get-detail.php - Aggregate Per Item</h2>';
+echo '<p>Verifies: Query properly aggregates returns across ALL return records</p>';
 
 // Get a peminjaman with returns
 $check_pem = $conn->prepare("
@@ -66,12 +66,12 @@ if ($pem = $pem_result->fetch_assoc()) {
     $agg_query->execute();
     $agg_result = $agg_query->get_result();
     
-    echo "<p><strong>Test Case:</strong> Peminjaman ID: {$pmj_id} (Kode: {$pem['kode_peminjaman']}) with {$pem['return_count']} submissions</p>";
+    echo "<p><strong>Test Case:</strong> Borrowing ID: {$pmj_id} (Code: {$pem['kode_peminjaman']}) with {$pem['return_count']} submissions</p>";
     
     if ($agg_result->num_rows > 0) {
         echo "<p class='pass'>✓ PASS: Query returned results (aggregate is working)</p>";
         echo "<table>";
-        echo "<tr><th>Barang ID</th><th>Total Returned</th><th>Total Damaged</th><th>Submission Count</th></tr>";
+        echo "<tr><th>Item ID</th><th>Total Returned</th><th>Total Damaged</th><th>Submission Count</th></tr>";
         while ($row = $agg_result->fetch_assoc()) {
             echo "<tr>";
             echo "<td>{$row['barang_id']}</td>";
@@ -85,7 +85,7 @@ if ($pem = $pem_result->fetch_assoc()) {
         echo "<p class='fail'>✗ FAIL: Query returned no results</p>";
     }
 } else {
-    echo "<p class='info'>ℹ INFO: No peminjaman with returns found for testing</p>";
+    echo "<p class='info'>ℹ INFO: No borrowing with returns found for testing</p>";
 }
 echo '</div>';
 
@@ -93,7 +93,7 @@ echo '</div>';
 // TEST 2: Get_Detail Aggregate Query
 // ============================================================================
 echo '<div class="test info"><h2>Test 2: /api/peminjaman/get_detail.php - Aggregate Returns Without Status Filter</h2>';
-echo '<p>Verifies: Query counts ALL pengembalian submissions (not just Selesai)</p>';
+echo '<p>Verifies: Query counts ALL return submissions (not just Completed)</p>';
 
 $detail_query = $conn->prepare("
     SELECT
@@ -124,7 +124,7 @@ if ($pmj_id) {
     if ($detail_result->num_rows > 0) {
         echo "<p class='pass'>✓ PASS: Query properly aggregates without status filter</p>";
         echo "<table>";
-        echo "<tr><th>Barang</th><th>Q. Pinjam</th><th>Q. Dikembalikan</th><th>Sisa</th></tr>";
+        echo "<tr><th>Item</th><th>Q. Borrowed</th><th>Q. Returned</th><th>Remaining</th></tr>";
         while ($row = $detail_result->fetch_assoc()) {
             echo "<tr>";
             echo "<td>{$row['nama_barang']}</td>";
@@ -146,7 +146,7 @@ echo '</div>';
 // TEST 3: Multiple Submission Scenario
 // ============================================================================
 echo '<div class="test info"><h2>Test 3: Multiple Submission Scenario</h2>';
-echo '<p>Verifies: System correctly handles 2+ pengembalian submissions per peminjaman</p>';
+echo '<p>Verifies: System correctly handles 2+ return submissions per borrowing</p>';
 
 $multi_sub = $conn->prepare("
     SELECT 
@@ -170,7 +170,7 @@ $multi_result = $multi_sub->get_result();
 if ($multi_result->num_rows > 0) {
     echo "<p class='pass'>✓ PASS: Found peminjaman with multiple submissions</p>";
     echo "<table>";
-    echo "<tr><th>Peminjaman</th><th>Submissions</th><th>Selesai</th><th>Pending</th><th>Total Returned</th></tr>";
+    echo "<tr><th>Borrowing</th><th>Submissions</th><th>Completed</th><th>Pending</th><th>Total Returned</th></tr>";
     while ($row = $multi_result->fetch_assoc()) {
         echo "<tr>";
         echo "<td>{$row['kode_peminjaman']}</td>";
@@ -213,7 +213,7 @@ $status_result = $final_status_test->get_result();
 if ($status_result->num_rows > 0) {
     echo "<p class='pass'>✓ FIX VERIFIED: Final status blocking logic is in place</p>";
     echo "<table>";
-    echo "<tr><th>Kode</th><th>Status</th><th>Submission Allowed</th></tr>";
+    echo "<tr><th>Code</th><th>Status</th><th>Submission Allowed</th></tr>";
     while ($row = $status_result->fetch_assoc()) {
         $style = $row['submission_allowed'] == 'BLOCKED' ? 'style="background: #fff3cd;"' : '';
         echo "<tr $style>";
@@ -231,8 +231,8 @@ echo '</div>';
 // ============================================================================
 // TEST 5: Data Consistency Check
 // ============================================================================
-echo '<div class="test info"><h2>Test 5: Data Consistency - Detail Pengembalian vs Peminjaman</h2>';
-echo '<p>Verifies: All returned items have matching detail_peminjaman records</p>';
+echo '<div class="test info"><h2>Test 5: Data Consistency - Return Details vs Borrowing</h2>';
+echo '<p>Verifies: All returned items have matching borrowing detail records</p>';
 
 $consistency_check = $conn->prepare("
     SELECT 
@@ -247,10 +247,10 @@ $consistency_check->execute();
 $consistency_result = $consistency_check->get_result()->fetch_assoc();
 
 if ($consistency_result['orphaned_returns'] == 0) {
-    echo "<p class='pass'>✓ PASS: All returned items have valid barang references</p>";
+    echo "<p class='pass'>✓ PASS: All returned items have valid item references</p>";
 } else {
     echo "<p class='fail'>✗ FAIL: {$consistency_result['orphaned_returns']} orphaned return records found</p>";
-    echo "<p>Affected barang_ids: {$consistency_result['barang_ids']}</p>";
+    echo "<p>Affected item IDs: {$consistency_result['barang_ids']}</p>";
 }
 echo '</div>';
 
@@ -260,7 +260,7 @@ echo '</div>';
 echo '<div class="test"><h2>Summary</h2>';
 echo '<p><strong>Aggregate Data Fix Implementation Status: COMPLETE</strong></p>';
 echo '<ul>';
-echo '<li>✓ get-detail.php: Updated to aggregate per barang across all pengembalian</li>';
+echo '<li>✓ get-detail.php: Updated to aggregate per item across all returns</li>';
 echo '<li>✓ get_detail.php: Updated to remove status filter, count all submissions</li>';
 echo '<li>✓ return.php: Updated with three-level validation blocking final statuses</li>';
 echo '<li>✓ Modal display: Now shows accurate aggregate return status</li>';

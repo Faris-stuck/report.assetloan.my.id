@@ -135,7 +135,7 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link"
-                                    href="../pengembalian/ajukan-pengembalian.html">Submit return</a></li>
+                                    href="../pengembalian/ajukan-pengembalian.html">Request Return</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -220,7 +220,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -232,10 +232,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -553,22 +553,24 @@
             switch (dbStatus) {
                 case 'Menunggu Persetujuan':
                 case 'Disetujui': // Both are "pending approval" from user perspective
-                    return 'Menunggu Persetujuan';
+                    return 'Pending Approval';
+                case 'Partial Approved':
+                    return 'Partial Approved';
                 case 'Sebagian Rusak':
                     return 'Partially Damaged';
                 case 'Semua Rusak':
                     return 'Fully Damaged';
                 case 'Sedang Dipinjam':
-                    return 'Sedang Dipinjam';
+                    return 'Currently Borrowed';
                 case 'Dikembalikan':
-                    return 'Dikembalikan';
+                    return 'Returned';
                 case 'Ditolak':
-                    return 'Ditolak';
+                    return 'Rejected';
                 case 'Proses Return':
-                    return 'Proses Return';
+                    return 'Return In Progress';
 
                 case 'Sebagian Dikembalikan':
-                    return 'Sebagian Dikembalikan';
+                    return 'Partially Returned';
                 default:
                     return dbStatus;
             }
@@ -580,7 +582,7 @@
             const displayStatus = getDisplayStatus(status, statusEn);
 
             switch (displayStatus) {
-                case 'Menunggu Persetujuan':
+                case 'Pending Approval':
                     return 'badge bg-warning';
                 case 'Partially Damaged':
                     return 'badge bg-warning text-dark';
@@ -590,16 +592,18 @@
                     return 'badge bg-danger';
                 case 'Semua Rusak':
                     return 'badge bg-danger';
-                case 'Sedang Dipinjam':
+                case 'Currently Borrowed':
                     return 'badge bg-primary';
-                case 'Dikembalikan':
+                case 'Returned':
                     return 'badge bg-success';
-                case 'Ditolak':
+                case 'Rejected':
                     return 'badge bg-danger';
-                case 'Proses Return':
+                case 'Return In Progress':
                     return 'badge bg-info text-dark';
-                case 'Sebagian Dikembalikan':
+                case 'Partially Returned':
                     return 'badge bg-warning text-dark';
+                case 'Partial Approved':
+                    return 'badge bg-info';
                 default:
                     if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
                     if (displayStatus.startsWith('Due')) return 'badge bg-warning text-dark';
@@ -616,7 +620,7 @@
             let statusBadge;
             // If there is an active pengembalian in Diajukan/Dicek/Sebagian Dikembalikan, treat as "Proses Return"
             if (peminjaman.pengembalian_status && ['Diajukan', 'Dicek'].includes(peminjaman.pengembalian_status)) {
-                displayStatus = 'Proses Return';
+                displayStatus = 'Return In Progress';
                 statusBadge = 'badge bg-warning text-dark';
             } else {
                 displayStatus = getDisplayStatus(dbStatus, statusEn);
@@ -626,21 +630,21 @@
             const totalBarang = peminjaman.detail_barang.reduce((sum, item) => sum + parseInt(item.jumlah), 0);
 
             let actionBtn = '';
-            if (displayStatus === 'Sedang Dipinjam' || displayStatus.startsWith('Due') || displayStatus === 'Overdue') {
+            if (displayStatus === 'Currently Borrowed' || displayStatus.startsWith('Due') || displayStatus === 'Overdue') {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="ajukanPengembalian('${peminjaman.id}')">
                     <i class="feather-refresh-cw"></i> Return
                 </button>`;
-            } else if (displayStatus === 'Proses Return') {
-                actionBtn = `<button class="btn btn-sm btn-outline-info" onclick="lihatDetail('${peminjaman.id}')">
-                    <i class="feather-eye"></i> View Return Status
+            } else if (displayStatus === 'Return In Progress') {
+                actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
+                    <i></i> View Return Status
                 </button>`;
-            } else if (displayStatus === 'Ditolak') {
-                actionBtn = `<button class="btn btn-sm btn-outline-danger" onclick="lihatDetail('${peminjaman.id}')">
-                    <i class="feather-eye"></i> Reason
+            } else if (displayStatus === 'Rejected') {
+                actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
+                    <i></i> Reason
                 </button>`;
             } else {
-                actionBtn = `<button class="btn btn-sm btn-outline-info" onclick="lihatDetail('${peminjaman.id}')">
-                    <i class="feather-eye"></i> Detail
+                actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
+                    <i></i> Detail
                 </button>`;
             }
 
@@ -667,8 +671,8 @@
             const dbStatus = peminjaman.status;
             const displayStatus = getDisplayStatus(dbStatus);
             const statusBadge = getStatusBadge(dbStatus);
-            const detailBtn = `<button class="btn btn-sm btn-outline-info" onclick="lihatDetail('${peminjaman.id}')">
-        <i class="feather-eye"></i> Detail
+            const detailBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
+        <i></i> Detail
      </button>`;
 
             return `
@@ -718,13 +722,13 @@
                 console.log('User peminjaman:', userPeminjaman);
 
                 const semua = userPeminjaman;
-                const menunggu = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Menunggu Persetujuan');
+                const menunggu = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Pending Approval');
                 const dipinjam = userPeminjaman.filter(p => {
                     const ds = getDisplayStatus(p.status, p.status_en);
-                    return ds === 'Sedang Dipinjam' || ds.startsWith('Due') || ds === 'Overdue' || ds === 'Proses Return' || ds === 'Sebagian Dikembalikan';
+                    return ds === 'Currently Borrowed' || ds.startsWith('Due') || ds === 'Overdue' || ds === 'Return In Progress' || ds === 'Partially Returned';
                 });
-                const dikembalikan = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Dikembalikan');
-                const ditolak = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Ditolak');
+                const dikembalikan = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Returned');
+                const ditolak = userPeminjaman.filter(p => getDisplayStatus(p.status, p.status_en) === 'Rejected');
 
                 console.log('Filtered - menunggu:', menunggu.length, 'dipinjam:', dipinjam.length);
 
@@ -795,12 +799,12 @@
                         // Redirect to ajukan-pengembalian page with peminjaman_id
                         window.location.href = `../pengembalian/ajukan-pengembalian.html?peminjaman_id=${peminjamanId}`;
                     } else {
-                        alert('Gagal mengajukan pengembalian: ' + (resp.message || 'Unknown error'));
+                        alert('Failed to submit return request: ' + (resp.message || 'Unknown error'));
                     }
                 })
                 .catch(err => {
                     console.error('Error when calling return API', err);
-                    alert('Terjadi kesalahan saat mengajukan pengembalian');
+                    alert('An error occurred while submitting return request');
                 });
         }
 
@@ -826,6 +830,7 @@
                             if (u.return_status === 'Dikembalikan') badgeClass = 'bg-success';
                             else if (u.return_status === 'Rusak') badgeClass = 'bg-warning text-dark';
                             else if (u.return_status === 'Ditolak') badgeClass = 'bg-danger';
+                            else if (u.return_status === 'Menunggu Persetujuan') badgeClass = 'bg-warning text-dark';
                             else if (u.return_status === 'Overdue' || u.return_status === 'Due Today') badgeClass = 'bg-danger';
                             else if (u.return_status && u.return_status.startsWith('Due')) badgeClass = 'bg-warning text-dark';
 
@@ -841,10 +846,14 @@
                                 <td class="text-center">${escapeHtml(u.expected_return)}</td>
                             </tr>`;
                         }).join('');
-                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">Tidak ada barang</td></tr>';
+                        document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
-                        // Notes section
-                        if (p.status === 'Ditolak' && p.catatan) {
+                        // Notes / Rejection reason section
+                        const reason = p.rejection_reason || p.catatan || '';
+                        if ((p.status === 'Ditolak' || p.status === 'Partial Approved') && reason) {
+                            document.getElementById('detailCatatanDiv').style.display = 'block';
+                            document.getElementById('detailCatatan').textContent = escapeHtml(reason);
+                        } else if (p.status === 'Ditolak' && p.catatan) {
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
                         } else {
@@ -853,12 +862,12 @@
 
                         new bootstrap.Modal(document.getElementById('modalDetail')).show();
                     } else {
-                        alert('Gagal memuat detail peminjaman');
+                        alert('Failed to load borrowing details');
                     }
                 })
                 .catch(err => {
                     console.error('Error:', err);
-                    alert('Error memuat detail');
+                    alert('Error loading details');
                 });
         }
     </script>

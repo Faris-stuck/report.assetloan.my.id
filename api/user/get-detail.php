@@ -24,7 +24,7 @@ $peminjaman_id = $_GET['peminjaman_id'] ?? $_GET['id'];
 if (!$peminjaman_id) {
     echo json_encode([
         "status" => false,
-        "message" => "peminjaman_id tidak ditemukan"
+        "message" => "peminjaman_id not found"
     ]);
     exit;
 }
@@ -45,7 +45,7 @@ $peminjaman = $result->fetch_assoc();
 if (!$peminjaman) {
     echo json_encode([
         "status" => false,
-        "message" => "Peminjaman tidak ditemukan"
+        "message" => "Borrowing not found"
     ]);
     exit;
 }

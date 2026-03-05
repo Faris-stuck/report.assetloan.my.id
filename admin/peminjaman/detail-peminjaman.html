@@ -205,7 +205,7 @@
                     <!--PROFILE-->
                     <!--PROFILE-->
                     <!--PROFILE-->
-                                        <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
                         <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
                             <div class="user-name" data-user-name>Loading...</div>
                             <div class="user-email" data-user-email></div>
@@ -217,10 +217,10 @@
                             </a>
                         </div>
                     </div>
-                    </div>
                 </div>
             </div>
-            <!--! [End] Header Right !-->
+        </div>
+        <!--! [End] Header Right !-->
         </div>
     </header>
     <!--! ================================================================ !-->
@@ -268,7 +268,7 @@
 
                     <div class="card stretch stretch-full">
                         <div class="card-header">
-                            <h5 class="mb-0" id="detail-title">Detail Peminjaman</h5>
+                            <h5 class="mb-0" id="detail-title">Borrowing Details</h5>
                         </div>
                         <div class="card-body" id="detail-content">
                             <!-- diisi oleh JS -->
@@ -343,7 +343,7 @@
         } else {
             container.innerHTML = `
                 <div class="alert alert-danger">
-                    Tidak ada peminjaman yang dipilih. Parameter "kode" atau "id" diperlukan.
+                    No borrowing selected. Parameter &quot;kode&quot; or &quot;id&quot; is required.
                 </div>`;
             throw new Error("Missing peminjaman identifier");
         }
@@ -368,7 +368,7 @@
                 if (!data) {
                     container.innerHTML = `
                         <div class="alert alert-danger">
-                            Data peminjaman <strong>${kode || id}</strong> tidak ditemukan.
+                            Borrowing data <strong>${kode || id}</strong> not found.
                         </div>`;
                     return;
                 }
@@ -390,7 +390,7 @@
 
                 // Update page title dynamically
                 const titleEl = document.getElementById('detail-title');
-                if (titleEl) titleEl.textContent = 'Detail Peminjaman - ' + data.kode_peminjaman;
+                if (titleEl) titleEl.textContent = 'Borrowing Details - ' + data.kode_peminjaman;
 
                 // Format dates
                 const tanggalPinjam = formatTanggal(data.tanggal_pinjam);
@@ -399,22 +399,22 @@
                 // Build HTML
                 let html = `
                     <table class="table table-bordered">
-                        <tr><th>Kode Peminjaman</th><td>${escapeHtml(data.kode_peminjaman || '-')}</td></tr>
-                        <tr><th>Nama Peminjam</th><td>${escapeHtml(data.nama_peminjam || '-')}</td></tr>
+                        <tr><th>Loan Code</th><td>${escapeHtml(data.kode_peminjaman || '-')}</td></tr>
+                        <tr><th>Borrower Name</th><td>${escapeHtml(data.nama_peminjam || '-')}</td></tr>
                         <tr><th>NRP</th><td>${escapeHtml(data.nrp || '-')}</td></tr>
-                        <tr><th>Tanggal Pinjam</th><td>${tanggalPinjam}</td></tr>
-                        <tr><th>Rencana Kembali</th><td>${rencanaKembali}</td></tr>
+                        <tr><th>Loan Date</th><td>${tanggalPinjam}</td></tr>
+                        <tr><th>Expected Return</th><td>${rencanaKembali}</td></tr>
                         <tr><th>Status</th>
                             <td><span class="badge bg-${badgeClass}">${escapeHtml(data.status)}</span></td>
                         </tr>
-                        ${data.catatan ? `<tr><th>Catatan</th><td>${escapeHtml(data.catatan)}</td></tr>` : ''}
+                        ${data.catatan ? `<tr><th>Notes</th><td>${escapeHtml(data.catatan)}</td></tr>` : ''}
                     </table>
                 `;
 
                 // If there are barang details, fetch and display them
                 if (data.id) {
-                    html += `<h6 class="mt-4">Barang yang Dipinjam</h6>
-                        <div id="barang-list" class="alert alert-info">Memuat data barang...</div>`;
+                    html += `<h6 class="mt-4">Borrowed Items</h6>
+                        <div id="barang-list" class="alert alert-info">Loading item data...</div>`;
 
                     // Fetch barang details
                     fetch(`${API_BASE_URL}/user/get-detail.php?peminjaman_id=${data.id}`, { credentials: 'same-origin' })
@@ -426,10 +426,10 @@
                                     <table class="table table-sm table-hover">
                                         <thead>
                                             <tr>
-                                                <th>Kode</th>
-                                                <th>Nama Barang</th>
-                                                <th>Jumlah</th>
-                                                <th>Lokasi</th>
+                                                <th>Code</th>
+                                                <th>Item Name</th>
+                                                <th>Quantity</th>
+                                                <th>Location</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -444,17 +444,17 @@
                                         </tbody>
                                     </table>`;
                             } else {
-                                barangList.innerHTML = '<div class="alert alert-warning">Tidak ada data barang ditemukan</div>';
+                                barangList.innerHTML = '<div class="alert alert-warning">No item data found</div>';
                             }
                         })
                         .catch(err => {
                             const barangList = document.getElementById('barang-list');
                             if (barangList) {
-                                barangList.innerHTML = '<div class="alert alert-danger">Gagal memuat data barang</div>';
+                                barangList.innerHTML = '<div class="alert alert-danger">Failed to load item data</div>';
                             }
                         });
                 } else {
-                    html += '<p class="text-muted">Tidak ada data barang</p>';
+                    html += '<p class="text-muted">No item data</p>';
                 }
 
                 container.innerHTML = html;
@@ -463,7 +463,7 @@
                 console.error('Error loading peminjaman detail:', err);
                 container.innerHTML = `
                     <div class="alert alert-danger">
-                        Gagal memuat data peminjaman: ${escapeHtml(err.message || 'Unknown error')}
+                        Failed to load borrowing data: ${escapeHtml(err.message || 'Unknown error')}
                     </div>`;
             });
 

@@ -22,10 +22,10 @@ require_once 'config/database.php';
 // require_once 'api/session-helper.php';
 
 echo "<!DOCTYPE html>";
-echo "<html lang='id'>";
+echo "<html lang='en'>";
 echo "<head>";
 echo "<meta charset='UTF-8'>";
-echo "<title>Verifikasi Status Peminjaman Chart</title>";
+echo "<title>Borrowing Status Chart Verification</title>";
 echo "<style>";
 echo "body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }";
 echo "h1 { color: #333; border-bottom: 3px solid #007bff; padding-bottom: 10px; }";
@@ -51,9 +51,9 @@ echo "</style>";
 echo "</head>";
 echo "<body>";
 
-echo "<h1>✓ Verifikasi Status Peminjaman Chart Implementation</h1>";
+echo "<h1>✓ Borrowing Status Chart Implementation Verification</h1>";
 echo "<p>File: <code>verify-status-peminjaman.php</code></p>";
-echo "<p>Tanggal: " . date('d M Y H:i:s') . "</p>";
+echo "<p>Date: " . date('d M Y H:i:s') . "</p>";
 
 try {
     // Test database connection
@@ -100,10 +100,10 @@ try {
     // Main verification: Status Peminjaman Chart Queries
     echo "<div class='section'>";
     echo "<h2>3. Status Peminjaman Chart - Query Verification</h2>";
-    echo "<p>Requirements: Queries harus menghitung jumlah <strong>transaksi (rows)</strong>, bukan jumlah user yang berbeda.</p>";
+    echo "<p>Requirements: Queries must count the number of <strong>transactions (rows)</strong>, not the number of distinct users.</p>";
     
     // Query 1: Menunggu Persetujuan
-    echo "<h3>Query 1: Menunggu Persetujuan</h3>";
+    echo "<h3>Query 1: Pending Approval</h3>";
     $q1 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Menunggu Persetujuan'";
     echo "<div class='query'>" . htmlspecialchars($q1) . "</div>";
     
@@ -112,14 +112,14 @@ try {
         $row1 = $result1->fetch_assoc();
         $count1 = (int)$row1['total'];
         echo "<div class='result'>";
-        echo "<div class='status-box menunggu'>Menunggu Persetujuan: <span class='count'>" . $count1 . "</span></div>";
+        echo "<div class='status-box menunggu'>Pending Approval: <span class='count'>" . $count1 . "</span></div>";
         echo "</div>";
     } else {
         echo "<div class='error'>❌ Query Error: " . $conn->error . "</div>";
     }
     
     // Query 2: Sedang Dipinjam (UPDATED)
-    echo "<h3>Query 2: Sedang Dipinjam (UPDATED - Includes Sebagian Dikembalikan)</h3>";
+    echo "<h3>Query 2: Currently Borrowed (UPDATED - Includes Partially Returned)</h3>";
     $q2 = "SELECT COUNT(*) as total FROM peminjaman WHERE status IN ('Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return') OR status LIKE 'Due%' OR status = 'Overdue'";
     echo "<div class='query'>" . htmlspecialchars($q2) . "</div>";
     
@@ -128,14 +128,14 @@ try {
         $row2 = $result2->fetch_assoc();
         $count2 = (int)$row2['total'];
         echo "<div class='result'>";
-        echo "<div class='status-box dipinjam'>Sedang Dipinjam: <span class='count'>" . $count2 . "</span></div>";
+        echo "<div class='status-box dipinjam'>Currently Borrowed: <span class='count'>" . $count2 . "</span></div>";
         echo "</div>";
     } else {
         echo "<div class='error'>❌ Query Error: " . $conn->error . "</div>";
     }
     
     // Query 3: Dikembalikan (UPDATED)
-    echo "<h3>Query 3: Dikembalikan (UPDATED - Includes Sebagian/Semua Rusak & Selesai)</h3>";
+    echo "<h3>Query 3: Returned (UPDATED - Includes Partially/All Damaged & Completed)</h3>";
     $q3 = "SELECT COUNT(*) as total FROM peminjaman WHERE status IN ('Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Selesai')";
     echo "<div class='query'>" . htmlspecialchars($q3) . "</div>";
     
@@ -144,14 +144,14 @@ try {
         $row3 = $result3->fetch_assoc();
         $count3 = (int)$row3['total'];
         echo "<div class='result'>";
-        echo "<div class='status-box dikembalikan'>Dikembalikan: <span class='count'>" . $count3 . "</span></div>";
+        echo "<div class='status-box dikembalikan'>Returned: <span class='count'>" . $count3 . "</span></div>";
         echo "</div>";
     } else {
         echo "<div class='error'>❌ Query Error: " . $conn->error . "</div>";
     }
     
     // Query 4: Ditolak
-    echo "<h3>Query 4: Ditolak</h3>";
+    echo "<h3>Query 4: Rejected</h3>";
     $q4 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Ditolak'";
     echo "<div class='query'>" . htmlspecialchars($q4) . "</div>";
     
@@ -160,17 +160,17 @@ try {
         $row4 = $result4->fetch_assoc();
         $count4 = (int)$row4['total'];
         echo "<div class='result'>";
-        echo "<div class='status-box ditolak'>Ditolak: <span class='count'>" . $count4 . "</span></div>";
+        echo "<div class='status-box ditolak'>Rejected: <span class='count'>" . $count4 . "</span></div>";
         echo "</div>";
     } else {
         echo "<div class='error'>❌ Query Error: " . $conn->error . "</div>";
     }
     
     // Summary
-    echo "<h3>Summary - Total Transaksi</h3>";
+    echo "<h3>Summary - Total Transactions</h3>";
     echo "<div class='result'>";
     $total_transactions = $count1 + $count2 + $count3 + $count4;
-    echo "<div class='total'>Total Transaksi: " . $total_transactions . "</div>";
+    echo "<div class='total'>Total Transactions: " . $total_transactions . "</div>";
     echo "</div>";
     
     echo "</div>";
@@ -208,10 +208,10 @@ try {
             
             // Determine mapping
             $mapped_to = "Other";
-            if ($status === 'Menunggu Persetujuan') $mapped_to = "Menunggu Persetujuan";
-            else if (in_array($status, ['Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return']) || strpos($status, 'Due') === 0 || $status === 'Overdue') $mapped_to = "Sedang Dipinjam";
-            else if (in_array($status, ['Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Selesai'])) $mapped_to = "Dikembalikan";
-            else if ($status === 'Ditolak') $mapped_to = "Ditolak";
+            if ($status === 'Menunggu Persetujuan') $mapped_to = "Pending Approval";
+            else if (in_array($status, ['Sedang Dipinjam', 'Sebagian Dikembalikan', 'Proses Return']) || strpos($status, 'Due') === 0 || $status === 'Overdue') $mapped_to = "Currently Borrowed";
+            else if (in_array($status, ['Dikembalikan', 'Sebagian Rusak', 'Semua Rusak', 'Selesai'])) $mapped_to = "Returned";
+            else if ($status === 'Ditolak') $mapped_to = "Rejected";
             
             echo "<tr>";
             echo "<td><strong>" . htmlspecialchars($status) . "</strong></td>";
@@ -270,8 +270,8 @@ try {
     echo "<p><strong>Chart Type:</strong> Bar Chart (ApexCharts)</p>";
     echo "<p><strong>Data Source:</strong> peminjaman table (real-time)</p>";
     echo "<p><strong>Counting Method:</strong> COUNT(*) - counts all transaction rows</p>";
-    echo "<p><strong>Status Categories:</strong> 4 (Menunggu, Sedang, Dikembalikan, Ditolak)</p>";
-    echo "<p><span class='pass'>✅ Grafik batang \"Status Peminjaman\" menampilkan jumlah TRANSAKSI berdasarkan COUNT(*), bukan jumlah USER</span></p>";
+    echo "<p><strong>Status Categories:</strong> 4 (Pending, Borrowed, Returned, Rejected)</p>";
+    echo "<p><span class='pass'>✅ Bar chart \"Borrowing Status\" displays the number of TRANSACTIONS based on COUNT(*), not the number of USERS</span></p>";
     echo "</div>";
     echo "</div>";
     

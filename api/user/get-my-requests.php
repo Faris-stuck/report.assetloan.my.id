@@ -22,7 +22,7 @@ $user_id = $_GET['user_id'] ?? 0;
 if (!$user_id) {
     echo json_encode([
         "status" => false,
-        "message" => "User ID diperlukan"
+        "message" => "User ID is required"
     ]);
     exit;
 }

@@ -24,7 +24,7 @@ if ($user_role !== 'user') {
     http_response_code(401);
     echo json_encode([
         "status" => false,
-        "message" => "Unauthorized: Role harus 'user'. Role saat ini: $user_role"
+        "message" => "Unauthorized: Role must be 'user'. Current role: $user_role"
     ]);
     exit;
 }
@@ -80,7 +80,7 @@ foreach ($_POST as $key => $value) {
 if (empty($user_id) || empty($nama_peminjam) || empty($nrp) || empty($rencana_pinjam) || empty($rencana_kembali)) {
     echo json_encode([
         "status" => false,
-        "message" => "Data required tidak lengkap. Pastikan semua field terisi."
+        "message" => "Required data is incomplete. Please ensure all fields are filled."
     ]);
     exit;
 }
@@ -90,7 +90,7 @@ $today = date('Y-m-d');
 if (strtotime($rencana_pinjam) < strtotime($today)) {
     echo json_encode([
         "status" => false,
-        "message" => "Tanggal peminjaman tidak boleh kurang dari tanggal hari ini ($today)"
+        "message" => "Borrowing date cannot be earlier than today ($today)"
     ]);
     exit;
 }
@@ -99,7 +99,7 @@ if (strtotime($rencana_pinjam) < strtotime($today)) {
 if (strtotime($rencana_kembali) < strtotime($rencana_pinjam)) {
     echo json_encode([
         "status" => false,
-        "message" => "Tanggal pengembalian tidak boleh kurang dari tanggal peminjaman"
+        "message" => "Return date cannot be earlier than the borrowing date"
     ]);
     exit;
 }
@@ -108,7 +108,7 @@ if (strtotime($rencana_kembali) < strtotime($rencana_pinjam)) {
 if (empty($barang) || array_sum($barang) == 0) {
     echo json_encode([
         "status" => false,
-        "message" => "Pilih minimal 1 barang untuk dipinjam."
+        "message" => "Please select at least 1 item to borrow."
     ]);
     exit;
 }
@@ -147,7 +147,7 @@ try {
             $barang_data = $result_cek->fetch_assoc();
 
             if (!$barang_data) {
-                throw new Exception("Barang dengan ID $barang_id tidak ditemukan");
+                throw new Exception("Item with ID $barang_id not found");
             }
 
             $stok_tersedia = intval($barang_data['stok_tersedia']);
@@ -156,13 +156,13 @@ try {
 
             // Cek apakah jumlah yang diminta melebihi stok tersedia
             if ($jumlah > $stok_tersedia) {
-                throw new Exception("Jumlah pinjam ($jumlah) untuk '$nama_brg' melebihi stok tersedia ($stok_tersedia)");
+                throw new Exception("Borrow quantity ($jumlah) for '$nama_brg' exceeds available stock ($stok_tersedia)");
             }
 
             // Cek apakah stok setelah dipinjam akan di bawah 0
             $stok_setelah = $stok_tersedia - $jumlah;
             if ($stok_setelah < 0) {
-                throw new Exception("Stok '$nama_brg' tidak mencukupi. Stok tersedia: $stok_tersedia, diminta: $jumlah");
+                throw new Exception("Stock for '$nama_brg' is insufficient. Available stock: $stok_tersedia, requested: $jumlah");
             }
 
             $stmt_detail = $conn->prepare("
@@ -187,7 +187,7 @@ try {
                 throw new Exception("Update stok failed: " . $stmt_update->error);
             }
             if ($stmt_update->affected_rows === 0) {
-                throw new Exception("Gagal mengurangi stok '$nama_brg'. Stok mungkin sudah berubah.");
+                throw new Exception("Failed to reduce stock for '$nama_brg'. Stock may have changed.");
             }
         }
     }
@@ -195,7 +195,7 @@ try {
     $conn->commit();
     
     // ============================================================
-    // Kirim email notifikasi setelah peminjaman berhasil dibuat
+    // Send email notification after borrowing request is successfully created
     // ============================================================
     try {
         require_once __DIR__ . '/../email/send-pinjam-request.php';

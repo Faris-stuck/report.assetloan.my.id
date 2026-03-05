@@ -35,11 +35,11 @@ try {
     $current = $stmt_check->get_result()->fetch_assoc();
     
     if (!$current) {
-        throw new Exception("Peminjaman tidak ditemukan");
+        throw new Exception("Borrowing not found");
     }
     
     if ($current['status'] === 'Ditolak' || $current['status'] === 'Dikembalikan') {
-        throw new Exception("Peminjaman sudah berstatus '{$current['status']}', tidak dapat ditolak lagi");
+        throw new Exception("Borrowing already has status '{$current['status']}', cannot be rejected again");
     }
     
     // Update status to Ditolak with catatan/alasan
@@ -69,14 +69,14 @@ try {
     // Kirim email notifikasi penolakan ke user
     try {
         require_once __DIR__ . '/../email/send-rejected.php';
-        sendRejectedEmail($conn, $id, 'Peminjaman');
+        sendRejectedEmail($conn, $id, 'Loan');
     } catch (Exception $emailEx) {
         error_log("[EMAIL ERROR] admin/reject: " . $emailEx->getMessage());
     }
     
     echo json_encode([
         "status" => true,
-        "message" => "Peminjaman berhasil ditolak dengan alasan: $catatan. Stok barang telah dikembalikan."
+        "message" => "Borrowing rejected with reason: $catatan. Item stock has been restored."
     ]);
 } catch (Exception $e) {
     $conn->rollback();

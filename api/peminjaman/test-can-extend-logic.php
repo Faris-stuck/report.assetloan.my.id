@@ -17,73 +17,73 @@ $final_statuses = ['Dikembalikan', 'Returned', 'Completed', 'Closed', 'Rejected'
 
 $test_scenarios = [
     [
-        'name' => 'Peminjaman yang BELUM pernah extend',
+        'name' => 'Borrowing - Never Extended',
         'peminjaman_status' => 'Sedang Dipinjam',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
     ],
     [
-        'name' => 'Peminjaman yang SUDAH pernah extend (Approved)',
+        'name' => 'Borrowing - Already Extended (Approved)',
         'peminjaman_status' => 'Sedang Dipinjam',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
     ],
     [
-        'name' => 'Peminjaman Overdue',
+        'name' => 'Borrowing - Overdue',
         'peminjaman_status' => 'Overdue',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
     ],
     [
-        'name' => 'Peminjaman Due H-7',
+        'name' => 'Borrowing - Due H-7',
         'peminjaman_status' => 'Due H-7',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
     ],
     [
-        'name' => 'Peminjaman Sebagian Dikembalikan',
+        'name' => 'Borrowing - Sebagian Dikembalikan',
         'peminjaman_status' => 'Sebagian Dikembalikan',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
     ],
     [
-        'name' => 'Peminjaman Final - Dikembalikan',
+        'name' => 'Borrowing Final - Dikembalikan',
         'peminjaman_status' => 'Dikembalikan',
         'expected_can_extend' => false,
         'expected_show_extend_button' => false
     ],
     [
-        'name' => 'Peminjaman Final - Returned',
+        'name' => 'Borrowing Final - Returned',
         'peminjaman_status' => 'Returned',
         'expected_can_extend' => false,
         'expected_show_extend_button' => false
     ],
     [
-        'name' => 'Peminjaman Final - Completed',
+        'name' => 'Borrowing Final - Completed',
         'peminjaman_status' => 'Completed',
         'expected_can_extend' => false,
         'expected_show_extend_button' => false
     ],
     [
-        'name' => 'Peminjaman Final - Rejected',
+        'name' => 'Borrowing Final - Rejected',
         'peminjaman_status' => 'Rejected',
         'expected_can_extend' => false,
         'expected_show_extend_button' => false
     ],
     [
-        'name' => 'Peminjaman Final - Ditolak',
+        'name' => 'Borrowing Final - Ditolak',
         'peminjaman_status' => 'Ditolak',
         'expected_can_extend' => false,
         'expected_show_extend_button' => false
     ],
     [
-        'name' => 'Peminjaman Disetujui',
+        'name' => 'Borrowing - Disetujui',
         'peminjaman_status' => 'Disetujui',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
     ],
     [
-        'name' => 'Peminjaman Proses Return',
+        'name' => 'Borrowing - Proses Return',
         'peminjaman_status' => 'Proses Return',
         'expected_can_extend' => true,
         'expected_show_extend_button' => true
@@ -142,20 +142,20 @@ echo "\n";
 if ($failed === 0) {
     echo "🎉 All tests PASSED!\n";
     echo "\n✅ KEY POINTS:\n";
-    echo "1. can_extend field ditambahkan ke API response\n";
-    echo "2. can_extend ditentukan dari peminjaman.status\n";
-    echo "3. BUKAN dari ada/tidaknya extend_peminjaman record\n";
-    echo "4. Frontend gunakan can_extend langsung dari peminjaman/get.php\n";
-    echo "5. Tombol EXTEND ditampilkan inline saat render (tidak perlu wait API)\n";
-    echo "6. Status extend tetap ditampilkan sebagai badge (dari extend/status.php)\n";
+    echo "1. can_extend field added to API response\n";
+    echo "2. can_extend determined from peminjaman.status\n";
+    echo "3. NOT from presence/absence of extend_peminjaman record\n";
+    echo "4. Frontend uses can_extend directly from peminjaman/get.php\n";
+    echo "5. EXTEND Button displayed inline during render (no need to wait for API)\n";
+    echo "6. Extend status still displayed as badge (from extend/status.php)\n";
 } else {
     echo "⚠️  Some tests FAILED. Please review!\n";
 }
 
 echo "\n═══════════════════════════════════════════════════════════\n";
 echo "\nSCENARIO COVERAGE:\n";
-echo "✓ Belum pernah extend → tombol muncul\n";
-echo "✓ Sudah pernah extend → tombol muncul\n";
-echo "✓ Peminjaman final → tombol tidak muncul\n";
-echo "✓ Status aktif apapun → tombol muncul\n";
+echo "✓ Never extended → button appears\n";
+echo "✓ Already extended → button appears\n";
+echo "✓ Final borrowing → button not shown\n";
+echo "✓ Any active status → button appears\n";
 echo "═══════════════════════════════════════════════════════════\n";

@@ -18,7 +18,7 @@ try {
 
 $id = (int)($_POST['id'] ?? 0);
 if (!$id) {
-    echo json_encode(["status" => false, "message" => "ID peminjaman wajib"]);
+    echo json_encode(["status" => false, "message" => "Borrowing ID is required"]);
     exit;
 }
 
@@ -32,10 +32,10 @@ try {
     $row = $chk->get_result()->fetch_assoc();
     
     if (!$row) {
-        throw new Exception("Peminjaman tidak ditemukan");
+        throw new Exception("Borrowing not found");
     }
     if (in_array($row['status'], ['Dikembalikan', 'Ditolak'])) {
-        throw new Exception("Peminjaman sudah berstatus: " . $row['status']);
+        throw new Exception("Borrowing already has status: " . $row['status']);
     }
 
     // Get total items borrowed
@@ -104,7 +104,7 @@ try {
         error_log("[EMAIL ERROR] pic_barang/process-return: " . $emailEx->getMessage());
     }
 
-    echo json_encode(["status" => true, "message" => "Pengembalian berhasil diproses"]);
+    echo json_encode(["status" => true, "message" => "Return processed successfully"]);
 } catch (Exception $e) {
     $conn->rollback();
     http_response_code(500);

@@ -12,7 +12,7 @@ try {
     SessionValidator::requireRole(['pic_barang']);
     $user_id = SessionValidator::getUserId();
     if (!$user_id) {
-        throw new Exception("Session tidak valid");
+        throw new Exception("Session not valid");
     }
 
     $stmt = $conn->prepare("SELECT id, nama, nrp, email, role, created_at FROM users WHERE id = ?");
@@ -28,7 +28,7 @@ try {
         ]);
     } else {
         http_response_code(404);
-        echo json_encode(['status' => false, 'message' => 'User tidak ditemukan']);
+        echo json_encode(['status' => false, 'message' => 'User not found']);
     }
 } catch (Exception $e) {
     http_response_code(403);

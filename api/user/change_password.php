@@ -25,13 +25,13 @@ $password = $_POST['password'] ?? '';
 
 if (!$id || !$password) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "User ID dan password wajib diisi"]);
+    echo json_encode(["status" => false, "message" => "User ID and password are required"]);
     exit;
 }
 
 if (strlen($password) < 6) {
     http_response_code(400);
-    echo json_encode(["status" => false, "message" => "Password minimal 6 karakter"]);
+    echo json_encode(["status" => false, "message" => "Password must be at least 6 characters"]);
     exit;
 }
 
@@ -43,7 +43,7 @@ $user = $stmt->get_result()->fetch_assoc();
 
 if (!$user) {
     http_response_code(404);
-    echo json_encode(["status" => false, "message" => "User tidak ditemukan"]);
+    echo json_encode(["status" => false, "message" => "User not found"]);
     exit;
 }
 
@@ -55,11 +55,11 @@ $stmt->bind_param("si", $plain_password, $id);
 if ($stmt->execute()) {
     echo json_encode([
         "status" => true,
-        "message" => "Password user '{$user['nama']}' berhasil diubah"
+        "message" => "Password for user '{$user['nama']}' successfully changed"
     ]);
 } else {
     http_response_code(500);
-    echo json_encode(["status" => false, "message" => "Gagal mengubah password"]);
+    echo json_encode(["status" => false, "message" => "Failed to change password"]);
 }
 
 $stmt->close();
