@@ -52,6 +52,19 @@
 			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
+    <style>
+        .rejection-label {
+            display: block;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        .rejection-reason-box {
+            padding: 12px 16px;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 
 <body>
@@ -360,9 +373,11 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                    <div id="detailCatatanDiv" style="display: none;">
-                                        <h6 class="text-danger mb-2"><strong>Notes</strong></h6>
-                                        <div class="alert alert-info" id="detailCatatan"></div>
+                                    <label class="rejection-label" id="detailCatatanLabel"
+                                        style="display: none;">Rejection Reason</label>
+                                    <div id="detailCatatanDiv" style="display: none;"
+                                        class="alert alert-danger rejection-reason-box">
+                                        <div id="detailCatatan"></div>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -468,7 +483,7 @@
       <td>${item.nrp}</td>
       <td>${item.barang}</td>
       <td>${item.tanggal}</td>
-      <td>${item.rencana_kembali}</td>
+      <td>${item.expected_return_nearest || item.rencana_kembali}</td>
       <td><span class="badge ${item.status === 'Overdue' || item.status === 'Due Today' ? 'bg-danger' : item.status.startsWith('Due') ? 'bg-warning text-dark' : 'bg-primary'}">${item.status}</span></td>
       <td>
         <button class="btn btn-sm btn-outline-primary"
@@ -538,15 +553,21 @@
                         document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
                         // Notes / Rejection reason
+                        // Check if any unit is rejected (approval_status = 'Ditolak')
+                        const hasRejectedUnit = units.some(u => u.approval_status === 'Ditolak');
                         const catatanDiv = document.getElementById('detailCatatanDiv');
+                        const catatanLabel = document.getElementById('detailCatatanLabel');
                         const reason = p.rejection_reason || p.catatan || '';
-                        if ((p.status === 'Ditolak' || p.status === 'Partial Approved') && reason) {
+                        if ((hasRejectedUnit || p.status === 'Ditolak') && reason) {
                             document.getElementById('detailCatatan').textContent = escapeHtml(reason);
+                            catatanLabel.style.display = 'block';
                             catatanDiv.style.display = 'block';
                         } else if (p.catatan && p.catatan.trim() !== '') {
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
+                            catatanLabel.style.display = 'block';
                             catatanDiv.style.display = 'block';
                         } else {
+                            catatanLabel.style.display = 'none';
                             catatanDiv.style.display = 'none';
                         }
 

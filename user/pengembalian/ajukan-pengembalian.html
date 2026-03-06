@@ -555,10 +555,9 @@
 
                     console.log("Total items in API response:", res.data.length);
 
-                    // Filter untuk menampilkan HANYA peminjaman yang sudah aktif dipinjam
-                    // JANGAN tampilkan: Pending Approval, Menunggu Persetujuan, Ditolak, dll
-                    // HANYA tampilkan: Sedang Dipinjam, Sebagian Dikembalikan, Due*, Overdue, Proses Return
-                    const allowedStatus = [
+                    // Filter: only show active borrowed items
+                    // Status comes from API (computed from peminjaman_units), no hardcode
+                    const activeStatuses = [
                         "Sedang Dipinjam",
                         "Sebagian Dikembalikan",
                         "Proses Return"
@@ -566,44 +565,38 @@
 
                     const itemsToReturn = res.data.filter(p => {
                         const userMatch = (p.user_id == USER_ID);
-
-                        // Check if status is in allowed list OR is a "Due" status OR is "Overdue"
+                        const st = p.status || '';
                         const isBorrowedStatus =
-                            allowedStatus.includes(p.status) ||
-                            (p.status && p.status.startsWith("Due")) ||
-                            p.status === "Overdue";
-
-                        if (p.user_id == USER_ID) {
-                            console.log(`  - Item: ${p.kode}, user_id=${p.user_id}, status=${p.status}, userMatch=${userMatch}, isBorrowedStatus=${isBorrowedStatus}`);
-                        }
+                            activeStatuses.includes(st) ||
+                            st.startsWith("Due") ||
+                            st === "Overdue";
 
                         return userMatch && isBorrowedStatus;
                     });
 
                     console.log("Items to display (filtered):", itemsToReturn.length);
 
+                    // === STATUS BADGE HELPER (database-driven) ===
+                    function getStatusBadge(status) {
+                        if (status === 'Overdue' || status === 'Due Today') return 'badge bg-danger';
+                        if (status && status.startsWith('Due')) return 'badge bg-warning text-dark';
+                        if (status === 'Sedang Dipinjam') return 'badge bg-primary';
+                        if (status === 'Sebagian Dikembalikan') return 'badge bg-warning text-dark';
+                        if (status === 'Proses Return') return 'badge bg-info';
+                        if (status === 'Dikembalikan') return 'badge bg-success';
+                        if (status === 'Ditolak') return 'badge bg-danger';
+                        if (status && status.includes('Rusak')) return 'badge bg-danger';
+                        return 'badge bg-secondary';
+                    }
+
                     // Build HTML
                     let html = "";
                     itemsToReturn.forEach(p => {
-                        // Determine status badge color
-                        let statusBadgeClass = "badge bg-secondary";
-                        if (p.status === "Overdue" || p.status === "Due Today") {
-                            statusBadgeClass = "badge bg-danger";
-                        } else if (p.status && p.status.startsWith("Due")) {
-                            statusBadgeClass = "badge bg-warning text-dark";
-                        } else if (p.status === "Sedang Dipinjam") {
-                            statusBadgeClass = "badge bg-primary";
-                        } else if (p.status === "Sebagian Dikembalikan") {
-                            statusBadgeClass = "badge bg-warning";
-                        } else if (p.status === "Proses Return") {
-                            statusBadgeClass = "badge bg-info";
-                        } else if (p.status === "Dikembalikan") {
-                            statusBadgeClass = "badge bg-success";
-                        } else if (p.status === "Dipinjam Kembali") {
-                            statusBadgeClass = "badge bg-secondary";
-                        } else if (p.status && p.status.includes("Rusak")) {
-                            statusBadgeClass = "badge bg-danger";
-                        }
+                        // Status badge from API-computed status (no hardcode)
+                        const statusBadgeClass = getStatusBadge(p.status);
+
+                        // Expected return from per-unit data (nearest unreturned unit)
+                        const expectedReturn = p.expected_return_nearest || p.rencana_kembali || '-';
 
                         // Determine button visibility based on can_extend from API
                         const extendButtonDisplay = p.can_extend ? 'inline-block' : 'none';
@@ -623,7 +616,7 @@
             <td><strong>${p.kode || '-'}</strong></td>
             <td>${p.barang || '-'}</td>
             <td>${p.tanggal || '-'}</td>
-            <td>${p.rencana_kembali || '-'}</td>
+            <td>${expectedReturn}</td>
             <td>
                 <span class="${statusBadgeClass}">${p.status || '-'}</span>
                 <span id="extend-badge-${p.id}">${extendBadgeHtml}</span>
@@ -636,7 +629,7 @@
                         <i class="feather-undo"></i> Return
                     </button>
                     <button class="btn btn-warning btn-sm" 
-                        onclick="openExtendModal(${p.id}, '${p.rencana_kembali || ''}')" 
+                        onclick="openExtendModal(${p.id}, '${expectedReturn}')" 
                         title="Request extend for this borrowing"
                         id="btn-extend-${p.id}"
                         style="display: ${extendButtonDisplay};">

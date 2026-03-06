@@ -409,13 +409,17 @@
                 if (result.status && result.data) {
                     const data = result.data;
 
-                    // Render Status Peminjaman Chart
-                    const statusData = {
-                        'Pending Approval': data.menunggu_persetujuan || 0,
-                        'Currently Borrowed': data.sedang_dipinjam || 0,
-                        'Returned': data.dikembalikan || 0,
-                        'Rejected': data.ditolak || 0
-                    };
+                    // Render Status Peminjaman Chart (dynamic from DB, user-filtered)
+                    const statusData = {};
+                    (data.per_status || []).forEach(row => {
+                        if (row.status) statusData[row.status] = row.total;
+                    });
+                    if (Object.keys(statusData).length === 0) {
+                        statusData['Menunggu Persetujuan'] = data.menunggu_persetujuan || 0;
+                        statusData['Sedang Dipinjam'] = data.sedang_dipinjam || 0;
+                        statusData['Dikembalikan'] = data.dikembalikan || 0;
+                        statusData['Ditolak'] = data.ditolak || 0;
+                    }
 
                     // Populate kategori filter dropdown
                     const categories = data.categories || [];
@@ -452,19 +456,67 @@
                             '<div class="text-center text-muted py-5">No borrowing data yet</div>';
                     }
 
-                    // Render Item Data Chart
+                    // Render Item Data Chart — fallback to available items when user has no borrowing history
                     const allBarang = data.all_barang || [];
                     if (allBarang.length > 0) {
                         renderItemDataChart(allBarang);
                     } else {
-                        document.getElementById('itemDataChart').innerHTML =
-                            '<div class="text-center text-muted py-5">No item data yet</div>';
+                        const availableBarang = data.available_barang || [];
+                        if (availableBarang.length > 0) {
+                            document.getElementById('itemDataChart').innerHTML = '';
+                            renderItemDataChart(availableBarang);
+                            // Add subtitle below chart to clarify the data source
+                            const subtitle = document.createElement('p');
+                            subtitle.className = 'text-center text-muted mt-2 mb-0';
+                            subtitle.style.fontSize = '13px';
+                            subtitle.dataset.fallbackSubtitle = '1';
+                            subtitle.textContent = 'No borrowing history yet — showing all available items in the system';
+                            document.getElementById('itemDataChart').after(subtitle);
+                        } else {
+                            document.getElementById('itemDataChart').innerHTML =
+                                '<div class="text-center text-muted py-5">No item data yet</div>';
+                        }
                     }
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
             }
         });
+
+        // Returns a consistent color for each known borrowing status
+        function getStatusColor(status) {
+            const colorMap = {
+                'Menunggu Persetujuan': '#FFC107',
+                'Partial Approved': '#17A2B8',
+                'Disetujui': '#0D6EFD',
+                'Menunggu Admin': '#6C757D',
+                'Menunggu Approver': '#6C757D',
+                'Sedang Dipinjam': '#3F83F8',
+                'Sebagian Dikembalikan': '#20C997',
+                'Proses Return': '#6F42C1',
+                'Dikembalikan': '#28A745',
+                'Sebagian Rusak': '#FD7E14',
+                'Semua Rusak': '#DC3545',
+                'Selesai': '#198754',
+                'Ditolak': '#DC3545',
+                'Batal': '#868E96',
+                'Overdue': '#DC3545',
+                'Due Today': '#FF4444',
+                'Due Tomorrow': '#FD7E14',
+                'Due 2 Day': '#FFB900',
+                'Due 3 Day': '#FFC107',
+                'Due 4 Day': '#CDDC39',
+                'Due 5 Day': '#8BC34A',
+                'Due 6 Day': '#4CAF50',
+                'Due 7 Day': '#198754',
+                'Borrowed': '#3F83F8',
+                'Returned': '#28A745',
+                'Rejected': '#DC3545',
+                'Partially Returned': '#20C997'
+            };
+            if (colorMap[status]) return colorMap[status];
+            return '#6C757D';
+        }
 
         // Chart: Status Peminjaman
         function renderStatusChart(statusData) {
@@ -475,7 +527,7 @@
 
             const labels = Object.keys(statusData);
             const values = Object.values(statusData);
-            const colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+            const colors = labels.map(getStatusColor);
 
             const options = {
                 chart: {
@@ -507,6 +559,7 @@
                     bar: {
                         horizontal: false,
                         columnWidth: '60%',
+                        distributed: true,
                         dataLabels: { position: 'top' }
                     }
                 },
@@ -726,9 +779,29 @@
                     }
                     if (allBarang.length > 0) {
                         renderItemDataChart(allBarang);
+                        // Remove fallback subtitle if borrowing data is now present
+                        const prevSubtitle = document.getElementById('itemDataChart').nextElementSibling;
+                        if (prevSubtitle && prevSubtitle.dataset.fallbackSubtitle) prevSubtitle.remove();
                     } else {
-                        document.getElementById('itemDataChart').innerHTML =
-                            '<div class="text-center text-muted py-5">No data for selected item</div>';
+                        // No borrowing data for this filter — show available items as fallback
+                        const availableBarang = (result.data.available_barang || []).filter(
+                            item => !namaBarang || namaBarang === 'all' || item.nama === namaBarang
+                        );
+                        if (availableBarang.length > 0) {
+                            renderItemDataChart(availableBarang);
+                            const existingSubtitle = document.getElementById('itemDataChart').nextElementSibling;
+                            if (!existingSubtitle || !existingSubtitle.dataset.fallbackSubtitle) {
+                                const subtitle = document.createElement('p');
+                                subtitle.className = 'text-center text-muted mt-2 mb-0';
+                                subtitle.style.fontSize = '13px';
+                                subtitle.dataset.fallbackSubtitle = '1';
+                                subtitle.textContent = 'No borrowing history yet — showing all available items in the system';
+                                document.getElementById('itemDataChart').after(subtitle);
+                            }
+                        } else {
+                            document.getElementById('itemDataChart').innerHTML =
+                                '<div class="text-center text-muted py-5">No data for selected item</div>';
+                        }
                     }
                 }
             } catch (error) {
@@ -807,12 +880,16 @@
                 const response = await fetch(url, { credentials: 'same-origin' });
                 const result = await response.json();
                 if (result.status && result.data) {
-                    const statusData = {
-                        'Pending Approval': result.data.menunggu_persetujuan || 0,
-                        'Currently Borrowed': result.data.sedang_dipinjam || 0,
-                        'Returned': result.data.dikembalikan || 0,
-                        'Rejected': result.data.ditolak || 0
-                    };
+                    const statusData = {};
+                    (result.data.per_status || []).forEach(row => {
+                        if (row.status) statusData[row.status] = row.total;
+                    });
+                    if (Object.keys(statusData).length === 0) {
+                        statusData['Menunggu Persetujuan'] = result.data.menunggu_persetujuan || 0;
+                        statusData['Sedang Dipinjam'] = result.data.sedang_dipinjam || 0;
+                        statusData['Dikembalikan'] = result.data.dikembalikan || 0;
+                        statusData['Ditolak'] = result.data.ditolak || 0;
+                    }
                     renderStatusChart(statusData);
                 }
             } catch (error) {

@@ -42,9 +42,9 @@
             <thead>
                 <tr>
                     <th>Item Name</th>
-                    <th>Quantity</th>
-                    <th>Location</th>
+                    <th>Qty</th>
                     <th>Loan Condition</th>
+                    <th>Return Status</th>
                 </tr>
             </thead>
             <tbody id="items-body">
@@ -63,12 +63,51 @@
             return url.searchParams.get(name);
         }
 
+        // === STATUS DISPLAY HELPERS (database-driven, no hardcode) ===
+        function getDisplayStatus(dbStatus) {
+            const map = {
+                'Menunggu Persetujuan': 'Pending Approval',
+                'Disetujui': 'Pending Approval',
+                'Partial Approved': 'Partial Approved',
+                'Sedang Dipinjam': 'Currently Borrowed',
+                'Dikembalikan': 'Returned',
+                'Ditolak': 'Rejected',
+                'Proses Return': 'Return In Progress',
+                'Sebagian Dikembalikan': 'Partially Returned',
+                'Sebagian Rusak': 'Partially Damaged',
+                'Semua Rusak': 'Fully Damaged',
+                'Overdue': 'Overdue',
+                'Due Today': 'Due Today',
+                'Belum Dikembalikan': 'Not Yet Returned'
+            };
+            return map[dbStatus] || dbStatus || '-';
+        }
+
+        function getStatusBadgeClass(dbStatus) {
+            const ds = getDisplayStatus(dbStatus);
+            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged') return 'badge bg-danger';
+            if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'badge bg-warning text-dark';
+            if (ds === 'Pending Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'badge bg-warning text-dark';
+            if (ds === 'Currently Borrowed') return 'badge bg-primary';
+            if (ds === 'Return In Progress' || ds === 'Partial Approved') return 'badge bg-info';
+            if (ds === 'Returned') return 'badge bg-success';
+            return 'badge bg-secondary';
+        }
+
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
         const id = getParam('id') || getParam('peminjaman_id');
         if (!id) {
             document.getElementById('alert').style.display = 'block';
             document.getElementById('alert').innerText = 'Borrowing ID not found in query string.';
         } else {
-            fetch(`${BASE_URL}/api/user/get-detail.php?id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
+            // Use get_detail_units.php — the per-unit API (same as Extend modal)
+            fetch(`${BASE_URL}/api/peminjaman/get_detail_units.php?peminjaman_id=${encodeURIComponent(id)}`, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
                         window.location.href = BASE_URL + '/index.html';
@@ -83,53 +122,38 @@
                         return;
                     }
                     const d = data.data;
-                    document.getElementById('kode').innerText = d.kode_peminjaman || d.kode || '';
-                    document.getElementById('tanggal_pinjam').innerText = d.tanggal_pinjam || d.tanggal || '';
-                    document.getElementById('rencana_kembali').innerText = d.rencana_kembali || d.rencana || '';
-                    const rawStatus = (d.status || '').toString();
-                    const rawStatus_en = (d.status_en || '').toString();
-                    let displayStatus = rawStatus_en || rawStatus || '-';
-                    if (rawStatus.toLowerCase().includes('dicek') || rawStatus.toLowerCase().includes('diproses') || rawStatus.toLowerCase().includes('proses')) {
-                        displayStatus = 'Processing';
-                    }
-                    if (rawStatus.toLowerCase().includes('sebagian dikembalikan')) {
-                        displayStatus = 'Partially Returned';
-                    }
-                    if (rawStatus.toLowerCase().includes('sebagian') || rawStatus.toLowerCase().includes('seb') || rawStatus_en.toLowerCase().includes('partially')) {
-                        displayStatus = 'Partially Damaged';
-                    }
-                    if ((rawStatus.toLowerCase().includes('semua') && rawStatus.toLowerCase().includes('rusak')) || rawStatus_en.toLowerCase().includes('fully')) {
-                        displayStatus = 'Fully Damaged';
-                    }
+                    document.getElementById('kode').innerText = d.kode_peminjaman || '';
+                    document.getElementById('tanggal_pinjam').innerText = d.tanggal_pinjam || '';
+                    // Expected return from per-unit data (nearest unreturned unit)
+                    document.getElementById('rencana_kembali').innerText = d.expected_return_nearest || d.rencana_kembali || '';
+                    // Status directly from API (computed from peminjaman_units)
+                    const displayStatus = getDisplayStatus(d.status);
                     const statusEl = document.getElementById('status');
                     statusEl.innerText = displayStatus;
-                    // set badge classes
-                    statusEl.className = 'badge bg-secondary';
-                    const s = displayStatus.toLowerCase();
-                    if (s.includes('menunggu')) statusEl.className = 'badge bg-warning text-dark';
-                    else if (s === 'overdue' || s === 'due today') statusEl.className = 'badge bg-danger';
-                    else if (s.startsWith('due')) statusEl.className = 'badge bg-warning text-dark';
-                    else if (s.includes('disetujui')) statusEl.className = 'badge bg-info';
-                    else if (s.includes('ditolak')) statusEl.className = 'badge bg-danger';
-                    else if (s.includes('dipinjam')) statusEl.className = 'badge bg-primary';
-                    else if (s.includes('sebagian dikembalikan')) statusEl.className = 'badge bg-warning text-dark';
-                    else if (s.includes('proses return') || s.includes('return in progress')) statusEl.className = 'badge bg-info';
-                    else if (s.includes('dikembalikan') || s.includes('returned')) statusEl.className = 'badge bg-success';
-                    else if (s.includes('diproses') || s.includes('sedang')) statusEl.className = 'badge bg-warning text-dark';
-                    else if (s.includes('partially')) statusEl.className = 'badge bg-warning text-dark';
-                    else if (s.includes('fully') && s.includes('damaged')) statusEl.className = 'badge bg-danger';
+                    statusEl.className = getStatusBadgeClass(d.status);
+
+                    // Render per-unit items table
                     const tbody = document.getElementById('items-body');
                     tbody.innerHTML = '';
-                    (d.detail_barang || []).forEach(it => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${it.nama || it.nama_barang || ''}</td>
-                            <td>${it.jumlah || it.qty || ''}</td>
-                            <td>${it.lokasi || it.lokasi_item || ''}</td>
-                            <td>${it.kondisi_pinjam || it.kondisi || ''}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                    const units = d.units || [];
+                    if (units.length > 0) {
+                        units.forEach((u, i) => {
+                            const tr = document.createElement('tr');
+                            let unitBadge = getStatusBadgeClass(u.return_status);
+                            tr.innerHTML = `
+                                <td>
+                                    <div class="fw-semibold">${escapeHtml(u.nama_barang)}</div>
+                                    <div class="small text-muted"><code>${escapeHtml(u.kode_barang)}</code></div>
+                                </td>
+                                <td>1</td>
+                                <td>${escapeHtml(u.kondisi_pinjam || '')}</td>
+                                <td><span class="${unitBadge}">${escapeHtml(u.return_status)}</span></td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No items</td></tr>';
+                    }
                 })
                 .catch(err => console.error(err));
         }

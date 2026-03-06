@@ -51,7 +51,9 @@ $q = $conn->query("
 ");
 
 while ($row = $q->fetch_assoc()) {
-    $row['status'] = computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['peminjaman_id']) ?? $row['rencana_kembali']);
+    $nearest_expected = getNearestExpectedReturn($conn, $row['peminjaman_id']);
+    $row['status'] = computeDueStatus($row['status'], $nearest_expected ?? $row['rencana_kembali']);
+    $row['expected_return_nearest'] = $nearest_expected ? date('d/m/Y', strtotime($nearest_expected)) : date('d/m/Y', strtotime($row['rencana_kembali']));
     $peminjam[] = $row;
 }
 

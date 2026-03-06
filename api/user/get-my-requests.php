@@ -167,6 +167,9 @@ try {
         $row['status'] = computeDueStatus($row['status'], $expected_for_status);
         $row['status_en'] = $row['status'];
 
+        // Per-unit expected return (nearest unreturned unit)
+        $expectedReturnNearest = $nearest_expected ? date('d/m/Y', strtotime($nearest_expected)) : ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-');
+
         $data[] = [
             'id' => $row['id'],
             'kode_peminjaman' => $row['kode_peminjaman'],
@@ -175,6 +178,7 @@ try {
             'nrp' => $row['nrp'],
             'tanggal_pinjam' => $row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-',
             'rencana_kembali' => $row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-',
+            'expected_return_nearest' => $expectedReturnNearest,
             'tanggal_kembali' => $row['tanggal_kembali'] ? date('d/m/Y', strtotime($row['tanggal_kembali'])) : '-',
             'status' => $row['status'],
             'status_en' => $row['status_en'],

@@ -119,7 +119,9 @@ while ($row = $res->fetch_assoc()) {
     $row['tanggal_pinjam_f'] = $row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-';
     $row['rencana_kembali_f'] = $row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-';
     // REAL-TIME DUE STATUS for peminjaman status (use nearest expected return)
-    $row['status_peminjaman'] = computeDueStatus($row['status_peminjaman'], getNearestExpectedReturn($conn, $row['peminjaman_id']) ?? $row['rencana_kembali']);
+    $nearest_expected = getNearestExpectedReturn($conn, $row['peminjaman_id']);
+    $row['status_peminjaman'] = computeDueStatus($row['status_peminjaman'], $nearest_expected ?? $row['rencana_kembali']);
+    $row['expected_return_nearest'] = $nearest_expected ? date('d/m/Y', strtotime($nearest_expected)) : $row['rencana_kembali_f'];
     
     // Remove internal calculation fields (not for display)
     unset($row['total_items']);

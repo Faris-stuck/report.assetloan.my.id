@@ -53,6 +53,19 @@
 			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
+    <style>
+        .rejection-label {
+            display: block;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        .rejection-reason-box {
+            padding: 12px 16px;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 
 <body>
@@ -1097,32 +1110,16 @@
             document.getElementById("tableDitolak").innerHTML = renderTableRows(ditolak);
         }
 
-        // Helper function untuk render baris tabel
+        // Helper function to render table rows - status from API (database-driven)
         function renderTableRows(data) {
             if (data.length === 0) {
                 return '<tr><td colspan="6" class="text-center">No data</td></tr>';
             }
 
             return data.map((item, index) => {
-                let badgeClass = "bg-secondary";
-                const s = (item.status || '').toString().toLowerCase();
-                const se = (item.status_en || '').toString().toLowerCase();
-
-                // Simple status-to-badge mapping
-                if (item.status === "Menunggu Persetujuan" || item.status === "Disetujui") badgeClass = "bg-warning";
-                else if (item.status === "Sedang Dipinjam") badgeClass = "bg-primary";
-                else if (item.status === "Overdue" || item.status === "Due Today") badgeClass = "bg-danger";
-                else if (item.status && item.status.startsWith("Due")) badgeClass = "bg-warning text-dark";
-                else if (item.status === "Dikembalikan") badgeClass = "bg-success";
-                else if (item.status === "Ditolak") badgeClass = "bg-danger";
-                else if (item.status === "Sebagian Dikembalikan") badgeClass = 'bg-warning text-dark';
-                else if (item.status === "Proses Return") badgeClass = 'bg-info text-dark';
-                else if (item.status_en === "Return In Progress") badgeClass = 'bg-info text-dark';
-                else if (item.status === "Sebagian Rusak") badgeClass = "bg-danger";
-                else if (item.status === "Semua Rusak") badgeClass = "bg-danger";
-                else if (item.status === "Partial Approved") badgeClass = "bg-info";
-
-                const displayStatus = item.status_en || item.status;
+                // Badge class from API status (no hardcode)
+                const badgeClass = getStatusBadge(item.status, item.status_en).replace('badge ', '');
+                const displayStatus = item.status_en || getDisplayStatus(item.status) || item.status;
                 const borrowerName = item.nama_peminjam || item.nama || '-';
                 return `
         <tr>
@@ -1147,66 +1144,35 @@
         });
 
         // ========== HELPER FUNCTIONS FOR DETAIL MODAL ==========
+        // Status translation (database-driven, no hardcode)
         function getDisplayStatus(dbStatus, statusEn) {
-            if (statusEn) {
-                const en_lower = statusEn.toLowerCase();
-                if (en_lower.includes('return in progress')) return 'Return In Progress';
-                if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
-            }
-            switch (dbStatus) {
-                case 'Menunggu Persetujuan':
-                case 'Disetujui':
-                    return 'Pending Approval';
-                case 'Partial Approved':
-                    return 'Partial Approved';
-                case 'Sebagian Dikembalikan':
-                    return 'Partially Returned';
-                case 'Sebagian Rusak':
-                    return 'Partially Damaged';
-                case 'Semua Rusak':
-                    return 'Fully Damaged';
-                case 'Sedang Dipinjam':
-                    return 'Currently Borrowed';
-                case 'Dikembalikan':
-                    return 'Returned';
-                case 'Ditolak':
-                    return 'Rejected';
-                case 'Proses Return':
-                    return 'Return In Progress';
-                default:
-                    return dbStatus;
-            }
+            const map = {
+                'Menunggu Persetujuan': 'Pending Approval',
+                'Disetujui': 'Pending Approval',
+                'Partial Approved': 'Partial Approved',
+                'Sedang Dipinjam': 'Currently Borrowed',
+                'Dikembalikan': 'Returned',
+                'Ditolak': 'Rejected',
+                'Proses Return': 'Return In Progress',
+                'Sebagian Dikembalikan': 'Partially Returned',
+                'Sebagian Rusak': 'Partially Damaged',
+                'Semua Rusak': 'Fully Damaged',
+                'Overdue': 'Overdue',
+                'Due Today': 'Due Today',
+                'Belum Dikembalikan': 'Not Yet Returned'
+            };
+            return map[dbStatus] || dbStatus || '-';
         }
 
         function getStatusBadge(status, statusEn) {
-            const displayStatus = getDisplayStatus(status, statusEn);
-            if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
-            if (displayStatus.startsWith('Due In') || displayStatus.startsWith('Due in')) return 'badge bg-warning';
-            switch (displayStatus) {
-                case 'Pending Approval':
-                    return 'badge bg-warning';
-                case 'Disetujui':
-                    return 'badge bg-info';
-                case 'Currently Borrowed':
-                    return 'badge bg-primary';
-                case 'Partially Returned':
-                    return 'badge bg-warning';
-                case 'Return In Progress':
-                case 'Return In Progress':
-                    return 'badge bg-info';
-                case 'Returned':
-                    return 'badge bg-success';
-                case 'Rejected':
-                    return 'badge bg-danger';
-                case 'Partial Approved':
-                    return 'badge bg-info';
-                case 'Partially Damaged':
-                case 'Fully Damaged':
-                case 'Semua Rusak':
-                    return 'badge bg-danger';
-                default:
-                    return 'badge bg-secondary';
-            }
+            const ds = getDisplayStatus(status, statusEn);
+            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged') return 'badge bg-danger';
+            if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'badge bg-warning text-dark';
+            if (ds === 'Pending Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'badge bg-warning text-dark';
+            if (ds === 'Currently Borrowed') return 'badge bg-primary';
+            if (ds === 'Return In Progress' || ds === 'Partial Approved') return 'badge bg-info';
+            if (ds === 'Returned') return 'badge bg-success';
+            return 'badge bg-secondary';
         }
 
         function escapeHtml(s) {
@@ -1256,14 +1222,19 @@
                         document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
                         // Notes / Rejection reason section
+                        // Check if any unit is rejected (approval_status = 'Ditolak')
+                        const hasRejectedUnit = units.some(u => u.approval_status === 'Ditolak');
                         const reason = p.rejection_reason || p.catatan || '';
-                        if ((p.status === 'Ditolak' || p.status === 'Partial Approved') && reason) {
+                        if ((hasRejectedUnit || p.status === 'Ditolak') && reason) {
+                            document.getElementById('detailCatatanLabel').style.display = 'block';
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(reason);
                         } else if (p.status === 'Ditolak' && p.catatan) {
+                            document.getElementById('detailCatatanLabel').style.display = 'block';
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
                         } else {
+                            document.getElementById('detailCatatanLabel').style.display = 'none';
                             document.getElementById('detailCatatanDiv').style.display = 'none';
                         }
 
@@ -1317,9 +1288,10 @@
                             <tbody id="detailBarangTable"></tbody>
                         </table>
                     </div>
-                    <div id="detailCatatanDiv" style="display: none;">
-                        <h6 class="text-danger mb-2"><strong>Rejection Reason</strong></h6>
-                        <div class="alert alert-danger" id="detailCatatan"></div>
+                    <label class="rejection-label" id="detailCatatanLabel" style="display: none;">Rejection
+                        Reason</label>
+                    <div id="detailCatatanDiv" style="display: none;" class="alert alert-danger rejection-reason-box">
+                        <div id="detailCatatan"></div>
                     </div>
                 </div>
                 <div class="modal-footer">

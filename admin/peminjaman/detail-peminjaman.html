@@ -325,6 +325,7 @@
     <script>
         /* ===============================
            LOAD PEMINJAMAN DETAIL FROM API
+           Uses get_detail_units.php for per-unit data (same source as Extend modal)
         ================================ */
 
         // Get parameters from URL
@@ -334,138 +335,37 @@
 
         const container = document.getElementById("detail-content");
 
-        // Build API URL
-        let apiUrl = `${API_BASE_URL}/peminjaman/get_all.php`;
-        if (kode) {
-            apiUrl += `?kode=${encodeURIComponent(kode)}`;
-        } else if (id) {
-            apiUrl += `?id=${encodeURIComponent(id)}`;
-        } else {
-            container.innerHTML = `
-                <div class="alert alert-danger">
-                    No borrowing selected. Parameter &quot;kode&quot; or &quot;id&quot; is required.
-                </div>`;
-            throw new Error("Missing peminjaman identifier");
+        // === STATUS DISPLAY HELPERS (database-driven, no hardcode) ===
+        function getDisplayStatus(dbStatus) {
+            const map = {
+                'Menunggu Persetujuan': 'Pending Approval',
+                'Disetujui': 'Approved',
+                'Partial Approved': 'Partial Approved',
+                'Sedang Dipinjam': 'Currently Borrowed',
+                'Dikembalikan': 'Returned',
+                'Ditolak': 'Rejected',
+                'Proses Return': 'Return In Progress',
+                'Sebagian Dikembalikan': 'Partially Returned',
+                'Sebagian Rusak': 'Partially Damaged',
+                'Semua Rusak': 'Fully Damaged',
+                'Overdue': 'Overdue',
+                'Due Today': 'Due Today',
+                'Belum Dikembalikan': 'Not Yet Returned'
+            };
+            return map[dbStatus] || dbStatus || '-';
         }
 
-        // Fetch data from API
-        fetch(apiUrl, { credentials: 'same-origin' })
-            .then(res => {
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '../../index.html';
-                    throw new Error('Unauthorized');
-                }
-                if (!res.ok) throw new Error('API error ' + res.status);
-                return res.json();
-            })
-            .then(res => {
-                if (!res.status) {
-                    throw new Error(res.message || 'Failed to load data');
-                }
-
-                const data = (res.data && res.data.length > 0) ? res.data[0] : null;
-
-                if (!data) {
-                    container.innerHTML = `
-                        <div class="alert alert-danger">
-                            Borrowing data <strong>${kode || id}</strong> not found.
-                        </div>`;
-                    return;
-                }
-
-                // Format status badge
-                const statusColor = {
-                    'Menunggu Persetujuan': 'warning',
-                    'Disetujui': 'info',
-                    'Sedang Dipinjam': 'primary',
-                    'Dikembalikan': 'success',
-                    'Ditolak': 'danger',
-                    'Proses Return': 'info',
-                    'Sebagian Dikembalikan': 'warning',
-                    'Overdue': 'danger',
-                    'Due Today': 'danger',
-                    'Due Tomorrow': 'warning'
-                };
-                let badgeClass = statusColor[data.status] || (data.status && data.status.startsWith('Due') ? 'warning' : 'secondary');
-
-                // Update page title dynamically
-                const titleEl = document.getElementById('detail-title');
-                if (titleEl) titleEl.textContent = 'Borrowing Details - ' + data.kode_peminjaman;
-
-                // Format dates
-                const tanggalPinjam = formatTanggal(data.tanggal_pinjam);
-                const rencanaKembali = formatTanggal(data.rencana_kembali);
-
-                // Build HTML
-                let html = `
-                    <table class="table table-bordered">
-                        <tr><th>Loan Code</th><td>${escapeHtml(data.kode_peminjaman || '-')}</td></tr>
-                        <tr><th>Borrower Name</th><td>${escapeHtml(data.nama_peminjam || '-')}</td></tr>
-                        <tr><th>NRP</th><td>${escapeHtml(data.nrp || '-')}</td></tr>
-                        <tr><th>Loan Date</th><td>${tanggalPinjam}</td></tr>
-                        <tr><th>Expected Return</th><td>${rencanaKembali}</td></tr>
-                        <tr><th>Status</th>
-                            <td><span class="badge bg-${badgeClass}">${escapeHtml(data.status)}</span></td>
-                        </tr>
-                        ${data.catatan ? `<tr><th>Notes</th><td>${escapeHtml(data.catatan)}</td></tr>` : ''}
-                    </table>
-                `;
-
-                // If there are barang details, fetch and display them
-                if (data.id) {
-                    html += `<h6 class="mt-4">Borrowed Items</h6>
-                        <div id="barang-list" class="alert alert-info">Loading item data...</div>`;
-
-                    // Fetch barang details
-                    fetch(`${API_BASE_URL}/user/get-detail.php?peminjaman_id=${data.id}`, { credentials: 'same-origin' })
-                        .then(r => r.ok ? r.json() : Promise.reject(r))
-                        .then(res => {
-                            const barangList = document.getElementById('barang-list');
-                            if (res.status && res.items && res.items.length > 0) {
-                                barangList.innerHTML = `
-                                    <table class="table table-sm table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Code</th>
-                                                <th>Item Name</th>
-                                                <th>Quantity</th>
-                                                <th>Location</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            ${res.items.map(item => `
-                                                <tr>
-                                                    <td><code>${escapeHtml(item.kode_barang || '-')}</code></td>
-                                                    <td>${escapeHtml(item.nama_barang || '-')}</td>
-                                                    <td>${item.jumlah || 0}</td>
-                                                    <td>${escapeHtml(item.lokasi || '-')}</td>
-                                                </tr>
-                                            `).join('')}
-                                        </tbody>
-                                    </table>`;
-                            } else {
-                                barangList.innerHTML = '<div class="alert alert-warning">No item data found</div>';
-                            }
-                        })
-                        .catch(err => {
-                            const barangList = document.getElementById('barang-list');
-                            if (barangList) {
-                                barangList.innerHTML = '<div class="alert alert-danger">Failed to load item data</div>';
-                            }
-                        });
-                } else {
-                    html += '<p class="text-muted">No item data</p>';
-                }
-
-                container.innerHTML = html;
-            })
-            .catch(err => {
-                console.error('Error loading peminjaman detail:', err);
-                container.innerHTML = `
-                    <div class="alert alert-danger">
-                        Failed to load borrowing data: ${escapeHtml(err.message || 'Unknown error')}
-                    </div>`;
-            });
+        function getStatusBadgeColor(dbStatus) {
+            const ds = getDisplayStatus(dbStatus);
+            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged') return 'danger';
+            if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'warning';
+            if (ds === 'Pending Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'warning';
+            if (ds === 'Approved') return 'info';
+            if (ds === 'Currently Borrowed') return 'primary';
+            if (ds === 'Return In Progress' || ds === 'Partial Approved') return 'info';
+            if (ds === 'Returned') return 'success';
+            return 'secondary';
+        }
 
         // Helper function to escape HTML
         function escapeHtml(text) {
@@ -474,6 +374,133 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // Resolve peminjaman_id: if only kode is given, first look it up
+        async function loadDetail() {
+            let peminjamanId = id;
+
+            // If we only have kode, resolve it to an ID first via get_all.php
+            if (!peminjamanId && kode) {
+                try {
+                    const lookupRes = await fetch(`${API_BASE_URL}/peminjaman/get_all.php?kode=${encodeURIComponent(kode)}`, { credentials: 'same-origin' });
+                    const lookupData = await lookupRes.json();
+                    if (lookupData.status && lookupData.data && lookupData.data.length > 0) {
+                        peminjamanId = lookupData.data[0].id;
+                    }
+                } catch (e) {
+                    console.error('Error resolving kode to id:', e);
+                }
+            }
+
+            if (!peminjamanId) {
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        No borrowing selected. Parameter &quot;kode&quot; or &quot;id&quot; is required.
+                    </div>`;
+                return;
+            }
+
+            try {
+                // Use get_detail_units.php — per-unit data, same source as Extend modal
+                const res = await fetch(`${API_BASE_URL}/peminjaman/get_detail_units.php?peminjaman_id=${encodeURIComponent(peminjamanId)}`, { credentials: 'same-origin' });
+
+                if (res.status === 401 || res.status === 403) {
+                    window.location.href = '../../index.html';
+                    return;
+                }
+                if (!res.ok) throw new Error('API error ' + res.status);
+
+                const result = await res.json();
+                if (!result.status || !result.data) {
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            Borrowing data <strong>${escapeHtml(kode || peminjamanId)}</strong> not found.
+                        </div>`;
+                    return;
+                }
+
+                const data = result.data;
+
+                // Update page title dynamically
+                const titleEl = document.getElementById('detail-title');
+                if (titleEl) titleEl.textContent = 'Borrowing Details - ' + data.kode_peminjaman;
+
+                // Status badge from API-computed status
+                const displayStatus = getDisplayStatus(data.status);
+                const badgeClass = getStatusBadgeColor(data.status);
+
+                // Expected return from per-unit data (nearest unreturned unit)
+                const expectedReturn = data.expected_return_nearest || data.rencana_kembali || '-';
+
+                // Build HTML header
+                let html = `
+                    <table class="table table-bordered">
+                        <tr><th>Loan Code</th><td>${escapeHtml(data.kode_peminjaman || '-')}</td></tr>
+                        <tr><th>Borrower Name</th><td>${escapeHtml(data.nama_peminjam || '-')}</td></tr>
+                        <tr><th>NRP</th><td>${escapeHtml(data.nrp || '-')}</td></tr>
+                        <tr><th>Loan Date</th><td>${escapeHtml(data.tanggal_pinjam || '-')}</td></tr>
+                        <tr><th>Expected Return</th><td>${escapeHtml(expectedReturn)}</td></tr>
+                        <tr><th>Status</th>
+                            <td><span class="badge bg-${badgeClass}">${escapeHtml(displayStatus)}</span></td>
+                        </tr>
+                        ${data.catatan ? `<tr><th>Notes</th><td>${escapeHtml(data.catatan)}</td></tr>` : ''}
+                    </table>
+                `;
+
+                // Build per-unit items table
+                const units = data.units || [];
+                if (units.length > 0) {
+                    html += `<h6 class="mt-4">Borrowed Items (Per Unit)</h6>
+                        <table class="table table-sm table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" style="width:40px">No</th>
+                                    <th>Item</th>
+                                    <th class="text-center" style="width:80px">Unit</th>
+                                    <th class="text-center" style="width:50px">Qty</th>
+                                    <th class="text-center" style="width:140px">Return Status</th>
+                                    <th class="text-center" style="width:120px">Expected Return</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${units.map((u, i) => {
+                        const unitBadge = getStatusBadgeColor(u.return_status);
+                        return `<tr>
+                                        <td class="text-center">${i + 1}</td>
+                                        <td>
+                                            <div class="fw-semibold">${escapeHtml(u.nama_barang)}</div>
+                                            <div class="small text-muted"><code>${escapeHtml(u.kode_barang)}</code></div>
+                                        </td>
+                                        <td class="text-center"><span class="badge bg-light text-dark">Unit ${escapeHtml(u.unit_display)}</span></td>
+                                        <td class="text-center">1</td>
+                                        <td class="text-center"><span class="badge bg-${unitBadge}">${escapeHtml(u.return_status)}</span></td>
+                                        <td class="text-center">${escapeHtml(u.expected_return || '-')}</td>
+                                    </tr>`;
+                    }).join('')}
+                            </tbody>
+                        </table>`;
+                } else {
+                    html += '<p class="text-muted mt-3">No item data</p>';
+                }
+
+                // Show rejection reason if applicable
+                if (data.rejection_reason && (data.status === 'Ditolak' || units.some(u => u.approval_status === 'Ditolak'))) {
+                    html += `<div class="alert alert-danger mt-3">
+                        <strong>Rejection Reason:</strong> ${escapeHtml(data.rejection_reason)}
+                    </div>`;
+                }
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Error loading peminjaman detail:', err);
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Failed to load borrowing data: ${escapeHtml(err.message || 'Unknown error')}
+                    </div>`;
+            }
+        }
+
+        loadDetail();
     </script>
 
 

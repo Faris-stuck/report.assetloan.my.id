@@ -68,6 +68,55 @@ try {
     $data['dikembalikan']         = (int)($row['dikembalikan'] ?? 0);
     $data['ditolak']              = (int)($row['ditolak']      ?? 0);
 
+    // per_status: DATEDIFF-based due-date classification for the Borrowing Status chart
+    // Active loans bucketed using nearest expected_return from peminjaman_units, falling back to rencana_kembali.
+    $_dueCase = "CASE
+            WHEN p.status IN ('Dikembalikan','Sebagian Rusak','Semua Rusak','Selesai') THEN 'Returned'
+            WHEN p.status = 'Ditolak' THEN 'Rejected'
+            WHEN p.status = 'Sebagian Dikembalikan' THEN 'Partially Returned'
+            WHEN (p.status IN ('Sedang Dipinjam','Proses Return') OR p.status LIKE 'Due%' OR p.status = 'Overdue') THEN
+                CASE
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 7  THEN 'Due 7 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 6  THEN 'Due 6 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 5  THEN 'Due 5 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 4  THEN 'Due 4 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 3  THEN 'Due 3 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 2  THEN 'Due 2 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 1  THEN 'Due Tomorrow'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 0  THEN 'Due Today'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) < 0  THEN 'Overdue'
+                    ELSE 'Borrowed'
+                END
+            ELSE p.status
+        END";
+    $_joinPuNear = "LEFT JOIN (
+            SELECT peminjaman_id, MIN(expected_return) AS nearest_return
+            FROM peminjaman_units
+            WHERE return_status NOT IN ('Dikembalikan','Rusak')
+            GROUP BY peminjaman_id
+        ) pu_near ON p.id = pu_near.peminjaman_id";
+    if ($tanggal_awal && $tanggal_akhir) {
+        $stmt = $conn->prepare("
+            SELECT status_label AS status, COUNT(*) AS total
+            FROM (SELECT {$_dueCase} AS status_label FROM peminjaman p {$_joinPuNear} WHERE p.tanggal_pinjam BETWEEN ? AND ?) t
+            GROUP BY status_label ORDER BY total DESC
+        ");
+        $stmt->bind_param('ss', $tanggal_awal, $tanggal_akhir);
+    } else {
+        $stmt = $conn->prepare("
+            SELECT status_label AS status, COUNT(*) AS total
+            FROM (SELECT {$_dueCase} AS status_label FROM peminjaman p {$_joinPuNear}) t
+            GROUP BY status_label ORDER BY total DESC
+        ");
+    }
+    $stmt->execute();
+    $perStatusResult = $stmt->get_result();
+    $per_status = [];
+    while ($r = $perStatusResult->fetch_assoc()) {
+        $per_status[] = ['status' => $r['status'], 'total' => (int)$r['total']];
+    }
+    $data['per_status'] = $per_status;
+
     // ── 2. Top Barang (with optional kategori filter, INDEPENDENT from Status date filter) ──────
     $barangQuery = "
         SELECT b.nama_barang AS nama,

@@ -231,6 +231,10 @@ try {
         $final_statuses = ['Dikembalikan', 'Returned', 'Completed', 'Closed', 'Rejected', 'Ditolak', 'Batal'];
         $can_extend = !in_array($row['status'], $final_statuses);
 
+        // Get expected_return_nearest from peminjaman_units (per-unit, database-driven)
+        $nearestReturn = getNearestExpectedReturn($conn, $row['id']);
+        $expectedReturnNearest = $nearestReturn ? date('d/m/Y', strtotime($nearestReturn)) : ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-');
+
         $data[] = [
             'id' => $row['id'],
             'kode' => $row['kode_peminjaman'],
@@ -239,6 +243,7 @@ try {
             'nrp' => $row['nrp'] ?: '-',
             'tanggal' => ($row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-'),
             'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
+            'expected_return_nearest' => $expectedReturnNearest,
             'status' => $row['status'],
             'status_en' => $row['status_en'] ?? $row['status'],
             'barang' => implode(', ', array_map(function($x){ return $x['jumlah'] . 'x ' . $x['nama'] . ' (' . $x['lokasi'] . ')'; }, $barang_list)),

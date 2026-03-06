@@ -371,7 +371,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <td>${p.nrp}</td>
                         <td>${p.jumlah}</td>
                         <td>${p.tanggal_pinjam}</td>
-                        <td>${p.rencana_kembali}</td>
+                        <td>${p.expected_return_nearest || p.rencana_kembali}</td>
                         <td><span class="badge ${statusBadge}">${p.status}</span></td>
                         <td>${p.kondisi_pinjam}</td>
                     </tr>

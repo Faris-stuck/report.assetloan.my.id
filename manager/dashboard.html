@@ -395,12 +395,16 @@
                 const result = await response.json();
 
                 if (result.status && result.data) {
-                    const statusData = {
-                        'Pending Approval': result.data.menunggu_persetujuan || 0,
-                        'Currently Borrowed': result.data.sedang_dipinjam || 0,
-                        'Returned': result.data.dikembalikan || 0,
-                        'Rejected': result.data.ditolak || 0
-                    };
+                    const statusData = {};
+                    (result.data.per_status || []).forEach(row => {
+                        if (row.status) statusData[row.status] = row.total;
+                    });
+                    if (Object.keys(statusData).length === 0) {
+                        statusData['Menunggu Persetujuan'] = result.data.menunggu_persetujuan || 0;
+                        statusData['Sedang Dipinjam'] = result.data.sedang_dipinjam || 0;
+                        statusData['Dikembalikan'] = result.data.dikembalikan || 0;
+                        statusData['Ditolak'] = result.data.ditolak || 0;
+                    }
                     renderStatusChart(statusData);
                 }
             } catch (error) {
@@ -461,6 +465,41 @@
 
         // ===== CHART RENDERING FUNCTIONS =====
 
+        // Returns a consistent color for each known borrowing status
+        function getStatusColor(status) {
+            const colorMap = {
+                'Menunggu Persetujuan': '#FFC107',
+                'Partial Approved': '#17A2B8',
+                'Disetujui': '#0D6EFD',
+                'Menunggu Admin': '#6C757D',
+                'Menunggu Approver': '#6C757D',
+                'Sedang Dipinjam': '#3F83F8',
+                'Sebagian Dikembalikan': '#20C997',
+                'Proses Return': '#6F42C1',
+                'Dikembalikan': '#28A745',
+                'Sebagian Rusak': '#FD7E14',
+                'Semua Rusak': '#DC3545',
+                'Selesai': '#198754',
+                'Ditolak': '#DC3545',
+                'Batal': '#868E96',
+                'Overdue': '#DC3545',
+                'Due Today': '#FF4444',
+                'Due Tomorrow': '#FD7E14',
+                'Due 2 Day': '#FFB900',
+                'Due 3 Day': '#FFC107',
+                'Due 4 Day': '#CDDC39',
+                'Due 5 Day': '#8BC34A',
+                'Due 6 Day': '#4CAF50',
+                'Due 7 Day': '#198754',
+                'Borrowed': '#3F83F8',
+                'Returned': '#28A745',
+                'Rejected': '#DC3545',
+                'Partially Returned': '#20C997'
+            };
+            if (colorMap[status]) return colorMap[status];
+            return '#6C757D';
+        }
+
         // Chart: Status Peminjaman
         function renderStatusChart(statusData) {
             if (statusChartInstance) {
@@ -470,7 +509,7 @@
 
             const labels = Object.keys(statusData);
             const values = Object.values(statusData);
-            const colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+            const colors = labels.map(getStatusColor);
 
             const options = {
                 chart: {
@@ -500,6 +539,7 @@
                     bar: {
                         horizontal: false,
                         columnWidth: '60%',
+                        distributed: true,
                         dataLabels: { position: 'top' }
                     }
                 },

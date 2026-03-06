@@ -387,7 +387,7 @@
                         else if (p.status === 'Ditolak') statusBadge = 'bg-danger';
 
                         const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
-                        const rencanaKembali = formatTanggal(p.rencana_kembali);
+                        const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';
 
                         tbody.innerHTML += `
                             <tr>

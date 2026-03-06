@@ -503,6 +503,21 @@
             document.getElementById('totalGantiRugi').textContent = summary;
         }
 
+        function removeRowFromTable(pengembalianId) {
+            const row = document.querySelector(`tr[data-pengembalian-id="${pengembalianId}"]`);
+            if (row) {
+                row.style.opacity = '0.5';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    row.remove();
+                    const tbody = document.getElementById('table-pengembalian');
+                    if (tbody.querySelectorAll('tr').length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No return request waiting inspection</td></tr>';
+                    }
+                }, 300);
+            }
+        }
+
         function loadPengembalian() {
             fetch(API + '/list.php?status=Diajukan', { credentials: 'same-origin' })
                 .then(r => {
@@ -540,7 +555,7 @@
                         else if (s.includes('selesai') && !s.includes('sebagian')) badge = `<span class="badge bg-success text-white">${status}</span>`;
                         else if (s.includes('diproses') || s.includes('dicek')) badge = `<span class="badge bg-info text-dark">${status}</span>`;
                         return `
-                        <tr>
+                        <tr data-pengembalian-id="${p.pengembalian_id}">
                             <td><code>${p.kode_pengembalian}</code></td>
                             <td><code>${p.kode_peminjaman}</code></td>
                             <td>${p.nama_peminjam}</td>
@@ -762,7 +777,7 @@
                         const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmFinalizeModal'));
                         if (confirmModal) confirmModal.hide();
                         if (modalInspeksi) modalInspeksi.hide();
-                        loadPengembalian();
+                        removeRowFromTable(pendingInspeksiData.pengembalian_id);
                     }
                 })
                 .catch(() => alert('Connection error'));
@@ -778,6 +793,21 @@
         // Extend (Perpanjang) Functions
         // ═══════════════════════════════════════════════════════
         const API_EXTEND = BASE_URL + '/api/extend';
+
+        function removeExtendRow(extendId) {
+            const row = document.querySelector(`tr[data-extend-id="${extendId}"]`);
+            if (row) {
+                row.style.opacity = '0.5';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    row.remove();
+                    const tbody = document.getElementById('table-extend');
+                    if (tbody.querySelectorAll('tr').length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No extend requests</td></tr>';
+                    }
+                }, 300);
+            }
+        }
 
         function loadExtendRequests() {
             const filterStatus = document.getElementById('extendFilter').value;
@@ -823,7 +853,7 @@
                         }
 
                         return `
-                        <tr>
+                        <tr data-extend-id="${e.extend_id}">
                             <td><code>${e.kode_peminjaman}</code></td>
                             <td>${e.nama_peminjam}</td>
                             <td>${e.nrp}</td>
@@ -850,7 +880,7 @@
                 .then(r => r.json())
                 .then(res => {
                     alert(res.message || (res.status ? 'Success' : 'Failed'));
-                    if (res.status) loadExtendRequests();
+                    if (res.status) removeExtendRow(extendId);
                 })
                 .catch(() => alert('Connection error'));
         }
@@ -865,7 +895,7 @@
                 .then(r => r.json())
                 .then(res => {
                     alert(res.message || (res.status ? 'Success' : 'Failed'));
-                    if (res.status) loadExtendRequests();
+                    if (res.status) removeExtendRow(extendId);
                 })
                 .catch(() => alert('Connection error'));
         }

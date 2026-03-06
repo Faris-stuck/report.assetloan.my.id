@@ -300,7 +300,7 @@
                             else if (p.status === 'Partial Approved') statusBadge = 'bg-info';
 
                             const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
-                            const rencanaKembali = formatTanggal(p.rencana_kembali);
+                            const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';
 
                             content += `<tr><td>${index + 1}</td><td><strong>${p.kode_peminjaman || '-'}</strong></td>`;
                             content += `<td>${p.nama_peminjam || '-'}</td><td>${p.nrp || '-'}</td>`;

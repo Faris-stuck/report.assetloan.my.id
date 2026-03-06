@@ -100,7 +100,8 @@ try {
         }
 
         // REAL-TIME DUE STATUS (use nearest expected return considering extends)
-        $row['status'] = computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']);
+        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
+        $row['status'] = computeDueStatus($row['status'], $nearest_expected ?? $row['rencana_kembali']);
 
         $data[] = [
             'id' => $row['id'],
@@ -112,6 +113,7 @@ try {
             'tanggal' => ($row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-'),
             'tanggal_pinjam' => ($row['tanggal_pinjam'] ? $row['tanggal_pinjam'] : ''),
             'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
+            'expected_return_nearest' => $nearest_expected ? date('d/m/Y', strtotime($nearest_expected)) : ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
             'status' => $row['status'],
             'barang' => implode(', ', $barang_list),
             'catatan' => $row['catatan'],

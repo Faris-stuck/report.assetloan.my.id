@@ -148,13 +148,15 @@ try {
     $result = $stmt->get_result();
     $recent = [];
     while ($row = $result->fetch_assoc()) {
+        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
         $recent[] = [
             'id' => (int)$row['id'],
             'kode' => $row['kode_peminjaman'],
             'nama' => $row['nama_peminjam'],
-            'status' => computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['id']) ?? $row['rencana_kembali']),
+            'status' => computeDueStatus($row['status'], $nearest_expected ?? $row['rencana_kembali']),
             'tanggal_pinjam' => ($row['tanggal_pinjam'] ? date('d/m/Y', strtotime($row['tanggal_pinjam'])) : '-'),
-            'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-')
+            'rencana_kembali' => ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-'),
+            'expected_return_nearest' => $nearest_expected ? date('d/m/Y', strtotime($nearest_expected)) : ($row['rencana_kembali'] ? date('d/m/Y', strtotime($row['rencana_kembali'])) : '-')
         ];
     }
     $stats['recent_actions'] = $recent;
@@ -267,7 +269,55 @@ try {
     }
     $stats['all_barang'] = $all_barang;
     $stmt->close();
-    
+
+    // 10. per_status: DATEDIFF-based due-date classification for the Borrowing Status chart
+    // Active loans are bucketed using per-unit nearest expected_return (from peminjaman_units),
+    // falling back to peminjaman.rencana_kembali when no unit data exists.
+    $_dueCase = "CASE
+            WHEN p.status IN ('Dikembalikan','Sebagian Rusak','Semua Rusak','Selesai') THEN 'Returned'
+            WHEN p.status = 'Ditolak' THEN 'Rejected'
+            WHEN p.status = 'Sebagian Dikembalikan' THEN 'Partially Returned'
+            WHEN (p.status IN ('Sedang Dipinjam','Proses Return') OR p.status LIKE 'Due%' OR p.status = 'Overdue') THEN
+                CASE
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 7  THEN 'Due 7 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 6  THEN 'Due 6 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 5  THEN 'Due 5 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 4  THEN 'Due 4 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 3  THEN 'Due 3 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 2  THEN 'Due 2 Day'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 1  THEN 'Due Tomorrow'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 0  THEN 'Due Today'
+                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) < 0  THEN 'Overdue'
+                    ELSE 'Borrowed'
+                END
+            ELSE p.status
+        END";
+    $perStatusQuery = "SELECT status_label AS status, COUNT(*) AS total FROM (
+        SELECT {$_dueCase} AS status_label
+        FROM peminjaman p
+        LEFT JOIN (
+            SELECT peminjaman_id, MIN(expected_return) AS nearest_return
+            FROM peminjaman_units
+            WHERE return_status NOT IN ('Dikembalikan','Rusak')
+            GROUP BY peminjaman_id
+        ) pu_near ON p.id = pu_near.peminjaman_id
+        WHERE 1=1" . str_replace('tanggal_pinjam', 'p.tanggal_pinjam', $dateWhereClause) . ") t GROUP BY status_label ORDER BY total DESC";
+    $stmt = $conn->prepare($perStatusQuery);
+    if (!$stmt) {
+        throw new Exception("Query per_status Error: " . $conn->error);
+    }
+    if (!empty($dateParams)) {
+        $stmt->bind_param($dateParamTypes, ...$dateParams);
+    }
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $per_status = [];
+    while ($row = $result->fetch_assoc()) {
+        $per_status[] = ['status' => $row['status'], 'total' => (int)$row['total']];
+    }
+    $stats['per_status'] = $per_status;
+    $stmt->close();
+
     // Return successful response with database connection info
     echo json_encode([
         'status' => true,

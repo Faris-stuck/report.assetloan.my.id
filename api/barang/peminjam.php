@@ -38,6 +38,7 @@ try {
 
     $data = [];
     while ($row = $result->fetch_assoc()) {
+        $nearest_expected = getNearestExpectedReturn($conn, $row['peminjaman_id']);
         $data[] = [
             'peminjaman_id' => $row['peminjaman_id'],
             'kode_peminjaman' => $row['kode_peminjaman'],
@@ -46,7 +47,8 @@ try {
             'jumlah' => $row['jumlah'],
             'tanggal_pinjam' => date('d/m/Y', strtotime($row['tanggal_pinjam'])),
             'rencana_kembali' => date('d/m/Y', strtotime($row['rencana_kembali'])),
-            'status' => computeDueStatus($row['status'], getNearestExpectedReturn($conn, $row['peminjaman_id']) ?? $row['rencana_kembali']),
+            'expected_return_nearest' => $nearest_expected ? date('d/m/Y', strtotime($nearest_expected)) : date('d/m/Y', strtotime($row['rencana_kembali'])),
+            'status' => computeDueStatus($row['status'], $nearest_expected ?? $row['rencana_kembali']),
             'kondisi_pinjam' => $row['kondisi_pinjam'] ?: '-',
             'lokasi' => $row['lokasi'] ?: '-'
         ];

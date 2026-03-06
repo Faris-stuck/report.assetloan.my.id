@@ -69,18 +69,25 @@ $sql = "
         p.kode_peminjaman,
         p.nama_peminjam,
         p.rencana_kembali,
+        COALESCE(pu_near.nearest_return, p.rencana_kembali) AS effective_return,
         p.tanggal_pinjam,
         p.status,
         p.last_reminder_date,
-        DATEDIFF(p.rencana_kembali, CURDATE()) AS sisa_hari,
+        DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) AS sisa_hari,
         u.email,
         u.nama AS nama_user
     FROM peminjaman p
     JOIN users u ON p.user_id = u.id
+    LEFT JOIN (
+        SELECT peminjaman_id, MIN(expected_return) AS nearest_return
+        FROM peminjaman_units
+        WHERE return_status IN ('belum', 'approved')
+        GROUP BY peminjaman_id
+    ) pu_near ON p.id = pu_near.peminjaman_id
     WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
-      AND DATEDIFF(p.rencana_kembali, CURDATE()) BETWEEN 0 AND 7
+      AND DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) BETWEEN 0 AND 7
       AND (p.last_reminder_date IS NULL OR p.last_reminder_date != CURDATE())
-    ORDER BY p.rencana_kembali ASC
+    ORDER BY COALESCE(pu_near.nearest_return, p.rencana_kembali) ASC
 ";
 
 $result = $conn->query($sql);
@@ -97,10 +104,16 @@ echo "[INFO] Found {$totalRows} borrowings that need reminders.\n\n";
 // Also check how many were already sent today (info only)
 // ============================================================
 $sqlSudah = "
-    SELECT COUNT(*) AS cnt FROM peminjaman
-    WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue')
-      AND DATEDIFF(rencana_kembali, CURDATE()) BETWEEN 0 AND 7
-      AND last_reminder_date = CURDATE()
+    SELECT COUNT(*) AS cnt FROM peminjaman p
+    LEFT JOIN (
+        SELECT peminjaman_id, MIN(expected_return) AS nearest_return
+        FROM peminjaman_units
+        WHERE return_status IN ('belum', 'approved')
+        GROUP BY peminjaman_id
+    ) pu_near ON p.id = pu_near.peminjaman_id
+    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+      AND DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) BETWEEN 0 AND 7
+      AND p.last_reminder_date = CURDATE()
 ";
 $resSudah = $conn->query($sqlSudah);
 $sudahDikirim = 0;
@@ -140,7 +153,7 @@ while ($row = $result->fetch_assoc()) {
     $emailUser      = $row['email'];
     $kodePeminjaman = $row['kode_peminjaman'];
     $tanggalPinjam  = date('d F Y', strtotime($row['tanggal_pinjam']));
-    $tanggalKembali = date('d F Y', strtotime($row['rencana_kembali']));
+    $tanggalKembali = date('d F Y', strtotime($row['effective_return']));
     $sisaHari       = (int) $row['sisa_hari'];
     $statusPinjaman = $row['status'];
 

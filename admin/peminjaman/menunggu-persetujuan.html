@@ -338,10 +338,12 @@
                                                     <p><strong>Borrow Date:</strong> <span id="modalTanggal"></span></p>
                                                 </div>
                                                 <div class="col-12">
-                                                    <p><strong>Expected Return:</strong> <span id="modalRencana"></span></p>
+                                                    <p><strong>Expected Return:</strong> <span id="modalRencana"></span>
+                                                    </p>
                                                 </div>
                                                 <div class="col-12">
-                                                    <p><strong>Borrowing Location:</strong> <span id="modalLokasiUmum"></span></p>
+                                                    <p><strong>Borrowing Location:</strong> <span
+                                                            id="modalLokasiUmum"></span></p>
                                                 </div>
                                                 <div class="col-12">
                                                     <p><strong>Notes:</strong> <span id="modalCatatan"></span></p>
@@ -364,14 +366,20 @@
                                                 </table>
                                             </div>
                                             <div id="rejectionReasonSection" style="display:none;" class="mt-3">
-                                                <label class="form-label fw-bold">Rejection Reason <span class="text-danger">*</span></label>
-                                                <textarea id="rejectionReasonTextarea" class="form-control" rows="3" placeholder="Enter the reason for rejecting selected items..."></textarea>
-                                                <div id="rejectionReasonError" class="text-danger small mt-1" style="display:none;">Rejection reason is required when items are rejected.</div>
+                                                <label class="form-label fw-bold">Rejection Reason <span
+                                                        class="text-danger">*</span></label>
+                                                <textarea id="rejectionReasonTextarea" class="form-control" rows="3"
+                                                    placeholder="Enter the reason for rejecting selected items..."></textarea>
+                                                <div id="rejectionReasonError" class="text-danger small mt-1"
+                                                    style="display:none;">Rejection reason is required when items are
+                                                    rejected.</div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="button" class="btn btn-primary" onclick="saveApprovalDecisions()">Save</button>
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary"
+                                                onclick="saveApprovalDecisions()">Save</button>
                                         </div>
                                     </div>
                                 </div>
@@ -384,11 +392,14 @@
                                             <h5 class="modal-title">Confirm Save</h5>
                                         </div>
                                         <div class="modal-body">
-                                            <p id="confirmSaveMessage">Are you sure you want to save these approval decisions?</p>
+                                            <p id="confirmSaveMessage">Are you sure you want to save these approval
+                                                decisions?</p>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" onclick="cancelConfirmSave()">Cancel</button>
-                                            <button type="button" class="btn btn-primary" onclick="doSaveApproval()">Save</button>
+                                            <button type="button" class="btn btn-secondary"
+                                                onclick="cancelConfirmSave()">Cancel</button>
+                                            <button type="button" class="btn btn-primary"
+                                                onclick="doSaveApproval()">Save</button>
                                         </div>
                                     </div>
                                 </div>
@@ -449,6 +460,21 @@
     <script>
         let selectedPeminjaman = null;
 
+        function removeRowFromTable(peminjamanId) {
+            // Remove the processed borrowing row from the table
+            const row = document.querySelector(`tr[data-peminjaman-id="${peminjamanId}"]`);
+            if (row) {
+                row.style.opacity = '0.5';
+                row.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => row.remove(), 300);
+                // If table is now empty, show message
+                const tbody = document.getElementById('tabelMenunggu');
+                if (tbody && tbody.children.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center">No pending approval data</td></tr>';
+                }
+            }
+        }
+
         function loadDataPeminjaman() {
             fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
                 .then(res => res.json())
@@ -473,7 +499,7 @@
                 return;
             }
             tbody.innerHTML = data.map((item, i) => `
-                <tr>
+                <tr data-peminjaman-id="${item.id}">
                     <td>${i + 1}</td>
                     <td>${escapeHtml(item.kode)}</td>
                     <td>${escapeHtml(item.nama)}</td>
@@ -507,7 +533,7 @@
                     document.getElementById("modalNama").textContent = escapeHtml(selectedPeminjaman.nama);
                     document.getElementById("modalNrp").textContent = escapeHtml(selectedPeminjaman.nrp);
                     document.getElementById("modalTanggal").textContent = escapeHtml(selectedPeminjaman.tanggal);
-                    document.getElementById("modalRencana").textContent = escapeHtml(selectedPeminjaman.rencana_kembali);
+                    document.getElementById("modalRencana").textContent = escapeHtml(selectedPeminjaman.expected_return_nearest || selectedPeminjaman.rencana_kembali);
                     document.getElementById("modalLokasiUmum").textContent = escapeHtml(selectedPeminjaman.lokasi_umum || '-');
                     document.getElementById("modalCatatan").textContent = escapeHtml(selectedPeminjaman.catatan || '-');
                     displayBarangList(selectedPeminjaman);
@@ -638,18 +664,22 @@
                 body: formData,
                 credentials: 'same-origin'
             })
-            .then(res => res.json())
-            .then(data => {
-                const m = getModalInstance('modalConfirmSave');
-                if (m) m.hide();
-                if (data.status) {
-                    showSuccess(data.message || 'Approval decisions saved successfully.');
-                    loadDataPeminjaman();
-                } else {
-                    alert('Failed: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(() => alert('Failed to connect to server.'));
+                .then(res => res.json())
+                .then(data => {
+                    const m = getModalInstance('modalConfirmSave');
+                    if (m) m.hide();
+                    if (data.status) {
+                        showSuccess(data.message || 'Approval decisions saved successfully.');
+                        // Instead of reloading entire table, remove only the processed row
+                        removeRowFromTable(selectedPeminjaman.id);
+                        // Close the process modal
+                        const processModal = getModalInstance('modalProses');
+                        if (processModal) processModal.hide();
+                    } else {
+                        alert('Failed: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(() => alert('Failed to connect to server.'));
         }
 
         document.addEventListener("DOMContentLoaded", loadDataPeminjaman);

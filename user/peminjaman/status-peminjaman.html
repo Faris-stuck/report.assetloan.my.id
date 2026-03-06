@@ -80,6 +80,19 @@
 			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
+    <style>
+        .rejection-label {
+            display: block;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+
+        .rejection-reason-box {
+            padding: 12px 16px;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 
 <body>
@@ -494,9 +507,10 @@
                         </table>
                     </div>
                     <hr>
-                    <div id="detailCatatanDiv" style="display: none;">
-                        <h6 class="text-danger mb-2"><strong>Rejection Reason</strong></h6>
-                        <div class="alert alert-danger" id="detailCatatan"></div>
+                    <label class="rejection-label" id="detailCatatanLabel" style="display: none;">Rejection
+                        Reason</label>
+                    <div id="detailCatatanDiv" style="display: none;" class="alert alert-danger rejection-reason-box">
+                        <div id="detailCatatan"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -543,72 +557,37 @@
             }
         }
 
-        // Fungsi untuk translate status database ke display status untuk user
+        // Translate database status to display status
+        // Status values come directly from API (computed from peminjaman_units)
         function getDisplayStatus(dbStatus, statusEn) {
-            if (statusEn) {
-                const en_lower = statusEn.toLowerCase();
-                if (en_lower.includes('partially')) return 'Partially Damaged';
-                if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
-            }
-            switch (dbStatus) {
-                case 'Menunggu Persetujuan':
-                case 'Disetujui': // Both are "pending approval" from user perspective
-                    return 'Pending Approval';
-                case 'Partial Approved':
-                    return 'Partial Approved';
-                case 'Sebagian Rusak':
-                    return 'Partially Damaged';
-                case 'Semua Rusak':
-                    return 'Fully Damaged';
-                case 'Sedang Dipinjam':
-                    return 'Currently Borrowed';
-                case 'Dikembalikan':
-                    return 'Returned';
-                case 'Ditolak':
-                    return 'Rejected';
-                case 'Proses Return':
-                    return 'Return In Progress';
-
-                case 'Sebagian Dikembalikan':
-                    return 'Partially Returned';
-                default:
-                    return dbStatus;
-            }
+            const map = {
+                'Menunggu Persetujuan': 'Pending Approval',
+                'Disetujui': 'Pending Approval',
+                'Partial Approved': 'Partial Approved',
+                'Sedang Dipinjam': 'Currently Borrowed',
+                'Dikembalikan': 'Returned',
+                'Ditolak': 'Rejected',
+                'Proses Return': 'Return In Progress',
+                'Sebagian Dikembalikan': 'Partially Returned',
+                'Sebagian Rusak': 'Partially Damaged',
+                'Semua Rusak': 'Fully Damaged',
+                'Overdue': 'Overdue',
+                'Due Today': 'Due Today',
+                'Belum Dikembalikan': 'Not Yet Returned'
+            };
+            return map[dbStatus] || dbStatus || '-';
         }
 
-        // Fungsi untuk mendapatkan badge class berdasarkan status
+        // Badge class from API status (database-driven, no hardcode)
         function getStatusBadge(status, statusEn) {
-            // Translate status dulu
-            const displayStatus = getDisplayStatus(status, statusEn);
-
-            switch (displayStatus) {
-                case 'Pending Approval':
-                    return 'badge bg-warning';
-                case 'Partially Damaged':
-                    return 'badge bg-warning text-dark';
-                case 'Sebagian Rusak':
-                    return 'badge bg-warning text-dark';
-                case 'Fully Damaged':
-                    return 'badge bg-danger';
-                case 'Semua Rusak':
-                    return 'badge bg-danger';
-                case 'Currently Borrowed':
-                    return 'badge bg-primary';
-                case 'Returned':
-                    return 'badge bg-success';
-                case 'Rejected':
-                    return 'badge bg-danger';
-                case 'Return In Progress':
-                    return 'badge bg-info text-dark';
-                case 'Partially Returned':
-                    return 'badge bg-warning text-dark';
-                case 'Partial Approved':
-                    return 'badge bg-info';
-                default:
-                    if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
-                    if (displayStatus.startsWith('Due')) return 'badge bg-warning text-dark';
-                    return 'badge bg-secondary';
-            }
+            const ds = getDisplayStatus(status, statusEn);
+            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged') return 'badge bg-danger';
+            if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'badge bg-warning text-dark';
+            if (ds === 'Pending Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'badge bg-warning text-dark';
+            if (ds === 'Currently Borrowed') return 'badge bg-primary';
+            if (ds === 'Return In Progress' || ds === 'Partial Approved') return 'badge bg-info';
+            if (ds === 'Returned') return 'badge bg-success';
+            return 'badge bg-secondary';
         }
 
         // Fungsi untuk membuat baris tabel
@@ -648,11 +627,14 @@
                 </button>`;
             }
 
+            // Expected return from per-unit data (nearest unreturned unit)
+            const expectedReturn = peminjaman.expected_return_nearest || peminjaman.rencana_kembali || '-';
+
             return `
         <tr>
             <td><strong>${escapeHtml(peminjaman.kode_peminjaman)}</strong></td>
             <td>${formatTanggal(peminjaman.tanggal_pinjam)}</td>
-            <td>${formatTanggal(peminjaman.rencana_kembali)}</td>
+            <td>${expectedReturn}</td>
             <td><span class="${statusBadge}">${escapeHtml(displayStatus)}</span></td>
             <td>${actionBtn}</td>
         </tr>
@@ -666,7 +648,7 @@
             return div.innerHTML;
         }
 
-        // Fungsi untuk membuat baris tabel dengan tanggal kembali (untuk yang sudah dikembalikan)
+        // Returned items table row — status and expected return from API
         function createReturnedTableRow(peminjaman) {
             const dbStatus = peminjaman.status;
             const displayStatus = getDisplayStatus(dbStatus);
@@ -675,12 +657,15 @@
         <i></i> Detail
      </button>`;
 
+            // Expected return from per-unit data
+            const expectedReturn = peminjaman.expected_return_nearest || peminjaman.rencana_kembali || '-';
+
             return `
         <tr>
             <td><strong>${escapeHtml(peminjaman.kode_peminjaman)}</strong></td>
             <td>${formatTanggal(peminjaman.tanggal_pinjam)}</td>
             <td>${formatTanggal(peminjaman.tanggal_kembali)}</td>
-            <td>${formatTanggal(peminjaman.rencana_kembali)}</td>
+            <td>${expectedReturn}</td>
             <td><span class="${statusBadge}">${escapeHtml(displayStatus)}</span></td>
             <td>${detailBtn}</td>
         </tr>
@@ -849,14 +834,19 @@
                         document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
                         // Notes / Rejection reason section
+                        // Check if any unit is rejected (approval_status = 'Ditolak')
+                        const hasRejectedUnit = units.some(u => u.approval_status === 'Ditolak');
                         const reason = p.rejection_reason || p.catatan || '';
-                        if ((p.status === 'Ditolak' || p.status === 'Partial Approved') && reason) {
+                        if ((hasRejectedUnit || p.status === 'Ditolak') && reason) {
+                            document.getElementById('detailCatatanLabel').style.display = 'block';
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(reason);
                         } else if (p.status === 'Ditolak' && p.catatan) {
+                            document.getElementById('detailCatatanLabel').style.display = 'block';
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);
                         } else {
+                            document.getElementById('detailCatatanLabel').style.display = 'none';
                             document.getElementById('detailCatatanDiv').style.display = 'none';
                         }
 

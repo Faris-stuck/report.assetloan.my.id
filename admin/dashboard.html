@@ -419,13 +419,17 @@
                 if (result.status && result.data) {
                     const data = result.data;
 
-                    // Render Status Peminjaman Chart (ALL TIME aggregate)
-                    const statusData = {
-                        'Pending Approval': data.menunggu_persetujuan || 0,
-                        'Currently Borrowed': data.sedang_dipinjam || 0,
-                        'Returned': data.dikembalikan || 0,
-                        'Rejected': data.ditolak || 0
-                    };
+                    // Render Status Peminjaman Chart (ALL TIME aggregate - dynamic from DB)
+                    const statusData = {};
+                    (data.per_status || []).forEach(row => {
+                        if (row.status) statusData[row.status] = row.total;
+                    });
+                    if (Object.keys(statusData).length === 0) {
+                        statusData['Menunggu Persetujuan'] = data.menunggu_persetujuan || 0;
+                        statusData['Sedang Dipinjam'] = data.sedang_dipinjam || 0;
+                        statusData['Dikembalikan'] = data.dikembalikan || 0;
+                        statusData['Ditolak'] = data.ditolak || 0;
+                    }
                     renderStatusChart(statusData);
 
                     // Populate kategori filter dropdown dengan categories dari API
@@ -483,33 +487,19 @@
 
                     if (recentActions.length > 0) {
                         tableBody.innerHTML = recentActions.map(item => {
-                            // Determine return date background color
+                            // Return date coloring derived from API status (no local date parsing)
+                            const expectedReturn = item.expected_return_nearest || item.rencana_kembali || '-';
                             let returnDateBgClass = 'bg-secondary';
                             let returnDateColor = 'text-white';
-
-                            if (item.status === 'Sedang Dipinjam' || item.status.startsWith('Due') || item.status === 'Overdue') {
-
-                                if (item.rencana_kembali !== '-') {
-                                    const [kembaliDay, kembaliMonth, kembaliYear] = item.rencana_kembali.split('/');
-                                    const kembaliDate = new Date(kembaliYear, kembaliMonth - 1, kembaliDay);
-                                    const today = new Date();
-                                    today.setHours(0, 0, 0, 0);
-
-                                    // Format today as dd/mm/yyyy for comparison
-                                    const todayFormatted = String(today.getDate()).padStart(2, '0') + '/' +
-                                        String(today.getMonth() + 1).padStart(2, '0') + '/' +
-                                        today.getFullYear();
-
-                                    // If return date equals borrow date OR equals today -> yellow
-                                    if (item.rencana_kembali === todayFormatted) {
-                                        returnDateBgClass = 'bg-warning';
-                                        returnDateColor = 'text-dark';
-                                    } else if (kembaliDate < today) {
-                                        // Check if return date is overdue (in the past) -> red
-                                        returnDateBgClass = 'bg-danger';
-                                        returnDateColor = 'text-white';
-                                    }
-                                }
+                            const st = item.status || '';
+                            if (st === 'Overdue') {
+                                returnDateBgClass = 'bg-danger'; returnDateColor = 'text-white';
+                            } else if (st === 'Due Today') {
+                                returnDateBgClass = 'bg-warning'; returnDateColor = 'text-dark';
+                            } else if (st.startsWith('Due In') || st.startsWith('Due in') || st === 'Due Tomorrow') {
+                                returnDateBgClass = 'bg-warning'; returnDateColor = 'text-dark';
+                            } else if (st === 'Sedang Dipinjam') {
+                                returnDateBgClass = 'bg-primary'; returnDateColor = 'text-white';
                             }
 
                             return `
@@ -518,7 +508,7 @@
                                     <td>${item.nama}</td>
                                     <td><span class="badge bg-${getStatusBadgeClass(item.status)}">${item.status}</span></td>
                                     <td>${item.tanggal_pinjam}</td>
-                                    <td><span class="badge ${returnDateBgClass} ${returnDateColor}">${item.rencana_kembali}</span></td>
+                                    <td><span class="badge ${returnDateBgClass} ${returnDateColor}">${expectedReturn}</span></td>
                                 </tr>
                             `;
                         }).join('');
@@ -554,6 +544,41 @@
         });
 
         // Chart: Status Peminjaman
+        // Returns a consistent color for each known borrowing status
+        function getStatusColor(status) {
+            const colorMap = {
+                'Menunggu Persetujuan': '#FFC107',
+                'Partial Approved': '#17A2B8',
+                'Disetujui': '#0D6EFD',
+                'Menunggu Admin': '#6C757D',
+                'Menunggu Approver': '#6C757D',
+                'Sedang Dipinjam': '#3F83F8',
+                'Sebagian Dikembalikan': '#20C997',
+                'Proses Return': '#6F42C1',
+                'Dikembalikan': '#28A745',
+                'Sebagian Rusak': '#FD7E14',
+                'Semua Rusak': '#DC3545',
+                'Selesai': '#198754',
+                'Ditolak': '#DC3545',
+                'Batal': '#868E96',
+                'Overdue': '#DC3545',
+                'Due Today': '#FF4444',
+                'Due Tomorrow': '#FD7E14',
+                'Due 2 Day': '#FFB900',
+                'Due 3 Day': '#FFC107',
+                'Due 4 Day': '#CDDC39',
+                'Due 5 Day': '#8BC34A',
+                'Due 6 Day': '#4CAF50',
+                'Due 7 Day': '#198754',
+                'Borrowed': '#3F83F8',
+                'Returned': '#28A745',
+                'Rejected': '#DC3545',
+                'Partially Returned': '#20C997'
+            };
+            if (colorMap[status]) return colorMap[status];
+            return '#6C757D';
+        }
+
         function renderStatusChart(statusData) {
             // Destroy existing chart instance if it exists
             if (statusChartInstance) {
@@ -563,7 +588,7 @@
 
             const labels = Object.keys(statusData);
             const values = Object.values(statusData);
-            const colors = ['#FFC107', '#17A2B8', '#28A745', '#DC3545'];
+            const colors = labels.map(getStatusColor);
 
             const options = {
                 chart: {
@@ -595,6 +620,7 @@
                     bar: {
                         horizontal: false,
                         columnWidth: '60%',
+                        distributed: true,
                         dataLabels: { position: 'top' }
                     }
                 },
@@ -1050,13 +1076,17 @@
                 const result = await response.json();
 
                 if (result.status && result.data) {
-                    // Update Status Peminjaman Chart ONLY
-                    const statusData = {
-                        'Pending Approval': result.data.menunggu_persetujuan || 0,
-                        'Currently Borrowed': result.data.sedang_dipinjam || 0,
-                        'Returned': result.data.dikembalikan || 0,
-                        'Rejected': result.data.ditolak || 0
-                    };
+                    // Update Status Peminjaman Chart ONLY (dynamic from DB)
+                    const statusData = {};
+                    (result.data.per_status || []).forEach(row => {
+                        if (row.status) statusData[row.status] = row.total;
+                    });
+                    if (Object.keys(statusData).length === 0) {
+                        statusData['Menunggu Persetujuan'] = result.data.menunggu_persetujuan || 0;
+                        statusData['Sedang Dipinjam'] = result.data.sedang_dipinjam || 0;
+                        statusData['Dikembalikan'] = result.data.dikembalikan || 0;
+                        statusData['Ditolak'] = result.data.ditolak || 0;
+                    }
                     renderStatusChart(statusData);
                     console.log('Status chart updated with date range:', startDateStatus, '-', endDateStatus);
                 } else {
