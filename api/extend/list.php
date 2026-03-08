@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API: Get Extend Requests List
  * Method: GET
@@ -92,7 +93,6 @@ try {
     }
 
     echo json_encode(['status' => true, 'data' => $data]);
-
 } catch (Exception $e) {
     echo json_encode(['status' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }

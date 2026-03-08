@@ -19,13 +19,11 @@ if ($is_local) {
     // LAPTOP
     $db_user = 'peminjaman_app';
     $db_pass = '';
-
 } else {
 
     // VPS
     $db_user = 'peminjaman_app';
     $db_pass = '';
-
 }
 
 // CONNECT
@@ -36,12 +34,11 @@ if ($conn->connect_error) {
 
     http_response_code(500);
 
-    die("Database Error: " . $conn->connect_error);
-
+    header('Content-Type: application/json');
+    die(json_encode(["status" => false, "message" => "Database connection failed"]));
 }
 
 // charset
 $conn->set_charset('utf8mb4');
 
 $conn->query("SET time_zone = '+07:00'");
-

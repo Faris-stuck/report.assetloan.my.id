@@ -23,16 +23,18 @@ try {
 
 $id_barang = $_POST['id_barang'] ?? null;
 
-if(!$id_barang){
+if (!$id_barang) {
     echo json_encode([
-        "status"=>false,
-        "message"=>"Item ID not found"
+        "status" => false,
+        "message" => "Item ID not found"
     ]);
     exit;
 }
 
 $vendor = $_POST['vendor'];
 $vendor_baru = $_POST['vendor_baru'] ?? null;
+$alamat = $_POST['alamat'] ?? null;
+$kontak = $_POST['kontak'] ?? null;
 $tanggal = $_POST['tanggal_pembelian'];
 $jumlah = isset($_POST['jumlah']) ? (int)$_POST['jumlah'] : 0;
 $harga = isset($_POST['harga_satuan']) ? (float)$_POST['harga_satuan'] : 0;
@@ -42,8 +44,8 @@ $keterangan = $_POST['keterangan'];
 $today = date('Y-m-d');
 if (strtotime($tanggal) < strtotime($today)) {
     echo json_encode([
-        "status"=>false,
-        "message"=>"Purchase date cannot be earlier than today ($today)"
+        "status" => false,
+        "message" => "Purchase date cannot be earlier than today ($today)"
     ]);
     exit;
 }
@@ -51,8 +53,8 @@ if (strtotime($tanggal) < strtotime($today)) {
 // VALIDASI: jumlah pembelian harus positif
 if ($jumlah <= 0) {
     echo json_encode([
-        "status"=>false,
-        "message"=>"Purchase quantity must be greater than 0"
+        "status" => false,
+        "message" => "Purchase quantity must be greater than 0"
     ]);
     exit;
 }
@@ -60,8 +62,8 @@ if ($jumlah <= 0) {
 // VALIDASI: harga satuan harus positif
 if ($harga <= 0) {
     echo json_encode([
-        "status"=>false,
-        "message"=>"Unit price must be greater than 0"
+        "status" => false,
+        "message" => "Unit price must be greater than 0"
     ]);
     exit;
 }
@@ -69,11 +71,19 @@ if ($harga <= 0) {
 $total = $jumlah * $harga;
 
 // vendor baru
-if($vendor === "baru"){
-    $stmt = $conn->prepare("INSERT INTO vendor(nama_vendor) VALUES(?)");
-    $stmt->bind_param("s", $vendor_baru);
+if ($vendor === "baru") {
+    $stmt = $conn->prepare("INSERT INTO vendor(nama_vendor, alamat, kontak) VALUES(?,?,?)");
+    $stmt->bind_param("sss", $vendor_baru, $alamat, $kontak);
     $stmt->execute();
     $vendor = $conn->insert_id;
+} else {
+    // Update existing vendor with address and contact if provided
+    if (!empty($alamat) || !empty($kontak)) {
+        $updateVendorStmt = $conn->prepare("UPDATE vendor SET alamat = COALESCE(?, alamat), kontak = COALESCE(?, kontak) WHERE id = ?");
+        $updateVendorStmt->bind_param("ssi", $alamat, $kontak, $vendor);
+        $updateVendorStmt->execute();
+        $updateVendorStmt->close();
+    }
 }
 
 // insert pembelian
@@ -100,6 +110,6 @@ $stmtStok->bind_param("iii", $jumlah, $jumlah, $id_barang);
 $stmtStok->execute();
 
 echo json_encode([
-    "status"=>true,
-    "message"=>"Purchase successful"
+    "status" => true,
+    "message" => "Purchase successful"
 ]);

@@ -206,6 +206,21 @@ document.addEventListener("DOMContentLoaded", function () {
         if (modalPembelian) {
             modalPembelian.addEventListener('show.bs.modal', function () {
                 setMinDateForPurchase();
+                
+                // RESET FORM - Clear all fields except vendor selection
+                const formPembelian = document.getElementById("formPembelian");
+                if (formPembelian) {
+                    // Reset specific fields (clearing their values)
+                    document.getElementById("tanggal_pembelian").value = "";
+                    document.getElementById("alamat_vendor").value = "";
+                    document.getElementById("kontak_vendor").value = "";
+                    document.getElementById("jumlah").value = "";
+                    document.getElementById("harga_satuan").value = "";
+                    document.getElementById("keterangan").value = "";
+                    
+                    // Keep vendor selection unchanged (don't reset it)
+                    // Vendor dropdown will maintain its previously selected value
+                }
             });
         }
 
@@ -505,6 +520,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const modalEditVendor = document.getElementById("modalEditVendor");
     if (modalEditVendor) {
         modalEditVendor.addEventListener("show.bs.modal", function () {
+            // Reset the form when modal opens (for adding new vendor)
+            cancelVendorEdit();
             loadVendorTable();
         });
     }

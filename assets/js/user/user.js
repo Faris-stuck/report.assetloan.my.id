@@ -334,7 +334,7 @@ function renderUsersTable(users, startIndex) {
                         <button class="btn btn-outline-info" onclick="openChangePasswordForUser(${user.id}, '${escapedName}')" title="Change Password">
                             <i class="feather-lock"></i>
                         </button>
-                        <button class="btn btn-outline-warning" onclick="openEditRoleModal(${user.id}, '${escapedName}', '${user.role}')" title="Edit Role">
+                        <button class="btn btn-outline-warning" onclick="openEditRoleModal(${user.id}, '${escapedName}', '${user.nrp}', '${user.role}')" title="Edit Role">
                             <i class="feather-edit-2"></i>
                         </button>
                         <button class="btn btn-outline-danger" onclick="deleteUser(${user.id}, '${escapedName}')" title="Delete">
@@ -404,10 +404,12 @@ function deleteUser(userId, userName) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// Edit Role Modal
-function openEditRoleModal(userId, userName, currentRole) {
+// Edit Role Modal - Open and populate fields
+function openEditRoleModal(userId, userName, userNrp, currentRole) {
     document.getElementById('editUserId').value = userId;
-    document.getElementById('editUserName').textContent = userName;
+    document.getElementById('editUserNameField').value = userName;
+    document.getElementById('editUserNrpField').value = userNrp;
+    document.getElementById('editCurrentRoleField').value = getRoleLabel(currentRole);
     document.getElementById('editRoleSelect').value = currentRole;
     new bootstrap.Modal(document.getElementById('modalEditRole')).show();
 }
@@ -417,15 +419,47 @@ function closeEditRoleModal() {
     if (modal) modal.hide();
 }
 
-// Handle form submit di modal edit role
-const formEditRole = document.getElementById('formEditRole');
-if (formEditRole) {
-    formEditRole.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const userId = document.getElementById('editUserId').value;
-        const newRole = document.getElementById('editRoleSelect').value;
-        updateUserRole(userId, newRole);
-    });
+// Handle Save button click in modal edit role
+function saveUserRoleChanges() {
+    const userId = document.getElementById('editUserId').value;
+    const newName = document.getElementById('editUserNameField').value.trim();
+    const newNrp = document.getElementById('editUserNrpField').value.trim();
+    const newRole = document.getElementById('editRoleSelect').value;
+
+    if (!newName) {
+        showFeedback('Name is required', 'warning');
+        return;
+    }
+    if (!newNrp) {
+        showFeedback('NRP is required', 'warning');
+        return;
+    }
+    if (!newRole) {
+        showFeedback('Role is required', 'warning');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('id', userId);
+    formData.append('nama', newName);
+    formData.append('nrp', newNrp);
+    formData.append('role', newRole);
+
+    fetch(BASE_URL + '/api/user/update.php', { method: 'POST', body: formData })
+        .then(response => {
+            if (!response.ok && response.status !== 400) throw new Error('HTTP ' + response.status);
+            return response.json();
+        })
+        .then(data => {
+            if (data.status) {
+                showFeedback('✓ User updated successfully', 'success');
+                closeEditRoleModal();
+                loadUsers();
+            } else {
+                showFeedback(data.message || 'Failed to update user', 'danger');
+            }
+        })
+        .catch(error => showFeedback('❌ Error: ' + error.message, 'danger'));
 }
 
 // ═══════════════════════════════════════════════════════════════

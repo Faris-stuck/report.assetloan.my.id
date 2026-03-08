@@ -464,6 +464,7 @@
                                     <select class="form-select" id="cpUserId" required>
                                         <option value="">-- Select User --</option>
                                     </select>
+                                    <small class="text-muted d-block mt-2">Format: Name (NRP)</small>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold">New Password</label>
@@ -488,35 +489,42 @@
 
 
             <!----UI MODAL UNTUK EDIT ROLE-->
+            <!-- Modal Change User Role -->
             <div class="modal fade" id="modalEditRole" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
-                        <form id="formEditRole">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Change User Role</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="modal-header">
+                            <h5 class="modal-title">Change User Role</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Name</label>
+                                <input type="text" class="form-control" id="editUserNameField">
                             </div>
-                            <div class="modal-body">
-                                <input type="hidden" id="editUserId">
-                                <p class="mb-3">
-                                    Changing role for user: <strong id="editUserName"></strong>
-                                </p>
-                                <div class="mb-3">
-                                    <label class="form-label">Select New Role</label>
-                                    <select class="form-select" id="editRoleSelect" required>
-                                        <option value="">-- Select Role --</option>
-                                        <!-- Options populated dynamically from database -->
-                                    </select>
-                                    <small class="text-muted d-block mt-2" id="editRoleDescriptions">
-                                        <!-- Role descriptions populated dynamically from database -->
-                                    </small>
-                                </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">NRP</label>
+                                <input type="text" class="form-control" id="editUserNrpField" >
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Current Role</label>
+                                <input type="text" class="form-control" id="editCurrentRoleField" readonly>
                             </div>
-                        </form>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">New Role</label>
+                                <select class="form-select" id="editRoleSelect" required>
+                                    <option value="">-- Select Role --</option>
+                                    <!-- Options populated dynamically from database -->
+                                </select>
+                            </div>
+                            <input type="hidden" id="editUserId">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="saveUserRoleChanges()">
+                                <i class="feather-save me-1"></i> Save
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

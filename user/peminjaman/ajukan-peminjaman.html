@@ -461,18 +461,18 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label>Planned Borrow Date</label>
+                                                    <label>Planned Borrow Date <span class="text-danger required-indicator">*</span></label>
                                                     <input type="date" name="rencana_pinjam" id="rencana_pinjam"
-                                                        class="form-control" required>
+                                                        class="form-control required-field" required>
                                                     <small class="text-muted">The date you plan to start borrowing
                                                         items (cannot be earlier than today)</small>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="mb-3">
-                                                    <label>Planned Return Date</label>
+                                                    <label>Planned Return Date <span class="text-danger required-indicator">*</span></label>
                                                     <input type="date" name="rencana_kembali" id="rencana_kembali"
-                                                        class="form-control" required>
+                                                        class="form-control required-field" required>
                                                     <small class="text-muted">The date you plan to return items (cannot
                                                         be earlier than borrow date)</small>
                                                 </div>
@@ -480,9 +480,9 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label>Borrowing Location</label>
-                                            <input type="text" name="lokasi_umum" class="form-control"
-                                                placeholder="Enter borrowing location (e.g: Computer Lab, Main Warehouse, etc)">
+                                            <label>Borrowing Location <span class="text-danger required-indicator">*</span></label>
+                                            <input type="text" name="lokasi_umum" id="lokasi_umum" class="form-control required-field"
+                                                placeholder="Enter borrowing location (e.g: Computer Lab, Main Warehouse, etc)" required>
                                         </div>
 
                                         <div class="mb-3">
@@ -498,8 +498,7 @@
                                                         <tr>
                                                             <th class="col-nama">Item Name</th>
                                                             <th class="col-stok">Available Stock</th>
-                                                            <th class="col-lokasi">Specific Location <small
-                                                                    class="text-muted">(optional)</small></th>
+                                                            <th class="col-lokasi">Item Location</th>
                                                             <th class="col-jumlah">Quantity</th>
                                                         </tr>
                                                     </thead>
@@ -939,6 +938,18 @@
                 if (nameInput) nameInput.value = userData.nama || '';
                 if (nrpInput) nrpInput.value = userData.nrp || '';
 
+                // Reset required field indicators to show "*"
+                const requiredFields = document.querySelectorAll('#requestBorrowingModal .required-field');
+                requiredFields.forEach(field => {
+                    const label = field.closest('.mb-3')?.querySelector('label');
+                    if (label) {
+                        const indicator = label.querySelector('.required-indicator');
+                        if (indicator) {
+                            indicator.style.display = 'inline';
+                        }
+                    }
+                });
+
                 // Load items
                 loadItemsForModal();
 
@@ -952,6 +963,7 @@
             const today = new Date().toISOString().split('T')[0];
             const pinjamInput = document.getElementById('rencana_pinjam');
             const kembaliInput = document.getElementById('rencana_kembali');
+            const lokasiInput = document.getElementById('lokasi_umum');
 
             // Set min date untuk tanggal pinjam = hari ini
             pinjamInput.setAttribute('min', today);
@@ -959,6 +971,7 @@
             // Saat tanggal pinjam berubah, update min date tanggal kembali
             pinjamInput.addEventListener('change', function () {
                 const pinjamDate = this.value;
+                handleRequiredFieldChange(this);
                 if (pinjamDate) {
                     kembaliInput.setAttribute('min', pinjamDate);
                     // Jika tanggal kembali sudah diisi dan kurang dari tanggal pinjam, reset
@@ -974,21 +987,91 @@
             // Validasi tambahan saat tanggal kembali berubah
             kembaliInput.addEventListener('change', function () {
                 const pinjamDate = pinjamInput.value;
+                handleRequiredFieldChange(this);
                 if (pinjamDate && this.value < pinjamDate) {
                     alert('Return date cannot be earlier than loan date.');
                     this.value = '';
                 }
             });
+
+            // Handle borrowing location field change
+            lokasiInput.addEventListener('change', function () {
+                handleRequiredFieldChange(this);
+            });
+            lokasiInput.addEventListener('input', function () {
+                handleRequiredFieldChange(this);
+            });
+
+            // Initialize all required fields with their indicators
+            initializeRequiredFieldIndicators();
+        }
+
+        // ========== REQUIRED FIELD INDICATOR MANAGEMENT ==========
+        function initializeRequiredFieldIndicators() {
+            const requiredFields = document.querySelectorAll('.required-field');
+            requiredFields.forEach(field => {
+                // Check initial state
+                handleRequiredFieldChange(field);
+                
+                // Add event listeners
+                field.addEventListener('change', function () {
+                    handleRequiredFieldChange(this);
+                });
+                field.addEventListener('input', function () {
+                    handleRequiredFieldChange(this);
+                });
+            });
+        }
+
+        function handleRequiredFieldChange(field) {
+            const label = field.closest('.mb-3')?.querySelector('label');
+            if (!label) return;
+
+            const indicator = label.querySelector('.required-indicator');
+            if (!indicator) return;
+
+            // If field has value, hide indicator; otherwise show it
+            if (field.value.trim() !== '') {
+                indicator.style.display = 'none';
+            } else {
+                indicator.style.display = 'inline';
+            }
         }
 
         // Form submission handler
         document.getElementById("formPinjam").addEventListener("submit", e => {
             e.preventDefault();
 
+            // Validasi required fields
+            const pinjamInput = document.querySelector('#requestBorrowingModal input[name="rencana_pinjam"]');
+            const kembaliInput = document.querySelector('#requestBorrowingModal input[name="rencana_kembali"]');
+            const lokasiInput = document.querySelector('#requestBorrowingModal input[name="lokasi_umum"]');
+
+            const pinjamDate = pinjamInput.value.trim();
+            const kembaliDate = kembaliInput.value.trim();
+            const lokasi = lokasiInput.value.trim();
+
+            // Check if all required fields are filled
+            if (!pinjamDate) {
+                alert("Borrow Date is required");
+                pinjamInput.focus();
+                return;
+            }
+
+            if (!kembaliDate) {
+                alert("Return Date is required");
+                kembaliInput.focus();
+                return;
+            }
+
+            if (!lokasi) {
+                alert("Borrowing Location is required");
+                lokasiInput.focus();
+                return;
+            }
+
             // Validasi tanggal pinjam >= hari ini
             const today = new Date().toISOString().split('T')[0];
-            const pinjamDate = document.querySelector('#requestBorrowingModal input[name="rencana_pinjam"]').value;
-            const kembaliDate = document.querySelector('#requestBorrowingModal input[name="rencana_kembali"]').value;
 
             if (pinjamDate < today) {
                 alert("Loan date cannot be earlier than today (" + today + ")");;
