@@ -33,20 +33,28 @@ while ($row = $q->fetch_assoc()) {
 }
 
 // ================= DAFTAR PEMINJAM =================
+// Uses peminjaman_units (approved only) instead of detail_peminjaman.jumlah
 $peminjam = [];
 $q = $conn->query("
   SELECT 
     pm.id AS peminjaman_id,
     pm.kode_peminjaman,
     u.nama,
-    dp.jumlah,
+    COUNT(pu.id) AS jumlah,
     pm.tanggal_pinjam,
     pm.rencana_kembali,
     pm.status
   FROM detail_peminjaman dp
   JOIN peminjaman pm ON dp.peminjaman_id = pm.id
   JOIN users u ON pm.user_id = u.id
+  JOIN peminjaman_units pu ON pu.peminjaman_id = pm.id
+    AND pu.barang_id = dp.barang_id
   WHERE dp.barang_id = $id
+    AND pm.status NOT IN ('Menunggu Persetujuan', 'Ditolak')
+    AND pu.approval_status = 'Disetujui'
+    AND pu.return_status NOT IN ('Dikembalikan', 'Rusak')
+  GROUP BY pm.id, pm.kode_peminjaman, u.nama,
+           pm.tanggal_pinjam, pm.rencana_kembali, pm.status
   ORDER BY pm.tanggal_pinjam DESC
 ");
 

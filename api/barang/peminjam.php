@@ -34,6 +34,7 @@ try {
             AND pu.barang_id = dp.barang_id
         WHERE dp.barang_id = ?
           AND p.status NOT IN ('Menunggu Persetujuan', 'Ditolak')
+          AND pu.approval_status = 'Disetujui'
           AND pu.return_status NOT IN ('Dikembalikan', 'Rusak')
         GROUP BY p.id, p.kode_peminjaman, p.nama_peminjam, p.nrp,
                  p.tanggal_pinjam, p.rencana_kembali, p.status,
