@@ -25,16 +25,130 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 /**
- * Send email using PHPMailer + SMTP Gmail
+ * Send email using PHPMailer + SMTP Gmail (NON-BLOCKING)
+ * 
+ * Dispatches email to a background PHP process so the HTTP response
+ * is returned immediately without waiting for SMTP. Falls back to
+ * synchronous sending if background dispatch fails.
  *
  * @param string $to         Recipient email
  * @param string $subject    Email subject
  * @param string $htmlBody   Email body in HTML format
  * @param string $toName     Recipient name (optional)
  * @param string $plainBody  Plain text email body fallback (optional)
- * @return bool              true if successful, false if failed
+ * @return bool              true if dispatched/sent, false if failed
  */
 function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
+    // Try non-blocking background dispatch first
+    $dispatched = _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody);
+    if ($dispatched) {
+        return true;
+    }
+
+    // Fallback: send synchronously if background dispatch failed
+    error_log("[EMAIL] Background dispatch failed, falling back to synchronous send for {$to}");
+    return _sendEmailSync($to, $subject, $htmlBody, $toName, $plainBody);
+}
+
+/**
+ * Dispatch email to background PHP process (non-blocking)
+ *
+ * @return bool  true if dispatched successfully
+ */
+function _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody) {
+    // Determine PHP binary path
+    $phpBin = _findPhpBinary();
+    if (!$phpBin) {
+        error_log("[EMAIL] Cannot find PHP binary for background dispatch");
+        return false;
+    }
+
+    // Path to the background worker script
+    $workerScript = __DIR__ . '/send-background.php';
+    if (!file_exists($workerScript)) {
+        error_log("[EMAIL] Background worker not found: {$workerScript}");
+        return false;
+    }
+
+    // Serialize email params to a temp file
+    $payload = [
+        'to'        => $to,
+        'toName'    => $toName,
+        'subject'   => $subject,
+        'htmlBody'  => $htmlBody,
+        'plainBody' => $plainBody,
+    ];
+
+    $tmpDir = sys_get_temp_dir();
+    $tmpFile = tempnam($tmpDir, 'email_');
+    if (!$tmpFile) {
+        error_log("[EMAIL] Failed to create temp file in {$tmpDir}");
+        return false;
+    }
+
+    if (file_put_contents($tmpFile, json_encode($payload)) === false) {
+        error_log("[EMAIL] Failed to write payload to {$tmpFile}");
+        @unlink($tmpFile);
+        return false;
+    }
+
+    // Execute background process (Linux: & for background, /dev/null to detach)
+    $cmd = escapeshellarg($phpBin) . ' ' . escapeshellarg($workerScript) . ' ' . escapeshellarg($tmpFile);
+
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        // Windows: use start /B for background
+        $cmd = 'start /B ' . $cmd;
+        pclose(popen($cmd, 'r'));
+    } else {
+        // Linux/Mac: redirect output and run in background
+        $cmd .= ' > /dev/null 2>&1 &';
+        exec($cmd);
+    }
+
+    error_log("[EMAIL] Dispatched background email to {$to} via {$tmpFile}");
+    return true;
+}
+
+/**
+ * Find the PHP CLI binary path
+ *
+ * @return string|null  Path to PHP binary, or null if not found
+ */
+function _findPhpBinary() {
+    // Check common XAMPP paths first
+    $candidates = [
+        '/opt/lampp/bin/php',           // Linux XAMPP
+        'E:\\xampp\\php\\php.exe',      // Windows XAMPP
+        'C:\\xampp\\php\\php.exe',      // Windows XAMPP alt
+        PHP_BINARY,                     // Current PHP binary
+    ];
+
+    foreach ($candidates as $path) {
+        if (!empty($path) && file_exists($path) && is_executable($path)) {
+            return $path;
+        }
+    }
+
+    // Try system PATH
+    $which = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'where php' : 'which php';
+    $result = trim(shell_exec($which) ?? '');
+    if (!empty($result)) {
+        $firstLine = strtok($result, "\n");
+        if (file_exists($firstLine)) {
+            return $firstLine;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Send email synchronously using PHPMailer + SMTP Gmail (BLOCKING)
+ * Used as fallback when background dispatch is not available.
+ *
+ * @return bool  true if sent successfully
+ */
+function _sendEmailSync($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
     global $smtpConfig;
 
     $mail = new PHPMailer(true);
