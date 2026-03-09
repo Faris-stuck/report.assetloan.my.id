@@ -48,9 +48,26 @@ try {
     $stmt_update->bind_param("ssi", $catatan, $tanggal_ditolak, $id);
     $stmt_update->execute();
     
-    // Restore stok_tersedia (cap at stok_total)
-    $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
-    $stmt_detail->bind_param("i", $id);
+    // Restore stok_tersedia - use approved units from peminjaman_units if they exist
+    $chk_units = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
+    $chk_units->bind_param("i", $id);
+    $chk_units->execute();
+    $has_units = (int)($chk_units->get_result()->fetch_assoc()['cnt'] ?? 0) > 0;
+
+    if ($has_units) {
+        // Restore stock only for approved units (rejected units' stock already restored during approval)
+        $stmt_detail = $conn->prepare("
+            SELECT pu.barang_id, COUNT(pu.id) as jumlah
+            FROM peminjaman_units pu
+            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+            GROUP BY pu.barang_id
+        ");
+        $stmt_detail->bind_param("i", $id);
+    } else {
+        // No units yet (still pending approval) - restore original dp.jumlah
+        $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
+        $stmt_detail->bind_param("i", $id);
+    }
     $stmt_detail->execute();
     $detail_query = $stmt_detail->get_result();
     

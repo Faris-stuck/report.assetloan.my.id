@@ -36,11 +36,16 @@ try {
                 dp.id AS detail_peminjaman_id,
                 dp.barang_id,
                 b.nama_barang,
-                dp.jumlah,
+                CASE
+                    WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
+                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                    ELSE dp.jumlah
+                END as jumlah,
                 dp.lokasi
             FROM detail_peminjaman dp
             LEFT JOIN barang b ON dp.barang_id = b.id
             WHERE dp.peminjaman_id = ?
+            HAVING jumlah > 0
         ");
         $stmt_detail->bind_param("i", $row['id']);
         $stmt_detail->execute();

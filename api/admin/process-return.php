@@ -49,16 +49,17 @@ try {
         $stmt_tgl->bind_param("si", $tanggal_kembali, $id);
         $stmt_tgl->execute();
         
-        // Get per-barang with already-returned aggregate
+        // Get per-barang from approved units (peminjaman_units) with already-returned aggregate
         $stmt_detail = $conn->prepare("
-            SELECT dp.barang_id, dp.jumlah,
+            SELECT pu.barang_id, COUNT(pu.id) as jumlah,
                 COALESCE((
                     SELECT SUM(dr.jumlah_kembali) FROM detail_pengembalian dr
                     JOIN pengembalian p ON dr.pengembalian_id = p.id
-                    WHERE p.peminjaman_id = ? AND dr.barang_id = dp.barang_id AND p.status = 'Selesai'
+                    WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Selesai'
                 ), 0) as already_returned
-            FROM detail_peminjaman dp
-            WHERE dp.peminjaman_id = ?
+            FROM peminjaman_units pu
+            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+            GROUP BY pu.barang_id
         ");
         $stmt_detail->bind_param("ii", $id, $id);
         $stmt_detail->execute();
@@ -81,10 +82,26 @@ try {
         $stmt_finalize->bind_param("i", $id);
         $stmt_finalize->execute();
     }
-    // Jika ditolak, kembalikan stok barang (cap at stok_total)
+    // Jika ditolak, kembalikan stok barang - use approved units from peminjaman_units
     if ($status === 'Ditolak') {
-        $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
-        $stmt_detail->bind_param("i", $id);
+        // Check if peminjaman_units exist (manager already processed approval)
+        $chk_units = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
+        $chk_units->bind_param("i", $id);
+        $chk_units->execute();
+        $has_units = (int)($chk_units->get_result()->fetch_assoc()['cnt'] ?? 0) > 0;
+
+        if ($has_units) {
+            $stmt_detail = $conn->prepare("
+                SELECT pu.barang_id, COUNT(pu.id) as jumlah
+                FROM peminjaman_units pu
+                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+                GROUP BY pu.barang_id
+            ");
+            $stmt_detail->bind_param("i", $id);
+        } else {
+            $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
+            $stmt_detail->bind_param("i", $id);
+        }
         $stmt_detail->execute();
         $detail_query = $stmt_detail->get_result();
         while ($detail = $detail_query->fetch_assoc()) {

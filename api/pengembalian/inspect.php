@@ -148,8 +148,8 @@ try {
     // Update peminjaman status based on AGGREGATE totals across ALL pengembalian records (including current one)
     $peminjaman_id = (int)$header['peminjaman_id'];
     
-    // Get total items borrowed
-    $tq = $conn->prepare("SELECT SUM(jumlah) as total FROM detail_peminjaman WHERE peminjaman_id = ?");
+    // Get total items borrowed (approved units from peminjaman_units)
+    $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Disetujui'");
     $tq->bind_param("i", $peminjaman_id);
     $tq->execute();
     $tq_result = $tq->get_result()->fetch_assoc();

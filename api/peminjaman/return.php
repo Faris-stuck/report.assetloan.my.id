@@ -65,11 +65,11 @@ if (!$peminjaman_id) {
     }
     
     // Validasi: Hitung total item yang masih belum dikembalikan FIRST (before status checks)
-    // Bandingkan aggregate pengembalian dengan detail_peminjaman asli
+    // Use approved units from peminjaman_units (not dp.jumlah which is requested qty)
     $count_total = $conn->prepare("
-        SELECT COALESCE(SUM(jumlah), 0) as total_items
-        FROM detail_peminjaman
-        WHERE peminjaman_id = ?
+        SELECT COUNT(*) as total_items
+        FROM peminjaman_units
+        WHERE peminjaman_id = ? AND approval_status = 'Disetujui'
     ");
     $count_total->bind_param("i", $peminjaman_id);
     $count_total->execute();

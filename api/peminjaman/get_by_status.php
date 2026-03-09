@@ -48,10 +48,23 @@ try {
         // Ambil detail barang untuk peminjaman ini
         $stmt_detail = $conn->prepare("
             SELECT
-                CONCAT(dp.jumlah, 'x ', b.nama_barang, ' (', dp.lokasi, ')') as item
+                CONCAT(
+                    CASE
+                        WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
+                        THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                        ELSE dp.jumlah
+                    END,
+                    'x ', b.nama_barang, ' (', dp.lokasi, ')'
+                ) as item,
+                CASE
+                    WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
+                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                    ELSE dp.jumlah
+                END as jumlah
             FROM detail_peminjaman dp
             LEFT JOIN barang b ON dp.barang_id = b.id
             WHERE dp.peminjaman_id = ?
+            HAVING jumlah > 0
         ");
         $stmt_detail->bind_param("i", $row['id']);
         $stmt_detail->execute();

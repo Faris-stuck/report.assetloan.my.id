@@ -13,7 +13,7 @@ $report = [
         'status' => 'Connected',
         'host' => 'localhost',
         'database' => 'peminjaman',
-        'user' => 'root'
+        'user' => 'peminjaman_app'
     ],
     'tables' => [],
     'query_tests' => [],

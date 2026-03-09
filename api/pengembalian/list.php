@@ -55,9 +55,9 @@ $sql = "
         COALESCE(SUM(dp.jumlah_rusak),0) AS total_rusak,
         COALESCE(SUM(dp.jumlah_kembali),0) AS total_kembali,
         (
-            SELECT COALESCE(SUM(dp2.jumlah), 0)
-            FROM detail_peminjaman dp2
-            WHERE dp2.peminjaman_id = p.id
+            SELECT COUNT(*)
+            FROM peminjaman_units pu2
+            WHERE pu2.peminjaman_id = p.id AND pu2.approval_status = 'Disetujui'
         ) as total_items,
         (
             SELECT COALESCE(SUM(dr.jumlah_kembali), 0)

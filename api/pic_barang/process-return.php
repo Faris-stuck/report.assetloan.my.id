@@ -38,8 +38,8 @@ try {
         throw new Exception("Borrowing already has status: " . $row['status']);
     }
 
-    // Get total items borrowed
-    $tq = $conn->prepare("SELECT SUM(jumlah) as total FROM detail_peminjaman WHERE peminjaman_id = ?");
+    // Get total items borrowed (approved units from peminjaman_units)
+    $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Disetujui'");
     $tq->bind_param("i", $id);
     $tq->execute();
     $total_items = (int)($tq->get_result()->fetch_assoc()['total'] ?? 0);
@@ -56,16 +56,17 @@ try {
     $total_already_returned = (int)($aq->get_result()->fetch_assoc()['total_returned'] ?? 0);
     
     // Only restore stock for items NOT yet returned via pengembalian flow
-    // Get per-barang breakdown
+    // Use approved units from peminjaman_units (not dp.jumlah)
     $detail_query = $conn->prepare("
-        SELECT dp.barang_id, dp.jumlah,
+        SELECT pu.barang_id, COUNT(pu.id) as jumlah,
             COALESCE((
                 SELECT SUM(dr.jumlah_kembali) FROM detail_pengembalian dr
                 JOIN pengembalian p ON dr.pengembalian_id = p.id
-                WHERE p.peminjaman_id = ? AND dr.barang_id = dp.barang_id AND p.status = 'Selesai'
+                WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Selesai'
             ), 0) as already_returned
-        FROM detail_peminjaman dp
-        WHERE dp.peminjaman_id = ?
+        FROM peminjaman_units pu
+        WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+        GROUP BY pu.barang_id
     ");
     $detail_query->bind_param("ii", $id, $id);
     $detail_query->execute();
