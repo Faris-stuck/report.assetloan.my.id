@@ -67,6 +67,8 @@ $sql_active = "
        OR status = 'Overdue'
        OR status = 'Sebagian Dikembalikan'
        OR status = 'Proses Return'
+       OR status = 'Partial Approved'
+       OR status = 'Disetujui'
     ORDER BY rencana_kembali ASC
 ";
 
@@ -107,6 +109,7 @@ $sql_detail = "
     FROM peminjaman 
     WHERE status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue'
        OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return'
+       OR status = 'Partial Approved' OR status = 'Disetujui'
     ORDER BY rencana_kembali ASC
 ";
 

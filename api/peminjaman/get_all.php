@@ -203,7 +203,7 @@ try {
         
         // Only compute dynamic status for active peminjaman
         // Ditolak, Menunggu Persetujuan, Disetujui, Partial Approved keep their DB status
-        if (!in_array($currentDbStatus, ['Ditolak', 'Menunggu Persetujuan', 'Disetujui', 'Partial Approved'])) {
+        if (!in_array($currentDbStatus, ['Ditolak', 'Menunggu Persetujuan'])) {
             $row['status'] = computeStatusFromUnits($conn, $row['id'], $currentDbStatus);
         }
 

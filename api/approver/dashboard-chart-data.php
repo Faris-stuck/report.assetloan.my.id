@@ -71,28 +71,22 @@ try {
     // per_status: DATEDIFF-based due-date classification for the Borrowing Status chart
     // Active loans bucketed using nearest expected_return from peminjaman_units, falling back to rencana_kembali.
     $_dueCase = "CASE
-            WHEN p.status IN ('Dikembalikan','Sebagian Rusak','Semua Rusak','Selesai') THEN 'Returned'
+            WHEN p.status = 'Menunggu Persetujuan' THEN 'Pending Approval'
             WHEN p.status = 'Ditolak' THEN 'Rejected'
-            WHEN p.status = 'Sebagian Dikembalikan' THEN 'Partially Returned'
-            WHEN (p.status IN ('Sedang Dipinjam','Proses Return') OR p.status LIKE 'Due%' OR p.status = 'Overdue') THEN
-                CASE
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 7  THEN 'Due 7 Day'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 6  THEN 'Due 6 Day'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 5  THEN 'Due 5 Day'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 4  THEN 'Due 4 Day'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 3  THEN 'Due 3 Day'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 2  THEN 'Due 2 Day'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 1  THEN 'Due Tomorrow'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 0  THEN 'Due Today'
-                    WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) < 0  THEN 'Overdue'
-                    ELSE 'Borrowed'
-                END
+            WHEN p.status IN ('Dikembalikan','Sebagian Rusak','Semua Rusak','Selesai') THEN 'Returned'
+            WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) < 0  THEN 'Overdue'
+            WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 0  THEN 'Due Today'
+            WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 1  THEN 'Due Tomorrow'
+            WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) BETWEEN 2 AND 7
+                THEN CONCAT('Due ', DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()), ' Day')
+            WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) > 7
+                THEN CONCAT('Due In ', DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()), ' Days')
             ELSE p.status
         END";
     $_joinPuNear = "LEFT JOIN (
             SELECT peminjaman_id, MIN(expected_return) AS nearest_return
             FROM peminjaman_units
-            WHERE return_status NOT IN ('Dikembalikan','Rusak')
+            WHERE return_status NOT IN ('Dikembalikan','Rusak','Ditolak')
             GROUP BY peminjaman_id
         ) pu_near ON p.id = pu_near.peminjaman_id";
     if ($tanggal_awal && $tanggal_akhir) {

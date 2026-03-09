@@ -24,21 +24,14 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
         return $dbStatus;
     }
 
-    // Determine if we should check due status.
-    //
-    // PRIORITY RULE (WAJIB):
-    //   "Sebagian Dikembalikan" is intentionally EXCLUDED from $isActive.
-    //   When some items have already been returned, the TABLE aggregate status
-    //   MUST remain "Sebagian Dikembalikan" regardless of how close the remaining
-    //   items are to their due date.  The per-unit MODAL will still display the
-    //   individual "Due In X Days" for each unreturned unit via get_detail_units.php.
-    //
-    //   All other active-borrow statuses ("Sedang Dipinjam", "Proses Return",
-    //   existing "Due*" or "Overdue") CAN be overridden by due-proximity logic.
-    $isActive = ($dbStatus === 'Sedang Dipinjam' || $dbStatus === 'Overdue'
-                 || $dbStatus === 'Proses Return'
-                 || strpos($dbStatus, 'Due') === 0);
-    if (!$isActive) {
+    // Only final/inactive statuses are NOT overridden by due-date proximity.
+    // All other statuses (Partial Approved, Disetujui, Sebagian Dikembalikan,
+    // Sedang Dipinjam, Proses Return, existing Due*, Overdue) ARE overridden.
+    $isNotOverridable = in_array($dbStatus, [
+        'Menunggu Persetujuan', 'Ditolak', 'Dikembalikan',
+        'Semua Rusak', 'Sebagian Rusak', 'Selesai'
+    ]);
+    if ($isNotOverridable) {
         return $dbStatus;
     }
 
@@ -65,25 +58,19 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
     $diff = $today->diff($returnDate);
     $daysRemaining = (int) $diff->format('%r%a');
 
-    // ==========================================
-    // PRIORITY LOGIC: Due status overrides active-borrow statuses
-    // NOTE: "Sebagian Dikembalikan" is NOT in $isActive so it will never reach
-    //       here.  Only "Sedang Dipinjam", "Proses Return", and existing "Due*"
-    //       statuses are resolved by remaining-days proximity below.
-    // ==========================================
-    
+    // PRIORITY LOGIC: Due status overrides all non-final statuses.
+    // No day-count cap — any positive remaining days shows "Due In X Days".
     if ($daysRemaining < 0) {
         return 'Overdue';
     } elseif ($daysRemaining === 0) {
         return 'Due Today';
     } elseif ($daysRemaining === 1) {
         return 'Due In 1 Day';
-    } elseif ($daysRemaining >= 2 && $daysRemaining <= 7) {
+    } elseif ($daysRemaining >= 2) {
         return 'Due In ' . $daysRemaining . ' Days';
-    } else {
-        // Only if daysRemaining > 7, keep original DB status
-        return $dbStatus;
     }
+
+    return $dbStatus;
 }
 
 /**
@@ -148,7 +135,7 @@ function getNearestExpectedReturn(&$conn, $peminjaman_id) {
  */
 function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
     // Final statuses that must NEVER be overridden
-    if (in_array($dbStatus, ['Ditolak', 'Menunggu Persetujuan', 'Disetujui'])) {
+    if (in_array($dbStatus, ['Ditolak', 'Menunggu Persetujuan'])) {
         return $dbStatus;
     }
 
@@ -157,6 +144,7 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
         SELECT pu.return_status, pu.expected_return
         FROM peminjaman_units pu
         WHERE pu.peminjaman_id = ?
+          AND pu.return_status != 'Ditolak'
     ");
     $stmt->bind_param("i", $peminjaman_id);
     $stmt->execute();
@@ -203,7 +191,7 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
                 $diffDays = (int)$today->diff($retDate)->format('%r%a');
                 if ($diffDays < 0) {
                     $has_overdue = true;
-                } elseif ($diffDays >= 0 && $diffDays <= 7) {
+                } elseif ($diffDays >= 0) {
                     if ($diffDays < $min_due_days) {
                         $min_due_days = $diffDays;
                     }
@@ -228,7 +216,7 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
     }
 
     // PRIORITY 3: Due In X Days
-    if ($min_due_days !== PHP_INT_MAX && $min_due_days >= 1 && $min_due_days <= 7) {
+    if ($min_due_days !== PHP_INT_MAX && $min_due_days >= 1) {
         if ($min_due_days === 1) {
             return 'Due In 1 Day';
         }
