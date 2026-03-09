@@ -101,23 +101,19 @@ try {
     $chkReturn->execute();
     $hasActiveReturn = $chkReturn->get_result()->num_rows > 0;
 
-    // Check if all items have been fully returned (via finalized pengembalian records)
+    // Check if all approved units have been fully returned (via peminjaman_units.return_status)
     $chkFullReturn = $conn->prepare("
         SELECT 
-            COALESCE(SUM(dp.jumlah), 0) as total_items,
-            COALESCE(SUM(dr.jumlah_kembali), 0) as total_returned
-        FROM detail_peminjaman dp
-        LEFT JOIN detail_pengembalian dr ON dr.barang_id = dp.barang_id 
-            AND dr.pengembalian_id IN (
-                SELECT id FROM pengembalian 
-                WHERE peminjaman_id = ? AND status = 'Selesai'
-            )
-        WHERE dp.peminjaman_id = ?
+            COUNT(*) as total_approved,
+            SUM(CASE WHEN return_status IN ('Dikembalikan', 'Rusak') THEN 1 ELSE 0 END) as total_returned
+        FROM peminjaman_units
+        WHERE peminjaman_id = ?
+          AND approval_status = 'Disetujui'
     ");
-    $chkFullReturn->bind_param("ii", $peminjaman_id, $peminjaman_id);
+    $chkFullReturn->bind_param("i", $peminjaman_id);
     $chkFullReturn->execute();
     $returnStats = $chkFullReturn->get_result()->fetch_assoc();
-    $totalItems = (int)($returnStats['total_items'] ?? 0);
+    $totalItems = (int)($returnStats['total_approved'] ?? 0);
     $totalReturned = (int)($returnStats['total_returned'] ?? 0);
     $itemsRemaining = $totalItems - $totalReturned;
 
@@ -191,7 +187,7 @@ try {
     $errorItems = [];
     
     if ($is_per_unit) {
-        // Per-unit format validation
+        // Per-unit format validation - verify each unit exists in peminjaman_units and is approved
         foreach ($items as $item) {
             $detail_id = (int)($item['detail_peminjaman_id'] ?? 0);
             $unit_num = (int)($item['unit_number'] ?? 0);
@@ -201,20 +197,22 @@ try {
                 continue;
             }
             
-            // Verify detail_peminjaman exists in this peminjaman
-            $chk = $conn->prepare("SELECT id, jumlah FROM detail_peminjaman WHERE id = ? AND peminjaman_id = ?");
-            $chk->bind_param("ii", $detail_id, $peminjaman_id);
+            // Verify unit exists in peminjaman_units, is approved, and not returned
+            $chk = $conn->prepare("
+                SELECT pu.id 
+                FROM peminjaman_units pu
+                WHERE pu.detail_peminjaman_id = ? 
+                  AND pu.unit_number = ?
+                  AND pu.peminjaman_id = ?
+                  AND pu.approval_status = 'Disetujui'
+                  AND pu.return_status NOT IN ('Dikembalikan', 'Rusak')
+            ");
+            $chk->bind_param("iii", $detail_id, $unit_num, $peminjaman_id);
             $chk->execute();
-            $detail = $chk->get_result()->fetch_assoc();
+            $unitRow = $chk->get_result()->fetch_assoc();
             
-            if (!$detail) {
-                $errorItems[] = "Detail item ID {$detail_id} not found";
-                continue;
-            }
-            
-            // Verify unit_number is within qty range
-            if ($unit_num > (int)$detail['jumlah']) {
-                $errorItems[] = "Unit {$unit_num} exceeds borrowed quantity (" . (int)$detail['jumlah'] . ")";
+            if (!$unitRow) {
+                $errorItems[] = "Unit {$unit_num} of detail ID {$detail_id} not found, not approved, or already returned";
             }
         }
     } else {

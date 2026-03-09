@@ -55,24 +55,28 @@ $stmt = $conn->prepare("
         d.barang_id,
         b.kode_barang,
         b.nama_barang,
-        COALESCE(dp.jumlah, 0) as jumlah_pinjam,
+        COALESCE((
+            SELECT COUNT(pu.id)
+            FROM peminjaman_units pu
+            WHERE pu.peminjaman_id = ?
+              AND pu.barang_id = d.barang_id
+              AND (pu.approval_status IS NULL OR pu.approval_status != 'Ditolak')
+        ), 0) AS jumlah_pinjam,
         d.jumlah_kembali,
         d.kondisi_kembali,
         d.jumlah_rusak,
         d.biaya_ganti_rugi,
         d.catatan,
         COALESCE((
-            SELECT SUM(dk2.jumlah_kembali)
-            FROM detail_pengembalian dk2
-            JOIN pengembalian k2 ON k2.id = dk2.pengembalian_id
-            WHERE k2.peminjaman_id = ?
-            AND dk2.barang_id = d.barang_id
-            AND k2.status = 'Selesai'
-            AND k2.id != d.pengembalian_id
-        ), 0) as sudah_dikembalikan_from_completed
+            SELECT COUNT(pu2.id)
+            FROM peminjaman_units pu2
+            WHERE pu2.peminjaman_id = ?
+              AND pu2.barang_id = d.barang_id
+              AND pu2.return_status IN ('Dikembalikan', 'Rusak')
+              AND (pu2.approval_status IS NULL OR pu2.approval_status != 'Ditolak')
+        ), 0) AS sudah_dikembalikan_from_units
     FROM detail_pengembalian d
     JOIN barang b ON b.id = d.barang_id
-    LEFT JOIN detail_peminjaman dp ON dp.barang_id = d.barang_id AND dp.peminjaman_id = ?
     WHERE d.pengembalian_id = ?
     ORDER BY b.nama_barang ASC
 ");
@@ -81,24 +85,21 @@ $stmt->execute();
 $items = [];
 $r = $stmt->get_result();
 while ($row = $r->fetch_assoc()) {
-    // Calculate sisa_dikembalikan correctly
-    // sisa = max qty that CAN be returned in THIS submission
-    // = total_pinjam - what's already returned and finalized (status='Selesai')
     $total_pinjam = (int)$row['jumlah_pinjam'];
-    $sudah_dikembalikan_from_completed = (int)$row['sudah_dikembalikan_from_completed'];
     $jumlah_kembali_current = (int)$row['jumlah_kembali'];
     
-    // Maximum qty that can be returned in THIS submission (not including already-returned qty)
-    // This is the "remain item" to show PIC what they can still accept
-    $max_untuk_submission_ini = max(0, $total_pinjam - $sudah_dikembalikan_from_completed);
+    // sudah_dikembalikan = units already returned (from peminjaman_units)
+    // But exclude the ones being returned in THIS submission
+    // We need: units returned in OTHER completed returns, not this one
+    // Use peminjaman_units returned count minus current submission's return qty
+    $total_returned_units = (int)$row['sudah_dikembalikan_from_units'];
     
-    // After approval, total returned will be = completed + current
-    // Remaining items not yet returned = total - (completed + current)
-    $akan_sisa_setelah_approval = max(0, $total_pinjam - ($sudah_dikembalikan_from_completed + $jumlah_kembali_current));
+    // sisa_dikembalikan = approved units still active (not yet returned)
+    $sisa = max(0, $total_pinjam - $total_returned_units);
     
-    // sisa_dikembalikan = max qty that can be in this submission (for "remain item" display)
-    $row['sisa_dikembalikan'] = $max_untuk_submission_ini;
-    $row['sudah_dikembalikan'] = $sudah_dikembalikan_from_completed;
+    $row['jumlah_pinjam'] = $total_pinjam;
+    $row['sisa_dikembalikan'] = $sisa;
+    $row['sudah_dikembalikan'] = $total_returned_units;
     
     $items[] = $row;
 }

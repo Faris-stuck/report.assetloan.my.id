@@ -87,21 +87,30 @@ try {
         exit;
     }
 
-    // Get all detail_peminjaman records with their item info
-    // d.expected_return is the single source of truth for the current due date.
+    // ═══════════════════════════════════════════════════════════════
+    // Get APPROVED units from peminjaman_units (not detail_peminjaman.jumlah)
+    // This ensures only manager-approved units appear in the extend modal.
+    // ═══════════════════════════════════════════════════════════════
     $stmt = $conn->prepare("
         SELECT 
-            d.id as detail_id,
-            d.barang_id,
-            d.jumlah as qty_total,
-            d.kondisi_pinjam,
-            d.expected_return AS detail_expected_return,
+            pu.id as pu_id,
+            pu.detail_peminjaman_id,
+            pu.barang_id,
+            pu.unit_number,
+            pu.unit_display as pu_unit_display,
+            pu.return_status,
+            pu.expected_return as pu_expected_return,
+            pu.kondisi_kembali,
+            pu.approval_status,
             b.kode_barang,
-            b.nama_barang
-        FROM detail_peminjaman d
-        JOIN barang b ON b.id = d.barang_id
-        WHERE d.peminjaman_id = ?
-        ORDER BY d.id
+            b.nama_barang,
+            dp.kondisi_pinjam
+        FROM peminjaman_units pu
+        JOIN barang b ON b.id = pu.barang_id
+        JOIN detail_peminjaman dp ON dp.id = pu.detail_peminjaman_id
+        WHERE pu.peminjaman_id = ?
+          AND pu.approval_status = 'Disetujui'
+        ORDER BY pu.detail_peminjaman_id, pu.unit_number
     ");
     
     if (!$stmt) {
@@ -112,7 +121,17 @@ try {
     if (!$stmt->execute()) {
         throw new Exception("Database execute error: " . $stmt->error);
     }
-    $detail_items = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $approved_units = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    // Count approved units per detail_peminjaman_id for unit_display "X/Y"
+    $approved_counts = [];
+    foreach ($approved_units as $au) {
+        $did = (int)$au['detail_peminjaman_id'];
+        if (!isset($approved_counts[$did])) {
+            $approved_counts[$did] = 0;
+        }
+        $approved_counts[$did]++;
+    }
 
     // Get latest extend per peminjaman and its items
     // Use ORDER BY ep.id DESC to get latest extend reliably
@@ -153,7 +172,6 @@ try {
         }
         
         if ($detail_id && $unit_num) {
-            // Per-unit extend: only set from the first (latest) record for this slot
             if (!isset($extend_map[$detail_id][$unit_num])) {
                 $extend_map[$detail_id][$unit_num] = [
                     'is_extended' => ($req_status === 'Approved'),
@@ -162,8 +180,6 @@ try {
                 ];
             }
         } else if (!$detail_id && !$unit_num) {
-            // Blanket extend (no items linked): covers the whole peminjaman
-            // Key by '0' to separate from unit-specific entries
             if (!isset($extend_map[0]['blanket'])) {
                 $extend_map[0]['blanket'] = [
                     'is_extended' => ($req_status === 'Approved'),
@@ -174,112 +190,85 @@ try {
         }
     }
 
-    // Get return history grouped by barang_id to compute sudah_dikembalikan
-    $stmt = $conn->prepare("
-        SELECT 
-            dr.barang_id,
-            COALESCE(SUM(dr.jumlah_kembali), 0) as total_returned
-        FROM detail_pengembalian dr
-        WHERE dr.pengembalian_id IN (
-            SELECT id FROM pengembalian 
-            WHERE peminjaman_id = ? AND status = 'Selesai'
-        )
-        GROUP BY dr.barang_id
-    ");
-    
-    if (!$stmt) {
-        throw new Exception("Database prepare error: " . $conn->error);
-    }
-    
-    $stmt->bind_param("i", $peminjaman_id);
-    if (!$stmt->execute()) {
-        throw new Exception("Database execute error: " . $stmt->error);
-    }
-    $return_history = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    // Determine if peminjaman is completed/inactive
+    $peminjaman_status = $peminjaman['status'];
+    $is_completed = in_array($peminjaman_status, [
+        'Dikembalikan', 'Returned', 'Completed', 'Closed',
+        'Ditolak', 'Rejected', 'Batal', 'Cancelled'
+    ]);
 
-    // Build return map
-    $return_map = [];
-    foreach ($return_history as $ret) {
-        $return_map[$ret['barang_id']] = (int)$ret['total_returned'];
-    }
-
-    // Generate per-unit array
+    // Build per-unit array directly from peminjaman_units (approved only)
     $units = [];
-    $unit_counter = 1;
+    // Track sequential number per detail_peminjaman_id for display
+    $detail_seq = [];
 
-    foreach ($detail_items as $item) {
-        $detail_id = (int)$item['detail_id'];
-        $barang_id = (int)$item['barang_id'];
-        $qty_total = (int)$item['qty_total'];
-        $kode_barang = $item['kode_barang'];
-        $nama_barang = $item['nama_barang'];
-        $kondisi_pinjam = $item['kondisi_pinjam'];
-        
-        $total_returned = $return_map[$barang_id] ?? 0;
-        
-        // Determine status of this peminjaman
-        $peminjaman_status = $peminjaman['status'];
-        $is_completed = in_array($peminjaman_status, [
-            'Dikembalikan', 'Returned', 'Completed', 'Closed',
-            'Ditolak', 'Rejected', 'Batal', 'Cancelled'
-        ]);
-        
-        // Generate per-unit rows
-        for ($unit_num = 1; $unit_num <= $qty_total; $unit_num++) {
-            // Determine if this unit was returned
-            // A unit is returned if total_returned >= unit_num
-            $is_returned = ($total_returned >= $unit_num);
-            
-            // Determine expected return date for this unit.
-            // Use detail_peminjaman.expected_return (single source of truth) as the base.
-            // Per-unit extends from extend_peminjaman_items can further override for granularity.
-            $expected_return = $item['detail_expected_return'] ?? $peminjaman['rencana_kembali'];
-            $is_extended = false;
-            $extend_status_for_unit = null;
-            $extend_date = null;
-            
-            // Check if this specific unit has an extend (latest = first in ORDER BY id DESC)
-            if (isset($extend_map[$detail_id][$unit_num])) {
-                $extend_info = $extend_map[$detail_id][$unit_num];
-                $is_extended = $extend_info['is_extended'];
-                $extend_status_for_unit = $extend_info['extend_status'];
-                $extend_date = $extend_info['extend_date'];
-                // Only update expected_return if Approved (Pending doesn't change the date yet)
-                if ($is_extended) {
-                    $expected_return = $extend_date;
-                }
-            } else if (isset($extend_map[0]['blanket'])) {
-                // Fall back to blanket (whole-peminjaman) extend if unit-specific not found
-                $extend_info = $extend_map[0]['blanket'];
-                $is_extended = $extend_info['is_extended'];
-                $extend_status_for_unit = $extend_info['extend_status'];
-                $extend_date = $extend_info['extend_date'];
-                if ($is_extended) {
-                    $expected_return = $extend_date;
-                }
-            }
-            
-            // Can extend: not yet returned AND peminjaman still active
-            $can_extend = !$is_returned && !$is_completed;
-            
-            $units[] = [
-                'unit_id' => "detail_{$detail_id}_unit_{$unit_num}",
-                'detail_peminjaman_id' => $detail_id,
-                'barang_id' => $barang_id,
-                'kode_barang' => $kode_barang,
-                'nama_barang' => $nama_barang,
-                'unit_number' => $unit_num,
-                'qty_dipinjam' => 1,
-                'kondisi_pinjam' => $kondisi_pinjam,
-                'expected_return' => $expected_return ? date('d/m/Y', strtotime($expected_return)) : '-',
-                'sudah_dikembalikan' => $is_returned,
-                'is_extended' => $is_extended,
-                'extend_status' => $extend_status_for_unit,
-                'extend_date' => $extend_date ? date('d/m/Y', strtotime($extend_date)) : null,
-                'can_extend' => $can_extend,
-                'unit_display' => "{$unit_num}/{$qty_total}"
-            ];
+    foreach ($approved_units as $au) {
+        $pu_id = (int)$au['pu_id'];
+        $detail_id = (int)$au['detail_peminjaman_id'];
+        $barang_id = (int)$au['barang_id'];
+        $unit_num = (int)$au['unit_number'];
+        $kode_barang = $au['kode_barang'];
+        $nama_barang = $au['nama_barang'];
+        $kondisi_pinjam = $au['kondisi_pinjam'];
+
+        // Track sequential number within this item for display
+        if (!isset($detail_seq[$detail_id])) {
+            $detail_seq[$detail_id] = 0;
         }
+        $detail_seq[$detail_id]++;
+        $seq = $detail_seq[$detail_id];
+        $total_approved = $approved_counts[$detail_id];
+
+        // Determine returned status from peminjaman_units.return_status
+        $return_status = $au['return_status'] ?? 'Belum Dikembalikan';
+        $is_returned = in_array($return_status, ['Dikembalikan', 'Rusak']);
+
+        // Expected return date: use peminjaman_units.expected_return as source of truth
+        $expected_return = $au['pu_expected_return'] ?? $peminjaman['rencana_kembali'];
+
+        $is_extended = false;
+        $extend_status_for_unit = null;
+        $extend_date = null;
+
+        // Check if this specific unit has an extend (latest = first in ORDER BY id DESC)
+        if (isset($extend_map[$detail_id][$unit_num])) {
+            $extend_info = $extend_map[$detail_id][$unit_num];
+            $is_extended = $extend_info['is_extended'];
+            $extend_status_for_unit = $extend_info['extend_status'];
+            $extend_date = $extend_info['extend_date'];
+            if ($is_extended) {
+                $expected_return = $extend_date;
+            }
+        } else if (isset($extend_map[0]['blanket'])) {
+            $extend_info = $extend_map[0]['blanket'];
+            $is_extended = $extend_info['is_extended'];
+            $extend_status_for_unit = $extend_info['extend_status'];
+            $extend_date = $extend_info['extend_date'];
+            if ($is_extended) {
+                $expected_return = $extend_date;
+            }
+        }
+
+        // Can extend: not yet returned AND peminjaman still active
+        $can_extend = !$is_returned && !$is_completed;
+
+        $units[] = [
+            'unit_id' => "detail_{$detail_id}_unit_{$unit_num}",
+            'detail_peminjaman_id' => $detail_id,
+            'barang_id' => $barang_id,
+            'kode_barang' => $kode_barang,
+            'nama_barang' => $nama_barang,
+            'unit_number' => $unit_num,
+            'qty_dipinjam' => 1,
+            'kondisi_pinjam' => $kondisi_pinjam,
+            'expected_return' => $expected_return ? date('d/m/Y', strtotime($expected_return)) : '-',
+            'sudah_dikembalikan' => $is_returned,
+            'is_extended' => $is_extended,
+            'extend_status' => $extend_status_for_unit,
+            'extend_date' => $extend_date ? date('d/m/Y', strtotime($extend_date)) : null,
+            'can_extend' => $can_extend,
+            'unit_display' => "{$seq}/{$total_approved}"
+        ];
     }
 
     echo json_encode([

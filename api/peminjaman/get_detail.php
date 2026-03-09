@@ -59,25 +59,35 @@ try {
         exit;
     }
 
-    // Get detail items WITH aggregate return history from ONLY FINALIZED pengembalian records
-    // This shows user what's already been returned and approved
+    // Get detail items with approved unit counts from peminjaman_units
+    // jumlah = count of approved units (excluding rejected)
+    // sudah_dikembalikan = count of units already returned (Dikembalikan/Rusak)
+    // sisa_dikembalikan = approved units still actively borrowed
     $stmt = $conn->prepare("
         SELECT
             d.id,
             d.barang_id,
-            d.jumlah,
             b.kode_barang,
             b.nama_barang,
-            COALESCE(SUM(dr.jumlah_kembali), 0) as sudah_dikembalikan
+            COALESCE((
+                SELECT COUNT(pu.id)
+                FROM peminjaman_units pu
+                WHERE pu.peminjaman_id = d.peminjaman_id
+                  AND pu.barang_id = d.barang_id
+                  AND (pu.approval_status IS NULL OR pu.approval_status != 'Ditolak')
+            ), 0) AS jumlah,
+            COALESCE((
+                SELECT COUNT(pu2.id)
+                FROM peminjaman_units pu2
+                WHERE pu2.peminjaman_id = d.peminjaman_id
+                  AND pu2.barang_id = d.barang_id
+                  AND pu2.return_status IN ('Dikembalikan', 'Rusak')
+                  AND (pu2.approval_status IS NULL OR pu2.approval_status != 'Ditolak')
+            ), 0) AS sudah_dikembalikan
         FROM detail_peminjaman d
         JOIN barang b ON b.id = d.barang_id
-        LEFT JOIN detail_pengembalian dr ON dr.barang_id = d.barang_id 
-            AND dr.pengembalian_id IN (
-                SELECT id FROM pengembalian 
-                WHERE peminjaman_id = ? AND status = 'Selesai'
-            )
         WHERE d.peminjaman_id = ?
-        GROUP BY d.id, d.barang_id, d.jumlah, b.kode_barang, b.nama_barang
+        GROUP BY d.id, d.barang_id, b.kode_barang, b.nama_barang
         ORDER BY b.nama_barang ASC
     ");
     
@@ -85,7 +95,7 @@ try {
         throw new Exception("Database prepare error: " . $conn->error);
     }
     
-    $stmt->bind_param("ii", $peminjaman_id, $peminjaman_id);
+    $stmt->bind_param("i", $peminjaman_id);
     if (!$stmt->execute()) {
         throw new Exception("Database execute error: " . $stmt->error);
     }
@@ -94,7 +104,7 @@ try {
 
     $items = [];
     while ($row = $result->fetch_assoc()) {
-        // Calculate sisa (remaining) = original qty - already returned qty
+        // sisa_dikembalikan = approved units - already returned units
         $row['sisa_dikembalikan'] = (int)$row['jumlah'] - (int)$row['sudah_dikembalikan'];
         $items[] = $row;
     }
