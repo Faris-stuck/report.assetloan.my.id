@@ -162,8 +162,8 @@ try {
     $stats['recent_actions'] = $recent;
     $stmt->close();
     
-    // 7. Top Barang Dipinjam (hitung total UNIT yang dipinjam dari detail_peminjaman)
-    // Include: Sedang Dipinjam + Sebagian Dikembalikan
+    // 7. Top Barang Dipinjam (count all borrowing transactions per item)
+    // Matches PIC dashboard logic: count all detail_peminjaman records per barang
     // Build dynamic query based on kategori filter
     if (!empty($kategoriFilter) && $kategoriFilter !== 'all') {
         // Query with kategori filter
@@ -173,15 +173,13 @@ try {
                 b.nama_barang, 
                 b.kategori,
                 b.stok_tersedia, 
-                COALESCE(SUM(dp.jumlah), 0) as jumlah_dipinjam
-            FROM barang b
-            LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
-            LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
-            WHERE b.kategori = ? AND (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' OR p.status = 'Sebagian Dikembalikan' OR p.status IS NULL)
+                COUNT(dp.id) as jumlah_dipinjam
+            FROM detail_peminjaman dp
+            JOIN barang b ON b.id = dp.barang_id
+            WHERE b.kategori = ?
             GROUP BY b.id, b.nama_barang, b.kategori, b.stok_tersedia
-            HAVING COALESCE(SUM(dp.jumlah), 0) > 0
             ORDER BY jumlah_dipinjam DESC
-            LIMIT 5
+            LIMIT 10
         ");
         if (!$stmt) {
             throw new Exception("Query 7 Error: " . $conn->error);
@@ -195,15 +193,12 @@ try {
                 b.nama_barang, 
                 b.kategori,
                 b.stok_tersedia, 
-                COALESCE(SUM(dp.jumlah), 0) as jumlah_dipinjam
-            FROM barang b
-            LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
-            LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
-            WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' OR p.status = 'Sebagian Dikembalikan' OR p.status IS NULL)
+                COUNT(dp.id) as jumlah_dipinjam
+            FROM detail_peminjaman dp
+            JOIN barang b ON b.id = dp.barang_id
             GROUP BY b.id, b.nama_barang, b.kategori, b.stok_tersedia
-            HAVING COALESCE(SUM(dp.jumlah), 0) > 0
             ORDER BY jumlah_dipinjam DESC
-            LIMIT 5
+            LIMIT 10
         ");
         if (!$stmt) {
             throw new Exception("Query 7 Error: " . $conn->error);
@@ -240,16 +235,15 @@ try {
     $stats['categories'] = $categories;
     $stmt->close();
     
-    // 9. Data Barang: All items with dipinjam (Sedang Dipinjam + Sebagian Dikembalikan) vs tersedia count
+    // 9. Data Barang: All items with dipinjam (counts all detail_peminjaman records, matching PIC API logic)
     $stmt = $conn->prepare("
         SELECT 
             b.id,
             b.nama_barang, 
             b.stok_tersedia, 
-            COALESCE(SUM(CASE WHEN (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' OR p.status = 'Sebagian Dikembalikan') THEN dp.jumlah ELSE 0 END), 0) as jumlah_dipinjam
+            IFNULL(COUNT(dp.id), 0) AS jumlah_dipinjam
         FROM barang b
-        LEFT JOIN detail_peminjaman dp ON b.id = dp.barang_id
-        LEFT JOIN peminjaman p ON dp.peminjaman_id = p.id
+        LEFT JOIN detail_peminjaman dp ON dp.barang_id = b.id
         GROUP BY b.id, b.nama_barang, b.stok_tersedia
         ORDER BY b.nama_barang ASC
     ");

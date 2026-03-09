@@ -6,7 +6,7 @@ require_once "../session-helper.php";
 
 // Validate user role
 try {
-    SessionValidator::requireRole(['admin']);
+    SessionValidator::requireRole(['admin', 'pic_barang']);
 } catch (Exception $e) {
     http_response_code(401);
     echo json_encode([

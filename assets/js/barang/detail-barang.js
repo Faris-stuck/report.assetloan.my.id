@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (modalPembelian) {
             modalPembelian.addEventListener('show.bs.modal', function () {
                 setMinDateForPurchase();
-                
+
                 // RESET FORM - Clear all fields except vendor selection
                 const formPembelian = document.getElementById("formPembelian");
                 if (formPembelian) {
@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("jumlah").value = "";
                     document.getElementById("harga_satuan").value = "";
                     document.getElementById("keterangan").value = "";
-                    
+
                     // Keep vendor selection unchanged (don't reset it)
                     // Vendor dropdown will maintain its previously selected value
                 }
@@ -363,10 +363,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 res.data.forEach((p, index) => {
-                    // Hitung total yang sedang dipinjam (status aktif)
-                    if (p.status === 'Sedang Dipinjam' || p.status.startsWith('Due') || p.status === 'Overdue') {
-                        totalDipinjam += p.jumlah;
-                    }
+                    // All rows from API are already approved & actively borrowed units.
+                    // Sum all jumlah values for the Borrowed card.
+                    totalDipinjam += parseInt(p.jumlah) || 0;
 
                     let statusBadge = "bg-secondary";
                     if (p.status === "Overdue" || p.status === "Due Today") statusBadge = "bg-danger";

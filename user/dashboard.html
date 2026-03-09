@@ -648,12 +648,18 @@
             const peminjaman = allBarang.map(item => parseInt(item.jumlah_peminjaman) || 0);
             const stokTersedia = allBarang.map(item => parseInt(item.stok_tersedia) || 0);
 
+            // Calculate max value across both series to ensure stable Y-axis scaling
+            const allValues = [...peminjaman, ...stokTersedia];
+            const maxValue = Math.max(...allValues, 1); // Ensure at least 1 for proper scaling
+            const yAxisMax = Math.ceil(maxValue * 1.1); // Add 10% padding
+
             const options = {
                 chart: {
                     type: 'bar',
                     height: 350,
                     fontFamily: 'inherit',
-                    toolbar: { show: true }
+                    toolbar: { show: true },
+                    stacked: false
                 },
                 colors: ['#3B5998', '#66BB6A'],
                 series: [
@@ -665,6 +671,9 @@
                     labels: { style: { fontSize: '12px' } }
                 },
                 yaxis: {
+                    min: 0,
+                    max: yAxisMax,
+                    tickAmount: Math.ceil(yAxisMax / 5),
                     title: { text: 'Quantity' },
                     labels: { formatter: val => Math.floor(val) }
                 },

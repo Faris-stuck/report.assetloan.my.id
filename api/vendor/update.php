@@ -7,7 +7,7 @@ header("Content-Type: application/json");
 require_once "../session-helper.php";
 
 try {
-    SessionValidator::requireRole(['admin', 'manager']);
+    SessionValidator::requireRole(['admin', 'manager', 'pic_barang']);
 } catch (Exception $e) {
     http_response_code(401);
     echo json_encode([
