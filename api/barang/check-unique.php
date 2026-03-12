@@ -1,6 +1,15 @@
 <?php
 require_once "../koneksi.php";
+require_once "../session-helper.php";
 header('Content-Type: application/json');
+
+try {
+    SessionValidator::requireRole(['admin', 'pic_barang']);
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode(["status" => false, "message" => "Unauthorized"]);
+    exit;
+}
 
 $kode = $_GET['kode'] ?? null;
 $nama = $_GET['nama'] ?? null;

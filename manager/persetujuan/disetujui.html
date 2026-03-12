@@ -39,7 +39,6 @@
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
     <script src="../../assets/js/auth/logout.js"></script>
     <script src="../../assets/js/profile-header.js"></script>
-    <!--[if lt IE 9]>    <script src="../../assets/js/auth/auth-manager.js"></script>
     <script src="../../assets/js/auth/role-validator.js"></script>
     <script>
         // Page protection
@@ -47,7 +46,7 @@
             RoleValidator.requireManager();
         }
     </script>
-
+    <!--[if lt IE 9]>
 			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
@@ -293,7 +292,7 @@
 
     <script>
         (function () {
-            const api = BASE_URL + '/api/approver/list-by-status.php?status=' + encodeURIComponent('Approved');
+            const api = BASE_URL + '/api/approver/list-by-status.php?status=Approved&include_due=1';
             function escapeHtml(s) { if (!s && s !== 0) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
             function readField(item, keys) { for (const k of keys) if (item[k] !== undefined) return item[k]; return ''; }
             async function load() {

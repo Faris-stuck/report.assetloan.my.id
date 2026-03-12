@@ -511,8 +511,10 @@
                             <td class="text-center">1</td>
                             <td>${escapeHtml(location)}</td>
                             <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-success me-1" id="btnApprove_${key}" onclick="setUnitDecision('${key}','Approved')">Approve</button>
-                                <button type="button" class="btn btn-sm btn-outline-danger" id="btnReject_${key}" onclick="setUnitDecision('${key}','Rejected')">Reject</button>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button type="button" class="btn btn-sm btn-outline-success" id="btnApprove_${key}" onclick="setUnitDecision('${key}','Approved')">Approve</button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="btnReject_${key}" onclick="setUnitDecision('${key}','Rejected')">Reject</button>
+                                </div>
                             </td>
                         </tr>`;
                     }
@@ -524,15 +526,15 @@
         function setUnitDecision(key, decision) {
             if (unitDecisions[key] === decision) {
                 unitDecisions[key] = null;
-                document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-outline-success me-1';
+                document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-outline-success';
                 document.getElementById('btnReject_' + key).className = 'btn btn-sm btn-outline-danger';
             } else {
                 unitDecisions[key] = decision;
                 if (decision === 'Approved') {
-                    document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-success me-1';
+                    document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-success';
                     document.getElementById('btnReject_' + key).className = 'btn btn-sm btn-outline-danger';
                 } else {
-                    document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-outline-success me-1';
+                    document.getElementById('btnApprove_' + key).className = 'btn btn-sm btn-outline-success';
                     document.getElementById('btnReject_' + key).className = 'btn btn-sm btn-danger';
                 }
             }

@@ -36,7 +36,7 @@ try {
     // 2. Approved
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND (status = 'Approved' OR status = 'Waiting for Admin')
+        WHERE user_id = ? AND status = 'Approved'
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();

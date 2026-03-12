@@ -21,8 +21,8 @@ $smtpConfig = [
     'host'     => 'smtp.gmail.com',
     'port'     => 587,
     'secure'   => 'tls',
-    'username' => 'openclaaw@gmail.com',           // ← SMTP sender (App Gmail)
-    'password' => 'olok ffwy ojxx gyyj ',            // ← Gmail App Password (16 characters)
+    'username' => getenv('SMTP_USERNAME') ?: 'openclaaw@gmail.com',
+    'password' => getenv('SMTP_PASSWORD') ?: 'olok ffwy ojxx gyyj',
     'fromName' => 'Komatsu Indonesia - Borrowing System',
 ];
 

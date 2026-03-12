@@ -31,8 +31,24 @@ if ($res && $res->num_rows > 0) {
     $user = $res->fetch_assoc();
     $stored = (string)($user['password'] ?? '');
 
-    // Verify password (plaintext comparison for development)
-    if ($password !== $stored) {
+    // Verify password — supports both bcrypt hash and legacy plaintext
+    $passwordValid = false;
+    if (strlen($stored) >= 60 && strpos($stored, '$2y$') === 0) {
+        // Bcrypt hash
+        $passwordValid = password_verify($password, $stored);
+    } else {
+        // Legacy plaintext — auto-upgrade to hash on successful login
+        $passwordValid = ($password === $stored);
+        if ($passwordValid) {
+            $hashed = password_hash($password, PASSWORD_DEFAULT);
+            $upd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $upd->bind_param("si", $hashed, $user['id']);
+            $upd->execute();
+            $upd->close();
+        }
+    }
+
+    if (!$passwordValid) {
         http_response_code(401);
         echo json_encode(["error" => "Login failed"]);
         exit;

@@ -46,6 +46,28 @@ const RoleValidator = (function () {
             redirectToLogin();
             return false;
         }
+        // Server-side session verification (async, non-blocking redirect)
+        try {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', getBasePath() + '/api/auth/verify-session.php', false);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({ user_id: user.id, user_role: user.role }));
+            if (xhr.status === 401 || xhr.status === 403) {
+                localStorage.removeItem('user');
+                redirectToLogin();
+                return false;
+            }
+            if (xhr.status === 200) {
+                try {
+                    const resp = JSON.parse(xhr.responseText);
+                    if (resp.role && resp.role !== user.role) {
+                        // Server says different role — trust server
+                        user.role = resp.role;
+                        localStorage.setItem('user', JSON.stringify(user));
+                    }
+                } catch (e) { /* ignore parse error */ }
+            }
+        } catch (e) { /* network error — allow offline access with localStorage */ }
         return true;
     }
 

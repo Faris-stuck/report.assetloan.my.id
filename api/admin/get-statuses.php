@@ -1,7 +1,17 @@
 <?php
 session_start();
 require_once "../koneksi.php";
+require_once "../session-helper.php";
 header("Content-Type: application/json");
+
+// K12: Role check — admin only
+try {
+    SessionValidator::requireRole(['admin']);
+} catch (Exception $e) {
+    http_response_code(403);
+    echo json_encode(["status" => false, "message" => "Forbidden"]);
+    exit;
+}
 
 /**
  * GET /api/admin/get-statuses.php

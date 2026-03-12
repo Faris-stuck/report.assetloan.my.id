@@ -180,7 +180,25 @@ try {
     }
     $stats['top_barang'] = $top_barang;
     $stmtTop->close();
-    
+
+    // ── Top Borrowers (INDEPENDENT date range filter) ─────────────────────
+    $tanggalAwalUser = $_GET['tanggal_awal_user'] ?? '';
+    $tanggalAkhirUser = $_GET['tanggal_akhir_user'] ?? '';
+    if (!empty($tanggalAwalUser) && !empty($tanggalAkhirUser)) {
+        $stmtUser = $conn->prepare("SELECT nama_peminjam AS nama, COUNT(*) AS jumlah FROM peminjaman WHERE tanggal_pinjam BETWEEN ? AND ? GROUP BY user_id, nama_peminjam ORDER BY jumlah DESC LIMIT 10");
+        $stmtUser->bind_param('ss', $tanggalAwalUser, $tanggalAkhirUser);
+    } else {
+        $stmtUser = $conn->prepare("SELECT nama_peminjam AS nama, COUNT(*) AS jumlah FROM peminjaman GROUP BY user_id, nama_peminjam ORDER BY jumlah DESC LIMIT 10");
+    }
+    $stmtUser->execute();
+    $userResult = $stmtUser->get_result();
+    $per_user = [];
+    while ($r = $userResult->fetch_assoc()) {
+        $per_user[] = ['nama' => $r['nama'], 'jumlah' => (int)$r['jumlah']];
+    }
+    $stats['per_user'] = $per_user;
+    $stmtUser->close();
+
     // 8. Get all categories for filter dropdown
     $stmt = $conn->prepare("
         SELECT DISTINCT kategori FROM barang WHERE kategori IS NOT NULL AND kategori != '' ORDER BY kategori ASC

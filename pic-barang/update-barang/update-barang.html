@@ -7,7 +7,13 @@
     <script src="../../assets/js/auth/session-validator.js"></script>
     <!--! PAGE GUARD - Security: must be first script in head -->
     <script src="../../assets/js/auth/page-guard.js"></script>
-    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/role-validator.js"></script>
+    <script>
+        // Page protection - PIC Barang only
+        if (typeof RoleValidator !== 'undefined') {
+            RoleValidator.requirePicBarang();
+        }
+    </script>
 
 
 

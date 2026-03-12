@@ -1,7 +1,6 @@
 <?php
 header('Content-Type: application/json');
 require_once "../koneksi.php";
-$id = $_POST['id'];
 // Server-side session validation
 require_once "../session-helper.php";
 
@@ -17,8 +16,14 @@ try {
     exit;
 }
 
-$status = $_POST['status'];
-$id = intval($id);
+$id = intval($_POST['id'] ?? 0);
+$status = trim($_POST['status'] ?? '');
+
+if (!$id || !$status) {
+    http_response_code(400);
+    echo json_encode(["status" => false, "message" => "ID and status are required"]);
+    exit;
+}
 
 $conn->begin_transaction();
 

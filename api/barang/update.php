@@ -160,7 +160,19 @@ if (!$id) {
 // ============================
 // MODE EDIT BARANG
 // ============================
-$stok_tersedia = $stok_total;
+// Calculate stok_tersedia = new stok_total - currently borrowed/active items
+$stmt_borrowed = $conn->prepare("
+    SELECT COALESCE(SUM(dp.jumlah), 0) as total_borrowed
+    FROM detail_peminjaman dp
+    JOIN peminjaman p ON dp.peminjaman_id = p.id
+    WHERE dp.barang_id = ?
+      AND p.status NOT IN ('Rejected', 'Returned', 'Completed', 'Waiting for Approval')
+");
+$stmt_borrowed->bind_param("i", $id);
+$stmt_borrowed->execute();
+$borrowed = (int)$stmt_borrowed->get_result()->fetch_assoc()['total_borrowed'];
+$stmt_borrowed->close();
+$stok_tersedia = max(0, $stok_total - $borrowed);
 
 $stmt = $conn->prepare("
     UPDATE barang SET

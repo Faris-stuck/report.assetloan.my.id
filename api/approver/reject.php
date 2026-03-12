@@ -1,8 +1,6 @@
 <?php
 header('Content-Type: application/json');
 require_once "../koneksi.php";
-$id = $_POST['id'];
-$rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';
 
 // Server-side session validation
 require_once "../session-helper.php";
@@ -19,8 +17,14 @@ try {
     exit;
 }
 
-$id = intval($id);
-$rejection_reason = $conn->real_escape_string($rejection_reason);
+$id = intval($_POST['id'] ?? 0);
+$rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';
+
+if (!$id) {
+    http_response_code(400);
+    echo json_encode(["status" => false, "message" => "ID is required"]);
+    exit;
+}
 
 $conn->begin_transaction();
 

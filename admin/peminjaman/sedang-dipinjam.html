@@ -484,7 +484,7 @@
       <td>${item.barang}</td>
       <td>${item.tanggal}</td>
       <td>${item.expected_return_nearest || item.rencana_kembali}</td>
-      <td><span class="badge ${item.status === 'Overdue' || item.status === 'Due Today' ? 'bg-danger' : item.status.startsWith('Due') ? 'bg-warning text-dark' : 'bg-primary'}">${item.status}</span></td>
+      <td><span class="badge ${item.status === 'Overdue' || item.status === 'Due Today' ? 'bg-danger' : item.status.startsWith('Due') ? 'bg-warning text-dark' : item.status === 'Partial Approved' ? 'bg-info' : 'bg-primary'}">${item.status}</span></td>
       <td>
         <button class="btn btn-sm btn-outline-primary"
           onclick="lihatDetail(${item.id})">

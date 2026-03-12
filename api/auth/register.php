@@ -43,8 +43,8 @@ if ($check_result && $check_result->num_rows > 0) {
 
 $check_stmt->close();
 
-// Store password as plaintext (development only)
-$plain_password = $password;
+// Hash password with bcrypt
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // Insert new user with default role 'user'
 $insert_stmt = $conn->prepare("INSERT INTO users (nama, nrp, email, password, role) VALUES (?, ?, ?, ?, 'user')");
@@ -57,7 +57,7 @@ if (!$insert_stmt) {
     exit;
 }
 
-$insert_stmt->bind_param("ssss", $nama, $nrp, $email, $plain_password);
+$insert_stmt->bind_param("ssss", $nama, $nrp, $email, $hashed_password);
 
 if ($insert_stmt->execute()) {
     echo json_encode([

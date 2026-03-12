@@ -7,24 +7,45 @@ try {
     SessionValidator::requireRole(['admin', 'manager']);
     
     $status = $_GET['status'] ?? 'Waiting for Approval';
-    // Query untuk mengambil data peminjaman dengan detail
-    $stmt = $conn->prepare("
-        SELECT
-            p.id,
-            p.kode_peminjaman,
-            p.nama_peminjam,
-            p.nrp,
-            p.tanggal_pinjam,
-            p.rencana_kembali,
-            p.status,
-            p.catatan,
-            p.lokasi_umum
-        FROM peminjaman p
-        WHERE p.status = ?
-        ORDER BY p.tanggal_pinjam DESC
-    ");
+    $include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
 
-    $stmt->bind_param("s", $status);
+    // Query untuk mengambil data peminjaman dengan detail
+    if ($include_due) {
+        // Include all active statuses: Borrowed + Partial Approved + Due% + Overdue
+        $stmt = $conn->prepare("
+            SELECT
+                p.id,
+                p.kode_peminjaman,
+                p.nama_peminjam,
+                p.nrp,
+                p.tanggal_pinjam,
+                p.rencana_kembali,
+                p.status,
+                p.catatan,
+                p.lokasi_umum
+            FROM peminjaman p
+            WHERE (p.status IN ('Borrowed','Partial Approved','Overdue','Due Today')
+                   OR p.status LIKE 'Due In%')
+            ORDER BY p.rencana_kembali ASC
+        ");
+    } else {
+        $stmt = $conn->prepare("
+            SELECT
+                p.id,
+                p.kode_peminjaman,
+                p.nama_peminjam,
+                p.nrp,
+                p.tanggal_pinjam,
+                p.rencana_kembali,
+                p.status,
+                p.catatan,
+                p.lokasi_umum
+            FROM peminjaman p
+            WHERE p.status = ?
+            ORDER BY p.tanggal_pinjam DESC
+        ");
+        $stmt->bind_param("s", $status);
+    }
     $stmt->execute();
     $result = $stmt->get_result();
 

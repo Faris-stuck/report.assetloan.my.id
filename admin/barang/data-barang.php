@@ -58,6 +58,7 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
     <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!--! END: Custom CSS-->
+    <script src="../../assets/js/base-url.js"></script>
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
     <!--[if lt IE 9]>
@@ -91,7 +92,7 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                                     class="feather-chevron-right"></i></span>
                         </a>
                         <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Grafik / Informasi</a>
+                            <li class="nxl-item"><a class="nxl-link" href="../../admin/dashboard.html">Chart / Information</a>
                             </li>
                         </ul>
                     </li>

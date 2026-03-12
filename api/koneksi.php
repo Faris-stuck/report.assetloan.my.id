@@ -241,3 +241,48 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
 
     return 'Borrowed';
 }
+
+/**
+ * Auto-update due status for all active borrowings.
+ * Silent — no output. Called on every koneksi.php include.
+ * Uses computeDueStatus() and getNearestExpectedReturn() already defined above.
+ *
+ * @param mysqli $conn
+ */
+function autoUpdateDueStatus(&$conn) {
+    try {
+        $sql = "
+            SELECT id, status, rencana_kembali
+            FROM peminjaman
+            WHERE status = 'Borrowed'
+               OR status LIKE 'Due%'
+               OR status = 'Overdue'
+               OR status = 'Partially Returned'
+               OR status = 'Return in Process'
+               OR status = 'Partial Approved'
+               OR status = 'Approved'
+        ";
+        $result = $conn->query($sql);
+        if (!$result || $result->num_rows === 0) return;
+
+        $stmt = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
+        if (!$stmt) return;
+
+        while ($row = $result->fetch_assoc()) {
+            $nearest = getNearestExpectedReturn($conn, $row['id']);
+            $effectiveDate = $nearest ?? $row['rencana_kembali'];
+            $newStatus = computeDueStatus($row['status'], $effectiveDate);
+
+            if ($newStatus !== $row['status']) {
+                $stmt->bind_param('si', $newStatus, $row['id']);
+                $stmt->execute();
+            }
+        }
+        $stmt->close();
+    } catch (Exception $e) {
+        // Silent — no output
+    }
+}
+
+// Auto-update due statuses on every page load
+autoUpdateDueStatus($conn);

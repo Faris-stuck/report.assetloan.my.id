@@ -835,8 +835,8 @@
         // ===== LOAN STATUS TREND =====
         var trendChartInstance = null;
         window._trendData = null;
-        const TREND_STATUSES = ['Approve', 'Partial Approved', 'Rejected'];
-        const TREND_COLORS = { 'Approve': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
+        const TREND_STATUSES = ['Approved', 'Partial Approved', 'Rejected'];
+        const TREND_COLORS = { 'Approved': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
 
         function populateTrendMonthFilter() {
             const sel = document.getElementById('trendMonthFilter');
@@ -1034,7 +1034,7 @@
             const options = {
                 series: [approve, partial, rejected],
                 chart: { type: 'pie', height: 350 },
-                labels: ['Approve', 'Partial Approved', 'Rejected'],
+                labels: ['Approved', 'Partial Approved', 'Rejected'],
                 colors: ['#28A745', '#17A2B8', '#DC3545'],
                 legend: { position: 'bottom' },
                 tooltip: {
@@ -1128,10 +1128,6 @@
         }
 
     </script>
-    <!--! BEGIN: Vendors JS for DateRangePicker !-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="../assets/vendors/js/daterangepicker.min.js"></script>
-    <!--! END: Vendors JS for DateRangePicker !-->
 </body>
 
 </html>

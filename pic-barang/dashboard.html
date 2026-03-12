@@ -259,7 +259,32 @@
                 </div>
                 <!-- End Row 3 -->
 
-                <!-- Row 4: Item Data -->
+                <!-- Row 4: Top Borrowers -->
+                <div class="row">
+                    <div class="col-xxl-12 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title mb-0">Top Borrowers</h5>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div id="reportrangeTopUser"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetDateTopUser">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="perUserChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Row 4 -->
+
+                <!-- Row 5: Item Data -->
                 <div class="row">
                     <!-- Chart: Data Barang -->
                     <div class="col-xxl-12 col-lg-12 mb-3">
@@ -328,6 +353,7 @@
         let inventoryChartInstance = null;
         let itemDataChartInstance = null;
         let ratioChartInstance = null;
+        let perUserChartInstance = null;
 
         // Load Dashboard Statistics
         document.addEventListener('DOMContentLoaded', async () => {
@@ -389,6 +415,13 @@
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+            }
+
+            // Load Top Borrowers Chart (independent, outside main try/catch)
+            try {
+                await loadTopUserChart();
+            } catch (e) {
+                console.error('Error loading top borrowers:', e);
             }
         });
 
@@ -683,14 +716,146 @@
             }
         }
 
+        // ===== TOP BORROWERS CHART =====
+
+        async function loadTopUserChart() {
+            try {
+                let url = BASE_URL + '/api/pic_barang/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (startDateTopUser) params.append('tanggal_awal_user', startDateTopUser);
+                if (endDateTopUser) params.append('tanggal_akhir_user', endDateTopUser);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    const perUser = result.data.per_user || [];
+                    if (perUser.length > 0) {
+                        renderPerUserChart(perUser);
+                    } else {
+                        document.getElementById('perUserChart').innerHTML =
+                            '<div class="text-center text-muted py-5">No borrowing data per user yet</div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading top user chart:', error);
+            }
+        }
+
+        function renderPerUserChart(perUser) {
+            if (perUserChartInstance) {
+                perUserChartInstance.destroy();
+                perUserChartInstance = null;
+            }
+
+            const names = perUser.map(item => item.nama);
+            const counts = perUser.map(item => parseInt(item.jumlah) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998'],
+                series: [{
+                    name: 'Borrowings',
+                    data: counts
+                }],
+                xaxis: {
+                    categories: names,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Quantity' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' borrowings' }
+                }
+            };
+
+            if (window.ApexCharts) {
+                perUserChartInstance = new ApexCharts(document.querySelector('#perUserChart'), options);
+                perUserChartInstance.render();
+            }
+        }
+
+        function initDateRangePickerTopUser() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+
+            var start = moment().clone().subtract(29, 'days');
+            var end = moment();
+
+            $('#reportrangeTopUser').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: { format: 'YYYY-MM-DD' },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'All Time': [moment('2020-01-01'), moment()]
+                }
+            });
+
+            document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+
+            startDateTopUser = start.format('YYYY-MM-DD');
+            endDateTopUser = end.format('YYYY-MM-DD');
+
+            $('#reportrangeTopUser').on('apply.daterangepicker', function (ev, picker) {
+                startDateTopUser = picker.startDate.format('YYYY-MM-DD');
+                endDateTopUser = picker.endDate.format('YYYY-MM-DD');
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                loadTopUserChart();
+            });
+
+            document.getElementById('btnResetDateTopUser').addEventListener('click', function () {
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+                $('#reportrangeTopUser').data('daterangepicker').setStartDate(newStart);
+                $('#reportrangeTopUser').data('daterangepicker').setEndDate(newEnd);
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                startDateTopUser = newStart.format('YYYY-MM-DD');
+                endDateTopUser = newEnd.format('YYYY-MM-DD');
+                loadTopUserChart();
+            });
+        }
+
         // ===== DATE RANGE FILTER FOR STATUS PEMINJAMAN =====
         let startDateStatus = null;
         let endDateStatus = null;
+        let startDateTopUser = null;
+        let endDateTopUser = null;
 
         document.addEventListener('DOMContentLoaded', function () {
             setTimeout(initStatusReportRangePicker, 500);
             setTimeout(initApprovalDateRangePicker, 700);
             setTimeout(initRatioDateRangePicker, 750);
+            setTimeout(initDateRangePickerTopUser, 800);
         });
 
         function initStatusReportRangePicker() {
@@ -776,8 +941,8 @@
         // ===== LOAN STATUS TREND =====
         var trendChartInstance = null;
         window._trendData = null;
-        const TREND_STATUSES = ['Approve', 'Partial Approved', 'Rejected'];
-        const TREND_COLORS = { 'Approve': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
+        const TREND_STATUSES = ['Approved', 'Partial Approved', 'Rejected'];
+        const TREND_COLORS = { 'Approved': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
 
         function populateTrendMonthFilter() {
             const sel = document.getElementById('trendMonthFilter');
@@ -975,7 +1140,7 @@
             const options = {
                 series: [approve, partial, rejected],
                 chart: { type: 'pie', height: 350 },
-                labels: ['Approve', 'Partial Approved', 'Rejected'],
+                labels: ['Approved', 'Partial Approved', 'Rejected'],
                 colors: ['#28A745', '#17A2B8', '#DC3545'],
                 legend: { position: 'bottom' },
                 tooltip: {

@@ -29,7 +29,7 @@ try {
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
         From peminjaman 
-        WHERE status = 'Approved' OR status = 'Waiting for Admin'
+        WHERE status = 'Approved'
     ");
     $stmt->execute();
     $result = $stmt->get_result();

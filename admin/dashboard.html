@@ -250,6 +250,50 @@
             <!-- [ page-header ] end -->
             <!-- [ Main Content ] start -->
             <div class="main-content">
+
+                <!-- Row 4: Item Data -->
+                <div class="row">
+                    <!-- Chart: Data Barang -->
+                    <div class="col-xxl-12 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
+                                    <h5 class="card-title">Item Data</h5>
+                                    <!-- Dropdown Nama Barang Filter -->
+                                    <div class="dropdown" style="width: 200px;">
+                                        <button
+                                            class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+                                            type="button" id="dataBarangDropdownBtn" data-bs-toggle="dropdown"
+                                            aria-expanded="false" style="max-width: 200px;">
+                                            <span id="dataBarangSelected">All Items</span>
+                                        </button>
+                                        <div class="dropdown-menu" id="dataBarangDropdownMenu"
+                                            style="width: 200px; max-height: 300px; overflow-y: auto;">
+                                            <input type="text" class="form-control form-control-sm m-2"
+                                                id="dataBarangSearch" placeholder="Search item..."
+                                                onclick="event.stopPropagation()" style="width: calc(100% - 1rem);">
+                                            <hr class="dropdown-divider m-1">
+                                            <a class="dropdown-item" href="#"
+                                                onclick="selectDataBarang('all'); return false;">
+                                                <small>All Items</small>
+                                            </a>
+                                            <div id="dataBarangList"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="itemDataChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+                </div>
+
+
                 <div class="row">
                     <!-- Chart: Status Peminjaman -->
                     <div class="col-xxl-6 col-lg-12 mb-3">
@@ -358,47 +402,32 @@
                 </div>
                 <!-- End Row 3 -->
 
-                <!-- Row 4: Item Data -->
+                <!-- Row 4: Top Borrowers -->
                 <div class="row">
-                    <!-- Chart: Data Barang -->
                     <div class="col-xxl-12 col-lg-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center w-100 flex-wrap gap-2">
-                                    <h5 class="card-title">Item Data</h5>
-                                    <!-- Dropdown Nama Barang Filter -->
-                                    <div class="dropdown" style="width: 200px;">
-                                        <button
-                                            class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
-                                            type="button" id="dataBarangDropdownBtn" data-bs-toggle="dropdown"
-                                            aria-expanded="false" style="max-width: 200px;">
-                                            <span id="dataBarangSelected">All Items</span>
-                                        </button>
-                                        <div class="dropdown-menu" id="dataBarangDropdownMenu"
-                                            style="width: 200px; max-height: 300px; overflow-y: auto;">
-                                            <input type="text" class="form-control form-control-sm m-2"
-                                                id="dataBarangSearch" placeholder="Search item..."
-                                                onclick="event.stopPropagation()" style="width: calc(100% - 1rem);">
-                                            <hr class="dropdown-divider m-1">
-                                            <a class="dropdown-item" href="#"
-                                                onclick="selectDataBarang('all'); return false;">
-                                                <small>All Items</small>
-                                            </a>
-                                            <div id="dataBarangList"></div>
+                                    <h5 class="card-title mb-0">Top Borrowers</h5>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div id="reportrangeTopUser"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
                                         </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetDateTopUser">Reset</button>
                                     </div>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div id="itemDataChart" style="height: 350px;"></div>
+                                <div id="perUserChart" style="height: 350px;"></div>
                             </div>
                         </div>
                     </div>
-
-
-
-
                 </div>
+                <!-- End Row 4 -->
+
+
             </div>
             <!-- [ Main Content ] end -->
         </div>
@@ -447,6 +476,7 @@
         let inventoryChartInstance = null;
         let itemDataChartInstance = null;
         let ratioChartInstance = null;
+        let perUserChartInstance = null;
 
         // Validasi role - hanya admin yang boleh akses admin dashboard
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -488,6 +518,7 @@
                     const categories = data.categories || [];
                     if (categories.length > 0) {
                         const dataBarangList = document.getElementById('dataBarangList');
+                        if (!dataBarangList) return;
 
                         // Populate Data Barang Dropdown (untuk dropdown nama barang dari top barang)
                         const topBarangNames = (data.top_barang || []).map(item => item.nama);
@@ -528,7 +559,7 @@
                     const recentActions = data.recent_actions || [];
                     const tableBody = document.getElementById('table-recent-actions');
 
-                    if (recentActions.length > 0) {
+                    if (tableBody && recentActions.length > 0) {
                         tableBody.innerHTML = recentActions.map(item => {
                             // Return date coloring derived from API status (no local date parsing)
                             const expectedReturn = item.expected_return_nearest || item.rencana_kembali || '-';
@@ -555,14 +586,14 @@
                                 </tr>
                             `;
                         }).join('');
-                    } else {
+                    } else if (tableBody) {
                         tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No activity</td></tr>';
                     }
 
                     // Populate top barang
                     const topContainer = document.getElementById('top-barang');
 
-                    if (topBarang.length > 0) {
+                    if (topContainer && topBarang.length > 0) {
                         topContainer.innerHTML = topBarang.map((item) => `
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <div class="card">
@@ -576,13 +607,21 @@
                                 </div>
                             </div>
                         `).join('');
-                    } else {
+                    } else if (topContainer) {
                         topContainer.innerHTML = '<div class="col-12 text-center text-muted">No data yet</div>';
                     }
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
-                document.getElementById('table-recent-actions').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
+                const errTable = document.getElementById('table-recent-actions');
+                if (errTable) errTable.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
+            }
+
+            // Load Top Borrowers Chart (independent, outside main try/catch)
+            try {
+                await loadTopUserChart();
+            } catch (e) {
+                console.error('Error loading top borrowers:', e);
             }
         });
 
@@ -941,6 +980,137 @@
             return statusMap[status] || 'light';
         }
 
+        // ===== TOP BORROWERS CHART =====
+        let startDateTopUser = null;
+        let endDateTopUser = null;
+
+        async function loadTopUserChart() {
+            try {
+                let url = BASE_URL + '/api/admin/dashboard-stats.php';
+                const params = new URLSearchParams();
+                if (startDateTopUser) params.append('tanggal_awal_user', startDateTopUser);
+                if (endDateTopUser) params.append('tanggal_akhir_user', endDateTopUser);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    const perUser = result.data.per_user || [];
+                    if (perUser.length > 0) {
+                        renderPerUserChart(perUser);
+                    } else {
+                        document.getElementById('perUserChart').innerHTML =
+                            '<div class="text-center text-muted py-5">No borrowing data per user yet</div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading top user chart:', error);
+            }
+        }
+
+        function renderPerUserChart(perUser) {
+            if (perUserChartInstance) {
+                perUserChartInstance.destroy();
+                perUserChartInstance = null;
+            }
+
+            const names = perUser.map(item => item.nama);
+            const counts = perUser.map(item => parseInt(item.jumlah) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998'],
+                series: [{
+                    name: 'Borrowings',
+                    data: counts
+                }],
+                xaxis: {
+                    categories: names,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Quantity' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' borrowings' }
+                }
+            };
+
+            if (window.ApexCharts) {
+                perUserChartInstance = new ApexCharts(document.querySelector('#perUserChart'), options);
+                perUserChartInstance.render();
+            }
+        }
+
+        function initDateRangePickerTopUser() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+
+            var start = moment().clone().subtract(29, 'days');
+            var end = moment();
+
+            $('#reportrangeTopUser').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: { format: 'YYYY-MM-DD' },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'All Time': [moment('2020-01-01'), moment()]
+                }
+            });
+
+            document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+
+            startDateTopUser = start.format('YYYY-MM-DD');
+            endDateTopUser = end.format('YYYY-MM-DD');
+
+            $('#reportrangeTopUser').on('apply.daterangepicker', function (ev, picker) {
+                startDateTopUser = picker.startDate.format('YYYY-MM-DD');
+                endDateTopUser = picker.endDate.format('YYYY-MM-DD');
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                loadTopUserChart();
+            });
+
+            document.getElementById('btnResetDateTopUser').addEventListener('click', function () {
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+                $('#reportrangeTopUser').data('daterangepicker').setStartDate(newStart);
+                $('#reportrangeTopUser').data('daterangepicker').setEndDate(newEnd);
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                startDateTopUser = newStart.format('YYYY-MM-DD');
+                endDateTopUser = newEnd.format('YYYY-MM-DD');
+                loadTopUserChart();
+            });
+        }
+
         // ===== DATE RANGE FILTER FOR STATUS PEMINJAMAN =====
 
         // Global variables for Status Peminjaman date range
@@ -952,6 +1122,7 @@
             setTimeout(initStatusReportRangePicker, 500);
             setTimeout(initApprovalDateRangePicker, 700);
             setTimeout(initRatioDateRangePicker, 750);
+            setTimeout(initDateRangePickerTopUser, 800);
         });
 
         function initStatusReportRangePicker() {
@@ -1022,7 +1193,7 @@
                 });
 
                 // Handle click event pada tombol Reset
-                document.getElementById('btnResetDateStatus').addEventListener('click', function () {
+                document.getElementById('btnResetDateStatus')?.addEventListener('click', function () {
                     console.log('Reset button clicked for Status Peminjaman');
                     // Reset daterangepicker ke default
                     var newStart = moment().clone().subtract(29, 'days');
@@ -1091,8 +1262,8 @@
         // ===== LOAN STATUS TREND =====
         var trendChartInstance = null;
         window._trendData = null;
-        const TREND_STATUSES = ['Approve', 'Partial Approved', 'Rejected'];
-        const TREND_COLORS = { 'Approve': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
+        const TREND_STATUSES = ['Approved', 'Partial Approved', 'Rejected'];
+        const TREND_COLORS = { 'Approved': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
 
         function populateTrendMonthFilter() {
             const sel = document.getElementById('trendMonthFilter');
@@ -1290,7 +1461,7 @@
             const options = {
                 series: [approve, partial, rejected],
                 chart: { type: 'pie', height: 350 },
-                labels: ['Approve', 'Partial Approved', 'Rejected'],
+                labels: ['Approved', 'Partial Approved', 'Rejected'],
                 colors: ['#28A745', '#17A2B8', '#DC3545'],
                 legend: { position: 'bottom' },
                 tooltip: {

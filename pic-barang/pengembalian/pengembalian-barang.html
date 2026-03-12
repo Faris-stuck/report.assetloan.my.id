@@ -248,7 +248,7 @@
                                     <th class="text-center" style="width: 90px;">Borrow QTY</th>
                                     <th style="width: 120px;">QTY Return</th>
                                     <th class="text-center" style="width: 110px;">Good condition</th>
-                                    <th class="text-end" style="width: 150px;">Damage Condicition</th>
+                                    <th class="text-end" style="width: 150px;">Damage Condition</th>
                                     <th>Remain Item</th>
                                 </tr>
                             </thead>
@@ -675,12 +675,14 @@
                         let actionHtml = '';
                         if (e.extend_status === 'Pending') {
                             actionHtml = `
-                                <button class="btn btn-sm btn-success me-1" onclick="approveExtend(${e.extend_id})" title="Approve">
-                                    <i class="feather-check"></i> Approve
-                                </button>
-                                <button class="btn btn-sm btn-danger" onclick="rejectExtend(${e.extend_id})" title="Reject">
-                                    <i class="feather-x"></i> Reject
-                                </button>`;
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-sm btn-success" onclick="approveExtend(${e.extend_id})" title="Approve">
+                                        <i class="feather-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectExtend(${e.extend_id})" title="Reject">
+                                        <i class="feather-x"></i> Reject
+                                    </button>
+                                </div>`;
                         } else {
                             actionHtml = `<span class="text-muted small">${e.approved_by_nama ? 'By: ' + e.approved_by_nama : '-'}</span>`;
                             if (e.approved_at) actionHtml += `<br><span class="text-muted small">${e.approved_at}</span>`;

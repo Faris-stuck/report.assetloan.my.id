@@ -1,6 +1,4 @@
 <?php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
 require_once "../koneksi.php";
 header('Content-Type: application/json');
 require_once "../session-helper.php";
@@ -17,12 +15,13 @@ try {
     exit;
 }
 
-$user_id = $_GET['user_id'] ?? 0;
+$user_id = SessionValidator::getUserId();
 
 if (!$user_id) {
+    http_response_code(401);
     echo json_encode([
         "status" => false,
-        "message" => "User ID is required"
+        "message" => "User session not found"
     ]);
     exit;
 }

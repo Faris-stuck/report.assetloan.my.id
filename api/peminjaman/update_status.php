@@ -44,18 +44,18 @@ $role = SessionValidator::getRole();
 // Validasi alur: Requester -> Approver (manager) -> Admin
 // Waiting for Approver -> only Approver/Admin can set to "Waiting for Admin" or "Rejected"
 // Waiting for Admin -> only Admin can set to "Borrowed" or "Rejected"
-if ($current === 'Waiting for Approver') {
-    if (!in_array($new_status, ['Waiting for Admin', 'Rejected'], true)) {
-        echo json_encode(["status" => false, "message" => "From Awaiting Approver can only be changed to Awaiting Admin or Rejected"]);
+if ($current === 'Waiting for Approval') {
+    if (!in_array($new_status, ['Approved', 'Rejected'], true)) {
+        echo json_encode(["status" => false, "message" => "From Waiting for Approval can only be changed to Approved or Rejected"]);
         exit;
     }
     if (!in_array($role, ['manager', 'admin'], true)) {
         echo json_encode(["status" => false, "message" => "Only Approver or Admin can approve/reject at this stage"]);
         exit;
     }
-} elseif ($current === 'Waiting for Admin') {
+} elseif ($current === 'Approved') {
     if (!in_array($new_status, ['Borrowed', 'Rejected'], true)) {
-        echo json_encode(["status" => false, "message" => "From Awaiting Admin can only be changed to Currently Borrowed or Rejected"]);
+        echo json_encode(["status" => false, "message" => "From Approved can only be changed to Borrowed or Rejected"]);
         exit;
     }
     if ($role !== 'admin') {

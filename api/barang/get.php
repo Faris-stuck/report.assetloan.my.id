@@ -2,6 +2,15 @@
 header('Content-Type: application/json');
 // [API] GET DATA BARANG
 require_once "../koneksi.php";
+require_once "../session-helper.php";
+
+try {
+    SessionValidator::requireRole(['admin', 'manager', 'pic_barang', 'user']);
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode(["status" => false, "message" => "Unauthorized"]);
+    exit;
+}
 
 $q = $conn->query("
   SELECT id, kode_barang, nama_barang, kategori, lokasi,
@@ -9,6 +18,12 @@ $q = $conn->query("
   FROM barang
   ORDER BY id ASC
 ");
+
+if (!$q) {
+    http_response_code(500);
+    echo json_encode(["status" => false, "message" => "Database query failed"]);
+    exit;
+}
 
 $data = [];
 while ($row = $q->fetch_assoc()) {

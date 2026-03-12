@@ -23,7 +23,7 @@ if ($is_local) {
 
     // VPS
     $db_user = 'peminjaman_app';
-    $db_pass = '';
+    $db_pass = getenv('DB_PASSWORD') ?: 'K0m4tsu#Db2026!';
 }
 
 // CONNECT

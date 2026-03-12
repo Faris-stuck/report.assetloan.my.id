@@ -3,33 +3,19 @@ require_once "../koneksi.php";
 header('Content-Type: application/json');
 require_once "../session-helper.php";
 
-// Validate user role - coba dari session dulu, jika tidak ada cek dari header
-$user_role = $_SESSION['user_role'] ?? null;
-
-// Jika tidak ada session, cek dari Authorization header (token/role dari client)
-if (!$user_role && isset($_SERVER['HTTP_AUTHORIZATION'])) {
-    $auth = $_SERVER['HTTP_AUTHORIZATION'];
-    if (preg_match('/Bearer\s+(\w+)/', $auth, $m)) {
-        // Decode atau validate token jika ada
-        $user_role = $m[1]; 
-    }
-}
-
-// Jika masih tidak ada, accept 'user' dari POST untuk flexibility
-if (!$user_role) {
-    $user_role = $_POST['role'] ?? 'user';
-}
-
-if ($user_role !== 'user') {
+// Validate user role - ONLY from server session
+try {
+    SessionValidator::requireRole(['user']);
+} catch (Exception $e) {
     http_response_code(401);
     echo json_encode([
         "status" => false,
-        "message" => "Unauthorized: Role must be 'user'. Current role: $user_role"
+        "message" => "Unauthorized: " . $e->getMessage()
     ]);
     exit;
 }
 
-$user_id = $_POST['user_id'] ?? null;
+$user_id = SessionValidator::getUserId();
 $nama_peminjam = $_POST['nama_peminjam'] ?? null;
 $nrp = $_POST['nrp'] ?? null;
 $lokasi_umum = $_POST['lokasi_umum'] ?? '';

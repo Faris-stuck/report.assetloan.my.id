@@ -1,6 +1,15 @@
 <?php
 require_once "../koneksi.php";
+require_once "../session-helper.php";
 header('Content-Type: application/json');
+
+try {
+    SessionValidator::requireRole(['admin', 'manager', 'pic_barang']);
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode(["status" => false, "message" => "Unauthorized"]);
+    exit;
+}
 
 $status = $_GET['status'] ?? 'Waiting for Approval';
 $include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
@@ -8,7 +17,7 @@ $include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
 try {
     // Query untuk mengambil data peminjaman dengan detail
     if ($include_due) {
-        // Include all active statuses: Borrowed + Due% + Overdue
+        // Include all active statuses: Borrowed + Partial Approved + Due% + Overdue
         $stmt = $conn->prepare("
             SELECT
                 p.id,
@@ -20,7 +29,8 @@ try {
                 p.status,
                 p.catatan
             FROM peminjaman p
-            WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+            WHERE (p.status IN ('Borrowed','Partial Approved','Overdue','Due Today')
+                   OR p.status LIKE 'Due In%')
             ORDER BY p.rencana_kembali ASC
         ");
     } else {

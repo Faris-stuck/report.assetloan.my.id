@@ -341,7 +341,7 @@
                 'Waiting for Approval': 'Waiting for Approval',
                 'Approved': 'Approved',
                 'Partial Approved': 'Partial Approved',
-                'Currently Borrowed': 'Currently Borrowed',
+                'Currently Borrowed': 'Borrowed',
                 'Returned': 'Returned',
                 'Rejected': 'Rejected',
                 'Return in Process': 'Return in Process',
@@ -361,7 +361,7 @@
             if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'warning';
             if (ds === 'Waiting for Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'warning';
             if (ds === 'Approved') return 'info';
-            if (ds === 'Currently Borrowed') return 'primary';
+            if (ds === 'Borrowed') return 'primary';
             if (ds === 'Return in Process' || ds === 'Partial Approved') return 'info';
             if (ds === 'Returned') return 'success';
             return 'secondary';

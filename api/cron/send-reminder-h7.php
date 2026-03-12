@@ -20,6 +20,18 @@
 // ============================================================
 // 1. SMTP CONFIGURATION — from config/email.php (NOT HARDCODED)
 // ============================================================
+// ============================================================
+// 0. CRON SECURITY — Verify token for web access
+// ============================================================
+if (php_sapi_name() !== 'cli') {
+    $token = $_GET['token'] ?? '';
+    if ($token !== (getenv('CRON_SECRET') ?: 'K0m4tsu_Cr0n_2026')) {
+        http_response_code(403);
+        echo 'Forbidden: Invalid cron token';
+        exit;
+    }
+}
+
 require_once __DIR__ . '/../../config/email.php';
 
 // ============================================================
@@ -81,7 +93,7 @@ $sql = "
     LEFT JOIN (
         SELECT peminjaman_id, MIN(expected_return) AS nearest_return
         FROM peminjaman_units
-        WHERE return_status IN ('belum', 'approved')
+        WHERE return_status = 'Not Yet Returned'
         GROUP BY peminjaman_id
     ) pu_near ON p.id = pu_near.peminjaman_id
     WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
@@ -108,7 +120,7 @@ $sqlSudah = "
     LEFT JOIN (
         SELECT peminjaman_id, MIN(expected_return) AS nearest_return
         FROM peminjaman_units
-        WHERE return_status IN ('belum', 'approved')
+        WHERE return_status = 'Not Yet Returned'
         GROUP BY peminjaman_id
     ) pu_near ON p.id = pu_near.peminjaman_id
     WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
