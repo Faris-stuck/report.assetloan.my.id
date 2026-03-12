@@ -44,7 +44,7 @@ $stmt = $conn->prepare("
     JOIN pengembalian k ON k.id = d.pengembalian_id
     JOIN peminjaman p ON p.id = k.peminjaman_id
     JOIN barang b ON b.id = d.barang_id
-    WHERE k.status = 'Selesai' AND d.kondisi_kembali = 'Rusak'
+    WHERE k.status = 'Completed' AND d.kondisi_kembali = 'Damaged'
     ORDER BY k.selesai_at DESC
     LIMIT ? OFFSET ?
 ");

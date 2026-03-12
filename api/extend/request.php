@@ -90,11 +90,11 @@ try {
 
     // ============================================================
     // KEY FIX: Check for ACTUAL return requests instead of status field
-    // Status "Proses Return" is only valid if there's a pending return request
+    // Status "Return in Process" is only valid if there's a pending return request
     // ============================================================
     $chkReturn = $conn->prepare("
         SELECT id, status FROM pengembalian 
-        WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek', 'Sebagian Dikembalikan', 'Sebagian Rusak')
+        WHERE peminjaman_id = ? AND status IN ('Submitted', 'Being Inspected', 'Partially Returned', 'Partially Damaged')
         LIMIT 1
     ");
     $chkReturn->bind_param("i", $peminjaman_id);
@@ -105,10 +105,10 @@ try {
     $chkFullReturn = $conn->prepare("
         SELECT 
             COUNT(*) as total_approved,
-            SUM(CASE WHEN return_status IN ('Dikembalikan', 'Rusak') THEN 1 ELSE 0 END) as total_returned
+            SUM(CASE WHEN return_status IN ('Returned', 'Damaged') THEN 1 ELSE 0 END) as total_returned
         FROM peminjaman_units
         WHERE peminjaman_id = ?
-          AND approval_status = 'Disetujui'
+          AND approval_status = 'Approved'
     ");
     $chkFullReturn->bind_param("i", $peminjaman_id);
     $chkFullReturn->execute();
@@ -133,7 +133,7 @@ try {
             FROM detail_pengembalian dr
             JOIN pengembalian p ON dr.pengembalian_id = p.id
             JOIN detail_peminjaman dp ON dr.barang_id = dp.barang_id
-            WHERE p.peminjaman_id = ? AND p.status IN ('Diajukan', 'Dicek', 'Sebagian Dikembalikan', 'Sebagian Rusak')
+            WHERE p.peminjaman_id = ? AND p.status IN ('Submitted', 'Being Inspected', 'Partially Returned', 'Partially Damaged')
             AND dp.peminjaman_id = ?
         ");
         $chkReturnItems->bind_param("ii", $peminjaman_id, $peminjaman_id);
@@ -157,9 +157,9 @@ try {
 
     // Original status validation - allow active statuses
     $currentStatus = $peminjaman['status'];
-    $isActive = in_array($currentStatus, ['Sedang Dipinjam', 'Disetujui', 'Sebagian Dikembalikan', 'Overdue'])
+    $isActive = in_array($currentStatus, ['Borrowed', 'Approved', 'Partially Returned', 'Overdue'])
                 || strpos($currentStatus, 'Due') === 0
-                || $currentStatus === 'Proses Return';  // Allow if there are items remaining
+                || $currentStatus === 'Return in Process';  // Allow if there are items remaining
     
     if (!$isActive) {
         echo json_encode(['status' => false, 'message' => 'Borrowing with status "' . $currentStatus . '" cannot be extended']);
@@ -204,8 +204,8 @@ try {
                 WHERE pu.detail_peminjaman_id = ? 
                   AND pu.unit_number = ?
                   AND pu.peminjaman_id = ?
-                  AND pu.approval_status = 'Disetujui'
-                  AND pu.return_status NOT IN ('Dikembalikan', 'Rusak')
+                  AND pu.approval_status = 'Approved'
+                  AND pu.return_status NOT IN ('Returned', 'Damaged')
             ");
             $chk->bind_param("iii", $detail_id, $unit_num, $peminjaman_id);
             $chk->execute();
@@ -235,7 +235,7 @@ try {
                 LEFT JOIN detail_pengembalian dr ON dr.barang_id = d.barang_id 
                     AND dr.pengembalian_id IN (
                         SELECT id FROM pengembalian 
-                        WHERE peminjaman_id = ? AND status = 'Selesai'
+                        WHERE peminjaman_id = ? AND status = 'Completed'
                     )
                 WHERE d.peminjaman_id = ? AND d.barang_id = ?
                 GROUP BY d.id

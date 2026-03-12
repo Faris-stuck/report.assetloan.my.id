@@ -384,8 +384,8 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                                         <div class="mb-3">
                                             <label>Condition</label>
                                             <select id="edit_kondisi" class="form-select">
-                                                <option value="Baik">Good</option>
-                                                <option value="Rusak">Damaged</option>
+                                                <option value="Good">Good</option>
+                                                <option value="Damaged">Damaged</option>
                                             </select>
                                         </div>
                                         <div class="mb-3">
@@ -515,8 +515,8 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                                     <div class="mb-2">
                                         <label>Condition</label>
                                         <select id="kondisi" name="kondisi" class="form-control">
-                                            <option value="Baik">Good</option>
-                                            <option value="Rusak">Damaged</option>
+                                            <option value="Good">Good</option>
+                                            <option value="Damaged">Damaged</option>
                                         </select>
                                     </div>
 

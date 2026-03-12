@@ -57,7 +57,7 @@ try {
                 b.nama_barang,
                 CASE
                     WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
-                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
                     ELSE dp.jumlah
                 END as jumlah,
                 dp.lokasi,
@@ -102,7 +102,7 @@ try {
             $pengembalian_status = $hk['status'];
         }
         
-        // Get AGGREGATE return data from ALL finalized pengembalian (status='Selesai')
+        // Get AGGREGATE return data from ALL finalized pengembalian (status='Completed')
         $agg_per_barang = $conn->prepare("
             SELECT dr.barang_id, 
                    SUM(dr.jumlah_kembali) as total_kembali, 
@@ -110,7 +110,7 @@ try {
                    MAX(dr.kondisi_kembali) as kondisi_kembali
             FROM detail_pengembalian dr
             JOIN pengembalian p ON dr.pengembalian_id = p.id
-            WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
+            WHERE p.peminjaman_id = ? AND p.status = 'Completed'
             GROUP BY dr.barang_id
         ");
         $agg_per_barang->bind_param("i", $row['id']);
@@ -144,23 +144,23 @@ try {
                 // All items returned
                 if ($total_rusak_agg > 0) {
                     if ($total_rusak_agg >= $total_items) {
-                        $row['status'] = 'Semua Rusak';
+                        $row['status'] = 'Fully Damaged';
                         $row['status_en'] = 'Fully Damaged';
                     } else {
-                        $row['status'] = 'Sebagian Rusak';
+                        $row['status'] = 'Partially Damaged';
                         $row['status_en'] = 'Partially Damaged';
                     }
                 } else {
-                    $row['status'] = 'Dikembalikan';
+                    $row['status'] = 'Returned';
                     $row['status_en'] = 'Returned';
                 }
             } else if ($sisa > 0) {
                 // Partial return
-                if ($has_pengembalian && in_array($pengembalian_status, ['Diajukan', 'Dicek'])) {
-                    $row['status'] = 'Proses Return';
-                    $row['status_en'] = 'Return In Progress';
+                if ($has_pengembalian && in_array($pengembalian_status, ['Submitted', 'Being Inspected'])) {
+                    $row['status'] = 'Return in Process';
+                    $row['status_en'] = 'Return in Process';
                 } else {
-                    $row['status'] = 'Sebagian Dikembalikan';
+                    $row['status'] = 'Partially Returned';
                     $row['status_en'] = 'Partially Returned';
                 }
             }

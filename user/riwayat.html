@@ -369,28 +369,29 @@
                         const status = (rw.status || '').toLowerCase();
                         const status_en = (rw.status_en || '').toLowerCase();
                         let display = rw.status_en || rw.status || '-';
-                        // map internal 'Dicek' or damaged states to friendlier text
-                        if (status.includes('dicek') || status.includes('diproses') || status.includes('proses')) {
-                            display = 'Processing';
+                        // map internal states to friendlier text
+                        if (status === 'return in process' || status === 'being inspected') {
+                            display = 'Return in Process';
                         }
-                        if (status.includes('sebagian dikembalikan')) {
+                        if (status === 'partially returned') {
                             display = 'Partially Returned';
                         }
-                        if ((status.includes('semua') && status.includes('rusak')) || status_en.includes('fully')) {
+                        if (status_en.includes('fully') && status_en.includes('damaged')) {
                             display = 'Fully Damaged';
                         }
                         let badge = '<span class="badge bg-secondary">' + display + '</span>';
-                        if (status.includes('menunggu') || status.includes('pending')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        if (status === 'waiting for approval') badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
                         else if (status === 'overdue' || status === 'due today') badge = '<span class="badge bg-danger">' + display + '</span>';
                         else if (status.startsWith('due')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
-                        else if (status.includes('disetujui') || status.includes('approved')) badge = '<span class="badge bg-info">' + display + '</span>';
-                        else if (status.includes('ditolak') || status.includes('rejected')) badge = '<span class="badge bg-danger">' + display + '</span>';
-                        else if (status.includes('dipinjam') || status.includes('borrowed') || status.includes('ongoing')) badge = '<span class="badge bg-primary">' + display + '</span>';
-                        else if (status.includes('sebagian dikembalikan')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
-                        else if (status.includes('proses return') || status.includes('return in progress')) badge = '<span class="badge bg-info">' + display + '</span>';
-                        else if (status.includes('dikembalikan') || status.includes('returned')) badge = '<span class="badge bg-success">' + display + '</span>';
-                        else if ((status.includes('semua') && status.includes('rusak')) || status_en.includes('fully')) badge = '<span class="badge bg-danger">' + display + '</span>';
-                        else if (status.includes('dicek') || status.includes('diproses') || status.includes('proses')) badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        else if (status === 'approved' || status === 'partial approved') badge = '<span class="badge bg-info">' + display + '</span>';
+                        else if (status === 'rejected') badge = '<span class="badge bg-danger">' + display + '</span>';
+                        else if (status === 'borrowed' || status === 'currently borrowed') badge = '<span class="badge bg-primary">' + display + '</span>';
+                        else if (status === 'partially returned') badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        else if (status === 'return in process') badge = '<span class="badge bg-info text-dark">' + display + '</span>';
+                        else if (status === 'returned') badge = '<span class="badge bg-success">' + display + '</span>';
+                        else if (status_en.includes('fully') && status_en.includes('damaged')) badge = '<span class="badge bg-danger">' + display + '</span>';
+                        else if (status === 'being inspected') badge = '<span class="badge bg-warning text-dark">' + display + '</span>';
+                        else if (status === 'not yet returned' || status === 'cancelled') badge = '<span class="badge bg-danger">' + display + '</span>';
 
                         return `<tr>
                             <td><a href="peminjaman/detail-peminjaman.html?peminjaman_id=${rw.id}"><code>${rw.kode_peminjaman}</code></a></td>

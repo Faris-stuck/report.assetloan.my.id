@@ -338,31 +338,31 @@
         // === STATUS DISPLAY HELPERS (database-driven, no hardcode) ===
         function getDisplayStatus(dbStatus) {
             const map = {
-                'Menunggu Persetujuan': 'Pending Approval',
-                'Disetujui': 'Approved',
+                'Waiting for Approval': 'Waiting for Approval',
+                'Approved': 'Approved',
                 'Partial Approved': 'Partial Approved',
-                'Sedang Dipinjam': 'Currently Borrowed',
-                'Dikembalikan': 'Returned',
-                'Ditolak': 'Rejected',
-                'Proses Return': 'Return In Progress',
-                'Sebagian Dikembalikan': 'Partially Returned',
-                'Sebagian Rusak': 'Partially Damaged',
-                'Semua Rusak': 'Fully Damaged',
+                'Currently Borrowed': 'Currently Borrowed',
+                'Returned': 'Returned',
+                'Rejected': 'Rejected',
+                'Return in Process': 'Return in Process',
+                'Partially Returned': 'Partially Returned',
+                'Partially Damaged': 'Partially Damaged',
+                'Fully Damaged': 'Fully Damaged',
                 'Overdue': 'Overdue',
                 'Due Today': 'Due Today',
-                'Belum Dikembalikan': 'Not Yet Returned'
+                'Not Yet Returned': 'Not Yet Returned'
             };
             return map[dbStatus] || dbStatus || '-';
         }
 
         function getStatusBadgeColor(dbStatus) {
             const ds = getDisplayStatus(dbStatus);
-            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged') return 'danger';
+            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged' || ds === 'Not Yet Returned' || ds === 'Cancelled') return 'danger';
             if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'warning';
-            if (ds === 'Pending Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'warning';
+            if (ds === 'Waiting for Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'warning';
             if (ds === 'Approved') return 'info';
             if (ds === 'Currently Borrowed') return 'primary';
-            if (ds === 'Return In Progress' || ds === 'Partial Approved') return 'info';
+            if (ds === 'Return in Process' || ds === 'Partial Approved') return 'info';
             if (ds === 'Returned') return 'success';
             return 'secondary';
         }
@@ -484,7 +484,7 @@
                 }
 
                 // Show rejection reason if applicable
-                if (data.rejection_reason && (data.status === 'Ditolak' || units.some(u => u.approval_status === 'Ditolak'))) {
+                if (data.rejection_reason && (data.status === 'Rejected' || units.some(u => u.approval_status === 'Rejected'))) {
                     html += `<div class="alert alert-danger mt-3">
                         <strong>Rejection Reason:</strong> ${escapeHtml(data.rejection_reason)}
                     </div>`;

@@ -33,25 +33,25 @@ try {
         throw new Exception("Borrowing not found");
     }
     
-    if ($current['status'] === 'Ditolak' || $current['status'] === 'Dikembalikan' || $current['status'] === 'Partial Approved' || $current['status'] === 'Sedang Dipinjam') {
+    if ($current['status'] === 'Rejected' || $current['status'] === 'Returned' || $current['status'] === 'Partial Approved' || $current['status'] === 'Borrowed') {
         throw new Exception("Borrowing already has status '{$current['status']}', cannot be processed again");
     }
     
     $successMessage = '';
 
-    if ($status === 'Disetujui') {
-        // Manager approve: change status directly to Sedang Dipinjam (Currently Borrowed)
+    if ($status === 'Approved') {
+        // Manager approve: change status directly to Borrowed
         // No admin approval needed - borrowing starts immediately
         $tanggal_disetujui = date('Y-m-d');
-        $stmt_approve = $conn->prepare("UPDATE peminjaman SET status='Sedang Dipinjam', tanggal_disetujui=? WHERE id=?");
+        $stmt_approve = $conn->prepare("UPDATE peminjaman SET status='Borrowed', tanggal_disetujui=? WHERE id=?");
         $stmt_approve->bind_param("si", $tanggal_disetujui, $id);
         $stmt_approve->execute();
         $successMessage = "Borrowing approved and status changed to Currently Borrowed.";
-    } elseif ($status === 'Ditolak') {
+    } elseif ($status === 'Rejected') {
         // Manager reject - store rejection reason in catatan field
         $rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';
         
-        $stmt_reject = $conn->prepare("UPDATE peminjaman SET status='Ditolak', catatan=? WHERE id=?");
+        $stmt_reject = $conn->prepare("UPDATE peminjaman SET status='Rejected', catatan=? WHERE id=?");
         $stmt_reject->bind_param("si", $rejection_reason, $id);
         $stmt_reject->execute();
         
@@ -80,7 +80,7 @@ try {
     echo json_encode(["status" => true, "message" => $successMessage]);
 
     // Kirim email notifikasi setelah berhasil
-    if ($status === 'Disetujui') {
+    if ($status === 'Approved') {
         try {
             require_once __DIR__ . '/../email/send-approved.php';
             sendApprovedEmail($conn, $id);
@@ -90,7 +90,7 @@ try {
     }
 
     // Kirim email notifikasi penolakan ke user
-    if ($status === 'Ditolak') {
+    if ($status === 'Rejected') {
         try {
             require_once __DIR__ . '/../email/send-rejected.php';
             sendRejectedEmail($conn, $id, 'Loan');

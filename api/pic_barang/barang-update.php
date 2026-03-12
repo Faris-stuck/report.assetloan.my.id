@@ -23,7 +23,7 @@ $lokasi         = $_POST['lokasi'] ?? null;
 $stok_total     = isset($_POST['stok_total']) ? (int)$_POST['stok_total'] : null;
 $stok_tersedia  = isset($_POST['stok_tersedia']) ? (int)$_POST['stok_tersedia'] : null;
 $safety_stock   = isset($_POST['safety_stock']) ? (int)$_POST['safety_stock'] : 1;
-$kondisi        = $_POST['kondisi'] ?? 'Baik';
+$kondisi        = $_POST['kondisi'] ?? 'Good';
 $keterangan     = $_POST['keterangan'] ?? null;
 
 if (!$id) {

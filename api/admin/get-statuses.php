@@ -37,23 +37,23 @@ try {
         $badgeColor = "bg-secondary"; // default
         
         // Dynamic badge color mapping
-        if ($status === "Menunggu Persetujuan") {
+        if ($status === "Waiting for Approval") {
             $badgeColor = "bg-warning";
-        } elseif ($status === "Disetujui") {
+        } elseif ($status === "Approved") {
             $badgeColor = "bg-info";
-        } elseif ($status === "Ditolak") {
+        } elseif ($status === "Rejected") {
             $badgeColor = "bg-danger";
-        } elseif ($status === "Selesai" || $status === "Dikembalikan") {
+        } elseif ($status === "Completed" || $status === "Returned") {
             $badgeColor = "bg-success";
-        } elseif ($status === "Sedang Dipinjam") {
+        } elseif ($status === "Borrowed") {
             $badgeColor = "bg-primary";
         } elseif ($status === "Overdue" || $status === "Due Today") {
             $badgeColor = "bg-danger";
         } elseif (strpos($status, "Due") === 0) {
             $badgeColor = "bg-warning text-dark";
-        } elseif ($status === "Sebagian Dikembalikan") {
+        } elseif ($status === "Partially Returned") {
             $badgeColor = "bg-warning text-dark";
-        } elseif ($status === "Proses Return") {
+        } elseif ($status === "Return in Process") {
             $badgeColor = "bg-warning";
         }
         

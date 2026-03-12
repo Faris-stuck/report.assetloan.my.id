@@ -558,9 +558,9 @@
                     // Filter: only show active borrowed items
                     // Status comes from API (computed from peminjaman_units), no hardcode
                     const activeStatuses = [
-                        "Sedang Dipinjam",
-                        "Sebagian Dikembalikan",
-                        "Proses Return",
+                        "Borrowed",
+                        "Partially Returned",
+                        "Return in Process",
                         "Partial Approved"
                     ];
 
@@ -581,12 +581,13 @@
                     function getStatusBadge(status) {
                         if (status === 'Overdue' || status === 'Due Today') return 'badge bg-danger';
                         if (status && status.startsWith('Due')) return 'badge bg-warning text-dark';
-                        if (status === 'Sedang Dipinjam') return 'badge bg-primary';
-                        if (status === 'Sebagian Dikembalikan') return 'badge bg-warning text-dark';
-                        if (status === 'Proses Return') return 'badge bg-info';
-                        if (status === 'Dikembalikan') return 'badge bg-success';
-                        if (status === 'Ditolak') return 'badge bg-danger';
-                        if (status && status.includes('Rusak')) return 'badge bg-danger';
+                        if (status === 'Borrowed') return 'badge bg-primary';
+                        if (status === 'Partially Returned') return 'badge bg-warning text-dark';
+                        if (status === 'Return in Process') return 'badge bg-info text-dark';
+                        if (status === 'Returned') return 'badge bg-success';
+                        if (status === 'Rejected') return 'badge bg-danger';
+                        if (status && status.includes('Damaged')) return 'badge bg-danger';
+                        if (status === 'Not Yet Returned' || status === 'Cancelled') return 'badge bg-danger';
                         return 'badge bg-secondary';
                     }
 
@@ -1072,7 +1073,7 @@
                         } else if (unit.extend_status === 'Pending') {
                             statusBadge = `<span class="badge bg-warning text-dark"><i class="feather-clock"></i> Extend Pending until ${unit.extend_date || '-'}</span>`;
                         } else if (unit.extend_status === 'Approved') {
-                            statusBadge = `<span class="badge bg-info">✓ Extended until ${unit.extend_date || '-'}</span>`;
+                            statusBadge = `<span class="badge bg-success">✓ Extended until ${unit.extend_date || '-'}</span>`;
                         } else if (unit.extend_status === 'Rejected') {
                             statusBadge = `<span class="badge bg-danger"><i class="feather-x"></i> Extend Rejected</span>`;
                         }

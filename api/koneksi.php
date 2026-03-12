@@ -13,7 +13,7 @@ require_once __DIR__ . '/../config/database.php';
 /**
  * Calculate loan due status in real-time.
  * Only override status if current status is "active borrowing"
- * (Sedang Dipinjam / Due% / Overdue). Non-active statuses are NOT changed.
+ * (Borrowed / Due% / Overdue). Non-active statuses are NOT changed.
  *
  * @param string $dbStatus        Status from database
  * @param string $rencanaKembali  Expected return date (Y-m-d, Y-m-d H:i:s, or d/m/Y)
@@ -25,11 +25,11 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
     }
 
     // Only final/inactive statuses are NOT overridden by due-date proximity.
-    // All other statuses (Partial Approved, Disetujui, Sebagian Dikembalikan,
-    // Sedang Dipinjam, Proses Return, existing Due*, Overdue) ARE overridden.
+    // All other statuses (Partial Approved, Approved, Partially Returned,
+    // Borrowed, Return in Process, existing Due*, Overdue) ARE overridden.
     $isNotOverridable = in_array($dbStatus, [
-        'Menunggu Persetujuan', 'Ditolak', 'Dikembalikan',
-        'Semua Rusak', 'Sebagian Rusak', 'Selesai'
+        'Waiting for Approval', 'Rejected', 'Returned',
+        'Fully Damaged', 'Partially Damaged', 'Completed'
     ]);
     if ($isNotOverridable) {
         return $dbStatus;
@@ -59,17 +59,18 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
     $daysRemaining = (int) $diff->format('%r%a');
 
     // PRIORITY LOGIC: Due status overrides all non-final statuses.
-    // No day-count cap — any positive remaining days shows "Due In X Days".
+    // Cap at 7 days — beyond 7 days, keep original DB status.
     if ($daysRemaining < 0) {
         return 'Overdue';
     } elseif ($daysRemaining === 0) {
         return 'Due Today';
     } elseif ($daysRemaining === 1) {
         return 'Due In 1 Day';
-    } elseif ($daysRemaining >= 2) {
+    } elseif ($daysRemaining >= 2 && $daysRemaining <= 7) {
         return 'Due In ' . $daysRemaining . ' Days';
     }
 
+    // > 7 days: keep original DB status (e.g. Partial Approved, Approved, etc.)
     return $dbStatus;
 }
 
@@ -85,13 +86,13 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
  */
 function getNearestExpectedReturn(&$conn, $peminjaman_id) {
     // Query the minimum expected_return from peminjaman_units
-    // Only for units NOT yet returned (return_status NOT IN Dikembalikan/Rusak/Ditolak)
+    // Only for units NOT yet returned (return_status NOT IN Returned/Damaged/Rejected)
     $stmt = $conn->prepare("
         SELECT MIN(pu.expected_return) AS nearest_return
         FROM peminjaman_units pu
         WHERE pu.peminjaman_id = ?
           AND pu.expected_return IS NOT NULL
-          AND pu.return_status NOT IN ('Dikembalikan', 'Rusak', 'Ditolak')
+          AND pu.return_status NOT IN ('Returned', 'Damaged', 'Rejected')
     ");
     $stmt->bind_param("i", $peminjaman_id);
     $stmt->execute();
@@ -126,7 +127,7 @@ function getNearestExpectedReturn(&$conn, $peminjaman_id) {
  * Compute per-unit-driven status for a peminjaman from peminjaman_units table.
  * Returns the PRIORITY status based on all unit expected_returns and return_statuses.
  *
- * Priority: Overdue > Due Today > Due In X Days (smallest X) > Sebagian Dikembalikan > Sedang Dipinjam > Dikembalikan
+ * Priority: Overdue > Due Today > Due In X Days (smallest X) > Partially Returned > Borrowed > Returned
  *
  * @param mysqli $conn
  * @param int    $peminjaman_id
@@ -135,7 +136,7 @@ function getNearestExpectedReturn(&$conn, $peminjaman_id) {
  */
 function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
     // Final statuses that must NEVER be overridden
-    if (in_array($dbStatus, ['Ditolak', 'Menunggu Persetujuan'])) {
+    if (in_array($dbStatus, ['Rejected', 'Waiting for Approval', 'Returned'])) {
         return $dbStatus;
     }
 
@@ -144,7 +145,7 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
         SELECT pu.return_status, pu.expected_return
         FROM peminjaman_units pu
         WHERE pu.peminjaman_id = ?
-          AND pu.return_status != 'Ditolak'
+          AND pu.return_status != 'Rejected'
     ");
     $stmt->bind_param("i", $peminjaman_id);
     $stmt->execute();
@@ -170,18 +171,18 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
         $expectedRaw = $unit['expected_return'];
 
         // Count returned units
-        if (in_array($rs, ['Dikembalikan', 'Rusak'])) {
+        if (in_array($rs, ['Returned', 'Damaged'])) {
             $total_returned++;
             continue;
         }
 
         // Track return process
-        if ($rs === 'Proses Return') {
+        if ($rs === 'Return in Process') {
             $has_proses_return = true;
         }
 
         // For active units, compute due proximity from per-unit expected_return
-        if ($expectedRaw && !in_array($rs, ['Ditolak', 'Menunggu Persetujuan', 'Disetujui'])) {
+        if ($expectedRaw && !in_array($rs, ['Rejected', 'Waiting for Approval', 'Approved'])) {
             $retDate = false;
             if (preg_match('/^\d{4}-\d{2}-\d{2}/', $expectedRaw)) {
                 $retDate = DateTime::createFromFormat('Y-m-d', substr($expectedRaw, 0, 10), $tz);
@@ -202,7 +203,7 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
 
     // PRIORITY 6: All units returned
     if ($total_returned >= $total_units && $total_units > 0) {
-        return 'Dikembalikan';
+        return 'Returned';
     }
 
     // PRIORITY 1: Overdue
@@ -215,23 +216,28 @@ function computeStatusFromUnits(&$conn, $peminjaman_id, $dbStatus) {
         return 'Due Today';
     }
 
-    // PRIORITY 3: Due In X Days
-    if ($min_due_days !== PHP_INT_MAX && $min_due_days >= 1) {
+    // PRIORITY 3: Due In X Days (capped at 7 days)
+    if ($min_due_days !== PHP_INT_MAX && $min_due_days >= 1 && $min_due_days <= 7) {
         if ($min_due_days === 1) {
             return 'Due In 1 Day';
         }
         return 'Due In ' . $min_due_days . ' Days';
     }
 
-    // PRIORITY 4: Sebagian Dikembalikan
+    // > 7 days: keep original DB status (e.g. Partial Approved, Approved, etc.)
+    if ($min_due_days > 7) {
+        return $dbStatus;
+    }
+
+    // PRIORITY 4: Partially Returned
     if ($total_returned > 0 && $total_returned < $total_units) {
-        return 'Sebagian Dikembalikan';
+        return 'Partially Returned';
     }
 
-    // PRIORITY 5: Sedang Dipinjam or Proses Return
+    // PRIORITY 5: Borrowed or Return in Process
     if ($has_proses_return) {
-        return 'Proses Return';
+        return 'Return in Process';
     }
 
-    return 'Sedang Dipinjam';
+    return 'Borrowed';
 }

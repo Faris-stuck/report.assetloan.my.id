@@ -166,8 +166,8 @@ function loadBarang() {
 
             res.data.forEach((item, i) => {
                 let statusBadge = "bg-success";
-                if (item.status === "Habis") statusBadge = "bg-danger";
-                else if (item.status === "Menipis") statusBadge = "bg-warning";
+                if (item.status === "Out of Stock") statusBadge = "bg-danger";
+                else if (item.status === "Low Stock") statusBadge = "bg-warning";
 
                 tbody.innerHTML += `
                 <tr>
@@ -182,7 +182,7 @@ function loadBarang() {
                     <td>${item.safety_stock}</td>
                     <td>${item.stok_tersedia}</td>
                     <td>
-                        <span class="badge ${item.kondisi === 'Rusak' ? 'bg-danger' : 'bg-success'}">
+                        <span class="badge ${item.kondisi === 'Damaged' ? 'bg-danger' : 'bg-success'}">
                             ${item.kondisi}
                         </span>
                     </td>

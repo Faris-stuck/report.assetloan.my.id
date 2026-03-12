@@ -8,7 +8,7 @@
  * Access : http://localhost/PROJECT/api/cron/update-due-status.php
  * 
  * Logic:
- *   - Active status (Sedang Dipinjam / Due% / Overdue / Sebagian Dikembalikan / Proses Return)
+ *   - Active status (Borrowed / Due% / Overdue / Partially Returned / Return in Process)
  *     updated based on remaining days from NEAREST expected return (considering extensions):
  *     > 7 days  → Keep original status (Sedang Dipinjam / Sebagian Dikembalikan / Proses Return)
  *     2-7 days  → Due In X Days
@@ -53,8 +53,8 @@ echo "[OK] Database connection successful.\n\n";
 
 // ============================================================
 // 3. DYNAMIC UPDATE: All active borrowings
-//    Active status = 'Sedang Dipinjam' OR LIKE 'Due%' OR 'Overdue'
-//                    OR 'Sebagian Dikembalikan' OR 'Proses Return'
+//    Active status = 'Borrowed' OR LIKE 'Due%' OR 'Overdue'
+//                    OR 'Partially Returned' OR 'Return in Process'
 //    Uses getNearestExpectedReturn() so extensions are accounted for
 // ============================================================
 echo "--- Dynamic status update based on remaining days (nearest expected return) ---\n";
@@ -62,13 +62,13 @@ echo "--- Dynamic status update based on remaining days (nearest expected return
 $sql_active = "
     SELECT id, kode_peminjaman, status, rencana_kembali
     FROM peminjaman
-    WHERE status = 'Sedang Dipinjam' 
+    WHERE status = 'Borrowed' 
        OR status LIKE 'Due%' 
        OR status = 'Overdue'
-       OR status = 'Sebagian Dikembalikan'
-       OR status = 'Proses Return'
+       OR status = 'Partially Returned'
+       OR status = 'Return in Process'
        OR status = 'Partial Approved'
-       OR status = 'Disetujui'
+       OR status = 'Approved'
     ORDER BY rencana_kembali ASC
 ";
 
@@ -107,9 +107,9 @@ $sql_detail = "
     SELECT id, kode_peminjaman, status, rencana_kembali, 
            DATEDIFF(rencana_kembali, CURDATE()) as sisa_hari
     FROM peminjaman 
-    WHERE status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue'
-       OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return'
-       OR status = 'Partial Approved' OR status = 'Disetujui'
+    WHERE status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue'
+       OR status = 'Partially Returned' OR status = 'Return in Process'
+       OR status = 'Partial Approved' OR status = 'Approved'
     ORDER BY rencana_kembali ASC
 ";
 

@@ -84,7 +84,7 @@ $sql = "
         WHERE return_status IN ('belum', 'approved')
         GROUP BY peminjaman_id
     ) pu_near ON p.id = pu_near.peminjaman_id
-    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+    WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
       AND DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) BETWEEN 0 AND 7
       AND (p.last_reminder_date IS NULL OR p.last_reminder_date != CURDATE())
     ORDER BY COALESCE(pu_near.nearest_return, p.rencana_kembali) ASC
@@ -111,7 +111,7 @@ $sqlSudah = "
         WHERE return_status IN ('belum', 'approved')
         GROUP BY peminjaman_id
     ) pu_near ON p.id = pu_near.peminjaman_id
-    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+    WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
       AND DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) BETWEEN 0 AND 7
       AND p.last_reminder_date = CURDATE()
 ";

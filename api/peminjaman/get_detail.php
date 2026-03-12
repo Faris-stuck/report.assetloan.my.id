@@ -61,7 +61,7 @@ try {
 
     // Get detail items with approved unit counts from peminjaman_units
     // jumlah = count of approved units (excluding rejected)
-    // sudah_dikembalikan = count of units already returned (Dikembalikan/Rusak)
+    // sudah_dikembalikan = count of units already returned (Returned/Damaged)
     // sisa_dikembalikan = approved units still actively borrowed
     $stmt = $conn->prepare("
         SELECT
@@ -74,15 +74,15 @@ try {
                 FROM peminjaman_units pu
                 WHERE pu.peminjaman_id = d.peminjaman_id
                   AND pu.barang_id = d.barang_id
-                  AND (pu.approval_status IS NULL OR pu.approval_status != 'Ditolak')
+                  AND (pu.approval_status IS NULL OR pu.approval_status != 'Rejected')
             ), 0) AS jumlah,
             COALESCE((
                 SELECT COUNT(pu2.id)
                 FROM peminjaman_units pu2
                 WHERE pu2.peminjaman_id = d.peminjaman_id
                   AND pu2.barang_id = d.barang_id
-                  AND pu2.return_status IN ('Dikembalikan', 'Rusak')
-                  AND (pu2.approval_status IS NULL OR pu2.approval_status != 'Ditolak')
+                  AND pu2.return_status IN ('Returned', 'Damaged')
+                  AND (pu2.approval_status IS NULL OR pu2.approval_status != 'Rejected')
             ), 0) AS sudah_dikembalikan
         FROM detail_peminjaman d
         JOIN barang b ON b.id = d.barang_id

@@ -55,7 +55,7 @@ $stmt_detail = $conn->prepare("
     SELECT b.id AS barang_id, b.nama_barang,
         CASE
             WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
-            THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+            THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
             ELSE dp.jumlah
         END as jumlah,
         dp.lokasi
@@ -83,15 +83,15 @@ while ($row = $result_detail->fetch_assoc()) {
 }
 
 // Attach pengembalian inspection details - aggregate from FINALIZED pengembalian records ONLY
-// Only count returns that have been approved by PIC (status='Selesai')
-// Pending submissions (Diajukan/Dicek) are NOT counted as returned yet
+// Only count returns that have been approved by PIC (status='Completed')
+// Pending submissions (Submitted/Being Inspected) are NOT counted as returned yet
 $agg_q = $conn->prepare("
     SELECT 
         SUM(dp.jumlah_kembali) as total_kembali,
         SUM(dp.jumlah_rusak) as total_rusak
     FROM detail_pengembalian dp
     JOIN pengembalian p ON dp.pengembalian_id = p.id
-    WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
+    WHERE p.peminjaman_id = ? AND p.status = 'Completed'
 ");
 $agg_q->bind_param("i", $peminjaman_id);
 $agg_q->execute();
@@ -116,7 +116,7 @@ $per_barang = $conn->prepare("
         MAX(kondisi_kembali) as kondisi_kembali
     FROM detail_pengembalian
     WHERE pengembalian_id IN (
-        SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Selesai'
+        SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Completed'
     )
     GROUP BY barang_id
 ");
@@ -152,20 +152,20 @@ if ($agg_result) {
         // All items have been returned AND finalized by PIC
         if ($total_rusak > 0) {
             if ($total_rusak >= $total_items) {
-                $display_status = 'Semua Rusak';
+                $display_status = 'Fully Damaged';
                 $display_status_en = 'Fully Damaged';
             } else {
-                $display_status = 'Sebagian Rusak';
+                $display_status = 'Partially Damaged';
                 $display_status_en = 'Partially Damaged';
             }
         } else {
             // All returned and no damage
-            $display_status = 'Dikembalikan';
+            $display_status = 'Returned';
             $display_status_en = 'Returned';
         }
     } else if ($total_dikembalikan > 0 && $total_dikembalikan < $total_items) {
         // Partial return (finalized)
-        $display_status = 'Sebagian Dikembalikan';
+        $display_status = 'Partially Returned';
         $display_status_en = 'Partially Returned';
     }
 }

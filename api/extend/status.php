@@ -41,13 +41,10 @@ try {
     // ========================================
     // Status peminjaman yang memungkinkan extend (dinamis, bukan hardcoded)
     $active_statuses = [
-        'Sedang Dipinjam',
-        'Disetujui',
+        'Borrowed',
         'Approved',
-        'Sebagian Dikembalikan',
         'Partially Returned',
-        'Proses Return',
-        'Return In Progress',
+        'Return in Process',
         'Overdue',
         'Due Today',
         'Due H-0',

@@ -19,8 +19,8 @@ try {
 $stmt = $conn->prepare("
     SELECT p.id, p.kode_peminjaman, p.nama_peminjam, p.nrp, p.tanggal_pinjam, p.rencana_kembali, p.status, p.catatan
     FROM peminjaman p
-    WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue' 
-           OR p.status = 'Sebagian Dikembalikan' OR p.status = 'Proses Return')
+    WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue' 
+           OR p.status = 'Partially Returned' OR p.status = 'Return in Process')
     ORDER BY p.rencana_kembali ASC
 ");
 $stmt->execute();

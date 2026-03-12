@@ -24,46 +24,46 @@ try {
     
     $stats = [];
     
-    // 1. Peminjaman Menunggu Persetujuan
+    // 1. Waiting for Approval
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND status = 'Menunggu Persetujuan'
+        WHERE user_id = ? AND status = 'Waiting for Approval'
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['menunggu_persetujuan'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
     
-    // 2. Peminjaman Disetujui
+    // 2. Approved
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND (status = 'Disetujui' OR status = 'Menunggu Admin')
+        WHERE user_id = ? AND (status = 'Approved' OR status = 'Waiting for Admin')
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['disetujui'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
     
-    // 3. Peminjaman Ditolak
+    // 3. Rejected
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND status = 'Ditolak'
+        WHERE user_id = ? AND status = 'Rejected'
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['ditolak'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
     
-    // 4. Sedang Dipinjam (active)
+    // 4. Borrowed (active)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')
+        WHERE user_id = ? AND (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['sedang_dipinjam'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
     
-    // 5. Sudah dikembalikan
+    // 5. Returned
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND status = 'Dikembalikan'
+        WHERE user_id = ? AND status = 'Returned'
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();

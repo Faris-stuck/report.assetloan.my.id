@@ -34,12 +34,12 @@ try {
     if (!$row) {
         throw new Exception("Borrowing not found");
     }
-    if (in_array($row['status'], ['Dikembalikan', 'Ditolak'])) {
+    if (in_array($row['status'], ['Returned', 'Rejected'])) {
         throw new Exception("Borrowing already has status: " . $row['status']);
     }
 
     // Get total items borrowed (approved units from peminjaman_units)
-    $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Disetujui'");
+    $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Approved'");
     $tq->bind_param("i", $id);
     $tq->execute();
     $total_items = (int)($tq->get_result()->fetch_assoc()['total'] ?? 0);
@@ -49,7 +49,7 @@ try {
         SELECT COALESCE(SUM(dp.jumlah_kembali), 0) as total_returned
         FROM detail_pengembalian dp
         JOIN pengembalian p ON dp.pengembalian_id = p.id
-        WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
+        WHERE p.peminjaman_id = ? AND p.status = 'Completed'
     ");
     $aq->bind_param("i", $id);
     $aq->execute();
@@ -62,10 +62,10 @@ try {
             COALESCE((
                 SELECT SUM(dr.jumlah_kembali) FROM detail_pengembalian dr
                 JOIN pengembalian p ON dr.pengembalian_id = p.id
-                WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Selesai'
+                WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Completed'
             ), 0) as already_returned
         FROM peminjaman_units pu
-        WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+        WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
         GROUP BY pu.barang_id
     ");
     $detail_query->bind_param("ii", $id, $id);
@@ -85,13 +85,13 @@ try {
         }
     }
     
-    // Mark as Dikembalikan
-    $upd = $conn->prepare("UPDATE peminjaman SET status = 'Dikembalikan', tanggal_kembali = CURDATE() WHERE id = ?");
+    // Mark as Returned
+    $upd = $conn->prepare("UPDATE peminjaman SET status = 'Returned', tanggal_kembali = CURDATE() WHERE id = ?");
     $upd->bind_param("i", $id);
     $upd->execute();
     
     // Also finalize any pending pengembalian records
-    $finalize = $conn->prepare("UPDATE pengembalian SET status = 'Selesai', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek')");
+    $finalize = $conn->prepare("UPDATE pengembalian SET status = 'Completed', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Submitted', 'Being Inspected')");
     $finalize->bind_param("i", $id);
     $finalize->execute();
     

@@ -8,15 +8,15 @@
  * - catatan_petugas (string) optional
  * - items (json string) required:
  *   [
- *     { "barang_id": 1, "kondisi_kembali": "Baik|Rusak", "jumlah_rusak": 0, "biaya_ganti_rugi": 0, "catatan": "" }
+ *     { "barang_id": 1, "kondisi_kembali": "Good|Damaged", "jumlah_rusak": 0, "biaya_ganti_rugi": 0, "catatan": "" }
  *   ]
  *
  * Behavior:
  * - Update detail_pengembalian sesuai inspeksi
- * - Jika ada rusak: set barang.kondisi='Rusak' (sederhana, level barang)
- * - Update peminjaman.status='Dikembalikan' dan tanggal_kembali=CURDATE()
- * - Kembalikan stok_tersedia hanya untuk jumlah baik (jumlah_kembali - jumlah_rusak)
- * - Set pengembalian.status='Selesai' + total_ganti_rugi
+ * - If damaged: set barang.kondisi='Damaged' (simple, barang level)
+ * - Update peminjaman.status='Returned' and tanggal_kembali=CURDATE()
+ * - Return stok_tersedia only for good qty (jumlah_kembali - jumlah_rusak)
+ * - Set pengembalian.status='Completed' + total_ganti_rugi
  */
 
 require_once "../koneksi.php";
@@ -66,19 +66,19 @@ try {
         throw new Exception("Return not found");
     }
     // If already finished, nothing to do
-    if ($header['status'] === 'Selesai') {
+    if ($header['status'] === 'Completed') {
         echo json_encode(["status" => true, "message" => "Return already processed"]);
         $conn->commit();
         exit;
     }
 
-    // Mark as 'Dicek' (being processed) when admin/pic starts inspecting
-    if ($header['status'] === 'Diajukan') {
-        $updStatus = $conn->prepare("UPDATE pengembalian SET status = 'Dicek', dicek_at = NOW() WHERE id = ?");
+    // Mark as 'Being Inspected' (being processed) when admin/pic starts inspecting
+    if ($header['status'] === 'Submitted') {
+        $updStatus = $conn->prepare("UPDATE pengembalian SET status = 'Being Inspected', dicek_at = NOW() WHERE id = ?");
         $updStatus->bind_param("i", $pengembalian_id);
         $updStatus->execute();
         // reflect change in local header var
-        $header['status'] = 'Dicek';
+        $header['status'] = 'Being Inspected';
     }
 
     $has_rusak = 0;
@@ -100,7 +100,7 @@ try {
     foreach ($items as $it) {
         $barang_id = (int)($it['barang_id'] ?? 0);
         $jumlah_kembali = max(0, (int)($it['jumlah_kembali'] ?? 0));
-        $kondisi = ($it['kondisi_kembali'] ?? 'Baik') === 'Rusak' ? 'Rusak' : 'Baik';
+        $kondisi = ($it['kondisi_kembali'] ?? 'Good') === 'Damaged' ? 'Damaged' : 'Good';
         $jumlah_rusak = max(0, (int)($it['jumlah_rusak'] ?? 0));
         $biaya = (float)($it['biaya_ganti_rugi'] ?? 0);
         $catatan = trim((string)($it['catatan'] ?? ''));
@@ -112,7 +112,7 @@ try {
             $jumlah_rusak = $jumlah_kembali;
         }
 
-        if ($kondisi === 'Rusak') {
+        if ($kondisi === 'Damaged') {
             $has_rusak = 1;
             $total_ganti_rugi += $biaya;
             // Increment stok_rusak by jumlah_rusak for this barang
@@ -129,7 +129,7 @@ try {
         }
     }
 
-    // Kembalikan stok berdasarkan jumlah baik
+    // Return stock based on good qty
     $dq = $conn->prepare("SELECT barang_id, jumlah_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
     $dq->bind_param("i", $pengembalian_id);
     $dq->execute();
@@ -149,21 +149,21 @@ try {
     $peminjaman_id = (int)$header['peminjaman_id'];
     
     // Get total items borrowed (approved units from peminjaman_units)
-    $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Disetujui'");
+    $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Approved'");
     $tq->bind_param("i", $peminjaman_id);
     $tq->execute();
     $tq_result = $tq->get_result()->fetch_assoc();
     $total_items = (int)($tq_result['total'] ?? 0);
     
     // Get AGGREGATE total returned and damaged from ALL pengembalian records (incl. current one being finalized)
-    // This counts pengembalian with status IN ('Dicek', 'Selesai') to include the current inspection
+    // This counts pengembalian with status IN ('Being Inspected', 'Completed') to include the current inspection
     $agg = $conn->prepare("
         SELECT 
             COALESCE(SUM(dp.jumlah_kembali), 0) as total_kembali,
             COALESCE(SUM(dp.jumlah_rusak), 0) as total_rusak
         FROM detail_pengembalian dp
         JOIN pengembalian p ON dp.pengembalian_id = p.id
-        WHERE p.peminjaman_id = ? AND (p.status = 'Selesai' OR p.id = ?)
+        WHERE p.peminjaman_id = ? AND (p.status = 'Completed' OR p.id = ?)
     ");
     $agg->bind_param("ii", $peminjaman_id, $pengembalian_id);
     $agg->execute();
@@ -175,32 +175,37 @@ try {
     
     // Determine status based on how many items are returned vs total
     if ($sisa <= 0 && $total_items > 0) {
-        // All items returned - regardless of damage status, mark as 'Dikembalikan'
-        $final_status = 'Dikembalikan';
+        // All items returned - regardless of damage status, mark as 'Returned'
+        $final_status = 'Returned';
         // Set tanggal_kembali only when ALL items returned
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ?, tanggal_kembali = CURDATE() WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
+
+        // Sync peminjaman_units: mark all unreturned units as 'Returned'
+        $upd_units = $conn->prepare("UPDATE peminjaman_units SET return_status = 'Returned' WHERE peminjaman_id = ? AND return_status = 'Not Yet Returned'");
+        $upd_units->bind_param("i", $peminjaman_id);
+        $upd_units->execute();
     } else if ($total_returned > 0) {
         // Partial return - some items still out but this inspection batch is finalized
         // Check if there are still PENDING return requests for this peminjaman
-        $chkPending = $conn->prepare("SELECT COUNT(*) as cnt FROM pengembalian WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek') AND id != ?");
+        $chkPending = $conn->prepare("SELECT COUNT(*) as cnt FROM pengembalian WHERE peminjaman_id = ? AND status IN ('Submitted', 'Being Inspected') AND id != ?");
         $chkPending->bind_param("ii", $peminjaman_id, $pengembalian_id);
         $chkPending->execute();
         $pendingCount = (int)($chkPending->get_result()->fetch_assoc()['cnt'] ?? 0);
         
         if ($pendingCount > 0) {
-            // There are still pending return requests → keep as 'Proses Return'
-            $final_status = 'Proses Return';
+            // There are still pending return requests → keep as 'Return in Process'
+            $final_status = 'Return in Process';
         } else {
-            // All returns finalized, but items remain → 'Sebagian Dikembalikan'
-            $final_status = 'Sebagian Dikembalikan';
+            // All returns finalized, but items remain → 'Partially Returned'
+            $final_status = 'Partially Returned';
         }
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     } else {
         // Nothing returned (edge case: PIC set all qty to 0)
-        // Keep as 'Sedang Dipinjam' since no return yet
-        $final_status = 'Sedang Dipinjam';
+        // Keep as 'Borrowed' since no return yet
+        $final_status = 'Borrowed';
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     }
@@ -212,7 +217,7 @@ try {
     // Update header pengembalian
     $u = $conn->prepare("
         UPDATE pengembalian
-        SET status = 'Selesai',
+        SET status = 'Completed',
             catatan_petugas = ?,
             checked_by_role = ?,
             checked_by_user_id = ?,
@@ -229,8 +234,8 @@ try {
 
     $conn->commit();
 
-    // Kirim email notifikasi ke user saat semua barang dikembalikan
-    if ($final_status === 'Dikembalikan') {
+    // Send email notification to user when all items are returned
+    if ($final_status === 'Returned') {
         try {
             require_once __DIR__ . '/../email/send-return-confirmed.php';
             sendReturnConfirmedEmail($conn, $peminjaman_id);

@@ -66,9 +66,9 @@ document.addEventListener("DOMContentLoaded", function () {
             const stokTersediaBadgeEl = document.getElementById("stokTersediaBadge");
             stokTersediaBadgeEl.innerText = b.stok_tersedia;
             stokTersediaBadgeEl.className = "badge " +
-                (res.status_barang === "Habis"
+                (res.status_barang === "Out of Stock"
                     ? "bg-danger"
-                    : res.status_barang === "Menipis"
+                    : res.status_barang === "Low Stock"
                         ? "bg-warning"
                         : "bg-success");
             document.getElementById("statusBarang").innerText = b.status_Barang;
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const kondisiEl = document.getElementById("kondisiBarang");
             kondisiEl.innerText = b.kondisi;
             kondisiEl.className =
-                "badge " + (b.kondisi === "Rusak" ? "bg-danger" : "bg-success");
+                "badge " + (b.kondisi === "Damaged" ? "bg-danger" : "bg-success");
 
             // STOK RUSAK (if field not present, default 0)
             const stokRusakEl = document.getElementById('stokRusak');
@@ -92,9 +92,9 @@ document.addEventListener("DOMContentLoaded", function () {
             statusEl.innerText = res.status_barang;
             statusEl.className =
                 "badge " +
-                (res.status_barang === "Habis"
+                (res.status_barang === "Out of Stock"
                     ? "bg-danger"
-                    : res.status_barang === "Menipis"
+                    : res.status_barang === "Low Stock"
                         ? "bg-warning"
                         : "bg-success");
         })
@@ -370,13 +370,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     let statusBadge = "bg-secondary";
                     if (p.status === "Overdue" || p.status === "Due Today") statusBadge = "bg-danger";
                     else if (p.status.startsWith("Due")) statusBadge = "bg-warning text-dark";
-                    else if (p.status === "Menunggu Persetujuan") statusBadge = "bg-warning";
-                    else if (p.status === "Disetujui") statusBadge = "bg-info";
-                    else if (p.status === "Sedang Dipinjam") statusBadge = "bg-primary";
-                    else if (p.status === "Sebagian Dikembalikan") statusBadge = "bg-warning text-dark";
-                    else if (p.status === "Proses Return") statusBadge = "bg-info text-dark";
-                    else if (p.status === "Dikembalikan") statusBadge = "bg-success";
-                    else if (p.status === "Ditolak") statusBadge = "bg-danger";
+                    else if (p.status === "Waiting for Approval") statusBadge = "bg-warning";
+                    else if (p.status === "Approved") statusBadge = "bg-info";
+                    else if (p.status === "Borrowed") statusBadge = "bg-primary";
+                    else if (p.status === "Partially Returned") statusBadge = "bg-warning text-dark";
+                    else if (p.status === "Return in Process") statusBadge = "bg-info text-dark";
+                    else if (p.status === "Returned") statusBadge = "bg-success";
+                    else if (p.status === "Rejected") statusBadge = "bg-danger";
+                    else if (p.status === "Cancelled") statusBadge = "bg-danger";
 
                     tbody.innerHTML += `
                     <tr>

@@ -37,17 +37,17 @@ try {
         throw new Exception("Borrowing not found");
     }
     
-    if ($current['status'] === 'Ditolak' || $current['status'] === 'Dikembalikan') {
+    if ($current['status'] === 'Rejected' || $current['status'] === 'Returned') {
         throw new Exception("Borrowing already has status '{$current['status']}', cannot be processed again");
     }
     
-    // Manager approval is now the only approval needed - status goes directly to Sedang Dipinjam
+    // Manager approval is now the only approval needed - status goes directly to Borrowed
     // Admin API here handles other admin functions: returns, and conditional rejections
     
-    if ($status === 'Dikembalikan') {
+    if ($status === 'Returned') {
         // Process item return
         $tanggal_kembali = date('Y-m-d');
-        $stmt_return = $conn->prepare("UPDATE peminjaman SET status='Dikembalikan', tanggal_kembali=? WHERE id=?");
+        $stmt_return = $conn->prepare("UPDATE peminjaman SET status='Returned', tanggal_kembali=? WHERE id=?");
         $stmt_return->bind_param("si", $tanggal_kembali, $id);
         $stmt_return->execute();
         
@@ -57,10 +57,10 @@ try {
                 COALESCE((
                     SELECT SUM(dr.jumlah_kembali) FROM detail_pengembalian dr
                     JOIN pengembalian p ON dr.pengembalian_id = p.id
-                    WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Selesai'
+                    WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Completed'
                 ), 0) as already_returned
             FROM peminjaman_units pu
-            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
             GROUP BY pu.barang_id
         ");
         $stmt_detail->bind_param("ii", $id, $id);
@@ -79,7 +79,7 @@ try {
         }
         
         // Finalize any pending pengembalian records
-        $stmt_finalize = $conn->prepare("UPDATE pengembalian SET status = 'Selesai', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek')");
+        $stmt_finalize = $conn->prepare("UPDATE pengembalian SET status = 'Completed', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Submitted', 'Being Inspected')");
         $stmt_finalize->bind_param("i", $id);
         $stmt_finalize->execute();
         
@@ -94,11 +94,11 @@ try {
         }
 
         echo json_encode(["status" => true, "message" => "Item successfully returned and stock restored."]);
-    } elseif ($status === 'Ditolak') {
+    } elseif ($status === 'Rejected') {
         // Admin can reject even after manager approval if needed
         $rejection_reason = isset($_POST['rejection_reason']) ? $_POST['rejection_reason'] : 'No reason provided';
         
-        $stmt_reject = $conn->prepare("UPDATE peminjaman SET status='Ditolak', catatan=? WHERE id=?");
+        $stmt_reject = $conn->prepare("UPDATE peminjaman SET status='Rejected', catatan=? WHERE id=?");
         $stmt_reject->bind_param("si", $rejection_reason, $id);
         $stmt_reject->execute();
         
@@ -114,7 +114,7 @@ try {
             $stmt_detail = $conn->prepare("
                 SELECT pu.barang_id, COUNT(pu.id) as jumlah
                 FROM peminjaman_units pu
-                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
                 GROUP BY pu.barang_id
             ");
             $stmt_detail->bind_param("i", $id);

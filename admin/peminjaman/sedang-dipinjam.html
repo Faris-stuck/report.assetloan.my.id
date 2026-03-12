@@ -518,23 +518,26 @@
                         // Status badge
                         let badgeCls = 'bg-primary';
                         const st = p.status || '';
-                        if (st === 'Ditolak') badgeCls = 'bg-danger';
-                        else if (st === 'Dikembalikan') badgeCls = 'bg-success';
+                        if (st === 'Rejected') badgeCls = 'bg-danger';
+                        else if (st === 'Returned') badgeCls = 'bg-success';
                         else if (st === 'Overdue' || st === 'Due Today') badgeCls = 'bg-danger';
                         else if (st.startsWith('Due')) badgeCls = 'bg-warning text-dark';
-                        else if (st === 'Sedang Dipinjam') badgeCls = 'bg-primary';
-                        else if (st === 'Sebagian Dikembalikan') badgeCls = 'bg-warning text-dark';
-                        else if (st === 'Proses Return') badgeCls = 'bg-info text-dark';
+                        else if (st === 'Borrowed') badgeCls = 'bg-primary';
+                        else if (st === 'Partially Returned') badgeCls = 'bg-warning text-dark';
+                        else if (st === 'Return in Process') badgeCls = 'bg-info text-dark';
                         else if (st === 'Partial Approved') badgeCls = 'bg-info';
+                        else if (st === 'Cancelled') badgeCls = 'bg-danger';
                         document.getElementById('detailStatus').innerHTML = `<span class="badge ${badgeCls}">${escapeHtml(st)}</span>`;
 
                         // Render per-unit rows
                         const units = p.units || [];
                         const barangHtml = units.map((u, i) => {
                             let returnBadge = 'bg-secondary';
-                            if (u.return_status === 'Dikembalikan') returnBadge = 'bg-success';
-                            else if (u.return_status === 'Rusak') returnBadge = 'bg-warning text-dark';
-                            else if (u.return_status === 'Ditolak') returnBadge = 'bg-danger';
+                            if (u.return_status === 'Returned') returnBadge = 'bg-success';
+                            else if (u.return_status === 'Damaged') returnBadge = 'bg-warning text-dark';
+                            else if (u.return_status === 'Rejected') returnBadge = 'bg-danger';
+                            else if (u.return_status === 'Waiting for Approval') returnBadge = 'bg-warning text-dark';
+                            else if (u.return_status === 'Not Yet Returned') returnBadge = 'bg-danger';
                             else if (u.return_status === 'Overdue' || u.return_status === 'Due Today') returnBadge = 'bg-danger';
                             else if (u.return_status && u.return_status.startsWith('Due')) returnBadge = 'bg-warning text-dark';
 
@@ -553,12 +556,12 @@
                         document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
                         // Notes / Rejection reason
-                        // Check if any unit is rejected (approval_status = 'Ditolak')
-                        const hasRejectedUnit = units.some(u => u.approval_status === 'Ditolak');
+                        // Check if any unit is rejected (approval_status = 'Rejected')
+                        const hasRejectedUnit = units.some(u => u.approval_status === 'Rejected');
                         const catatanDiv = document.getElementById('detailCatatanDiv');
                         const catatanLabel = document.getElementById('detailCatatanLabel');
                         const reason = p.rejection_reason || p.catatan || '';
-                        if ((hasRejectedUnit || p.status === 'Ditolak') && reason) {
+                        if ((hasRejectedUnit || p.status === 'Rejected') && reason) {
                             document.getElementById('detailCatatan').textContent = escapeHtml(reason);
                             catatanLabel.style.display = 'block';
                             catatanDiv.style.display = 'block';

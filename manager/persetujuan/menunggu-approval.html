@@ -410,7 +410,7 @@
         }
 
         function loadDataPeminjaman() {
-            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
+            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Waiting for Approval", { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
                     if (res.status) {
@@ -454,7 +454,7 @@
         }
 
         function openModal(id) {
-            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Menunggu Persetujuan", { credentials: 'same-origin' })
+            fetch(BASE_URL + "/api/approver/list-by-status.php?status=Waiting for Approval", { credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
                     if (!res.status || !res.data) return;

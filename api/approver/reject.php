@@ -35,12 +35,12 @@ try {
         throw new Exception("Borrowing not found");
     }
     
-    if ($current['status'] === 'Ditolak' || $current['status'] === 'Dikembalikan') {
+    if ($current['status'] === 'Rejected' || $current['status'] === 'Returned') {
         throw new Exception("Borrowing already has status '{$current['status']}', cannot be rejected again");
     }
     
-    // Update peminjaman status to Ditolak
-    $stmt_update = $conn->prepare("UPDATE peminjaman SET status='Ditolak', catatan=? WHERE id=?");
+    // Update peminjaman status to Rejected
+    $stmt_update = $conn->prepare("UPDATE peminjaman SET status='Rejected', catatan=? WHERE id=?");
     $stmt_update->bind_param("si", $rejection_reason, $id);
     $stmt_update->execute();
     
@@ -55,7 +55,7 @@ try {
         $stmt_detail = $conn->prepare("
             SELECT pu.barang_id, COUNT(pu.id) as jumlah
             FROM peminjaman_units pu
-            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
             GROUP BY pu.barang_id
         ");
         $stmt_detail->bind_param("i", $id);

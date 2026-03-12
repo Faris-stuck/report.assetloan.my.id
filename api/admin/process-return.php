@@ -34,7 +34,7 @@ try {
         throw new Exception("Borrowing not found");
     }
     
-    if ($current['status'] === 'Dikembalikan') {
+    if ($current['status'] === 'Returned') {
         throw new Exception("Borrowing already returned, cannot be processed again");
     }
     
@@ -42,8 +42,8 @@ try {
     $stmt_update->bind_param("si", $status, $id);
     $stmt_update->execute();
     
-    // Jika dikembalikan, kembalikan stok barang (aggregate-aware: only restore remaining items)
-    if ($status === 'Dikembalikan') {
+    // If Returned, restore item stock (aggregate-aware: only restore remaining items)
+    if ($status === 'Returned') {
         $tanggal_kembali = date('Y-m-d');
         $stmt_tgl = $conn->prepare("UPDATE peminjaman SET tanggal_kembali=? WHERE id=?");
         $stmt_tgl->bind_param("si", $tanggal_kembali, $id);
@@ -55,10 +55,10 @@ try {
                 COALESCE((
                     SELECT SUM(dr.jumlah_kembali) FROM detail_pengembalian dr
                     JOIN pengembalian p ON dr.pengembalian_id = p.id
-                    WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Selesai'
+                    WHERE p.peminjaman_id = ? AND dr.barang_id = pu.barang_id AND p.status = 'Completed'
                 ), 0) as already_returned
             FROM peminjaman_units pu
-            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
             GROUP BY pu.barang_id
         ");
         $stmt_detail->bind_param("ii", $id, $id);
@@ -78,12 +78,12 @@ try {
         }
         
         // Finalize any pending pengembalian records
-        $stmt_finalize = $conn->prepare("UPDATE pengembalian SET status = 'Selesai', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek')");
+        $stmt_finalize = $conn->prepare("UPDATE pengembalian SET status = 'Completed', selesai_at = NOW() WHERE peminjaman_id = ? AND status IN ('Submitted', 'Being Inspected')");
         $stmt_finalize->bind_param("i", $id);
         $stmt_finalize->execute();
     }
-    // Jika ditolak, kembalikan stok barang - use approved units from peminjaman_units
-    if ($status === 'Ditolak') {
+    // If Rejected, restore item stock - use approved units from peminjaman_units
+    if ($status === 'Rejected') {
         // Check if peminjaman_units exist (manager already processed approval)
         $chk_units = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
         $chk_units->bind_param("i", $id);
@@ -94,7 +94,7 @@ try {
             $stmt_detail = $conn->prepare("
                 SELECT pu.barang_id, COUNT(pu.id) as jumlah
                 FROM peminjaman_units pu
-                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
                 GROUP BY pu.barang_id
             ");
             $stmt_detail->bind_param("i", $id);
@@ -116,7 +116,7 @@ try {
     $conn->commit();
 
     // Kirim email notifikasi berdasarkan status
-    if ($status === 'Dikembalikan') {
+    if ($status === 'Returned') {
         try {
             require_once __DIR__ . '/../email/send-return-confirmed.php';
             sendReturnConfirmedEmail($conn, $id);
@@ -126,7 +126,7 @@ try {
     }
 
     // Kirim email notifikasi penolakan pengembalian ke user
-    if ($status === 'Ditolak') {
+    if ($status === 'Rejected') {
         try {
             require_once __DIR__ . '/../email/send-rejected.php';
             sendRejectedEmail($conn, $id, 'Return');

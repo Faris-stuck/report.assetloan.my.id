@@ -376,15 +376,17 @@
 
                     res.data.forEach((p, index) => {
                         let statusBadge = 'bg-secondary';
-                        if (p.status === 'Menunggu Persetujuan') statusBadge = 'bg-warning';
-                        else if (p.status === 'Disetujui') statusBadge = 'bg-info';
-                        else if (p.status === 'Sedang Dipinjam') statusBadge = 'bg-primary';
+                        if (p.status === 'Waiting for Approval') statusBadge = 'bg-warning';
+                        else if (p.status === 'Approved') statusBadge = 'bg-info';
+                        else if (p.status === 'Borrowed') statusBadge = 'bg-primary';
                         else if (p.status === 'Overdue' || p.status === 'Due Today') statusBadge = 'bg-danger';
                         else if (p.status.startsWith('Due')) statusBadge = 'bg-warning text-dark';
-                        else if (p.status === 'Sebagian Dikembalikan') statusBadge = 'bg-warning text-dark';
-                        else if (p.status === 'Proses Return') statusBadge = 'bg-info text-dark';
-                        else if (p.status === 'Dikembalikan') statusBadge = 'bg-success';
-                        else if (p.status === 'Ditolak') statusBadge = 'bg-danger';
+                        else if (p.status === 'Partially Returned') statusBadge = 'bg-warning text-dark';
+                        else if (p.status === 'Return in Process') statusBadge = 'bg-info text-dark';
+                        else if (p.status === 'Returned') statusBadge = 'bg-success';
+                        else if (p.status === 'Rejected') statusBadge = 'bg-danger';
+                        else if (p.status === 'Partial Approved') statusBadge = 'bg-info';
+                        else if (p.status === 'Cancelled') statusBadge = 'bg-danger';
 
                         const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
                         const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';

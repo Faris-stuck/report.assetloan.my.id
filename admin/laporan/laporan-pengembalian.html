@@ -376,9 +376,9 @@
 
                     res.data.forEach((p, index) => {
                         let statusBadge = 'bg-secondary';
-                        if (p.status === 'Diajukan') statusBadge = 'bg-warning';
-                        if (p.status === 'Selesai') statusBadge = 'bg-success';
-                        if (p.status === 'Ditolak') statusBadge = 'bg-danger';
+                        if (p.status === 'Submitted') statusBadge = 'bg-warning';
+                        if (p.status === 'Completed') statusBadge = 'bg-success';
+                        if (p.status === 'Rejected') statusBadge = 'bg-danger';
 
                         const tanggalPengajuan = p.diajukan_at_f || formatTanggal(p.diajukan_at) || '-';
 

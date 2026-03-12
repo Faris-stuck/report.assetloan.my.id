@@ -2,13 +2,13 @@
 require_once "../koneksi.php";
 header('Content-Type: application/json');
 
-$status = $_GET['status'] ?? 'Menunggu Persetujuan';
+$status = $_GET['status'] ?? 'Waiting for Approval';
 $include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
 
 try {
     // Query untuk mengambil data peminjaman dengan detail
     if ($include_due) {
-        // Include all active statuses: Sedang Dipinjam + Due% + Overdue
+        // Include all active statuses: Borrowed + Due% + Overdue
         $stmt = $conn->prepare("
             SELECT
                 p.id,
@@ -20,7 +20,7 @@ try {
                 p.status,
                 p.catatan
             FROM peminjaman p
-            WHERE (p.status = 'Sedang Dipinjam' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
+            WHERE (p.status = 'Borrowed' OR p.status LIKE 'Due%' OR p.status = 'Overdue')
             ORDER BY p.rencana_kembali ASC
         ");
     } else {
@@ -51,14 +51,14 @@ try {
                 CONCAT(
                     CASE
                         WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
-                        THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                        THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
                         ELSE dp.jumlah
                     END,
                     'x ', b.nama_barang, ' (', dp.lokasi, ')'
                 ) as item,
                 CASE
                     WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
-                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
                     ELSE dp.jumlah
                 END as jumlah
             FROM detail_peminjaman dp

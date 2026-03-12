@@ -19,17 +19,16 @@ try {
     // Optional filters
     $tanggal_awal  = isset($_GET['tanggal_awal'])  ? trim($_GET['tanggal_awal'])  : null;
     $tanggal_akhir = isset($_GET['tanggal_akhir']) ? trim($_GET['tanggal_akhir']) : null;
-    $kategori      = isset($_GET['kategori'])      ? trim($_GET['kategori'])      : null;
 
     // ── 1. Status peminjaman counts (with optional date range, user-filtered) ──
     if ($tanggal_awal && $tanggal_akhir) {
         $stmt = $conn->prepare("
             SELECT
-                SUM(CASE WHEN status = 'Menunggu Persetujuan' THEN 1 ELSE 0 END) AS menunggu,
-                SUM(CASE WHEN status IN ('Sedang Dipinjam','Proses Return','Sebagian Dikembalikan')
+                SUM(CASE WHEN status = 'Waiting for Approval' THEN 1 ELSE 0 END) AS menunggu,
+                SUM(CASE WHEN status IN ('Borrowed','Return in Process','Partially Returned')
                           OR status LIKE 'Due%' OR status = 'Overdue' THEN 1 ELSE 0 END) AS dipinjam,
-                SUM(CASE WHEN status = 'Dikembalikan' THEN 1 ELSE 0 END) AS dikembalikan,
-                SUM(CASE WHEN status = 'Ditolak'      THEN 1 ELSE 0 END) AS ditolak
+                SUM(CASE WHEN status = 'Returned' THEN 1 ELSE 0 END) AS dikembalikan,
+                SUM(CASE WHEN status = 'Rejected'      THEN 1 ELSE 0 END) AS ditolak
             FROM peminjaman
             WHERE user_id = ? AND tanggal_pinjam BETWEEN ? AND ?
         ");
@@ -37,11 +36,11 @@ try {
     } else {
         $stmt = $conn->prepare("
             SELECT
-                SUM(CASE WHEN status = 'Menunggu Persetujuan' THEN 1 ELSE 0 END) AS menunggu,
-                SUM(CASE WHEN status IN ('Sedang Dipinjam','Proses Return','Sebagian Dikembalikan')
+                SUM(CASE WHEN status = 'Waiting for Approval' THEN 1 ELSE 0 END) AS menunggu,
+                SUM(CASE WHEN status IN ('Borrowed','Return in Process','Partially Returned')
                           OR status LIKE 'Due%' OR status = 'Overdue' THEN 1 ELSE 0 END) AS dipinjam,
-                SUM(CASE WHEN status = 'Dikembalikan' THEN 1 ELSE 0 END) AS dikembalikan,
-                SUM(CASE WHEN status = 'Ditolak'      THEN 1 ELSE 0 END) AS ditolak
+                SUM(CASE WHEN status = 'Returned' THEN 1 ELSE 0 END) AS dikembalikan,
+                SUM(CASE WHEN status = 'Rejected'      THEN 1 ELSE 0 END) AS ditolak
             FROM peminjaman
             WHERE user_id = ?
         ");
@@ -58,22 +57,20 @@ try {
     // per_status: DATEDIFF-based due-date classification for the Borrowing Status chart (user-filtered)
     // Active loans bucketed using nearest expected_return from peminjaman_units, falling back to rencana_kembali.
     $_dueCase = "CASE
-            WHEN p.status = 'Menunggu Persetujuan' THEN 'Pending Approval'
-            WHEN p.status = 'Ditolak' THEN 'Rejected'
-            WHEN p.status IN ('Dikembalikan','Sebagian Rusak','Semua Rusak','Selesai') THEN 'Returned'
+            WHEN p.status = 'Waiting for Approval' THEN 'Pending Approval'
+            WHEN p.status = 'Rejected' THEN 'Rejected'
+            WHEN p.status IN ('Returned','Partially Damaged','Fully Damaged','Completed') THEN 'Returned'
             WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) < 0  THEN 'Overdue'
             WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 0  THEN 'Due Today'
             WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) = 1  THEN 'Due Tomorrow'
             WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) BETWEEN 2 AND 7
-                THEN CONCAT('Due ', DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()), ' Day')
-            WHEN DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) > 7
                 THEN CONCAT('Due In ', DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()), ' Days')
             ELSE p.status
         END";
     $_joinPuNear = "LEFT JOIN (
             SELECT peminjaman_id, MIN(expected_return) AS nearest_return
             FROM peminjaman_units
-            WHERE return_status NOT IN ('Dikembalikan','Rusak','Ditolak')
+            WHERE return_status NOT IN ('Returned','Damaged','Rejected')
             GROUP BY peminjaman_id
         ) pu_near ON p.id = pu_near.peminjaman_id";
     if ($tanggal_awal && $tanggal_akhir) {
@@ -99,15 +96,12 @@ try {
     }
     $data['per_status'] = $per_status;
 
-    // ── 2. Distinct categories from items this user borrowed (for dropdown) ────
+    // ── 2. Distinct categories from all barang in system (for dropdown) ────
     $stmt = $conn->prepare("
-        SELECT DISTINCT b.kategori FROM barang b
-        INNER JOIN detail_peminjaman dp ON dp.barang_id = b.id
-        INNER JOIN peminjaman p ON p.id = dp.peminjaman_id
-        WHERE p.user_id = ? AND b.kategori IS NOT NULL AND b.kategori <> ''
-        ORDER BY b.kategori ASC
+        SELECT DISTINCT kategori FROM barang
+        WHERE kategori IS NOT NULL AND kategori <> ''
+        ORDER BY kategori ASC
     ");
-    $stmt->bind_param('i', $user_id);
     $stmt->execute();
     $catResult = $stmt->get_result();
     $categories = [];
@@ -116,47 +110,24 @@ try {
     }
     $data['categories'] = $categories;
 
-    // ── 3. Top 10 items this user borrowed (optional kategori filter) ──────────
-    if ($kategori && $kategori !== 'all') {
-        $stmt = $conn->prepare("
-            SELECT b.nama_barang AS nama,
-                   COUNT(dp.id)  AS jumlah_peminjaman,
-                   b.stok_tersedia
-            FROM detail_peminjaman dp
-            JOIN barang b ON b.id = dp.barang_id
-            JOIN peminjaman p ON p.id = dp.peminjaman_id
-            WHERE p.user_id = ? AND b.kategori = ?
-            GROUP BY dp.barang_id, b.nama_barang, b.stok_tersedia
-            ORDER BY jumlah_peminjaman DESC
-            LIMIT 10
-        ");
-        $stmt->bind_param('is', $user_id, $kategori);
-    } else {
-        $stmt = $conn->prepare("
-            SELECT b.nama_barang AS nama,
-                   COUNT(dp.id)  AS jumlah_peminjaman,
-                   b.stok_tersedia
-            FROM detail_peminjaman dp
-            JOIN barang b ON b.id = dp.barang_id
-            JOIN peminjaman p ON p.id = dp.peminjaman_id
-            WHERE p.user_id = ?
-            GROUP BY dp.barang_id, b.nama_barang, b.stok_tersedia
-            ORDER BY jumlah_peminjaman DESC
-            LIMIT 10
-        ");
-        $stmt->bind_param('i', $user_id);
-    }
-    $stmt->execute();
-    $topResult = $stmt->get_result();
+    // ── 3. Top 5 Most Frequently Borrowed Items (lifetime, no filters) ──────────
+    $stmtTop = $conn->prepare("
+        SELECT b.nama_barang, SUM(dp.jumlah) AS total_qty_dipinjam, MAX(p.created_at) AS last_borrowed
+        FROM detail_peminjaman dp
+        JOIN barang b ON b.id = dp.barang_id
+        JOIN peminjaman p ON p.id = dp.peminjaman_id
+        GROUP BY b.id, b.nama_barang
+        ORDER BY total_qty_dipinjam DESC, last_borrowed DESC
+        LIMIT 5
+    ");
+    $stmtTop->execute();
+    $topResult = $stmtTop->get_result();
     $top_barang = [];
     while ($r = $topResult->fetch_assoc()) {
-        $top_barang[] = [
-            'nama'              => $r['nama'],
-            'jumlah_peminjaman' => (int)$r['jumlah_peminjaman'],
-            'stok_tersedia'     => (int)$r['stok_tersedia']
-        ];
+        $top_barang[] = ['nama' => $r['nama_barang'], 'total_qty' => (int)$r['total_qty_dipinjam']];
     }
     $data['top_barang'] = $top_barang;
+    $stmtTop->close();
 
     // ── 4. All items this user ever borrowed (for Data Barang chart) ──────────
     $stmt = $conn->prepare("
@@ -203,6 +174,115 @@ try {
         ];
     }
     $data['available_barang'] = $available_barang;
+
+    // ===== LOAN VS RETURN RATIO PIE CHART =====
+    $ratioStart = isset($_GET['ratio_start']) ? $_GET['ratio_start'] : date('Y-m-d', strtotime('-29 days'));
+    $ratioEnd = isset($_GET['ratio_end']) ? $_GET['ratio_end'] : date('Y-m-d');
+
+    $stmtBorrowed = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status = 'Borrowed' AND p.tanggal_pinjam BETWEEN ? AND ?");
+    $stmtBorrowed->bind_param('iss', $user_id, $ratioStart, $ratioEnd);
+    $stmtBorrowed->execute();
+    $borrowedCount = (int)$stmtBorrowed->get_result()->fetch_assoc()['total'];
+    $stmtBorrowed->close();
+
+    $stmtReturned = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status = 'Returned' AND p.tanggal_pinjam BETWEEN ? AND ?");
+    $stmtReturned->bind_param('iss', $user_id, $ratioStart, $ratioEnd);
+    $stmtReturned->execute();
+    $returnedCount = (int)$stmtReturned->get_result()->fetch_assoc()['total'];
+    $stmtReturned->close();
+
+    $data['loan_vs_return_ratio'] = [
+        'borrowed' => $borrowedCount,
+        'returned' => $returnedCount
+    ];
+
+    // ===== APPROVAL STATUS PIE CHART =====
+    $approvalStart = isset($_GET['approval_start']) ? $_GET['approval_start'] : date('Y-m-d', strtotime('-29 days'));
+    $approvalEnd = isset($_GET['approval_end']) ? $_GET['approval_end'] : date('Y-m-d');
+
+    $stmtApprove = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status NOT IN ('Waiting for Approval','Partial Approved','Rejected') AND p.tanggal_disetujui BETWEEN ? AND ?");
+    $stmtApprove->bind_param('iss', $user_id, $approvalStart, $approvalEnd);
+    $stmtApprove->execute();
+    $approveCount = (int)$stmtApprove->get_result()->fetch_assoc()['total'];
+    $stmtApprove->close();
+
+    $stmtPartial = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status = 'Partial Approved' AND p.tanggal_disetujui BETWEEN ? AND ?");
+    $stmtPartial->bind_param('iss', $user_id, $approvalStart, $approvalEnd);
+    $stmtPartial->execute();
+    $partialCount = (int)$stmtPartial->get_result()->fetch_assoc()['total'];
+    $stmtPartial->close();
+
+    $rejectedEnd = $approvalEnd . ' 23:59:59';
+    $stmtRejected = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status = 'Rejected' AND p.created_at BETWEEN ? AND ?");
+    $stmtRejected->bind_param('iss', $user_id, $approvalStart, $rejectedEnd);
+    $stmtRejected->execute();
+    $rejectedCount = (int)$stmtRejected->get_result()->fetch_assoc()['total'];
+    $stmtRejected->close();
+
+    $data['approval_status'] = [
+        'approve' => $approveCount,
+        'partial_approved' => $partialCount,
+        'rejected' => $rejectedCount
+    ];
+
+    // ===== LOAN STATUS TREND =====
+    $trendMonth = isset($_GET['trend_month']) ? $_GET['trend_month'] : date('Y-m');
+    $trendMonthStart = $trendMonth . '-01';
+    $trendMonthEnd = date('Y-m-t', strtotime($trendMonthStart)) . ' 23:59:59';
+
+    $trendCase = "CASE
+        WHEN p.status IN ('Borrowed','Returned') THEN 'Approve'
+        WHEN p.status = 'Partial Approved' THEN 'Partial Approved'
+        WHEN p.status = 'Rejected' THEN 'Rejected'
+        ELSE NULL END";
+
+    $trendDateCol = "CASE
+        WHEN p.status IN ('Borrowed','Returned','Partial Approved') THEN p.tanggal_disetujui
+        WHEN p.status = 'Rejected' THEN p.created_at
+        ELSE NULL END";
+
+    $baseline = [];
+    $sqlB = "SELECT $trendCase AS status_group, COUNT(*) AS cnt
+             FROM peminjaman p
+             WHERE ($trendCase) IS NOT NULL
+               AND ($trendDateCol) < ?
+               AND p.user_id = ?
+             GROUP BY status_group";
+    $stmtB = $conn->prepare($sqlB);
+    $stmtB->bind_param('si', $trendMonthStart, $user_id);
+    $stmtB->execute();
+    $resB = $stmtB->get_result();
+    while ($row = $resB->fetch_assoc()) {
+        $baseline[$row['status_group']] = (int)$row['cnt'];
+    }
+    $stmtB->close();
+
+    $weekRaw = [];
+    $sqlW = "SELECT LEAST(CEIL(DAY(($trendDateCol)) / 7.0), 4) AS week_num,
+                    $trendCase AS status_group, COUNT(*) AS cnt
+             FROM peminjaman p
+             WHERE ($trendCase) IS NOT NULL
+               AND ($trendDateCol) >= ?
+               AND ($trendDateCol) <= ?
+               AND p.user_id = ?
+             GROUP BY week_num, status_group
+             ORDER BY week_num, status_group";
+    $stmtW = $conn->prepare($sqlW);
+    $stmtW->bind_param('ssi', $trendMonthStart, $trendMonthEnd, $user_id);
+    $stmtW->execute();
+    $resW = $stmtW->get_result();
+    while ($row = $resW->fetch_assoc()) {
+        $w = (int)$row['week_num'];
+        if (!isset($weekRaw[$w])) $weekRaw[$w] = [];
+        $weekRaw[$w][$row['status_group']] = (int)$row['cnt'];
+    }
+    $stmtW->close();
+
+    $data['loan_status_trend'] = [
+        'month' => $trendMonth,
+        'baseline' => $baseline,
+        'raw' => $weekRaw
+    ];
 
     echo json_encode(['status' => true, 'data' => $data]);
 

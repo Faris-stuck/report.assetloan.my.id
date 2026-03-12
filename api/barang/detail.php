@@ -50,9 +50,9 @@ $q = $conn->query("
   JOIN peminjaman_units pu ON pu.peminjaman_id = pm.id
     AND pu.barang_id = dp.barang_id
   WHERE dp.barang_id = $id
-    AND pm.status NOT IN ('Menunggu Persetujuan', 'Ditolak')
-    AND pu.approval_status = 'Disetujui'
-    AND pu.return_status NOT IN ('Dikembalikan', 'Rusak')
+    AND pm.status NOT IN ('Waiting for Approval', 'Rejected')
+    AND pu.approval_status = 'Approved'
+    AND pu.return_status NOT IN ('Returned', 'Damaged')
   GROUP BY pm.id, pm.kode_peminjaman, u.nama,
            pm.tanggal_pinjam, pm.rencana_kembali, pm.status
   ORDER BY pm.tanggal_pinjam DESC

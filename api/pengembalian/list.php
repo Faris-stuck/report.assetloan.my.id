@@ -1,10 +1,10 @@
 <?php
 /**
- * API: List pengembalian yang Diajukan (Admin/PIC Barang)
+ * API: List pengembalian yang Submitted (Admin/PIC Barang)
  * Endpoint: /api/pengembalian/list.php
  *
  * Query params:
- * - status (optional) default 'Diajukan'
+ * - status (optional) default 'Submitted'
  */
 
 require_once "../koneksi.php";
@@ -23,14 +23,14 @@ try {
     exit;
 }
 
-$status_input = $_GET['status'] ?? 'Diajukan';
-// Support comma-separated statuses: e.g., "Diajukan,Dicek"
+$status_input = $_GET['status'] ?? 'Submitted';
+// Support comma-separated statuses: e.g., "Submitted,Being Inspected"
 $statuses = array_map('trim', explode(',', $status_input));
 $statuses = array_filter(array_unique($statuses)); // remove empty/duplicate values
 
-// If empty, default to just Diajukan
+// If empty, default to just Submitted
 if (empty($statuses)) {
-    $statuses = ['Diajukan'];
+    $statuses = ['Submitted'];
 }
 
 // Build WHERE clause with multiple status values
@@ -57,13 +57,13 @@ $sql = "
         (
             SELECT COUNT(*)
             FROM peminjaman_units pu2
-            WHERE pu2.peminjaman_id = p.id AND pu2.approval_status = 'Disetujui'
+            WHERE pu2.peminjaman_id = p.id AND pu2.approval_status = 'Approved'
         ) as total_items,
         (
             SELECT COALESCE(SUM(dr.jumlah_kembali), 0)
             FROM detail_pengembalian dr
             JOIN pengembalian kr ON kr.id = dr.pengembalian_id
-            WHERE kr.peminjaman_id = p.id AND kr.status = 'Selesai'
+            WHERE kr.peminjaman_id = p.id AND kr.status = 'Completed'
         ) as total_finalized
     FROM pengembalian k
     JOIN peminjaman p ON p.id = k.peminjaman_id
@@ -134,10 +134,10 @@ while ($row = $res->fetch_assoc()) {
     $display_status_en = $row['status_pengembalian'];
     if ($total_rusak > 0 && $total_kembali > 0) {
         if ($total_rusak >= $total_kembali) {
-            $display_status = 'Semua Rusak';
+            $display_status = 'Fully Damaged';
             $display_status_en = 'Fully Damaged';
         } else {
-            $display_status = 'Sebagian Rusak';
+            $display_status = 'Partially Damaged';
             $display_status_en = 'Partially Damaged';
         }
     }

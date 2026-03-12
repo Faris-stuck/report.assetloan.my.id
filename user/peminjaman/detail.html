@@ -66,30 +66,30 @@
         // === STATUS DISPLAY HELPERS (database-driven, no hardcode) ===
         function getDisplayStatus(dbStatus) {
             const map = {
-                'Menunggu Persetujuan': 'Pending Approval',
-                'Disetujui': 'Pending Approval',
+                'Waiting for Approval': 'Waiting for Approval',
+                'Approved': 'Approved',
                 'Partial Approved': 'Partial Approved',
-                'Sedang Dipinjam': 'Currently Borrowed',
-                'Dikembalikan': 'Returned',
-                'Ditolak': 'Rejected',
-                'Proses Return': 'Return In Progress',
-                'Sebagian Dikembalikan': 'Partially Returned',
-                'Sebagian Rusak': 'Partially Damaged',
-                'Semua Rusak': 'Fully Damaged',
+                'Currently Borrowed': 'Currently Borrowed',
+                'Returned': 'Returned',
+                'Rejected': 'Rejected',
+                'Return in Process': 'Return in Process',
+                'Partially Returned': 'Partially Returned',
+                'Partially Damaged': 'Partially Damaged',
+                'Fully Damaged': 'Fully Damaged',
                 'Overdue': 'Overdue',
                 'Due Today': 'Due Today',
-                'Belum Dikembalikan': 'Not Yet Returned'
+                'Not Yet Returned': 'Not Yet Returned'
             };
             return map[dbStatus] || dbStatus || '-';
         }
 
         function getStatusBadgeClass(dbStatus) {
             const ds = getDisplayStatus(dbStatus);
-            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged') return 'badge bg-danger';
+            if (ds === 'Overdue' || ds === 'Due Today' || ds === 'Rejected' || ds === 'Fully Damaged' || ds === 'Not Yet Returned' || ds === 'Cancelled') return 'badge bg-danger';
             if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'badge bg-warning text-dark';
-            if (ds === 'Pending Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'badge bg-warning text-dark';
+            if (ds === 'Waiting for Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'badge bg-warning text-dark';
             if (ds === 'Currently Borrowed') return 'badge bg-primary';
-            if (ds === 'Return In Progress' || ds === 'Partial Approved') return 'badge bg-info';
+            if (ds === 'Return in Process' || ds === 'Partial Approved') return 'badge bg-info text-dark';
             if (ds === 'Returned') return 'badge bg-success';
             return 'badge bg-secondary';
         }

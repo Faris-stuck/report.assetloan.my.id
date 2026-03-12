@@ -363,7 +363,7 @@
 
         function loadPengembalian() {
             // Fetch only completely new returns (Diajukan), not ones being examined (Dicek) or finalized (Selesai)
-            fetch(API + '/list.php?status=Diajukan', { credentials: 'same-origin' })
+            fetch(API + '/list.php?status=Submitted', { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 403) {
                         window.location.href = BASE_URL + '/index.html';
@@ -390,11 +390,11 @@
                         const status = p.display_status_en || p.display_status || p.status_pengembalian || p.status_peminjaman || '-';
                         const s = (status || '').toString().toLowerCase();
                         let badge = `<span class="badge bg-secondary">${status}</span>`;
-                        if (s.includes('menunggu') || s.includes('pending')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('diajukan') || s.includes('submitted')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('sebagian') || s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('selesai') && !s.includes('sebagian')) badge = `<span class="badge bg-success text-white">${status}</span>`;
-                        else if (s.includes('diproses') || s.includes('dicek')) badge = `<span class="badge bg-info text-dark">${status}</span>`;
+                        if (s.includes('pending') || s === 'submitted') badge = `<span class="badge bg-warning text-dark">${status}</span>`;
+                        else if (s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
+                        else if (s === 'completed') badge = `<span class="badge bg-success text-white">${status}</span>`;
+                        else if (s === 'rejected') badge = `<span class="badge bg-danger">${status}</span>`;
+                        else if (s === 'being inspected') badge = `<span class="badge bg-info text-dark">${status}</span>`;
                         return `
                         <tr data-pengembalian-id="${p.pengembalian_id}">
                             <td><code>${p.kode_pengembalian}</code></td>
@@ -564,7 +564,7 @@
                 }
 
                 // Determine kondisi_kembali based on whether there is damage
-                const kondisi_kembali = damaged > 0 ? 'Rusak' : 'Baik';
+                const kondisi_kembali = damaged > 0 ? 'Damaged' : 'Good';
 
                 items.push({
                     barang_id,

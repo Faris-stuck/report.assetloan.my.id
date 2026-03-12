@@ -15,41 +15,41 @@ try {
     
     $stats = [];
     
-    // 1. Menunggu Persetujuan (pending approval)
+    // 1. Waiting for Approval (pending approval)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
         FROM peminjaman 
-        WHERE status = 'Menunggu Persetujuan'
+        WHERE status = 'Waiting for Approval'
     ");
     $stmt->execute();
     $result = $stmt->get_result();
     $stats['menunggu_persetujuan'] = $result->fetch_assoc()['total'] ?? 0;
     
-    // 2. Disetujui/Menunggu Admin (approved, waiting for admin)
+    // 2. Approved/Waiting for Admin (approved, waiting for admin)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
-        FROM peminjaman 
-        WHERE status = 'Disetujui' OR status = 'Menunggu Admin'
+        From peminjaman 
+        WHERE status = 'Approved' OR status = 'Waiting for Admin'
     ");
     $stmt->execute();
     $result = $stmt->get_result();
     $stats['disetujui'] = $result->fetch_assoc()['total'] ?? 0;
     
-    // 3. Ditolak (rejected)
+    // 3. Rejected (rejected)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
         FROM peminjaman 
-        WHERE status = 'Ditolak'
+        WHERE status = 'Rejected'
     ");
     $stmt->execute();
     $result = $stmt->get_result();
     $stats['ditolak'] = $result->fetch_assoc()['total'] ?? 0;
     
-    // 4. Sedang Dipinjam (active loans)
+    // 4. Borrowed (active loans)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total 
         FROM peminjaman 
-        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')
+        WHERE (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
     ");
     $stmt->execute();
     $result = $stmt->get_result();
@@ -89,7 +89,7 @@ try {
             COUNT(*) as jumlah,
             GROUP_CONCAT(p.kode_peminjaman) as kode_list
         FROM peminjaman p
-        WHERE p.status = 'Menunggu Persetujuan'
+        WHERE p.status = 'Waiting for Approval'
         GROUP BY p.nama_peminjam
         ORDER BY jumlah DESC
         LIMIT 5

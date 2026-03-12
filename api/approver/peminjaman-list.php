@@ -16,7 +16,7 @@ if (session_status() === PHP_SESSION_NONE) {
 try {
     SessionValidator::requireRole(['admin', 'manager']);
     
-    $status = $_GET['status'] ?? 'Menunggu Persetujuan';
+    $status = $_GET['status'] ?? 'Waiting for Approval';
     $limit = intval($_GET['limit'] ?? 10);
     $offset = intval($_GET['offset'] ?? 0);
     

@@ -13,15 +13,15 @@ try {
 
     $stats = [];
 
-    // Sedang Dipinjam
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')");
+    // Borrowed
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')");
     $stmt->execute();
     $stats['sedang_dipinjam'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
 
-    // Dikembalikan hari ini
+    // Returned today
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman
-        WHERE status = 'Dikembalikan' AND DATE(tanggal_kembali) = CURDATE()
+        WHERE status = 'Returned' AND DATE(tanggal_kembali) = CURDATE()
     ");
     $stmt->execute();
     $stats['dikembalikan_hari_ini'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
@@ -43,11 +43,11 @@ try {
     $stmt->execute();
     $stats['stok_menipis'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
 
-    // Recent peminjaman sedang dipinjam (untuk pengembalian)
+    // Recent active borrowings (for return processing)
     $stmt = $conn->prepare("
         SELECT id, kode_peminjaman, nama_peminjam, status, tanggal_pinjam, rencana_kembali
         FROM peminjaman
-        WHERE (status = 'Sedang Dipinjam' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Sebagian Dikembalikan' OR status = 'Proses Return')
+        WHERE (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
         ORDER BY rencana_kembali ASC
         LIMIT 5
     ");

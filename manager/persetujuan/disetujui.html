@@ -293,7 +293,7 @@
 
     <script>
         (function () {
-            const api = BASE_URL + '/api/approver/list-by-status.php?status=' + encodeURIComponent('Disetujui');
+            const api = BASE_URL + '/api/approver/list-by-status.php?status=' + encodeURIComponent('Approved');
             function escapeHtml(s) { if (!s && s !== 0) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
             function readField(item, keys) { for (const k of keys) if (item[k] !== undefined) return item[k]; return ''; }
             async function load() {
@@ -314,8 +314,19 @@
                         const barang = escapeHtml(readField(item, ['barang', 'items']));
                         const tanggal = escapeHtml(readField(item, ['tanggal_pinjam', 'tanggal']));
                         const status = escapeHtml(item.status || '');
+                        let statusBadge = 'bg-secondary';
+                        if (status === 'Borrowed' || status === 'Currently Borrowed') statusBadge = 'bg-primary';
+                        else if (status === 'Waiting for Approval') statusBadge = 'bg-warning text-dark';
+                        else if (status === 'Approved' || status === 'Partial Approved') statusBadge = 'bg-info';
+                        else if (status === 'Returned') statusBadge = 'bg-success';
+                        else if (status === 'Rejected') statusBadge = 'bg-danger';
+                        else if (status === 'Return in Process') statusBadge = 'bg-info text-dark';
+                        else if (status === 'Partially Returned') statusBadge = 'bg-warning text-dark';
+                        else if (status === 'Overdue' || status === 'Due Today') statusBadge = 'bg-danger';
+                        else if (status.startsWith('Due')) statusBadge = 'bg-warning text-dark';
+                        else if (status === 'Cancelled') statusBadge = 'bg-danger';
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `<td>${idx + 1}</td><td>${kode}</td><td>${nama}</td><td>${nrp}</td><td>${barang}</td><td>${tanggal}</td><td>${status}</td>`;
+                        tr.innerHTML = `<td>${idx + 1}</td><td>${kode}</td><td>${nama}</td><td>${nrp}</td><td>${barang}</td><td>${tanggal}</td><td><span class="badge ${statusBadge}">${status}</span></td>`;
                         tbody.appendChild(tr);
                     });
                 } catch (e) {

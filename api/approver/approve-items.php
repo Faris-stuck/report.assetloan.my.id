@@ -12,8 +12,8 @@
  *   - Creates peminjaman_units rows if they don't exist yet (pending borrowing)
  *   - Sets approval_status per unit
  *   - Determines overall peminjaman status:
- *       All approved => Sedang Dipinjam
- *       All rejected => Ditolak
+ *       All approved => Borrowed
+ *       All rejected => Rejected
  *       Mixed => Partial Approved
  *   - Restores stock for rejected units
  *   - Stores rejection_reason on peminjaman if any rejected
@@ -43,7 +43,7 @@ try {
         if (!isset($item['detail_peminjaman_id']) || !isset($item['unit_number']) || !isset($item['status'])) {
             throw new Exception("Item at index $idx missing required fields (detail_peminjaman_id, unit_number, status).");
         }
-        if (!in_array($item['status'], ['approved', 'rejected', 'Disetujui', 'Ditolak'])) {
+        if (!in_array($item['status'], ['approved', 'rejected', 'Approved', 'Rejected'])) {
             throw new Exception("Item at index $idx has invalid status: " . $item['status']);
         }
     }
@@ -60,8 +60,8 @@ try {
         throw new Exception("Borrowing not found.");
     }
     
-    if ($peminjaman['status'] !== 'Menunggu Persetujuan') {
-        throw new Exception("Borrowing status is '{$peminjaman['status']}', can only process 'Menunggu Persetujuan'.");
+    if ($peminjaman['status'] !== 'Waiting for Approval') {
+        throw new Exception("Borrowing status is '{$peminjaman['status']}', can only process 'Waiting for Approval'.");
     }
     
     // 2. Get detail_peminjaman rows
@@ -97,7 +97,7 @@ try {
         $stmt_insert_unit = $conn->prepare("
             INSERT INTO peminjaman_units 
             (peminjaman_id, detail_peminjaman_id, barang_id, unit_number, unit_display, return_status, expected_return, created_at) 
-            VALUES (?, ?, ?, ?, ?, 'Menunggu Persetujuan', ?, NOW())
+            VALUES (?, ?, ?, ?, ?, 'Waiting for Approval', ?, NOW())
         ");
         
         foreach ($detail_rows as $detail) {
@@ -141,15 +141,15 @@ try {
     foreach ($items_decisions as $item) {
         $detail_id = intval($item['detail_peminjaman_id']);
         $unit_num = intval($item['unit_number']);
-        $decision = $item['status']; // 'approved'/'Disetujui' or 'rejected'/'Ditolak'
+        $decision = $item['status']; // 'approved'/'Approved' or 'rejected'/'Rejected'
         
-        if ($decision === 'approved' || $decision === 'Disetujui') {
-            $approval_status = 'Disetujui';
-            $return_status = 'Belum Dikembalikan'; // Approved = ready to be borrowed
+        if ($decision === 'approved' || $decision === 'Approved') {
+            $approval_status = 'Approved';
+            $return_status = 'Not Yet Returned'; // Approved = ready to be borrowed
             $approved_count++;
         } else {
-            $approval_status = 'Ditolak';
-            $return_status = 'Ditolak'; // Rejected
+            $approval_status = 'Rejected';
+            $return_status = 'Rejected'; // Rejected
             $rejected_count++;
             
             // Track stock to restore
@@ -176,9 +176,9 @@ try {
     
     // 6. Determine overall status
     if ($approved_count === $total_count) {
-        $overall_status = 'Sedang Dipinjam';
+        $overall_status = 'Borrowed';
     } elseif ($rejected_count === $total_count) {
-        $overall_status = 'Ditolak';
+        $overall_status = 'Rejected';
     } else {
         $overall_status = 'Partial Approved';
     }
@@ -220,7 +220,7 @@ try {
     $conn->commit();
     
     // 9. Send email notifications
-    if ($overall_status === 'Sedang Dipinjam' || $overall_status === 'Partial Approved') {
+    if ($overall_status === 'Borrowed' || $overall_status === 'Partial Approved') {
         // Some items approved - send approval email
         try {
             if (file_exists(__DIR__ . '/../email/send-approved.php')) {
@@ -232,7 +232,7 @@ try {
         }
     }
     
-    if ($overall_status === 'Ditolak') {
+    if ($overall_status === 'Rejected') {
         // All rejected - send rejection email
         try {
             if (file_exists(__DIR__ . '/../email/send-rejected.php')) {

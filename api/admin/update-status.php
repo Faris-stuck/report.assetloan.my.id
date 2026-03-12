@@ -38,8 +38,8 @@ if (!$res_cur || $res_cur->num_rows === 0) {
 $current = $res_cur->fetch_assoc()['status'];
 
 // Validasi alur untuk Admin
-if ($current === 'Disetujui') {
-    if (!in_array($new_status, ['Sedang Dipinjam', 'Ditolak'], true)) {
+if ($current === 'Approved') {
+    if (!in_array($new_status, ['Borrowed', 'Rejected'], true)) {
         echo json_encode(["status" => false, "message" => "From Approved, can only change to Active Borrowing or Rejected"]);
         exit;
     }
@@ -56,15 +56,15 @@ try {
     $stmt->bind_param("si", $new_status, $id);
     $stmt->execute();
 
-    // Jika status disetujui jadi Sedang Dipinjam, update tanggal persetujuan
-    if ($new_status === 'Sedang Dipinjam') {
+    // If status approved to Borrowed, update approval date
+    if ($new_status === 'Borrowed') {
         $stmt_approve = $conn->prepare("UPDATE peminjaman SET tanggal_disetujui = CURDATE() WHERE id = ?");
         $stmt_approve->bind_param("i", $id);
         $stmt_approve->execute();
     }
 
-    // Jika status ditolak, kembalikan stok barang - use approved units from peminjaman_units
-    if ($new_status === 'Ditolak') {
+    // If status rejected, restore item stock - use approved units from peminjaman_units
+    if ($new_status === 'Rejected') {
         // Check if peminjaman_units exist (manager already processed approval)
         $chk_units = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
         $chk_units->bind_param("i", $id);
@@ -75,7 +75,7 @@ try {
             $stmt_detail = $conn->prepare("
                 SELECT pu.barang_id, COUNT(pu.id) as jumlah
                 FROM peminjaman_units pu
-                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Disetujui'
+                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
                 GROUP BY pu.barang_id
             ");
             $stmt_detail->bind_param("i", $id);
@@ -98,7 +98,7 @@ try {
     $conn->commit();
 
     // Kirim email notifikasi setelah berhasil
-    if ($new_status === 'Sedang Dipinjam') {
+    if ($new_status === 'Borrowed') {
         try {
             require_once __DIR__ . '/../email/send-approved.php';
             sendApprovedEmail($conn, $id);
@@ -108,7 +108,7 @@ try {
     }
 
     // Kirim email notifikasi penolakan ke user
-    if ($new_status === 'Ditolak') {
+    if ($new_status === 'Rejected') {
         try {
             require_once __DIR__ . '/../email/send-rejected.php';
             sendRejectedEmail($conn, $id, 'Loan');

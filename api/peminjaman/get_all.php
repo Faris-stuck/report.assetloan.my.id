@@ -98,7 +98,7 @@ try {
                 b.nama_barang,
                 CASE
                     WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
-                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
                     ELSE dp.jumlah
                 END as jumlah,
                 dp.lokasi
@@ -125,8 +125,8 @@ try {
         }
 
         // Aggregate returns from ALL FINALIZED pengembalian records for this peminjaman
-        // Only count pengembalian with status='Selesai' (completed/finalized by PIC/Admin)
-        // Pengembalian with status 'Diajukan', 'Dicek' are still pending and not included
+        // Only count pengembalian with status='Completed' (completed/finalized by PIC/Admin)
+        // Pengembalian with status 'Submitted', 'Being Inspected' are still pending and not included
         $agg = $conn->prepare("
             SELECT 
                 SUM(dp.jumlah_kembali) as total_kembali,
@@ -134,7 +134,7 @@ try {
                 COUNT(DISTINCT p.id) as has_selesai
             FROM detail_pengembalian dp
             JOIN pengembalian p ON dp.pengembalian_id = p.id
-            WHERE p.peminjaman_id = ? AND p.status = 'Selesai'
+            WHERE p.peminjaman_id = ? AND p.status = 'Completed'
         ");
         $agg->bind_param("i", $row['id']);
         $agg->execute();
@@ -171,7 +171,7 @@ try {
             $pengembalian_status = $hk['status'];
             
             // Check if this return is ACTIVE (not yet finalized)
-            if (in_array($pengembalian_status, ['Diajukan', 'Dicek', 'Sebagian Dikembalikan', 'Sebagian Rusak'])) {
+            if (in_array($pengembalian_status, ['Submitted', 'Being Inspected', 'Partially Returned', 'Partially Damaged'])) {
                 $has_active_return = true;
             }
             
@@ -203,21 +203,21 @@ try {
         
         // Only compute dynamic status for active peminjaman
         // Ditolak, Menunggu Persetujuan, Disetujui, Partial Approved keep their DB status
-        if (!in_array($currentDbStatus, ['Ditolak', 'Menunggu Persetujuan'])) {
+        if (!in_array($currentDbStatus, ['Rejected', 'Waiting for Approval'])) {
             $row['status'] = computeStatusFromUnits($conn, $row['id'], $currentDbStatus);
         }
 
         // Map status to English for frontend compatibility
         $status_en_map = [
-            'Dikembalikan' => 'Returned',
-            'Sebagian Dikembalikan' => 'Partially Returned',
-            'Sedang Dipinjam' => 'Borrowed',
-            'Proses Return' => 'Return In Progress',
+            'Returned' => 'Returned',
+            'Partially Returned' => 'Partially Returned',
+            'Borrowed' => 'Borrowed',
+            'Return in Process' => 'Return In Progress',
             'Overdue' => 'Overdue',
             'Due Today' => 'Due Today',
-            'Ditolak' => 'Rejected',
-            'Menunggu Persetujuan' => 'Pending Approval',
-            'Disetujui' => 'Approved',
+            'Rejected' => 'Rejected',
+            'Waiting for Approval' => 'Pending Approval',
+            'Approved' => 'Approved',
             'Partial Approved' => 'Partial Approved',
         ];
         $computedStatus = $row['status'];
@@ -233,7 +233,7 @@ try {
         // DETERMINE CAN_EXTEND based on peminjaman status
         // ========================================
         // Status final/selesai yang TIDAK memungkinkan extend
-        $final_statuses = ['Dikembalikan', 'Returned', 'Completed', 'Closed', 'Rejected', 'Ditolak', 'Batal'];
+        $final_statuses = ['Returned', 'Completed', 'Closed', 'Rejected', 'Cancelled'];
         $can_extend = !in_array($row['status'], $final_statuses);
 
         // Get expected_return_nearest from peminjaman_units (per-unit, database-driven)

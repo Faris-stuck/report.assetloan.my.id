@@ -42,10 +42,10 @@ $current = $res_cur->fetch_assoc()['status'];
 $role = SessionValidator::getRole();
 
 // Validasi alur: Requester -> Approver (manager) -> Admin
-// Menunggu Approver -> hanya Approver/Admin boleh set ke "Menunggu Admin" atau "Ditolak"
-// Menunggu Admin -> hanya Admin boleh set ke "Sedang Dipinjam" atau "Ditolak"
-if ($current === 'Menunggu Approver') {
-    if (!in_array($new_status, ['Menunggu Admin', 'Ditolak'], true)) {
+// Waiting for Approver -> only Approver/Admin can set to "Waiting for Admin" or "Rejected"
+// Waiting for Admin -> only Admin can set to "Borrowed" or "Rejected"
+if ($current === 'Waiting for Approver') {
+    if (!in_array($new_status, ['Waiting for Admin', 'Rejected'], true)) {
         echo json_encode(["status" => false, "message" => "From Awaiting Approver can only be changed to Awaiting Admin or Rejected"]);
         exit;
     }
@@ -53,8 +53,8 @@ if ($current === 'Menunggu Approver') {
         echo json_encode(["status" => false, "message" => "Only Approver or Admin can approve/reject at this stage"]);
         exit;
     }
-} elseif ($current === 'Menunggu Admin') {
-    if (!in_array($new_status, ['Sedang Dipinjam', 'Ditolak'], true)) {
+} elseif ($current === 'Waiting for Admin') {
+    if (!in_array($new_status, ['Borrowed', 'Rejected'], true)) {
         echo json_encode(["status" => false, "message" => "From Awaiting Admin can only be changed to Currently Borrowed or Rejected"]);
         exit;
     }
@@ -75,15 +75,15 @@ try {
     $stmt->bind_param("si", $new_status, $id);
     $stmt->execute();
 
-    // Jika status disetujui jadi Sedang Dipinjam, update tanggal persetujuan
-    if ($new_status === 'Sedang Dipinjam') {
+    // If approved to Borrowed, update approval date
+    if ($new_status === 'Borrowed') {
         $stmt_approve = $conn->prepare("UPDATE peminjaman SET tanggal_disetujui = CURDATE() WHERE id = ?");
         $stmt_approve->bind_param("i", $id);
         $stmt_approve->execute();
     }
 
-    // Jika status ditolak, kembalikan stok barang (cap at stok_total)
-    if ($new_status === 'Ditolak') {
+    // If Rejected, restore item stock (cap at stok_total)
+    if ($new_status === 'Rejected') {
         // Ambil detail peminjaman untuk mengembalikan stok
         $stmt_detail = $conn->prepare("
             SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?
@@ -104,7 +104,7 @@ try {
     $conn->commit();
 
     // Kirim email notifikasi setelah berhasil
-    if ($new_status === 'Sedang Dipinjam') {
+    if ($new_status === 'Borrowed') {
         try {
             require_once __DIR__ . '/../email/send-approved.php';
             sendApprovedEmail($conn, $id);

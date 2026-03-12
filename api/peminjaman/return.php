@@ -69,20 +69,20 @@ if (!$peminjaman_id) {
     $count_total = $conn->prepare("
         SELECT COUNT(*) as total_items
         FROM peminjaman_units
-        WHERE peminjaman_id = ? AND approval_status = 'Disetujui'
+        WHERE peminjaman_id = ? AND approval_status = 'Approved'
     ");
     $count_total->bind_param("i", $peminjaman_id);
     $count_total->execute();
     $total_result = $count_total->get_result()->fetch_assoc();
     $total_items = (int)$total_result['total_items'];
 
-    // Hitung total yang sudah dikembalikan dari FINALIZED pengembalian records (status='Selesai')
+    // Hitung total yang sudah dikembalikan dari FINALIZED pengembalian records (status='Completed')
     // Only count approved/finalized ones, not pending submissions
     $count_returned = $conn->prepare("
         SELECT COALESCE(SUM(jumlah_kembali), 0) as total_returned
         FROM detail_pengembalian
         WHERE pengembalian_id IN (
-            SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Selesai'
+            SELECT id FROM pengembalian WHERE peminjaman_id = ? AND status = 'Completed'
         )
     ");
     $count_returned->bind_param("i", $peminjaman_id);
@@ -98,7 +98,7 @@ if (!$peminjaman_id) {
     $check_pending = $conn->prepare("
         SELECT COUNT(*) as pending_count
         FROM pengembalian
-        WHERE peminjaman_id = ? AND status IN ('Diajukan', 'Dicek')
+        WHERE peminjaman_id = ? AND status IN ('Submitted', 'Being Inspected')
     ");
     $check_pending->bind_param("i", $peminjaman_id);
     $check_pending->execute();
@@ -144,7 +144,7 @@ try {
     $ins = $conn->prepare("
         INSERT INTO pengembalian
         (kode_pengembalian, peminjaman_id, user_id, status, catatan_user)
-        VALUES (?, ?, ?, 'Diajukan', ?)
+        VALUES (?, ?, ?, 'Submitted', ?)
     ");
     $ins->bind_param("siis", $kode_pengembalian, $peminjaman_id, $user_id, $catatan_user);
     if (!$ins->execute()) {
@@ -175,11 +175,11 @@ try {
         $jumlah_kembali = (int)($item['qty_return'] ?? 0);
         $jumlah_rusak = (int)($item['damaged'] ?? 0);
         $sisa_dikembalikan = (int)($item['remain_item'] ?? 0);
-        $kondisi_kembali = 'Baik';
+        $kondisi_kembali = 'Good';
 
-        // If has damaged items, set kondisi to Rusak
+        // If has damaged items, set kondisi to Damaged
         if ($jumlah_rusak > 0) {
-            $kondisi_kembali = 'Rusak';
+            $kondisi_kembali = 'Damaged';
         }
 
         // Only insert if there's actually something being returned
@@ -196,8 +196,8 @@ try {
         throw new Exception("No items submitted for return. Please enter a return quantity for at least 1 item.");
     }
     
-    // Set peminjaman status to 'Proses Return' to reflect return process in DB
-    $upd_status = $conn->prepare("UPDATE peminjaman SET status = 'Proses Return' WHERE id = ?");
+    // Set peminjaman status to 'Return in Process' to reflect return process in DB
+    $upd_status = $conn->prepare("UPDATE peminjaman SET status = 'Return in Process' WHERE id = ?");
     $upd_status->bind_param("i", $peminjaman_id);
     if (!$upd_status->execute()) {
         throw new Exception("Failed to update borrowing status: " . $upd_status->error);

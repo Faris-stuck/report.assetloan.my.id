@@ -6,7 +6,7 @@ header('Content-Type: application/json');
 try {
     SessionValidator::requireRole(['admin', 'manager']);
     
-    $status = $_GET['status'] ?? 'Menunggu Persetujuan';
+    $status = $_GET['status'] ?? 'Waiting for Approval';
     // Query untuk mengambil data peminjaman dengan detail
     $stmt = $conn->prepare("
         SELECT
@@ -38,7 +38,7 @@ try {
                 b.nama_barang,
                 CASE
                     WHEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.peminjaman_id = dp.peminjaman_id) > 0
-                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Disetujui')
+                    THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
                     ELSE dp.jumlah
                 END as jumlah,
                 dp.lokasi
@@ -93,10 +93,10 @@ try {
             }
             if ($total_rusak > 0) {
                 if ($total_rusak < $total_items) {
-                    $row['status'] = 'Sebagian Rusak';
+                    $row['status'] = 'Partially Damaged';
                     $row['status_en'] = 'Partially Damaged';
                 } else {
-                    $row['status'] = 'Semua Rusak';
+                    $row['status'] = 'Fully Damaged';
                     $row['status_en'] = 'Fully Damaged';
                 }
             } else {

@@ -126,7 +126,7 @@ try {
         throw new Exception("Prepare failed: " . $conn->error);
     }
 
-    $status = "Menunggu Persetujuan";
+    $status = "Waiting for Approval";
     $stmt->bind_param("sisssssss", $kode, $user_id, $nama_peminjam, $nrp, $lokasi_umum, $rencana_pinjam, $rencana_kembali, $status, $catatan);
     
     if (!$stmt->execute()) {
@@ -170,7 +170,7 @@ try {
                 (peminjaman_id, barang_id, lokasi, jumlah, kondisi_pinjam)
                 VALUES (?, ?, ?, ?, ?)
             ");
-            $kondisi_pinjam = 'Baik';
+            $kondisi_pinjam = 'Good';
             $stmt_detail->bind_param("iisis", $peminjaman_id, $barang_id, $lokasi_item, $jumlah, $kondisi_pinjam);
             if (!$stmt_detail->execute()) {
                 throw new Exception("Insert detail failed: " . $stmt_detail->error);

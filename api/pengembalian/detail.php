@@ -60,7 +60,7 @@ $stmt = $conn->prepare("
             FROM peminjaman_units pu
             WHERE pu.peminjaman_id = ?
               AND pu.barang_id = d.barang_id
-              AND (pu.approval_status IS NULL OR pu.approval_status != 'Ditolak')
+              AND (pu.approval_status IS NULL OR pu.approval_status != 'Rejected')
         ), 0) AS jumlah_pinjam,
         d.jumlah_kembali,
         d.kondisi_kembali,
@@ -72,8 +72,8 @@ $stmt = $conn->prepare("
             FROM peminjaman_units pu2
             WHERE pu2.peminjaman_id = ?
               AND pu2.barang_id = d.barang_id
-              AND pu2.return_status IN ('Dikembalikan', 'Rusak')
-              AND (pu2.approval_status IS NULL OR pu2.approval_status != 'Ditolak')
+              AND pu2.return_status IN ('Returned', 'Damaged')
+              AND (pu2.approval_status IS NULL OR pu2.approval_status != 'Rejected')
         ), 0) AS sudah_dikembalikan_from_units
     FROM detail_pengembalian d
     JOIN barang b ON b.id = d.barang_id

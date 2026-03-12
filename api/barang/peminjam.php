@@ -33,9 +33,9 @@ try {
         JOIN peminjaman_units pu ON pu.peminjaman_id = p.id
             AND pu.barang_id = dp.barang_id
         WHERE dp.barang_id = ?
-          AND p.status NOT IN ('Menunggu Persetujuan', 'Ditolak')
-          AND pu.approval_status = 'Disetujui'
-          AND pu.return_status NOT IN ('Dikembalikan', 'Rusak')
+          AND p.status NOT IN ('Waiting for Approval', 'Rejected')
+          AND pu.approval_status = 'Approved'
+          AND pu.return_status NOT IN ('Returned', 'Damaged')
         GROUP BY p.id, p.kode_peminjaman, p.nama_peminjam, p.nrp,
                  p.tanggal_pinjam, p.rencana_kembali, p.status,
                  dp.kondisi_pinjam, dp.lokasi

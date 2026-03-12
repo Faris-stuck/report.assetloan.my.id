@@ -654,7 +654,7 @@
                 .then(res => {
                     let html = "";
                     res.data.forEach(b => {
-                        if (b.stok_tersedia > 0 && b.kondisi === 'Baik') {
+                        if (b.stok_tersedia > 0 && b.kondisi === 'Good') {
                             html += `
                 <tr>
                     <td class="align-middle">${b.nama_barang}</td>
@@ -1107,15 +1107,17 @@
                 let badgeClass = "bg-secondary";
 
                 // Simple status-to-badge mapping
-                if (item.status === "Menunggu Persetujuan" || item.status === "Disetujui") badgeClass = "bg-warning";
-                else if (item.status === "Sedang Dipinjam") badgeClass = "bg-primary";
+                if (item.status === "Waiting for Approval") badgeClass = "bg-warning";
+                else if (item.status === "Approved") badgeClass = "bg-info";
+                else if (item.status === "Borrowed") badgeClass = "bg-primary";
                 else if (item.status === "Overdue" || item.status === "Due Today") badgeClass = "bg-danger";
                 else if (item.status && item.status.startsWith("Due")) badgeClass = "bg-warning text-dark";
-                else if (item.status === "Dikembalikan") badgeClass = "bg-success";
-                else if (item.status === "Ditolak") badgeClass = "bg-danger";
-                else if (item.status === "Sebagian Dikembalikan") badgeClass = 'bg-warning text-dark';
-                else if (item.status === "Proses Return") badgeClass = "bg-info text-dark";
+                else if (item.status === "Returned") badgeClass = "bg-success";
+                else if (item.status === "Rejected") badgeClass = "bg-danger";
+                else if (item.status === "Partially Returned") badgeClass = 'bg-warning text-dark';
+                else if (item.status === "Return in Process") badgeClass = "bg-info text-dark";
                 else if (item.status === "Partial Approved") badgeClass = "bg-info";
+                else if (item.status === "Cancelled") badgeClass = "bg-danger";
 
                 const displayStatus = item.status_en || item.status;
                 return `
@@ -1144,25 +1146,26 @@
                 if (en_lower.includes('fully') && en_lower.includes('damaged')) return 'Fully Damaged';
             }
             switch (dbStatus) {
-                case 'Menunggu Persetujuan':
-                case 'Disetujui':
-                    return 'Pending Approval';
+                case 'Waiting for Approval':
+                    return 'Waiting for Approval';
+                case 'Approved':
+                    return 'Approved';
                 case 'Partial Approved':
                     return 'Partial Approved';
-                case 'Sebagian Dikembalikan':
+                case 'Partially Returned':
                     return 'Partially Returned';
-                case 'Sebagian Rusak':
+                case 'Partially Damaged':
                     return 'Partially Damaged';
-                case 'Semua Rusak':
+                case 'Fully Damaged':
                     return 'Fully Damaged';
-                case 'Sedang Dipinjam':
+                case 'Currently Borrowed':
                     return 'Currently Borrowed';
-                case 'Dikembalikan':
+                case 'Returned':
                     return 'Returned';
-                case 'Ditolak':
+                case 'Rejected':
                     return 'Rejected';
-                case 'Proses Return':
-                    return 'Return In Progress';
+                case 'Return in Process':
+                    return 'Return in Process';
                 case 'Sedang Diproses':
                     return 'Processing';
                 default:
@@ -1173,18 +1176,18 @@
         function getStatusBadge(status, statusEn) {
             const displayStatus = getDisplayStatus(status, statusEn);
             if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
-            if (displayStatus.startsWith('Due In') || displayStatus.startsWith('Due in')) return 'badge bg-warning';
+            if (displayStatus.startsWith('Due In') || displayStatus.startsWith('Due in')) return 'badge bg-warning text-dark';
             switch (displayStatus) {
-                case 'Pending Approval':
+                case 'Waiting for Approval':
                     return 'badge bg-warning';
                 case 'Approved':
                     return 'badge bg-info';
                 case 'Currently Borrowed':
                     return 'badge bg-primary';
                 case 'Partially Returned':
-                    return 'badge bg-warning';
-                case 'Return In Progress':
-                    return 'badge bg-info';
+                    return 'badge bg-warning text-dark';
+                case 'Return in Process':
+                    return 'badge bg-info text-dark';
                 case 'Returned':
                     return 'badge bg-success';
                 case 'Rejected':
@@ -1193,6 +1196,8 @@
                     return 'badge bg-info';
                 case 'Partially Damaged':
                 case 'Fully Damaged':
+                case 'Not Yet Returned':
+                case 'Cancelled':
                     return 'badge bg-danger';
                 default:
                     return 'badge bg-secondary';
@@ -1224,9 +1229,11 @@
                         const units = p.units || [];
                         const barangHtml = units.map((u, i) => {
                             let badgeClass = 'bg-secondary';
-                            if (u.return_status === 'Dikembalikan') badgeClass = 'bg-success';
-                            else if (u.return_status === 'Rusak') badgeClass = 'bg-warning text-dark';
-                            else if (u.return_status === 'Ditolak') badgeClass = 'bg-danger';
+                            if (u.return_status === 'Returned') badgeClass = 'bg-success';
+                            else if (u.return_status === 'Damaged') badgeClass = 'bg-warning text-dark';
+                            else if (u.return_status === 'Rejected') badgeClass = 'bg-danger';
+                            else if (u.return_status === 'Waiting for Approval') badgeClass = 'bg-warning text-dark';
+                            else if (u.return_status === 'Not Yet Returned') badgeClass = 'bg-danger';
                             else if (u.return_status === 'Overdue' || u.return_status === 'Due Today') badgeClass = 'bg-danger';
                             else if (u.return_status && u.return_status.startsWith('Due')) badgeClass = 'bg-warning text-dark';
 
@@ -1245,14 +1252,14 @@
                         document.getElementById('detailBarangTable').innerHTML = barangHtml || '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
 
                         // Notes / Rejection reason section
-                        // Check if any unit is rejected (approval_status = 'Ditolak')
-                        const hasRejectedUnit = units.some(u => u.approval_status === 'Ditolak');
+                        // Check if any unit is rejected (approval_status = 'Rejected')
+                        const hasRejectedUnit = units.some(u => u.approval_status === 'Rejected');
                         const reason = p.rejection_reason || p.catatan || '';
-                        if ((hasRejectedUnit || p.status === 'Ditolak') && reason) {
+                        if ((hasRejectedUnit || p.status === 'Rejected') && reason) {
                             document.getElementById('detailCatatanLabel').style.display = 'block';
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(reason);
-                        } else if (p.status === 'Ditolak' && p.catatan) {
+                        } else if (p.status === 'Rejected' && p.catatan) {
                             document.getElementById('detailCatatanLabel').style.display = 'block';
                             document.getElementById('detailCatatanDiv').style.display = 'block';
                             document.getElementById('detailCatatan').textContent = escapeHtml(p.catatan);

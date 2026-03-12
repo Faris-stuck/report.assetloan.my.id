@@ -100,6 +100,40 @@ try {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    // ─── UPDATE peminjaman_units.expected_return ─────────────────────────────
+    // peminjaman_units is the single source of truth for getNearestExpectedReturn()
+    // and all dashboard/cron queries. Must stay in sync with detail_peminjaman.
+    $unit_items = $conn->prepare("
+        SELECT detail_peminjaman_id, unit_number
+        FROM extend_peminjaman_items
+        WHERE extend_peminjaman_id = ? AND detail_peminjaman_id IS NOT NULL
+    ");
+    $unit_items->bind_param("i", $extend_id);
+    $unit_items->execute();
+    $unit_rows = $unit_items->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    if (!empty($unit_rows)) {
+        // Per-unit extend: update only the referenced peminjaman_units rows
+        $upd_pu = $conn->prepare("UPDATE peminjaman_units SET expected_return = ? WHERE detail_peminjaman_id = ? AND unit_number = ?");
+        foreach ($unit_rows as $ur) {
+            $dp_id = (int)$ur['detail_peminjaman_id'];
+            $unum  = (int)$ur['unit_number'];
+            $upd_pu->bind_param("sii", $extend['tanggal_perpanjang'], $dp_id, $unum);
+            $upd_pu->execute();
+        }
+    } else {
+        // Blanket extend: update all unreturned peminjaman_units for this peminjaman
+        $upd_pu = $conn->prepare("
+            UPDATE peminjaman_units
+            SET expected_return = ?
+            WHERE peminjaman_id = ?
+              AND return_status NOT IN ('Returned', 'Damaged', 'Rejected')
+        ");
+        $upd_pu->bind_param("si", $extend['tanggal_perpanjang'], $extend['peminjaman_id']);
+        $upd_pu->execute();
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     $conn->commit();
 
     // Kirim email notifikasi ke user bahwa perpanjangan disetujui

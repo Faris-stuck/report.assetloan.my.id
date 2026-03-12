@@ -109,7 +109,7 @@ try {
         JOIN barang b ON b.id = pu.barang_id
         JOIN detail_peminjaman dp ON dp.id = pu.detail_peminjaman_id
         WHERE pu.peminjaman_id = ?
-          AND pu.approval_status = 'Disetujui'
+          AND pu.approval_status = 'Approved'
         ORDER BY pu.detail_peminjaman_id, pu.unit_number
     ");
     
@@ -193,8 +193,8 @@ try {
     // Determine if peminjaman is completed/inactive
     $peminjaman_status = $peminjaman['status'];
     $is_completed = in_array($peminjaman_status, [
-        'Dikembalikan', 'Returned', 'Completed', 'Closed',
-        'Ditolak', 'Rejected', 'Batal', 'Cancelled'
+        'Returned', 'Completed', 'Closed',
+        'Rejected', 'Cancelled'
     ]);
 
     // Build per-unit array directly from peminjaman_units (approved only)
@@ -220,8 +220,8 @@ try {
         $total_approved = $approved_counts[$detail_id];
 
         // Determine returned status from peminjaman_units.return_status
-        $return_status = $au['return_status'] ?? 'Belum Dikembalikan';
-        $is_returned = in_array($return_status, ['Dikembalikan', 'Rusak']);
+        $return_status = $au['return_status'] ?? 'Not Yet Returned';
+        $is_returned = in_array($return_status, ['Returned', 'Damaged']);
 
         // Expected return date: use peminjaman_units.expected_return as source of truth
         $expected_return = $au['pu_expected_return'] ?? $peminjaman['rencana_kembali'];
