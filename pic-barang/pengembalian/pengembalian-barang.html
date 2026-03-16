@@ -165,6 +165,15 @@
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
+                                <tr style="background: #4a69bd;">
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterReturnCode" placeholder="Filter code..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterBorrowCode" placeholder="Filter code..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterBorrower" placeholder="Filter borrower..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterReturnNrp" placeholder="Filter NRP..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterSubmittedAt" placeholder="Filter date..." oninput="applyReturnFilters()"></td>
+                                    <td><select class="form-select form-select-sm border-0" id="filterReturnStatus" onchange="applyReturnFilters()"><option value="">All</option></select></td>
+                                    <td></td>
+                                </tr>
                             </thead>
                             <tbody id="table-pengembalian">
                                 <tr>
@@ -201,6 +210,16 @@
                                     <th>Reason</th>
                                     <th>Status</th>
                                     <th>Action</th>
+                                </tr>
+                                <tr style="background: #4a69bd;">
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendBorrowCode" placeholder="Filter code..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendBorrower" placeholder="Filter borrower..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendNrp" placeholder="Filter NRP..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterCurrentReturn" placeholder="Filter date..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterRequestedDate" placeholder="Filter date..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterReason" placeholder="Filter reason..." oninput="applyExtendFilters()"></td>
+                                    <td><select class="form-select form-select-sm border-0" id="filterExtendStatus" onchange="applyExtendFilters()"><option value="">All</option></select></td>
+                                    <td></td>
                                 </tr>
                             </thead>
                             <tbody id="table-extend">
@@ -734,6 +753,63 @@
                     if (res.status) removeExtendRow(extendId);
                 })
                 .catch(() => alert('Connection error'));
+        }
+
+        function applyReturnFilters() {
+            const filterReturnCode = document.getElementById('filterReturnCode').value.toLowerCase();
+            const filterBorrowCode = document.getElementById('filterBorrowCode').value.toLowerCase();
+            const filterBorrower = document.getElementById('filterBorrower').value.toLowerCase();
+            const filterReturnNrp = document.getElementById('filterReturnNrp').value.toLowerCase();
+            const filterSubmittedAt = document.getElementById('filterSubmittedAt').value.toLowerCase();
+
+            const tbody = document.getElementById('table-pengembalian');
+            const rows = tbody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const returnCode = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+                const borrowCode = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                const borrower = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+                const nrp = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+                const submittedAt = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+
+                const matches = returnCode.includes(filterReturnCode) &&
+                    borrowCode.includes(filterBorrowCode) &&
+                    borrower.includes(filterBorrower) &&
+                    nrp.includes(filterReturnNrp) &&
+                    submittedAt.includes(filterSubmittedAt);
+
+                row.style.display = matches ? '' : 'none';
+            });
+        }
+
+        function applyExtendFilters() {
+            const filterBorrowCode = document.getElementById('filterExtendBorrowCode').value.toLowerCase();
+            const filterBorrower = document.getElementById('filterExtendBorrower').value.toLowerCase();
+            const filterNrp = document.getElementById('filterExtendNrp').value.toLowerCase();
+            const filterCurrentReturn = document.getElementById('filterCurrentReturn').value.toLowerCase();
+            const filterRequestedDate = document.getElementById('filterRequestedDate').value.toLowerCase();
+            const filterReason = document.getElementById('filterReason').value.toLowerCase();
+
+            const tbody = document.getElementById('table-extend');
+            const rows = tbody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const borrowCode = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
+                const borrower = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                const nrp = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+                const currentReturn = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+                const requestedDate = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+                const reason = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
+
+                const matches = borrowCode.includes(filterBorrowCode) &&
+                    borrower.includes(filterBorrower) &&
+                    nrp.includes(filterNrp) &&
+                    currentReturn.includes(filterCurrentReturn) &&
+                    requestedDate.includes(filterRequestedDate) &&
+                    reason.includes(filterReason);
+
+                row.style.display = matches ? '' : 'none';
+            });
         }
 
         document.addEventListener('DOMContentLoaded', loadExtendRequests);

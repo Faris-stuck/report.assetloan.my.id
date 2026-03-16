@@ -237,6 +237,16 @@
                                         <th>Action</th>
 
                                     </tr>
+                                    <tr style="background: #4a69bd;">
+                                        <td></td>
+                                        <td><input type="text" class="form-control form-control-sm border-0" id="filterBorrowingCode" placeholder="Filter code..." oninput="applyApprovalFilters()"></td>
+                                        <td><input type="text" class="form-control form-control-sm border-0" id="filterName" placeholder="Filter name..." oninput="applyApprovalFilters()"></td>
+                                        <td><input type="text" class="form-control form-control-sm border-0" id="filterNrp" placeholder="Filter NRP..." oninput="applyApprovalFilters()"></td>
+                                        <td><input type="text" class="form-control form-control-sm border-0" id="filterItems" placeholder="Filter items..." oninput="applyApprovalFilters()"></td>
+                                        <td><input type="text" class="form-control form-control-sm border-0" id="filterDate" placeholder="Filter date..." oninput="applyApprovalFilters()"></td>
+                                        <td><select class="form-select form-select-sm border-0" id="filterStatus" onchange="applyApprovalFilters()"><option value="">All</option><option value="Waiting for Approval">Waiting</option></select></td>
+                                        <td></td>
+                                    </tr>
                                 </thead>
                                 <tbody id="tabelMenunggu">
 
@@ -629,6 +639,33 @@
                     }
                 })
                 .catch(() => alert('Failed to connect to server.'));
+        }
+
+        function applyApprovalFilters() {
+            const borrowingCode = document.getElementById('filterBorrowingCode').value.toLowerCase();
+            const name = document.getElementById('filterName').value.toLowerCase();
+            const nrp = document.getElementById('filterNrp').value.toLowerCase();
+            const items = document.getElementById('filterItems').value.toLowerCase();
+            const date = document.getElementById('filterDate').value.toLowerCase();
+
+            const tbody = document.getElementById('tabelMenunggu');
+            const rows = tbody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                const kode = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                const nama = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+                const nrpCell = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+                const barang = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
+                const tgl = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
+
+                const matches = kode.includes(borrowingCode) &&
+                    nama.includes(name) &&
+                    nrpCell.includes(nrp) &&
+                    barang.includes(items) &&
+                    tgl.includes(date);
+
+                row.style.display = matches ? '' : 'none';
+            });
         }
 
         document.addEventListener("DOMContentLoaded", loadDataPeminjaman);
