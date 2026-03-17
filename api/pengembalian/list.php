@@ -24,9 +24,14 @@ try {
 }
 
 $status_input = $_GET['status'] ?? 'Submitted';
+// Whitelist of valid pengembalian statuses
+$valid_statuses = ['Submitted', 'Being Inspected', 'Completed', 'Partially Returned', 'Partially Damaged'];
 // Support comma-separated statuses: e.g., "Submitted,Being Inspected"
 $statuses = array_map('trim', explode(',', $status_input));
 $statuses = array_filter(array_unique($statuses)); // remove empty/duplicate values
+
+// Validate statuses against whitelist
+$statuses = array_intersect($statuses, $valid_statuses);
 
 // If empty, default to just Submitted
 if (empty($statuses)) {

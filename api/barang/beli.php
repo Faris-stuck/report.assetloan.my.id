@@ -24,9 +24,10 @@ try {
 $id_barang = $_POST['id_barang'] ?? null;
 
 if (!$id_barang) {
+    http_response_code(400);
     echo json_encode([
         "status" => false,
-        "message" => "Item ID not found"
+        "message" => "Item ID is required"
     ]);
     exit;
 }
@@ -70,11 +71,33 @@ if ($harga <= 0) {
 
 $total = $jumlah * $harga;
 
+// Validate that item exists in barang table
+$stmt_check = $conn->prepare("SELECT id FROM barang WHERE id = ?");
+$stmt_check->bind_param("i", $id_barang);
+$stmt_check->execute();
+$check_result = $stmt_check->get_result();
+if ($check_result->num_rows === 0) {
+    http_response_code(404);
+    echo json_encode([
+        "status" => false,
+        "message" => "Item not found"
+    ]);
+    exit;
+}
+$stmt_check->close();
+
 // vendor baru
 if ($vendor === "baru") {
     $stmt = $conn->prepare("INSERT INTO vendor(nama_vendor, alamat, kontak) VALUES(?,?,?)");
     $stmt->bind_param("sss", $vendor_baru, $alamat, $kontak);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        http_response_code(500);
+        echo json_encode([
+            "status" => false,
+            "message" => "Database error occurred"
+        ]);
+        exit;
+    }
     $vendor = $conn->insert_id;
 } else {
     // Update existing vendor with address and contact if provided

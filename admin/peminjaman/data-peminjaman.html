@@ -1175,33 +1175,14 @@
 
         function getStatusBadge(status, statusEn) {
             const displayStatus = getDisplayStatus(status, statusEn);
-            if (displayStatus === 'Overdue' || displayStatus === 'Due Today') return 'badge bg-danger';
+            // Canonical status colors mapping
+            if (displayStatus === 'Overdue' || displayStatus === 'Due Today' || displayStatus === 'Rejected' || displayStatus === 'Fully Damaged' || displayStatus === 'Not Yet Returned' || displayStatus === 'Cancelled') return 'badge bg-danger';
             if (displayStatus.startsWith('Due In') || displayStatus.startsWith('Due in')) return 'badge bg-warning text-dark';
-            switch (displayStatus) {
-                case 'Waiting for Approval':
-                    return 'badge bg-warning';
-                case 'Approved':
-                    return 'badge bg-info';
-                case 'Currently Borrowed':
-                    return 'badge bg-primary';
-                case 'Partially Returned':
-                    return 'badge bg-warning text-dark';
-                case 'Return in Process':
-                    return 'badge bg-info text-dark';
-                case 'Returned':
-                    return 'badge bg-success';
-                case 'Rejected':
-                    return 'badge bg-danger';
-                case 'Partial Approved':
-                    return 'badge bg-info';
-                case 'Partially Damaged':
-                case 'Fully Damaged':
-                case 'Not Yet Returned':
-                case 'Cancelled':
-                    return 'badge bg-danger';
-                default:
-                    return 'badge bg-secondary';
-            }
+            if (displayStatus === 'Waiting for Approval' || displayStatus === 'Partially Returned' || displayStatus === 'Partially Damaged') return 'badge bg-warning text-dark';
+            if (displayStatus === 'Borrowed' || displayStatus === 'Approved' || displayStatus === 'Currently Borrowed') return 'badge bg-primary';
+            if (displayStatus === 'Return in Process' || displayStatus === 'Partial Approved') return 'badge bg-info';
+            if (displayStatus === 'Returned') return 'badge bg-success';
+            return 'badge bg-secondary';
         }
 
         function escapeHtml(s) {

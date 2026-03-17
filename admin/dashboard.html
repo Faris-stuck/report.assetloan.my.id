@@ -496,9 +496,7 @@
         <footer class="footer">
             <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
                 <span>Copyright ©</span>
-                <script>
-                    document.write(new Date().getFullYear());
-                </script>
+                <span id="year-display"></span>
             </p>
             <p><span>By: <a target="_blank" href="https://wrapbootstrap.com/user/theme_ocean"
                         target="_blank">theme_ocean</a></span> • <span>Distributed by: <a target="_blank"
@@ -532,6 +530,14 @@
     <!--! END: Apps Init !-->
 
     <script>
+        // Security: Escape HTML to prevent XSS
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
         // Store chart instances globally
         let statusChartInstance = null;
         let inventoryChartInstance = null;
@@ -587,8 +593,8 @@
                         const uniqueBarangNames = [...new Set([...topBarangNames, ...allBarangNames])];
 
                         dataBarangList.innerHTML = uniqueBarangNames.map(nama => `
-                            <a class="dropdown-item" href="#" onclick="selectDataBarang('${nama}'); return false;">
-                                <small>${nama}</small>
+                            <a class="dropdown-item" href="#" onclick="selectDataBarang('${escapeHtml(nama)}'); return false;">
+                                <small>${escapeHtml(nama)}</small>
                             </a>
                         `).join('');
 
@@ -639,11 +645,11 @@
 
                             return `
                                 <tr>
-                                    <td><code>${item.kode}</code></td>
-                                    <td>${item.nama}</td>
-                                    <td><span class="badge bg-${getStatusBadgeClass(item.status)}">${item.status}</span></td>
-                                    <td>${item.tanggal_pinjam}</td>
-                                    <td><span class="badge ${returnDateBgClass} ${returnDateColor}">${expectedReturn}</span></td>
+                                    <td><code>${escapeHtml(item.kode)}</code></td>
+                                    <td>${escapeHtml(item.nama)}</td>
+                                    <td><span class="badge bg-${getStatusBadgeClass(item.status)}">${escapeHtml(item.status)}</span></td>
+                                    <td>${escapeHtml(item.tanggal_pinjam)}</td>
+                                    <td><span class="badge ${returnDateBgClass} ${returnDateColor}">${escapeHtml(expectedReturn)}</span></td>
                                 </tr>
                             `;
                         }).join('');
@@ -659,10 +665,10 @@
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h6 class="card-title">${item.nama}</h6>
+                                        <h6 class="card-title">${escapeHtml(item.nama)}</h6>
                                         <div class="d-flex justify-content-between">
-                                            <small class="text-muted">Borrowed: <strong>${item.jumlah_peminjaman}x</strong></small>
-                                            <small class="text-muted">Available: <strong>${item.stok_tersedia}</strong></small>
+                                            <small class="text-muted">Borrowed: <strong>${escapeHtml(item.jumlah_peminjaman)}x</strong></small>
+                                            <small class="text-muted">Available: <strong>${escapeHtml(item.stok_tersedia)}</strong></small>
                                         </div>
                                     </div>
                                 </div>
@@ -1683,12 +1689,16 @@
             document.getElementById('prevNewProduct').disabled = currentNewProductSlide === 0;
             document.getElementById('nextNewProduct').disabled = currentNewProductSlide === newProductSlides.length - 1;
         }
-
     </script>
-    <!--! BEGIN: Vendors JS for DateRangePicker !-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="../assets/vendors/js/daterangepicker.min.js"></script>
-    <!--! END: Vendors JS for DateRangePicker !-->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var yearDisplay = document.getElementById('year-display');
+            if (yearDisplay) {
+                yearDisplay.textContent = new Date().getFullYear();
+            }
+        });
+    </script>
 </body>
 
 </html>

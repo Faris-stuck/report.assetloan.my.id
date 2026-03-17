@@ -10,10 +10,12 @@ require_once __DIR__ . '/../session-helper.php';
 
 header('Content-Type: application/json');
 
-$session = new SessionValidator();
-if (!$session->isLoggedIn()) {
+// Validate session using static method (consistent with other API files)
+try {
+    SessionValidator::requireRole(['user', 'admin', 'manager', 'pic_barang']);
+} catch (Exception $e) {
     http_response_code(403);
-    echo json_encode(['status' => false, 'message' => 'Unauthorized']);
+    echo json_encode(['status' => false, 'message' => $e->getMessage()]);
     exit;
 }
 

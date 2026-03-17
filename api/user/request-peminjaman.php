@@ -63,7 +63,7 @@ foreach ($_POST as $key => $value) {
 }
 
 // Validasi data required
-if (empty($user_id) || empty($nama_peminjam) || empty($nrp) || empty($rencana_pinjam) || empty($rencana_kembali)) {
+if (empty($user_id) || empty($nama_peminjam) || empty($nrp) || empty($rencana_pinjam) || empty($rencana_kembali) || empty($lokasi_umum)) {
     echo json_encode([
         "status" => false,
         "message" => "Required data is incomplete. Please ensure all fields are filled."

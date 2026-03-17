@@ -69,12 +69,6 @@
                         </ul>
                         </a>
                     </li>
-                    <li class="nxl-item">
-                        <a class="nxl-link" href="profil.html">
-                            <span class="nxl-micon"><i class="feather-user"></i></span>
-                            <span class="nxl-mtext">Profile</span>
-                        </a>
-                    </li>
                 </ul>
             </div>
         </div>
@@ -360,9 +354,7 @@
             <!-- [ Main Content ] end -->
         </div>
         <footer class="footer">
-            <p class="fs-11 text-muted fw-medium mb-0">Copyright ©
-                <script>document.write(new Date().getFullYear());</script> PIC Item
-            </p>
+            <p class="fs-11 text-muted fw-medium mb-0">Copyright © <span id="year-display"></span> PIC Item</p>
         </footer>
     </main>
 
@@ -382,6 +374,14 @@
     <!--! END: Apps Init !-->
 
     <script>
+        // Security: Escape HTML to prevent XSS
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
         // Store chart instances globally
         let statusChartInstance = null;
         let inventoryChartInstance = null;
@@ -421,8 +421,8 @@
                         const uniqueBarangNames = [...new Set([...topBarangNames, ...allBarangNames])];
 
                         dataBarangList.innerHTML = uniqueBarangNames.map(nama => `
-                            <a class="dropdown-item" href="#" onclick="selectDataBarang('${nama}'); return false;">
-                                <small>${nama}</small>
+                            <a class="dropdown-item" href="#" onclick="selectDataBarang('${escapeHtml(nama)}'); return false;">
+                                <small>${escapeHtml(nama)}</small>
                             </a>
                         `).join('');
 
@@ -1337,9 +1337,14 @@
 
     </script>
     <!--! BEGIN: Vendors JS for DateRangePicker !-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
-    <script src="../assets/vendors/js/daterangepicker.min.js"></script>
-    <!--! END: Vendors JS for DateRangePicker !-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var yearDisplay = document.getElementById('year-display');
+            if (yearDisplay) {
+                yearDisplay.textContent = new Date().getFullYear();
+            }
+        });
+    </script>
 </body>
 
 </html>

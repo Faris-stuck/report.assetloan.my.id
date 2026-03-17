@@ -160,16 +160,6 @@
                             <li class="nxl-item"><a class="nxl-link" href="../riwayat.html">Borrowing History</a></li>
                         </ul>
                     </li>
-                    <li class="nxl-item nxl-hasmenu">
-                        <a href="javascript:void(0);" class="nxl-link">
-                            <span class="nxl-micon"><i class="feather-dollar-sign"></i></span>
-                            <span class="nxl-mtext">Profile</span><span class="nxl-arrow"><i
-                                    class="feather-chevron-right"></i></span>
-                        </a>
-                        <ul class="nxl-submenu">
-                            <li class="nxl-item"><a class="nxl-link" href="../profil.html">Profile</a></li>
-                        </ul>
-                    </li>
 
                 </ul>
             </div>
@@ -584,7 +574,7 @@
             if (ds.startsWith('Due In') || ds.startsWith('Due in')) return 'badge bg-warning text-dark';
             if (ds === 'Waiting for Approval' || ds === 'Partially Returned' || ds === 'Partially Damaged') return 'badge bg-warning text-dark';
             if (ds === 'Currently Borrowed') return 'badge bg-primary';
-            if (ds === 'Return in Process' || ds === 'Partial Approved') return 'badge bg-info text-dark';
+            if (ds === 'Return in Process' || ds === 'Partial Approved') return 'badge bg-info';
             if (ds === 'Returned') return 'badge bg-success';
             return 'badge bg-secondary';
         }

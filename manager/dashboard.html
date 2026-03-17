@@ -387,9 +387,7 @@
         <footer class="footer">
             <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
                 <span>Copyright ©</span>
-                <script>
-                    document.write(new Date().getFullYear());
-                </script>
+                <span id="year-display"></span>
             </p>
             <p><span>By: <a target="_blank" href="https://wrapbootstrap.com/user/theme_ocean"
                         target="_blank">theme_ocean</a></span> • <span>Distributed by: <a target="_blank"
@@ -421,6 +419,14 @@
     <!--! END: Apps Init !-->
 
     <script>
+        // Security: Escape HTML to prevent XSS
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
         // Store chart instances globally
         let statusChartInstance = null;
         let inventoryChartInstance = null;
@@ -1228,7 +1234,15 @@
             document.getElementById('prevNewProduct').disabled = currentNewProductSlide === 0;
             document.getElementById('nextNewProduct').disabled = currentNewProductSlide === newProductSlides.length - 1;
         }
+    </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var yearDisplay = document.getElementById('year-display');
+            if (yearDisplay) {
+                yearDisplay.textContent = new Date().getFullYear();
+            }
+        });
     </script>
 </body>
 

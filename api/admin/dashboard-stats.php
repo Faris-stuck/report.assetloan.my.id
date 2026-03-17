@@ -87,8 +87,8 @@ try {
     $stats['sedang_dipinjam'] = (int)($row['total'] ?? 0);
     $stmt->close();
 
-    // 3. Returned (all time aggregate - includes all returned items regardless of condition)
-    $query3 = "SELECT COUNT(*) as total FROM peminjaman WHERE status IN ('Returned', 'Partially Damaged', 'Fully Damaged', 'Completed')" . $dateWhereClause;
+    // 3. Returned (all time aggregate - only canonical 'Returned' status)
+    $query3 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Returned'" . $dateWhereClause;
     $stmt = $conn->prepare($query3);
     if (!$stmt) {
         throw new Exception("Query 3 Error: " . $conn->error);
