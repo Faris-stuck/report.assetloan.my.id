@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API: Manager/Approver Dashboard Chart Data
  * Returns system-wide status counts, per-user counts, per-barang counts (for bar charts)
@@ -267,8 +268,32 @@ try {
         'raw' => $weekRaw
     ];
 
-    echo json_encode(['status' => true, 'data' => $data]);
+    // New Products This Month
+    $stmtNewProducts = $conn->prepare("
+        SELECT 
+            nama_barang,
+            stok_tersedia,
+            stok_total,
+            lokasi
+        FROM barang
+        WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
+        ORDER BY created_at DESC
+    ");
+    $stmtNewProducts->execute();
+    $newProductsResult = $stmtNewProducts->get_result();
+    $new_products = [];
+    while ($row = $newProductsResult->fetch_assoc()) {
+        $new_products[] = [
+            'nama_barang' => $row['nama_barang'],
+            'stok_tersedia' => (int)$row['stok_tersedia'],
+            'stok_total' => (int)$row['stok_total'],
+            'lokasi' => $row['lokasi']
+        ];
+    }
+    $data['new_products'] = $new_products;
+    $stmtNewProducts->close();
 
+    echo json_encode(['status' => true, 'data' => $data]);
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode(['status' => false, 'message' => $e->getMessage()]);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API: Admin Dashboard Statistics
  * Purpose: Get statistics for admin dashboard from peminjaman database
@@ -13,16 +14,16 @@ header('Content-Type: application/json');
 try {
     // Validate admin/manager role
     SessionValidator::requireRole(['admin', 'manager']);
-    
+
     // Get date range filter parameters for Status Peminjaman
     $tanggalAwal = $_GET['tanggal_awal'] ?? '';
     $tanggalAkhir = $_GET['tanggal_akhir'] ?? '';
-    
+
     // Build date range WHERE clause if dates are provided
     $dateWhereClause = '';
     $dateParams = [];
     $dateParamTypes = '';
-    
+
     if (!empty($tanggalAwal) && !empty($tanggalAkhir)) {
         $dateWhereClause = " AND tanggal_pinjam BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)";
         $dateParams = [$tanggalAwal, $tanggalAkhir];
@@ -36,9 +37,9 @@ try {
         $dateParams = [$tanggalAkhir];
         $dateParamTypes = 's';
     }
-    
+
     $stats = [];
-    
+
     /**
      * STATUS PEMINJAMAN CHART
      * 
@@ -55,7 +56,7 @@ try {
      * - "Returned": 'Returned' + 'Partially Damaged' + 'Fully Damaged' + 'Completed'
      * - "Rejected": Only status = 'Rejected'
      */
-    
+
     // 1. Waiting for Approval (pending approval)
     $query1 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Waiting for Approval'" . $dateWhereClause;
     $stmt = $conn->prepare($query1);
@@ -70,7 +71,7 @@ try {
     $row = $result->fetch_assoc();
     $stats['menunggu_persetujuan'] = (int)($row['total'] ?? 0);
     $stmt->close();
-    
+
     // 2. Borrowed (active loans - includes Due patterns and partial returns)
     $query2 = "SELECT COUNT(*) as total FROM peminjaman WHERE (status IN ('Borrowed', 'Partially Returned', 'Return in Process') OR status LIKE 'Due%' OR status = 'Overdue')" . $dateWhereClause;
     $stmt = $conn->prepare($query2);
@@ -85,7 +86,7 @@ try {
     $row = $result->fetch_assoc();
     $stats['sedang_dipinjam'] = (int)($row['total'] ?? 0);
     $stmt->close();
-    
+
     // 3. Returned (all time aggregate - includes all returned items regardless of condition)
     $query3 = "SELECT COUNT(*) as total FROM peminjaman WHERE status IN ('Returned', 'Partially Damaged', 'Fully Damaged', 'Completed')" . $dateWhereClause;
     $stmt = $conn->prepare($query3);
@@ -100,7 +101,7 @@ try {
     $row = $result->fetch_assoc();
     $stats['dikembalikan'] = (int)($row['total'] ?? 0);
     $stmt->close();
-    
+
     // 4. Rejected
     $query4 = "SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Rejected'" . $dateWhereClause;
     $stmt = $conn->prepare($query4);
@@ -115,7 +116,7 @@ try {
     $row = $result->fetch_assoc();
     $stats['ditolak'] = (int)($row['total'] ?? 0);
     $stmt->close();
-    
+
     // 5. Total barang tersedia
     $stmt = $conn->prepare("
         SELECT SUM(stok_tersedia) as total FROM barang
@@ -128,7 +129,7 @@ try {
     $row = $result->fetch_assoc();
     $stats['barang_tersedia'] = (int)($row['total'] ?? 0);
     $stmt->close();
-    
+
     // 6. Recent activity from peminjaman (all statuses, most recent first)
     $stmt = $conn->prepare("
         SELECT 
@@ -158,7 +159,7 @@ try {
     }
     $stats['recent_actions'] = $recent;
     $stmt->close();
-    
+
     // 7. Top 5 Most Frequently Borrowed Items (lifetime, no filters)
     $stmtTop = $conn->prepare("
         SELECT b.nama_barang, SUM(dp.jumlah) AS total_qty_dipinjam, MAX(p.created_at) AS last_borrowed
@@ -214,7 +215,7 @@ try {
     }
     $stats['categories'] = $categories;
     $stmt->close();
-    
+
     // 9. Data Barang: All items with dipinjam (counts all detail_peminjaman records, matching PIC API logic)
     $stmt = $conn->prepare("
         SELECT 
@@ -399,6 +400,34 @@ try {
         'raw' => $weekRaw
     ];
 
+    // 11. New Products This Month
+    $stmtNewProducts = $conn->prepare("
+        SELECT 
+            nama_barang,
+            stok_tersedia,
+            stok_total,
+            lokasi
+        FROM barang
+        WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
+        ORDER BY created_at DESC
+    ");
+    if (!$stmtNewProducts) {
+        throw new Exception("Query 11 Error: " . $conn->error);
+    }
+    $stmtNewProducts->execute();
+    $newProductsResult = $stmtNewProducts->get_result();
+    $new_products = [];
+    while ($row = $newProductsResult->fetch_assoc()) {
+        $new_products[] = [
+            'nama_barang' => $row['nama_barang'],
+            'stok_tersedia' => (int)$row['stok_tersedia'],
+            'stok_total' => (int)$row['stok_total'],
+            'lokasi' => $row['lokasi']
+        ];
+    }
+    $stats['new_products'] = $new_products;
+    $stmtNewProducts->close();
+
     // Return successful response with database connection info
     echo json_encode([
         'status' => true,
@@ -407,7 +436,6 @@ try {
         'timestamp' => date('Y-m-d H:i:s')
     ]);
     $conn->close();
-    
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
@@ -416,4 +444,3 @@ try {
         'database' => 'peminjaman'
     ]);
 }
-?>
