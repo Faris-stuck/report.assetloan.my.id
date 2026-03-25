@@ -56,13 +56,7 @@
         .badge {
             font-size: 0.75em;
             padding: 0.375em 0.75em;
-        }
-
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-    </style>
+        }    </style>
     <!--! END: Custom CSS-->
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
@@ -121,7 +115,6 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="#">Analytics</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -600,19 +593,19 @@
             let actionBtn = '';
             if (displayStatus === 'Currently Borrowed' || displayStatus.startsWith('Due') || displayStatus === 'Overdue') {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="ajukanPengembalian('${peminjaman.id}')">
-                    <i class="feather-refresh-cw"></i> Return
+                    Return
                 </button>`;
             } else if (displayStatus === 'Return in Process') {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
-                    <i></i> View Return Status
+                    Detail
                 </button>`;
             } else if (displayStatus === 'Rejected') {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
-                    <i></i> Reason
+                    Reason
                 </button>`;
             } else {
                 actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
-                    <i></i> Detail
+                    Detail
                 </button>`;
             }
 
@@ -643,7 +636,7 @@
             const displayStatus = getDisplayStatus(dbStatus);
             const statusBadge = getStatusBadge(dbStatus);
             const detailBtn = `<button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${peminjaman.id}')">
-        <i></i> Detail
+        Detail
      </button>`;
 
             // Expected return from per-unit data
@@ -664,7 +657,7 @@
         // Load data peminjaman
         const apiUrl = `${BASE_URL}/api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
         console.log('USER_ID=', USER_ID);
-        console.log('Fetching peminjaman from', apiUrl);
+        console.log('Fetching borrowing records from', apiUrl);
 
         fetch(apiUrl, { credentials: 'same-origin' })
             .then(res => {

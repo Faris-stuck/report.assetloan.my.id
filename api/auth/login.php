@@ -29,28 +29,14 @@ $res = $stmt->get_result();
 
 if ($res && $res->num_rows > 0) {
     $user = $res->fetch_assoc();
-    $stored = (string)($user['password'] ?? '');
+    $stored = (string) ($user['password'] ?? '');
 
-    // Verify password — supports both bcrypt hash and legacy plaintext
-    $passwordValid = false;
-    if (strlen($stored) >= 60 && strpos($stored, '$2y$') === 0) {
-        // Bcrypt hash
-        $passwordValid = password_verify($password, $stored);
-    } else {
-        // Legacy plaintext — auto-upgrade to hash on successful login
-        $passwordValid = ($password === $stored);
-        if ($passwordValid) {
-            $hashed = password_hash($password, PASSWORD_DEFAULT);
-            $upd = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-            $upd->bind_param("si", $hashed, $user['id']);
-            $upd->execute();
-            $upd->close();
-        }
-    }
+    // Development mode: plaintext password check (no hashing).
+    $passwordValid = ($password === $stored);
 
     if (!$passwordValid) {
         http_response_code(401);
-        echo json_encode(["error" => "Login failed"]);
+        echo json_encode(["error" => "Password yang Anda masukkan salah"]);
         exit;
     }
 
@@ -69,7 +55,6 @@ if ($res && $res->num_rows > 0) {
     unset($user['password']);
     echo json_encode($user);
 } else {
-    http_response_code(401);
-    echo json_encode(["error" => "Login failed"]);
+    http_response_code(404);
+    echo json_encode(["error" => "Email tidak terdaftar"]);
 }
-

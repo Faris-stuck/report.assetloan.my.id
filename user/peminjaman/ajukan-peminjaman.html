@@ -94,7 +94,6 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="#">Analytics</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -256,11 +255,11 @@
 
                     <!-- [ Borrowing Data Table ] start -->
                     <div class="card stretch stretch-full">
-                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div class="card-header d-flex justify-content-between align-items-center flex-nowrap gap-3">
                             <div>
                                 <h5 class="mb-0">Loan</h5>
                             </div>
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <div class="d-flex align-items-center gap-2 flex-nowrap">
                                 <div id="reportrange" class="reportrange-picker d-flex align-items-center">
                                     <span class="reportrange-picker-field"></span>
                                 </div>
@@ -636,7 +635,7 @@
             }
 
             if (!isMatchingPreset) {
-                console.log('✓ Custom range selected (tidak match dengan preset)');
+                console.log('✓ Custom range selected (does not match any preset)');
             }
 
             console.log('Date range changed to: ' + startDate + ' to ' + endDate);

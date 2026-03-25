@@ -92,7 +92,7 @@
     } catch (e) {
         // Network error — untuk keamanan, tetap tendang ke login
         // Lebih baik logout dari pada membiarkan akses tanpa verifikasi
-        console.warn('Page Guard: Gagal verifikasi session server:', e.message);
+        console.warn('Page Guard: Failed to verify server session:', e.message);
         kickToLogin();
         return;
     }
@@ -135,7 +135,7 @@
                 el.textContent = email;
             });
         } catch (e) {
-            console.warn('Page Guard: Gagal update user profile dropdown:', e.message);
+            console.warn('Page Guard: Failed to update user profile dropdown:', e.message);
         }
     }
 

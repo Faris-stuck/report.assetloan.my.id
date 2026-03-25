@@ -7,130 +7,218 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Rubik:400,400i,500,500i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&display=swap" rel="stylesheet">
     <link rel="icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
     <style>
+        :root {
+            --theme-default: #140a9a;
+            --theme-default-dark: #0c065c;
+            --input-bg: #f3f3ff;
+            --input-border: #efefef;
+            --text-muted: #898989;
+        }
+
         * {
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
         }
 
         body {
             margin: 0;
-            min-height: 100vh;
-            background: radial-gradient(circle at top, #03051f, #05082b 60%, #0a0f4a);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-family: 'Rubik', 'Roboto', sans-serif;
         }
 
         .login-card {
-            background: #ffffff;
-            width: 100%;
-            max-width: 420px;
-            border-radius: 14px;
-            padding: 40px 36px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, .35);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            padding: 30px 12px;
+            background: #000066;
+            background: linear-gradient(to top, #000066, #02001a);
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .login-main {
+            width: 450px;
+            max-width: 100%;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 37px rgba(8, 21, 66, 0.05);
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .text-center {
             text-align: center;
         }
 
-        .logo img {
-            width: 160px;
-            margin-bottom: 20px;
+        .text-end {
+            text-align: right;
         }
 
-        .title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: #111827;
+        .mt-3 {
+            margin-top: 1rem;
         }
 
-        .subtitle {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 28px;
-            color: #111827;
+        .mb-3 {
+            margin-bottom: 1rem;
         }
 
-        .form-group {
-            text-align: left;
-            margin-bottom: 18px;
+        .logo-big-img {
+            width: 35%;
+            min-width: 120px;
+            max-width: 170px;
+            height: auto;
         }
 
-        .form-group label {
-            display: block;
-            font-size: 14px;
+        .hidden-status {
+            display: none;
+        }
+
+        .theme-form h4 {
+            margin: 0;
+            font-size: 24px;
             font-weight: 500;
-            margin-bottom: 6px;
-            color: #374151;
+            color: #2c323f;
+            line-height: 1.35;
         }
 
-        .form-group input {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-            background: #f5f7ff;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .form-group input:focus {
-            border-color: #1e3a8a;
-            background: #ffffff;
-        }
-
-        .password-wrapper {
+        .theme-form .form-group {
+            margin-bottom: 10px;
             position: relative;
         }
 
-        .show-password {
+        .theme-form .col-form-label {
+            display: block;
+            font-size: 15px;
+            letter-spacing: 0.4px;
+            color: #2c323f;
+            margin-bottom: 6px;
+        }
+
+        .theme-form .form-control {
+            width: 100%;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: #374151;
+            font-weight: 400;
+            font-size: 14px;
+            padding: 12px 10px;
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: none;
+        }
+
+        .theme-form .form-control::placeholder {
+            color: #6b7280;
+            letter-spacing: normal;
+            font-weight: 400;
+        }
+
+        .theme-form .form-control:focus,
+        .theme-form .form-control:hover {
+            border-color: #b9c1cc;
+            background-color: #ffffff;
+            box-shadow: none;
+        }
+
+        .form-input {
+            position: relative;
+        }
+
+        .show-hide {
             position: absolute;
-            right: 12px;
             top: 50%;
+            right: 12px;
             transform: translateY(-50%);
-            font-size: 13px;
-            color: #1e3a8a;
+            line-height: 1;
+        }
+
+        .show-password {
             cursor: pointer;
+            font-size: 13px;
+            color: var(--theme-default);
             user-select: none;
+        }
+
+        .form-group.mb-0 {
+            margin-top: 4px;
+            margin-bottom: 0;
+            position: relative;
+            min-height: 0;
         }
 
         .login-btn {
             width: 100%;
             padding: 12px;
             border: none;
-            border-radius: 8px;
-            background: #1e3a8a;
+            border-radius: 4px;
+            background-color: var(--theme-default);
             color: #ffffff;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 500;
             cursor: pointer;
-            margin-top: 14px;
+            transition: background-color 0.2s ease;
         }
 
         .login-btn:hover {
-            background: #162f6a;
+            background-color: var(--theme-default-dark);
         }
 
         .forgot {
-            margin-top: 14px;
             display: block;
-            font-size: 14px;
-            color: #1e3a8a;
+            position: static;
+            margin-top: 14px;
+            text-align: center;
+            color: var(--theme-default);
             text-decoration: none;
-            font-weight: 500;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .forgot:hover {
+            text-decoration: underline;
+        }
+
+        .register-link {
+            display: block;
+            margin-top: 10px;
+            color: #2c323f;
+            text-decoration: none;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .register-link:hover {
+            color: var(--theme-default);
+            text-decoration: underline;
         }
 
         .footer {
-            margin-top: 26px;
+            margin-top: 10px;
+            text-align: center;
+            color: #898989;
             font-size: 12px;
-            color: #6b7280;
+            line-height: 1.4;
         }
 
-        @media (max-width: 480px) {
-            .login-card {
-                padding: 30px 24px;
+        @media (max-width: 576px) {
+            .login-main {
+                width: 100%;
+                padding: 28px 22px;
+            }
+
+            .theme-form h4 {
+                font-size: 20px;
+            }
+
+            .forgot {
+                margin-top: 12px;
             }
         }
     </style>
@@ -139,37 +227,41 @@
 <body>
 
     <div class="login-card">
-        <div class="logo">
-            <!-- Ganti src sesuai lokasi logo kamu -->
-            <img src="assets/images/Komatsu-Logo-removebg-preview.png" alt="Komatsu Logo">
-        </div>
+        <div class="login-main">
+            <form id="loginForm" class="theme-form">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <input id="StatusLogin" class="form-control hidden-status" type="hidden" readonly>
+                        <img class="logo-big-img" src="assets/images/Komatsu-Logo-removebg-preview.png" alt="loginpage">
+                    </div>
+                    <div class="mb-3">
+                        <h4>Komatsu Group Indonesia Business Partner Portal</h4>
+                    </div>
+                </div>
 
-        <div class="title">Komatsu Group Indonesia</div>
-        <!-- <div class="subtitle">Business Partner Portal</div>-->
+                <div class="form-group">
+                    <label class="col-form-label" for="email">Email</label>
+                    <input class="form-control" type="email" id="email" name="email" placeholder="email address" required>
+                </div>
 
-        <form id="loginForm">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="email" name="email" placeholder="email" required>
-            </div>
+                <div class="form-group">
+                    <label class="col-form-label" for="password">Password</label>
+                    <div class="form-input position-relative">
+                        <input class="form-control" type="password" id="password" name="password" placeholder="*********" required>
+                        <div class="show-hide"><span class="show-password" onclick="togglePassword()">show</span></div>
+                    </div>
+                </div>
 
-            <div class="form-group password-wrapper">
-                <label>Password</label>
-                <input type="password" id="password" name="password" placeholder="********" required>
-                <span class="show-password" onclick="togglePassword()">show</span>
-            </div>
-
-            <div class="w-100 mt-4 pt-2">
-                <button type="submit" class="login-btn">Log in</button>
-            </div>
-
-        </form>
-
-        <a href="forgot-password.html" class="forgot">Forgot password</a>
-        <a href="register.html" class="forgot">Don't have an account? Register here</a>
-
-        <div class="footer">
-            1.2.260112-04 © 2024 - ICT Komatsu Indonesia
+                <div class="form-group mb-0">
+                    <div class="text-end mt-3">
+                        <button class="login-btn" type="submit">Log in</button>
+                    </div>
+                    <a class="forgot" href="forgot-password.html">Forgot password</a>
+                    <div class="footer">
+                        1.2.260112-04 © 2024 - ICT Komatsu Indonesia
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -255,9 +347,11 @@
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value;
             const loginBtn = document.querySelector('.login-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
 
             if (!email || !password) {
-                alert("Email and password are required");
+                alert("Email and password are required.");
                 return;
             }
 
@@ -277,8 +371,43 @@
                 });
 
                 if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    alert(err.error || "Login failed. Please check your email/password.");
+                    let message = '';
+                    const contentType = res.headers.get('content-type') || '';
+
+                    if (contentType.includes('application/json')) {
+                        const err = await res.json().catch(() => ({}));
+                        message = err.error || err.message || '';
+                    } else {
+                        const text = await res.text().catch(() => '');
+                        message = text.trim();
+                    }
+
+                    if (message) {
+                        const normalized = message.toLowerCase();
+                        if (normalized.includes('login failed')) {
+                            message = 'Login failed. Please check your email and password.';
+                        }
+                    }
+
+                    if (!message) {
+                        if (res.status === 404) {
+                            message = 'Email is not registered.';
+                        } else if (res.status === 401) {
+                            message = 'The password you entered is incorrect.';
+                        } else if (res.status === 400) {
+                            message = 'Email and password are required.';
+                        } else {
+                            message = 'Login failed. Please check your email and password.';
+                        }
+                    }
+
+                    alert(message);
+                    if (res.status === 404) {
+                        emailInput.focus();
+                    } else if (res.status === 401) {
+                        passwordInput.focus();
+                    }
+
                     loginBtn.disabled = false;
                     loginBtn.textContent = 'Log in';
                     return;
@@ -293,7 +422,7 @@
                 redirectToDashboard(data.role);
 
             } catch (error) {
-                alert("A server connection error occurred.");
+                alert("Server connection issue. Please try again in a moment.");
                 console.error(error);
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Log in';

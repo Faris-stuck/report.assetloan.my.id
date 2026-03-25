@@ -36,6 +36,19 @@
     <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
     <link rel="stylesheet" href="../../assets/css/custom.css">
     <!--! END: Custom CSS-->
+    <style>
+        .return-action-buttons {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .return-action-buttons .btn {
+            white-space: nowrap;
+        }
+    </style>
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
     <script src="../../assets/js/auth/logout.js"></script>
@@ -73,7 +86,6 @@
                         </a>
                         <ul class="nxl-submenu">
                             <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
-                            <li class="nxl-item"><a class="nxl-link" href="#">Analytics</a></li>
                         </ul>
                     </li>
                     <li class="nxl-item nxl-hasmenu">
@@ -513,7 +525,7 @@
                 return;
             }
 
-            console.log("=== Loading Peminjaman List ===");
+            console.log("=== Loading Borrowing List ===");
             console.log("USER_ID:", USER_ID);
 
             // Fetch all borrowings from database
@@ -614,11 +626,11 @@
                 <span id="extend-badge-${p.id}">${extendBadgeHtml}</span>
             </td>
             <td>
-                <div class="d-flex gap-1 flex-wrap">
-                    <button class="btn btn-danger btn-sm" 
+                <div class="return-action-buttons">
+                    <button class="btn btn-sm btn-outline-primary" 
                         onclick="openReturnInspeksi(${p.id})" 
                         title="Request return for this borrowing">
-                        <i class="feather-undo"></i> Return
+                        Return
                     </button>
                     <button class="btn btn-warning btn-sm" 
                         onclick="openExtendModal(${p.id}, '${expectedReturn}')" 
@@ -969,13 +981,16 @@
                     console.error('Error:', err);
                     let errorMsg = err.message || 'Connection error';
 
-                    // If it's a known API error, provide additional context
-                    if (errorMsg.includes('sudah pernah diajukan')) {
-                        errorMsg += '\n\n(Please wait for admin review of your previous return submission)';
-                    } else if (errorMsg.includes('Semua barang sudah dikembalikan')) {
-                        errorMsg += '\n\n(All items for this borrowing have already been returned)';
-                    } else if (errorMsg.includes('tidak bisa diajukan')) {
-                        errorMsg += '\n\n(This borrowing cannot accept new returns in its current state)';
+                    // Normalize known backend messages into consistent English.
+                    const lowerMsg = errorMsg.toLowerCase();
+                    if (lowerMsg.includes('already been submitted')) {
+                        errorMsg = 'A return request for this borrowing has already been submitted.';
+                    } else if (lowerMsg.includes('already been returned')) {
+                        errorMsg = 'All items for this borrowing have already been returned.';
+                    } else if (lowerMsg.includes('cannot be submitted')) {
+                        errorMsg = 'This borrowing cannot accept a new return request in its current state.';
+                    } else {
+                        errorMsg = 'Unable to submit the return request. Please review your data and try again.';
                     }
 
                     alert('Return Request Failed:\n\n' + errorMsg);
@@ -1013,7 +1028,7 @@
                         badgeEl.innerHTML = '';
                     }
                 })
-                .catch(() => console.log('Failed to load extend status for peminjaman', peminjamanId));
+                .catch(() => console.log('Failed to load extend status for borrowing', peminjamanId));
         }
 
         function openExtendModal(peminjamanId, currentReturnDate) {

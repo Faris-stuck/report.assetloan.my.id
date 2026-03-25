@@ -639,7 +639,7 @@
             }
 
             if (!isMatchingPreset) {
-                console.log('✓ Custom range selected (tidak match dengan preset)');
+                console.log('✓ Custom range selected (does not match any preset)');
             }
 
             console.log('Date range changed to: ' + startDate + ' to ' + endDate);
@@ -802,7 +802,7 @@
 
                 // Method 4: Listen to input change di daterangepicker range inputs
                 $(document).on('change', '.daterangepicker input', function () {
-                    console.log('✓ METHOD 4: Input dalam daterangepicker berubah - removing active styling');
+                    console.log('✓ METHOD 4: Daterangepicker input changed - removing active styling');
                     // Langsung hapus active class ketika user mulai edit custom range
                     document.querySelectorAll('.daterangepicker .ranges li').forEach(function (button) {
                         button.classList.remove('active');
@@ -1166,7 +1166,7 @@
                     return 'Rejected';
                 case 'Return in Process':
                     return 'Return in Process';
-                case 'Sedang Diproses':
+                case 'Processing':
                     return 'Processing';
                 default:
                     return dbStatus;

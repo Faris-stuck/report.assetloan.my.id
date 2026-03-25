@@ -607,3 +607,24 @@ body {
 .hamburger-inner::after {
     background-color: #ffffff !important;
 }
+/* ============================= */
+/* FORCE HORIZONTAL BUTTON LAYOUT */
+/* ============================= */
+
+.modal-footer {
+    flex-wrap: nowrap !important;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.modal-footer .btn {
+    white-space: nowrap;
+}
+
+.d-grid.gap-2.d-md-flex.justify-content-md-end {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    justify-content: flex-end !important;
+    gap: 8px;
+}

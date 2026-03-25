@@ -47,10 +47,9 @@ if (!$user) {
     exit;
 }
 
-// Hash password with bcrypt
-$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+// Store password as plaintext (development only)
 $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
-$stmt->bind_param("si", $hashed_password, $id);
+$stmt->bind_param("si", $password, $id);
 
 if ($stmt->execute()) {
     echo json_encode([

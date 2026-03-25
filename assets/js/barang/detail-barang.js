@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
         })
     // .catch(err => {
     //     console.log(err);
-    //     alert("Gagal mengambil detail barang");
+    //     alert("Failed to fetch item details");
     // });
 
 
