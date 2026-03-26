@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 26 Mar 2026 pada 08.44
+-- Waktu pembuatan: 26 Mar 2026 pada 10.17
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -47,7 +47,7 @@ CREATE TABLE `barang` (
 --
 
 INSERT INTO `barang` (`id`, `kode_barang`, `nama_barang`, `kategori`, `lokasi`, `stok_total`, `stok_tersedia`, `safety_stock`, `kondisi`, `keterangan`, `created_at`, `stok_rusak`) VALUES
-(150, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 50, 35, 1, 'Good', 'Work Requirements', '2026-03-09 07:25:26', 1),
+(150, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 50, 37, 1, 'Good', 'Work Requirements', '2026-03-09 07:25:26', 1),
 (151, 'ADC-LAP-02', 'Laptop Lenovo Ideapad Slim 3', 'Laptop', 'ICT-MAIN OFFICE', 20, 20, 1, 'Good', 'Work Requirement', '2026-03-09 08:12:30', 0),
 (152, 'ADC-LAP-03', 'Laptop Lenovo IDeapad Slim 5', 'Laptop', 'ICT - MAIN OFFICE', 20, 17, 1, 'Good', 'Work Requirement\r\n', '2026-03-09 22:30:36', 0),
 (153, 'ADC-MOUSE-01', 'Mouse Logitech', 'Mouse', 'ICT - MAIN OFFICE', 20, 18, 1, 'Good', 'Work Requirement', '2026-03-09 22:31:01', 0),
@@ -99,16 +99,7 @@ INSERT INTO `detail_peminjaman` (`id`, `peminjaman_id`, `barang_id`, `lokasi`, `
 (148, 105, 150, 'ICT - MAIN OFFICE', 5, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-10 07:18:29'),
 (149, 106, 152, 'ICT - MAIN OFFICE', 5, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-10 13:14:26'),
 (150, 107, 150, 'ICT - MAIN OFFICE', 2, '2026-03-30', 'Good', 'pending', NULL, NULL, NULL, '2026-03-10 13:25:29'),
-(153, 113, 150, 'ICT - MAIN OFFICE', 3, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-11 13:21:23'),
-(154, 114, 150, 'ICT - MAIN OFFICE', 1, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:32:35'),
-(155, 115, 150, 'ICT - MAIN OFFICE', 1, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:32:37'),
-(156, 116, 150, 'ICT - MAIN OFFICE', 2, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:32:40'),
-(157, 117, 150, 'ICT - MAIN OFFICE', 1, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:33:00'),
-(158, 118, 150, 'ICT - MAIN OFFICE', 1, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:33:03'),
-(159, 119, 150, 'ICT - MAIN OFFICE', 2, '2026-04-16', 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:33:04'),
-(160, 120, 150, 'ICT - MAIN OFFICE', 1, '2026-04-05', 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:37:56'),
-(161, 121, 150, 'ICT - MAIN OFFICE', 1, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:37:58'),
-(162, 122, 150, 'ICT - MAIN OFFICE', 2, '2026-04-09', 'Good', 'pending', NULL, NULL, NULL, '2026-03-26 11:38:01');
+(153, 113, 150, 'ICT - MAIN OFFICE', 3, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-11 13:21:23');
 
 -- --------------------------------------------------------
 
@@ -137,8 +128,7 @@ INSERT INTO `detail_pengembalian` (`id`, `pengembalian_id`, `barang_id`, `jumlah
 (43, 42, 151, 1, 'Good', 0, 0, 0.00, '', '2026-03-10 07:21:12'),
 (44, 42, 152, 2, 'Good', 0, 0, 0.00, '', '2026-03-10 07:21:12'),
 (45, 42, 150, 1, 'Good', 0, 0, 0.00, '', '2026-03-10 07:21:12'),
-(46, 43, 150, 2, 'Good', 0, 0, 0.00, '', '2026-03-10 13:54:06'),
-(47, 48, 150, 1, 'Good', 0, 0, 0.00, 'ok', '2026-03-26 11:40:35');
+(46, 43, 150, 2, 'Good', 0, 0, 0.00, '', '2026-03-10 13:54:06');
 
 -- --------------------------------------------------------
 
@@ -165,13 +155,7 @@ CREATE TABLE `extend_peminjaman` (
 
 INSERT INTO `extend_peminjaman` (`id`, `peminjaman_id`, `user_id`, `tanggal_kembali_sekarang`, `tanggal_perpanjang`, `alasan`, `status`, `approved_by`, `approved_at`, `created_at`) VALUES
 (11, 107, 1025, '2026-03-10', '2026-03-30', 'TES EXTEND', 'Approved', 1024, '2026-03-10 13:26:59', '2026-03-10 13:26:14'),
-(12, 102, 1025, '2026-03-16', '2026-04-01', 'TES EXTEND ALL', 'Approved', 1024, '2026-03-11 09:21:06', '2026-03-11 09:20:38'),
-(13, 122, 1047, '2026-04-02', '2026-04-09', 'manual partial', 'Approved', 1044, '2026-03-26 11:39:21', '2026-03-26 11:39:20'),
-(14, 120, 1047, '2026-04-02', '2026-04-05', 'manual approve', 'Approved', 1046, '2026-03-26 11:40:30', '2026-03-26 11:40:30'),
-(15, 120, 1047, '2026-04-05', '2026-04-07', 'manual reject', 'Rejected', 1044, '2026-03-26 11:40:33', '2026-03-26 11:40:33'),
-(18, 119, 1025, '2026-04-02', '2026-04-15', 'BUGFIX_TEST_SEND_EXTEND_REQUEST_20260326131206', 'Rejected', 1, '2026-03-26 13:12:10', '2026-03-26 13:12:08'),
-(21, 119, 1025, '2026-04-13', '2026-04-14', 'DELTA_CHECK_20260326132542_1', 'Approved', 1, '2026-03-26 13:25:44', '2026-03-26 13:25:42'),
-(22, 119, 1025, '2026-04-14', '2026-04-16', 'DELTA_CHECK_20260326132542_2', 'Approved', 1, '2026-03-26 13:26:30', '2026-03-26 13:25:49');
+(12, 102, 1025, '2026-03-16', '2026-04-01', 'TES EXTEND ALL', 'Approved', 1024, '2026-03-11 09:21:06', '2026-03-11 09:20:38');
 
 -- --------------------------------------------------------
 
@@ -200,13 +184,7 @@ INSERT INTO `extend_peminjaman_items` (`id`, `extend_peminjaman_id`, `detail_pem
 (12, 12, 140, 1, '2026-04-01', '2026-03-11 09:20:38'),
 (13, 12, 140, 2, '2026-04-01', '2026-03-11 09:20:38'),
 (14, 12, 141, 1, '2026-04-01', '2026-03-11 09:20:38'),
-(15, 12, 141, 2, '2026-04-01', '2026-03-11 09:20:38'),
-(16, 13, 162, 1, '2026-04-09', '2026-03-26 11:39:20'),
-(17, 14, 160, 1, '2026-04-05', '2026-03-26 11:40:30'),
-(18, 15, 160, 1, '2026-04-07', '2026-03-26 11:40:33'),
-(21, 18, 159, 1, '2026-04-15', '2026-03-26 13:12:08'),
-(24, 21, 159, 1, '2026-04-14', '2026-03-26 13:25:42'),
-(25, 22, 159, 1, '2026-04-16', '2026-03-26 13:25:49');
+(15, 12, 141, 2, '2026-04-01', '2026-03-11 09:20:38');
 
 -- --------------------------------------------------------
 
@@ -269,16 +247,7 @@ INSERT INTO `peminjaman` (`id`, `kode_peminjaman`, `user_id`, `nama_peminjam`, `
 (105, 'PMJ-1773101909', 1025, 'Faris User', '48479373', 'FABRIKASI', '2026-03-10', '2026-03-16', '2026-03-10', 'Overdue', 'TES NOTES USER', 'TES REJECT 2', '2026-03-10 07:18:29', NULL, NULL),
 (106, 'PMJ-1773123266', 1025, 'Faris User', '48479373', 'KBN', '2026-03-10', '2026-03-25', '2026-03-10', 'Overdue', '', 'tes tolak', '2026-03-10 13:14:26', NULL, NULL),
 (107, 'PMJ-1773123929', 1025, 'Faris User', '48479373', 'Kbn', '2026-03-10', '2026-03-30', '2026-03-10', 'Returned', '', '', '2026-03-10 13:25:29', '2026-03-10', NULL),
-(113, 'PMJ-1773210083', 1025, 'Faris User', '48479373', 'kbn', '2026-03-11', '2026-03-31', NULL, 'Waiting for Approval', 'tes notes', NULL, '2026-03-11 13:21:23', NULL, NULL),
-(114, 'PMJ-1774499555', 1033, 'E2E user 20260326113233', 'E2E-user-20260326113', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-02', NULL, 'Waiting for Approval', 'E2E-APPROVE-20260326113233', NULL, '2026-03-26 11:32:35', NULL, NULL),
-(115, 'PMJ-1774499557', 1033, 'E2E user 20260326113233', 'E2E-user-20260326113', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-02', NULL, 'Waiting for Approval', 'E2E-REJECT-20260326113233', NULL, '2026-03-26 11:32:37', NULL, NULL),
-(116, 'PMJ-1774499560', 1033, 'E2E user 20260326113233', 'E2E-user-20260326113', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-02', '2026-03-26', 'Due In 7 Days', 'E2E-PARTIAL-EXT-20260326113233', '', '2026-03-26 11:32:40', NULL, NULL),
-(117, 'PMJ-1774499580', 1025, 'Faris User', '48479373', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-02', NULL, 'Waiting for Approval', 'E2E-APPROVE-20260326113258', NULL, '2026-03-26 11:33:00', NULL, NULL),
-(118, 'PMJ-1774499583', 1025, 'Faris User', '48479373', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-02', NULL, 'Waiting for Approval', 'E2E-REJECT-20260326113258', NULL, '2026-03-26 11:33:03', NULL, NULL),
-(119, 'PMJ-1774499584', 1025, 'Faris User', '48479373', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-16', '2026-03-26', 'Due In 7 Days', 'E2E-PARTIAL-EXT-20260326113258', '', '2026-03-26 11:33:04', NULL, NULL),
-(120, 'PMJ-1774499876', 1047, 'QA user 113753', 'QUS113753', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-05', '2026-03-26', 'Returned', 'RUN113753-A', '', '2026-03-26 11:37:56', '2026-03-26', NULL),
-(121, 'PMJ-1774499878', 1047, 'QA user 113753', 'QUS113753', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-02', NULL, 'Rejected', 'RUN113753-B', 'manual reject', '2026-03-26 11:37:58', NULL, NULL),
-(122, 'PMJ-1774499881', 1047, 'QA user 113753', 'QUS113753', 'ICT - MAIN OFFICE', '2026-03-26', '2026-04-09', '2026-03-26', 'Due In 7 Days', 'RUN113753-C', '', '2026-03-26 11:38:01', NULL, NULL);
+(113, 'PMJ-1773210083', 1025, 'Faris User', '48479373', 'kbn', '2026-03-11', '2026-03-31', NULL, 'Waiting for Approval', 'tes notes', NULL, '2026-03-11 13:21:23', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -347,15 +316,7 @@ INSERT INTO `peminjaman_units` (`id`, `peminjaman_id`, `detail_peminjaman_id`, `
 (182, 107, 150, 150, 2, 'Unit 2 of 2', 'Returned', '2026-03-30', NULL, NULL, 'Approved', 1023, '2026-03-10 13:25:40', NULL, '2026-03-10 13:25:40'),
 (183, 113, 153, 150, 1, 'Unit 1', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09'),
 (184, 113, 153, 150, 2, 'Unit 2', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09'),
-(185, 113, 153, 150, 3, 'Unit 3', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09'),
-(186, 116, 156, 150, 1, 'Unit 1 of 2', 'Not Yet Returned', '2026-04-02', NULL, NULL, 'Approved', 1031, '2026-03-26 11:32:42', NULL, '2026-03-26 11:32:42'),
-(187, 116, 156, 150, 2, 'Unit 2 of 2', 'Not Yet Returned', '2026-04-02', NULL, NULL, 'Approved', 1031, '2026-03-26 11:32:42', NULL, '2026-03-26 11:32:42'),
-(188, 119, 159, 150, 1, 'Unit 1 of 2', 'Not Yet Returned', '2026-04-16', NULL, NULL, 'Approved', 1023, '2026-03-26 11:33:07', NULL, '2026-03-26 11:33:07'),
-(189, 119, 159, 150, 2, 'Unit 2 of 2', 'Not Yet Returned', '2026-04-02', NULL, NULL, 'Approved', 1023, '2026-03-26 11:33:07', NULL, '2026-03-26 11:33:07'),
-(190, 122, 162, 150, 1, 'Unit 1 of 2', 'Not Yet Returned', '2026-04-09', NULL, NULL, 'Approved', 1045, '2026-03-26 11:38:05', NULL, '2026-03-26 11:38:05'),
-(191, 122, 162, 150, 2, 'Unit 2 of 2', 'Not Yet Returned', '2026-04-02', NULL, NULL, 'Approved', 1045, '2026-03-26 11:38:05', NULL, '2026-03-26 11:38:05'),
-(192, 120, 160, 150, 1, 'Unit 1 of 1', 'Returned', '2026-04-05', NULL, NULL, 'Approved', 1045, '2026-03-26 11:40:24', NULL, '2026-03-26 11:40:24'),
-(193, 121, 161, 150, 1, 'Unit 1 of 1', 'Rejected', '2026-04-02', NULL, NULL, 'Rejected', 1045, '2026-03-26 11:40:27', NULL, '2026-03-26 11:40:27');
+(185, 113, 153, 150, 3, 'Unit 3', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09');
 
 -- --------------------------------------------------------
 
@@ -386,8 +347,7 @@ CREATE TABLE `pengembalian` (
 
 INSERT INTO `pengembalian` (`id`, `kode_pengembalian`, `peminjaman_id`, `user_id`, `status`, `catatan_user`, `catatan_petugas`, `checked_by_role`, `checked_by_user_id`, `has_rusak`, `total_ganti_rugi`, `diajukan_at`, `dicek_at`, `selesai_at`) VALUES
 (42, 'KMB-1773102072', 101, 1025, 'Completed', 'TES RETURN USER', 'TES NOTES PIC', 'pic_barang', 1024, 0, 0.00, '2026-03-10 07:21:12', '2026-03-10 07:22:46', '2026-03-10 07:22:46'),
-(43, 'KMB-1773125646', 107, 1025, 'Completed', '', '', 'pic_barang', 1024, 0, 0.00, '2026-03-10 13:54:06', '2026-03-10 13:54:22', '2026-03-10 13:54:22'),
-(48, 'KMB-1774500035', 120, 1047, 'Completed', 'manual return', 'manual inspect', 'pic_barang', 1046, 0, 0.00, '2026-03-26 11:40:35', '2026-03-26 11:40:38', '2026-03-26 11:40:43');
+(43, 'KMB-1773125646', 107, 1025, 'Completed', '', '', 'pic_barang', 1024, 0, 0.00, '2026-03-10 13:54:06', '2026-03-10 13:54:22', '2026-03-10 13:54:22');
 
 -- --------------------------------------------------------
 
@@ -456,17 +416,7 @@ INSERT INTO `users` (`id`, `nama`, `nrp`, `email`, `password`, `role`, `created_
 (1022, 'Faris Admin', '49583984', 'azmiariffaris@gmail.com', '123456', 'admin', '2026-03-09 07:17:47', '501450', '2026-03-26 10:54:50'),
 (1023, 'Faris Manager', '202480392', 'azmiariffaris1@gmail.com', '123456', 'manager', '2026-03-09 07:18:27', NULL, NULL),
 (1024, 'Faris Pic Barang', '48573837', 'azmiariffaris2@gmail.com', '123456', 'pic_barang', '2026-03-09 07:19:07', NULL, NULL),
-(1025, 'Faris User', '48479373', 'azmiariffaris3@gmail.com', '654321', 'user', '2026-03-09 07:19:41', '449524', '2026-03-26 12:14:07'),
-(1030, 'E2E admin 20260326113233', 'E2E-admin-2026032611', 'e2e_admin_20260326113233@test.local', '123456', 'admin', '2026-03-26 11:32:34', NULL, NULL),
-(1031, 'E2E manager 20260326113233', 'E2E-manager-20260326', 'e2e_manager_20260326113233@test.local', '123456', 'manager', '2026-03-26 11:32:35', NULL, NULL),
-(1032, 'E2E pic_barang 20260326113233', 'E2E-pic_barang-20260', 'e2e_pic_barang_20260326113233@test.local', '123456', 'pic_barang', '2026-03-26 11:32:35', NULL, NULL),
-(1033, 'E2E user 20260326113233', 'E2E-user-20260326113', 'e2e_user_20260326113233@test.local', '654321', 'user', '2026-03-26 11:32:35', NULL, NULL),
-(1042, 'Smoke User', 'S113449', 'smoke_user_113449@test.local', '123456', 'user', '2026-03-26 11:34:49', NULL, NULL),
-(1043, 'QA admin 113722', 'QAD113722', 'qad113722@test.local', '123456', 'admin', '2026-03-26 11:37:25', NULL, NULL),
-(1044, 'QA admin 113753', 'QAD113753', 'qad113753@test.local', '123456', 'admin', '2026-03-26 11:37:55', NULL, NULL),
-(1045, 'QA manager 113753', 'QMG113753', 'qmg113753@test.local', '123456', 'manager', '2026-03-26 11:37:55', NULL, NULL),
-(1046, 'QA pic_barang 113753', 'QPC113753', 'qpc113753@test.local', '123456', 'pic_barang', '2026-03-26 11:37:55', NULL, NULL),
-(1047, 'QA user 113753', 'QUS113753', 'qus113753@test.local', '654321', 'user', '2026-03-26 11:37:55', '170640', '2026-03-26 11:56:11');
+(1025, 'Faris User', '48479373', 'azmiariffaris3@gmail.com', '654321', 'user', '2026-03-09 07:19:41', '449524', '2026-03-26 12:14:07');
 
 -- --------------------------------------------------------
 
