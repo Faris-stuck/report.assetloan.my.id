@@ -1,0 +1,26 @@
+# OS artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor folders
+.vscode/
+.idea/
+
+# Local environment secrets
+.env
+.env.*
+!.env.example
+
+# Runtime uploads and generated files
+/assets/uploads/
+/tmp/
+/temp/
+/cache/
+*.log
+*.pid
+*.tmp
+*.bak
+
+# Test/tooling caches
+.phpunit.result.cache

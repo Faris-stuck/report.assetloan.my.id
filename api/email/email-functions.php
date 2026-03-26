@@ -25,28 +25,301 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 /**
- * Send email using PHPMailer + SMTP Gmail (NON-BLOCKING)
- * 
- * Dispatches email to a background PHP process so the HTTP response
- * is returned immediately without waiting for SMTP. Falls back to
- * synchronous sending if background dispatch fails.
+ * Email queue directory (used when background dispatcher fails).
+ */
+function _getEmailQueueDir() {
+    $customDir = trim((string) getenv('EMAIL_QUEUE_DIR'));
+    if ($customDir !== '') {
+        return $customDir;
+    }
+    return __DIR__ . '/../../tmp/email-queue';
+}
+
+function _getEmailQueueFailedDir() {
+    return _getEmailQueueDir() . '/failed';
+}
+
+function _ensureEmailQueueDirs() {
+    $dirs = [_getEmailQueueDir(), _getEmailQueueFailedDir()];
+    foreach ($dirs as $dir) {
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+            error_log("[EMAIL QUEUE] Failed to create queue directory: {$dir}");
+            return false;
+        }
+    }
+    return true;
+}
+
+function _buildQueuedEmailPayload($to, $subject, $htmlBody, $toName, $plainBody) {
+    return [
+        'version' => 1,
+        'to' => (string) $to,
+        'toName' => (string) $toName,
+        'subject' => (string) $subject,
+        'htmlBody' => (string) $htmlBody,
+        'plainBody' => (string) $plainBody,
+        'attempts' => 0,
+        'next_attempt_at' => time(),
+        'created_at' => date('c'),
+        'last_error' => null,
+    ];
+}
+
+function _enqueueEmailForRetry($payload) {
+    if (!_ensureEmailQueueDirs()) {
+        return false;
+    }
+
+    try {
+        $rand = bin2hex(random_bytes(6));
+    } catch (Throwable $e) {
+        $rand = uniqid('', true);
+    }
+
+    $file = _getEmailQueueDir() . '/mailq_' . date('Ymd_His') . '_' . str_replace('.', '', $rand) . '.json';
+    $json = json_encode($payload, JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        error_log("[EMAIL QUEUE] Failed to encode queue payload");
+        return false;
+    }
+
+    $ok = @file_put_contents($file, $json, LOCK_EX);
+    if ($ok === false) {
+        error_log("[EMAIL QUEUE] Failed to write queue payload: {$file}");
+        return false;
+    }
+
+    error_log("[EMAIL QUEUE] Email queued: {$file}");
+    return true;
+}
+
+function _dispatchQueueWorkerBackground() {
+    $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+    $phpBin = _findPhpBinary();
+    if (!$phpBin) {
+        error_log("[EMAIL QUEUE] Cannot find PHP binary for queue worker");
+        return false;
+    }
+
+    $workerScript = __DIR__ . '/send-queue-worker.php';
+    if (!file_exists($workerScript)) {
+        error_log("[EMAIL QUEUE] Queue worker not found: {$workerScript}");
+        return false;
+    }
+
+    $maxPerRun = max(1, (int) (getenv('EMAIL_QUEUE_MAX_PER_RUN') ?: 25));
+    $cmdBase = escapeshellarg($phpBin) . ' ' . escapeshellarg($workerScript) . ' --max=' . $maxPerRun;
+
+    if (_startBackgroundCommand($cmdBase)) {
+        return true;
+    }
+
+    error_log($isWindows
+        ? "[EMAIL QUEUE] Failed to start queue worker in Windows background process"
+        : "[EMAIL QUEUE] Failed to start queue worker in POSIX background process");
+    return false;
+}
+
+function _startBackgroundCommand($cmdBase) {
+    $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+
+    if ($isWindows) {
+        // Use cmd /c start for detached non-blocking execution.
+        $cmd = 'cmd /c start "" /B ' . $cmdBase . ' > NUL 2>&1';
+        $handle = @popen($cmd, 'r');
+        if (is_resource($handle)) {
+            @pclose($handle);
+            return true;
+        }
+
+        // Fallback to proc_open in case popen is restricted.
+        $proc = @proc_open(
+            'cmd /c start "" /B ' . $cmdBase,
+            [
+                0 => ['pipe', 'r'],
+                1 => ['file', 'NUL', 'w'],
+                2 => ['file', 'NUL', 'w'],
+            ],
+            $pipes
+        );
+        if (is_resource($proc)) {
+            if (isset($pipes[0]) && is_resource($pipes[0])) {
+                @fclose($pipes[0]);
+            }
+            @proc_close($proc);
+            return true;
+        }
+
+        return false;
+    }
+
+    $exitCode = 1;
+    exec($cmdBase . ' > /dev/null 2>&1 &', $voidOutput, $exitCode);
+    return $exitCode === 0;
+}
+
+function _requeueOrFailLockedEmail($lockedPath, $payload, $errorMessage) {
+    $attempts = (int)($payload['attempts'] ?? 0) + 1;
+    $payload['attempts'] = $attempts;
+    $payload['last_error'] = substr((string)$errorMessage, 0, 500);
+    $payload['updated_at'] = date('c');
+
+    $maxAttempts = max(1, (int)(getenv('EMAIL_QUEUE_MAX_ATTEMPTS') ?: 5));
+    if ($attempts >= $maxAttempts) {
+        $failedName = basename(substr($lockedPath, 0, -5));
+        $failedPath = _getEmailQueueFailedDir() . '/failed_' . $failedName;
+        @file_put_contents($failedPath, json_encode($payload, JSON_UNESCAPED_SLASHES), LOCK_EX);
+        @unlink($lockedPath);
+        error_log("[EMAIL QUEUE] Moved to failed queue after {$attempts} attempts: {$failedPath}");
+        return 'failed';
+    }
+
+    $backoff = min(900, (int)pow(2, max(0, $attempts - 1)) * 15); // 15s, 30s, 60s, ...
+    $payload['next_attempt_at'] = time() + $backoff;
+
+    $queuePath = substr($lockedPath, 0, -5); // remove .lock
+    $written = @file_put_contents($queuePath, json_encode($payload, JSON_UNESCAPED_SLASHES), LOCK_EX);
+    @unlink($lockedPath);
+    if ($written === false) {
+        error_log("[EMAIL QUEUE] Failed to requeue email: {$queuePath}");
+        return 'failed';
+    }
+    return 'requeued';
+}
+
+/**
+ * Process queued emails synchronously (for cron/worker).
+ *
+ * @param int $maxPerRun
+ * @return array
+ */
+function processEmailQueue($maxPerRun = 25) {
+    $maxPerRun = max(1, (int)$maxPerRun);
+    $summary = [
+        'processed' => 0,
+        'sent' => 0,
+        'requeued' => 0,
+        'failed' => 0,
+        'deferred' => 0,
+    ];
+
+    if (!_ensureEmailQueueDirs()) {
+        return $summary;
+    }
+
+    $queueFiles = glob(_getEmailQueueDir() . '/mailq_*.json') ?: [];
+    sort($queueFiles, SORT_STRING);
+
+    foreach ($queueFiles as $queuePath) {
+        if ($summary['processed'] >= $maxPerRun) {
+            break;
+        }
+
+        $lockedPath = $queuePath . '.lock';
+        if (!@rename($queuePath, $lockedPath)) {
+            continue; // already handled by another worker
+        }
+
+        $summary['processed']++;
+        $raw = @file_get_contents($lockedPath);
+        if ($raw === false) {
+            @unlink($lockedPath);
+            $summary['failed']++;
+            continue;
+        }
+
+        $payload = json_decode($raw, true);
+        if (!is_array($payload) || empty($payload['to']) || empty($payload['subject'])) {
+            @unlink($lockedPath);
+            $summary['failed']++;
+            continue;
+        }
+
+        $nextAttemptAt = (int)($payload['next_attempt_at'] ?? 0);
+        if ($nextAttemptAt > time()) {
+            // Not yet due, put it back and continue.
+            @rename($lockedPath, $queuePath);
+            $summary['deferred']++;
+            continue;
+        }
+
+        $sent = _sendEmailSync(
+            (string)$payload['to'],
+            (string)$payload['subject'],
+            (string)($payload['htmlBody'] ?? ''),
+            (string)($payload['toName'] ?? ''),
+            (string)($payload['plainBody'] ?? '')
+        );
+
+        if ($sent) {
+            @unlink($lockedPath);
+            $summary['sent']++;
+            continue;
+        }
+
+        $outcome = _requeueOrFailLockedEmail($lockedPath, $payload, 'SMTP send failed');
+        if ($outcome === 'requeued') {
+            $summary['requeued']++;
+        } else {
+            $summary['failed']++;
+        }
+    }
+
+    return $summary;
+}
+
+/**
+ * Send email using PHPMailer + SMTP Gmail
+ *
+ * Tries non-blocking background dispatch first on all OS.
+ * Falls back to synchronous sending unless disabled via options.
  *
  * @param string $to         Recipient email
  * @param string $subject    Email subject
  * @param string $htmlBody   Email body in HTML format
  * @param string $toName     Recipient name (optional)
  * @param string $plainBody  Plain text email body fallback (optional)
+ * @param array  $options    Optional flags:
+ *                           - forceSync (bool): send synchronously
+ *                           - preferBackground (bool): try background dispatch first (default true)
+ *                           - noSyncFallback (bool): don't fallback to sync when background fails
  * @return bool              true if dispatched/sent, false if failed
  */
-function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
-    // Try non-blocking background dispatch first
-    $dispatched = _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody);
-    if ($dispatched) {
-        return true;
+function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '', $options = []) {
+    $forceSync = is_array($options) && !empty($options['forceSync']);
+    $preferBackground = !is_array($options) || !array_key_exists('preferBackground', $options)
+        ? true
+        : !empty($options['preferBackground']);
+    $noSyncFallback = is_array($options) && !empty($options['noSyncFallback']);
+
+    // Force synchronous send (used for user-triggered flows that must not delay).
+    if ($forceSync) {
+        return _sendEmailSync($to, $subject, $htmlBody, $toName, $plainBody);
+    }
+
+    if ($preferBackground) {
+        // Try non-blocking background dispatch first.
+        $dispatched = _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody);
+        if ($dispatched) {
+            return true;
+        }
+
+        if ($noSyncFallback) {
+            // Keep request fast: queue for retry instead of blocking user flow.
+            $queued = _enqueueEmailForRetry(_buildQueuedEmailPayload($to, $subject, $htmlBody, $toName, $plainBody));
+            if ($queued) {
+                if (!_dispatchQueueWorkerBackground()) {
+                    error_log("[EMAIL QUEUE] Queue worker could not be started immediately; message remains queued");
+                }
+                return true;
+            }
+            error_log("[EMAIL] Background dispatch failed, queue fallback failed, and sync fallback disabled for {$to}");
+            return false;
+        }
     }
 
     // Fallback: send synchronously if background dispatch failed
-    error_log("[EMAIL] Background dispatch failed, falling back to synchronous send for {$to}");
+    error_log("[EMAIL] Falling back to synchronous send for {$to}");
     return _sendEmailSync($to, $subject, $htmlBody, $toName, $plainBody);
 }
 
@@ -56,6 +329,8 @@ function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
  * @return bool  true if dispatched successfully
  */
 function _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody) {
+    $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+
     // Determine PHP binary path
     $phpBin = _findPhpBinary();
     if (!$phpBin) {
@@ -93,20 +368,37 @@ function _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody)
     }
 
     // Execute background process (Linux: & for background, /dev/null to detach)
-    $cmd = escapeshellarg($phpBin) . ' ' . escapeshellarg($workerScript) . ' ' . escapeshellarg($tmpFile);
+    $cmdBase = escapeshellarg($phpBin) . ' ' . escapeshellarg($workerScript) . ' ' . escapeshellarg($tmpFile);
 
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        // Windows: use start /B for background
-        $cmd = 'start /B ' . $cmd;
-        pclose(popen($cmd, 'r'));
-    } else {
-        // Linux/Mac: redirect output and run in background
-        $cmd .= ' > /dev/null 2>&1 &';
-        exec($cmd);
+    if (_startBackgroundCommand($cmdBase)) {
+        error_log($isWindows
+            ? "[EMAIL] Dispatched background email (WIN) to {$to} via {$tmpFile}"
+            : "[EMAIL] Dispatched background email to {$to} via {$tmpFile}");
+        return true;
     }
 
-    error_log("[EMAIL] Dispatched background email to {$to} via {$tmpFile}");
-    return true;
+    error_log($isWindows
+        ? "[EMAIL] Failed to start Windows background dispatcher"
+        : "[EMAIL] Failed to start POSIX background dispatcher");
+    return false;
+}
+
+function _isUsablePhpCliBinary($path) {
+    if (empty($path)) {
+        return false;
+    }
+
+    $name = strtolower(basename($path));
+    if ($name === '' || strpos($name, 'httpd') !== false || strpos($name, 'apache') !== false) {
+        return false;
+    }
+
+    $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+    if ($isWindows) {
+        return in_array($name, ['php.exe', 'php-win.exe', 'php-cgi.exe', 'phpdbg.exe'], true);
+    }
+
+    return $name === 'php' || strpos($name, 'php') === 0;
 }
 
 /**
@@ -115,27 +407,73 @@ function _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody)
  * @return string|null  Path to PHP binary, or null if not found
  */
 function _findPhpBinary() {
-    // Check common XAMPP paths first
-    $candidates = [
-        '/opt/lampp/bin/php',           // Linux XAMPP
-        'E:\\xampp\\php\\php.exe',      // Windows XAMPP
-        'C:\\xampp\\php\\php.exe',      // Windows XAMPP alt
-        PHP_BINARY,                     // Current PHP binary
-    ];
+    $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
 
-    foreach ($candidates as $path) {
-        if (!empty($path) && file_exists($path) && is_executable($path)) {
+    // Priority order:
+    // 1) Explicit env override
+    // 2) OS-specific common install paths
+    // 3) Current runtime binary (PHP_BINARY), only if it is a PHP CLI executable
+    //    (in apache2handler this can be httpd.exe, which is invalid for CLI worker)
+    $candidates = [];
+
+    $envPhp = getenv('PHP_CLI_BIN');
+    if (!empty($envPhp)) {
+        $candidates[] = $envPhp;
+    }
+
+    if ($isWindows) {
+        $candidates[] = 'E:\\xampp\\php\\php.exe';
+        $candidates[] = 'C:\\xampp\\php\\php.exe';
+    } else {
+        $candidates[] = '/usr/bin/php';
+        $candidates[] = '/usr/local/bin/php';
+        $candidates[] = '/opt/lampp/bin/php';
+    }
+
+    if (defined('PHP_BINARY') && !empty(PHP_BINARY)) {
+        $runtimeBinary = (string) PHP_BINARY;
+        if (_isUsablePhpCliBinary($runtimeBinary)) {
+            $candidates[] = $runtimeBinary;
+        } else {
+            // Helpful fallback when running under Apache module on XAMPP.
+            // Example PHP_BINARY: E:\xampp\apache\bin\httpd.exe
+            $runtimeDir = dirname($runtimeBinary);
+            $parentDir = dirname($runtimeDir);
+            if ($isWindows && strtolower(basename($runtimeDir)) === 'bin' && strtolower(basename($parentDir)) === 'apache') {
+                $xamppRoot = dirname($parentDir);
+                $candidates[] = $xamppRoot . '\\php\\php.exe';
+            }
+        }
+    }
+
+    foreach (array_unique($candidates) as $path) {
+        if (empty($path) || !file_exists($path)) {
+            continue;
+        }
+        if (!_isUsablePhpCliBinary($path)) {
+            continue;
+        }
+
+        // is_executable can be unreliable on Windows; file existence is enough there.
+        if ($isWindows || is_executable($path)) {
             return $path;
         }
     }
 
     // Try system PATH
-    $which = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'where php' : 'which php';
+    $which = $isWindows ? 'where php' : 'which php';
     $result = trim(shell_exec($which) ?? '');
     if (!empty($result)) {
-        $firstLine = strtok($result, "\n");
-        if (file_exists($firstLine)) {
-            return $firstLine;
+        $lines = preg_split('/\r\n|\r|\n/', $result);
+        foreach ($lines as $line) {
+            $candidate = trim($line, " \t\n\r\0\x0B\"'");
+            if ($candidate !== ''
+                && file_exists($candidate)
+                && _isUsablePhpCliBinary($candidate)
+                && ($isWindows || is_executable($candidate))
+            ) {
+                return $candidate;
+            }
         }
     }
 

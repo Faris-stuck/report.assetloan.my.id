@@ -159,7 +159,7 @@ function sendExtendRequestEmail($conn, $extendId) {
     // ============================================================
     $totalSent = 0;
     foreach ($recipients as $r) {
-        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
+        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'], '', ['noSyncFallback' => true])) {
             error_log("[EMAIL] send-extend-request: EMAIL SENT TO: " . $r['email']);
             $totalSent++;
         } else {

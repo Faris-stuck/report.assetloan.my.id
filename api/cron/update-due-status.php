@@ -18,8 +18,10 @@
  *   - Inactive status (Dikembalikan, Ditolak, etc.) NOT changed.
  *   - Uses getNearestExpectedReturn() for accuracy with per-unit extensions.
  * 
- * Cron job (every day at 00:05):
- *   5 0 * * * /opt/lampp/bin/php /opt/lampp/htdocs/PROJECT/api/cron/update-due-status.php >> /opt/lampp/htdocs/PROJECT/api/cron/due-status.log 2>&1
+ * Execution notes:
+ *   - Can be executed manually via browser/CLI (with token for browser).
+ *   - In this project, due-status refresh is also triggered from
+ *     /PROJECT/api/koneksi.php on every request.
  * 
  * ============================================================
  */

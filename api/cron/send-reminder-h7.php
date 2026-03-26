@@ -8,7 +8,7 @@
  * Access : http://localhost/PROJECT/api/cron/send-reminder-h7.php
  * 
  * How it works:
- *   - Opened via browser (not a cron job)
+ *   - Trigger manually via browser URL (token disabled by default for testing) or via CLI
  *   - Check borrowings with rencana_kembali between D-7 to D-0
  *   - Send email reminder once per day per borrowing
  *   - Do not resend if page is refreshed on the same day
@@ -21,9 +21,13 @@
 // 1. SMTP CONFIGURATION — from config/email.php (NOT HARDCODED)
 // ============================================================
 // ============================================================
-// 0. CRON SECURITY — Verify token for web access
+// 0. CRON SECURITY (OPTIONAL)
+// Disabled by default for testing.
+// To enable token protection later, set:
+//   CRON_REQUIRE_TOKEN_REMINDER=1
 // ============================================================
-if (php_sapi_name() !== 'cli') {
+$requireToken = (string) (getenv('CRON_REQUIRE_TOKEN_REMINDER') ?: '') === '1';
+if (php_sapi_name() !== 'cli' && $requireToken) {
     $token = $_GET['token'] ?? '';
     if ($token !== (getenv('CRON_SECRET') ?: 'K0m4tsu_Cr0n_2026')) {
         http_response_code(403);

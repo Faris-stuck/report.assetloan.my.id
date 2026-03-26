@@ -15,7 +15,7 @@ if (!$user_role || !in_array($user_role, ['admin'])) {
         exit;
     }
     // Redirect ke login untuk page load biasa
-    header('Location: ../../auth/login.html');
+    header('Location: ../../index.html');
     exit;
 }
 

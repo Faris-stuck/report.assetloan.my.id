@@ -62,8 +62,8 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
     <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
     <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
     <!--[if lt IE 9]>
-			<script src="https:oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></scrip>
-			<script src="https:oss.maxcdn.com/respond/1.4.2/respond.min.js"></sript>
+			<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+			<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 		<![endif]-->
 </head>
 
@@ -264,7 +264,7 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
                         <h5 class="m-b-10">Dashboard</h5>
                     </div>
                     <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+                        <li class="breadcrumb-item"><a href="../dashboard.html">Home</a></li>
                         <li class="breadcrumb-item">Dashboard</li>
                     </ul>
                 </div>
@@ -586,7 +586,7 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
     <!---END KONEKSI KE DATA-BARANG.JS-->
     <!-- Profile Header & Logout Scripts -->
     <script src="../../assets/js/profile-header.js"></script>
-    <script src="../../assets/js/logout.js"></script>
+    <script src="../../assets/js/auth/logout.js"></script>
 
     <!-- Modal: Duplicate Warning -->
     <div class="modal fade" id="modalDuplicateWarning" tabindex="-1">
