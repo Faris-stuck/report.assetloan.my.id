@@ -27,7 +27,7 @@ function getExtendWithPeminjamanAndUser($conn, $extendId) {
             e.peminjaman_id,
             e.tanggal_perpanjang,
             e.status as extend_status,
-            e.catatan,
+            e.alasan,
             p.kode_peminjaman,
             p.nama_peminjam,
             p.tanggal_pinjam,
