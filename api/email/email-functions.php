@@ -377,6 +377,9 @@ function _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody)
         return true;
     }
 
+    // Cleanup payload file if dispatcher failed to start.
+    // Prevent stale temp files from accumulating in system temp directory.
+    @unlink($tmpFile);
     error_log($isWindows
         ? "[EMAIL] Failed to start Windows background dispatcher"
         : "[EMAIL] Failed to start POSIX background dispatcher");
