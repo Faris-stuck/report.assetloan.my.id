@@ -9,7 +9,7 @@
 .nxl-navigation,
 .nxl-navigation .navbar-wrapper,
 .nxl-navigation .navbar-content {
-    background-color: #021b6e;
+    background-color: var(--komatsu-blue) !important;
     /* Biru Komatsu */
 }
 
@@ -91,7 +91,7 @@
 /* ============================= */
 
 html.minimenu .nxl-navigation:hover .navbar-content {
-    background-color: #0b2ea3;
+    background-color: var(--komatsu-blue) !important;
 }
 
 
@@ -114,7 +114,7 @@ html.minimenu .nxl-navigation:hover .navbar-content {
     height: 80px;
     /* bisa kamu ubah (70–100px) */
     padding: 0;
-    background-color: #0b2a8f;
+    background-color: var(--komatsu-blue) !important;
     /* biru Komatsu */
     display: flex;
     align-items: center;
@@ -136,10 +136,11 @@ html.minimenu .nxl-navigation:hover .navbar-content {
 /* LOGO BESAR */
 
 .nxl-navigation .logo.logo-lg {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* penuh, tapi bisa terpotong sedikit */
+    width: 200px;
+    max-width: 92%;
+    height: auto;
+    object-fit: contain;
+    background-color: transparent !important;
 }
 
 /* FIX MODAL BLUR DURALUX */
@@ -585,8 +586,9 @@ body {
 /* HEADER BACKGROUND */
 /* ============================= */
 
-.nxl-header {
-    background-color: #021b6e !important;
+.nxl-header,
+.nxl-header .header-wrapper {
+    background-color: var(--komatsu-blue) !important;
 }
 
 /* ============================= */

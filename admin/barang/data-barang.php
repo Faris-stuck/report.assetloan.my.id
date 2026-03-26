@@ -76,7 +76,7 @@ unset($_SESSION['status'], $_SESSION['Message_Pesan']);
             <div class="m-header">
                 <a href="#" class="b-brand">
                     <!-- ========   change your logo hear   ============ -->
-                    <img src="../../assets/images/logo-komatsu-putih.png" height="auto" width="200px" alt="" class="logo logo-lg" />
+                    <img src="../../assets/images/logo-komatsu-transparan-removebg-preview.png" height="auto" width="200px" alt="" class="logo logo-lg" />
                     <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
                 </a>
             </div>
