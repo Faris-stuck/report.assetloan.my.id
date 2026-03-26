@@ -6,28 +6,44 @@ ini_set('display_errors', 0);
 
 date_default_timezone_set('Asia/Jakarta');
 
-$host = $_SERVER['HTTP_HOST'] ?? '';
+$rawHost = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '');
+$host = strtolower(trim(explode(':', $rawHost)[0]));
 
-// config default
-$db_host = 'localhost';
-$db_name = 'peminjaman';
+// Config defaults (override with environment variables when needed)
+$db_host = getenv('DB_HOST') ?: 'localhost';
+$db_name = getenv('DB_NAME') ?: 'peminjaman';
+
+$isPrivateIpv4 = (bool) preg_match('/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/', $host);
+$isLocalHostname = $host !== '' && strpos($host, '.') === false && !is_numeric(str_replace('-', '', $host));
+$isLocalDomain = substr($host, -6) === '.local';
 
 // DETEKSI LOCAL ATAU VPS
 $is_local =
-    strpos($host, 'localhost') !== false ||
-    strpos($host, '127.0.0.1') !== false;
+    $host === '' ||
+    $host === 'localhost' ||
+    $host === '127.0.0.1' ||
+    $host === '::1' ||
+    $isPrivateIpv4 ||
+    $isLocalHostname ||
+    $isLocalDomain;
 
 // CONFIG BERDASARKAN ENVIRONMENT
 if ($is_local) {
 
-    // LAPTOP
-    $db_user = 'peminjaman_app';
-    $db_pass = '';
+    // Local default (XAMPP/WAMP default)
+    $db_user = getenv('DB_USER_LOCAL') ?: (getenv('DB_USER') ?: 'root');
+    $db_pass = getenv('DB_PASSWORD_LOCAL');
+    if ($db_pass === false) {
+        $db_pass = getenv('DB_PASSWORD');
+    }
+    if ($db_pass === false) {
+        $db_pass = '';
+    }
 } else {
 
-    // VPS
-    $db_user = 'peminjaman_app';
-    $db_pass = getenv('DB_PASSWORD') ?: 'K0m4tsu#Db2026!';
+    // VPS / production (set via env)
+    $db_user = getenv('DB_USER') ?: 'peminjaman_app';
+    $db_pass = getenv('DB_PASSWORD') ?: '';
 }
 
 // CONNECT
