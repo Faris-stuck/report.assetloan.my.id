@@ -504,7 +504,6 @@
 
             const labels = Object.keys(statusData);
             const values = Object.values(statusData);
-            const colors = labels.map(getStatusColor);
 
             const options = {
                 chart: {
@@ -513,7 +512,7 @@
                     fontFamily: 'inherit',
                     toolbar: { show: true }
                 },
-                colors: colors,
+                colors: ['#3F83F8'],
                 series: [{
                     name: '',
                     data: values
@@ -536,7 +535,7 @@
                     bar: {
                         horizontal: false,
                         columnWidth: '60%',
-                        distributed: true,
+                        distributed: false,
                         dataLabels: { position: 'top' }
                     }
                 },
