@@ -81,12 +81,6 @@ try {
         throw new Exception("No detail items found for this borrowing.");
     }
 
-    // Build a map of detail_peminjaman rows by id
-    $detail_map = [];
-    foreach ($detail_rows as $row) {
-        $detail_map[$row['id']] = $row;
-    }
-
     // 3. Check if peminjaman_units already exist
     $stmt_units_check = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
     $stmt_units_check->bind_param("i", $peminjaman_id);
@@ -128,9 +122,6 @@ try {
     $rejected_count = 0;
     $total_count = count($items_decisions);
 
-    // Track rejected qty per barang_id for stock restore
-    $rejected_stock = []; // barang_id => qty to restore
-
     $stmt_update_unit = $conn->prepare("
         UPDATE peminjaman_units 
         SET approval_status = ?, 
@@ -153,13 +144,6 @@ try {
             $approval_status = 'Rejected';
             $return_status = 'Rejected'; // Rejected
             $rejected_count++;
-
-            // Track stock to restore
-            if (isset($detail_map[$detail_id])) {
-                $bid = $detail_map[$detail_id]['barang_id'];
-                if (!isset($rejected_stock[$bid])) $rejected_stock[$bid] = 0;
-                $rejected_stock[$bid]++;
-            }
         }
 
         $stmt_update_unit->bind_param(
@@ -189,7 +173,7 @@ try {
         $overall_status = 'Partial Approved';
     }
 
-    // 6b. Handle Partial Approved → Bor    ✓ No syntax errors detected in api/approver/list-by-status.phprowed conversion
+    // 6b. Handle Partial Approved -> Borrowed conversion
     // If current status is 'Partial Approved' and now all units are approved → upgrade to Borrowed
     if ($current_pem_status === 'Partial Approved' && $overall_status === 'Borrowed') {
         // All remaining items in Partial Approved are now approved
@@ -220,13 +204,35 @@ try {
     }
 
     // 8. Restore stock for rejected units (cap at stok_total)
-    if (!empty($rejected_stock)) {
+    // Source of truth: final per-unit status stored in peminjaman_units.
+    if ($rejected_count > 0) {
+        $stmt_rejected_units = $conn->prepare("
+            SELECT pu.barang_id, COUNT(pu.id) AS qty
+            FROM peminjaman_units pu
+            WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Rejected'
+            GROUP BY pu.barang_id
+        ");
+        $stmt_rejected_units->bind_param("i", $peminjaman_id);
+        if (!$stmt_rejected_units->execute()) {
+            throw new Exception("Failed to read rejected units: " . $stmt_rejected_units->error);
+        }
+
+        $result_rejected_units = $stmt_rejected_units->get_result();
         $stmt_restore = $conn->prepare("
             UPDATE barang SET stok_tersedia = LEAST(stok_total, stok_tersedia + ?) WHERE id = ?
         ");
-        foreach ($rejected_stock as $barang_id => $qty) {
+
+        while ($rejected_unit = $result_rejected_units->fetch_assoc()) {
+            $qty = (int)($rejected_unit['qty'] ?? 0);
+            $barang_id = (int)($rejected_unit['barang_id'] ?? 0);
+            if ($qty <= 0 || $barang_id <= 0) {
+                continue;
+            }
+
             $stmt_restore->bind_param("ii", $qty, $barang_id);
-            $stmt_restore->execute();
+            if (!$stmt_restore->execute()) {
+                throw new Exception("Failed to restore stock for rejected unit: " . $stmt_restore->error);
+            }
         }
     }
 

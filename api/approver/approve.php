@@ -60,9 +60,26 @@ try {
         $stmt_reject->bind_param("si", $rejection_reason, $id);
         $stmt_reject->execute();
         
-        // RESTORE STOCK: Kembalikan stok_tersedia (cap at stok_total)
-        $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
-        $stmt_detail->bind_param("i", $id);
+        // Restore stock:
+        // - If per-unit rows already exist, restore only approved units.
+        // - Otherwise (legacy pending), restore from requested detail qty.
+        $chk_units = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
+        $chk_units->bind_param("i", $id);
+        $chk_units->execute();
+        $has_units = (int)($chk_units->get_result()->fetch_assoc()['cnt'] ?? 0) > 0;
+
+        if ($has_units) {
+            $stmt_detail = $conn->prepare("
+                SELECT pu.barang_id, COUNT(pu.id) as jumlah
+                FROM peminjaman_units pu
+                WHERE pu.peminjaman_id = ? AND pu.approval_status = 'Approved'
+                GROUP BY pu.barang_id
+            ");
+            $stmt_detail->bind_param("i", $id);
+        } else {
+            $stmt_detail = $conn->prepare("SELECT barang_id, jumlah FROM detail_peminjaman WHERE peminjaman_id = ?");
+            $stmt_detail->bind_param("i", $id);
+        }
         $stmt_detail->execute();
         $detail_query = $stmt_detail->get_result();
         
