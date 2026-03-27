@@ -4,7 +4,7 @@
 let allUsers = [];
 let filteredUsers = [];
 let currentPage = 1;
-let perPage = 100;
+let perPage = 10;
 let sortField = 'nama';
 let sortAsc = true;
 let rolesData = []; // Loaded from database, no hardcode
@@ -229,7 +229,7 @@ function sortTable(field) {
 }
 
 function changePerPage() {
-    perPage = parseInt(document.getElementById('perPage').value) || 100;
+    perPage = parseInt(document.getElementById('perPage').value) || 10;
     currentPage = 1;
     renderPage();
 }
