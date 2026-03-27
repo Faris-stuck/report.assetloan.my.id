@@ -439,6 +439,10 @@ function saveUserRoleChanges() {
         return;
     }
 
+    if (!confirm('Are you sure you want to update this user\'s information?')) {
+        return;
+    }
+
     const formData = new FormData();
     formData.append('id', userId);
     formData.append('nama', newName);

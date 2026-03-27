@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API: Inspeksi pengembalian (Admin/PIC Barang)
  * Endpoint: /api/pengembalian/inspect.php
@@ -141,20 +142,22 @@ try {
         if ($jumlah_rusak > $jumlah_kembali) $jumlah_rusak = $jumlah_kembali;
         $jumlah_baik = $jumlah_kembali - $jumlah_rusak;
         if ($jumlah_baik > 0) {
-            $conn->query("UPDATE barang SET stok_tersedia = LEAST(stok_total, stok_tersedia + $jumlah_baik) WHERE id = $barang_id");
+            $stmt_restore_stock = $conn->prepare("UPDATE barang SET stok_tersedia = LEAST(stok_total, stok_tersedia + ?) WHERE id = ?");
+            $stmt_restore_stock->bind_param("ii", $jumlah_baik, $barang_id);
+            $stmt_restore_stock->execute();
         }
     }
 
     // Update peminjaman status based on AGGREGATE totals across ALL pengembalian records (including current one)
     $peminjaman_id = (int)$header['peminjaman_id'];
-    
+
     // Get total items borrowed (approved units from peminjaman_units)
     $tq = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman_units WHERE peminjaman_id = ? AND approval_status = 'Approved'");
     $tq->bind_param("i", $peminjaman_id);
     $tq->execute();
     $tq_result = $tq->get_result()->fetch_assoc();
     $total_items = (int)($tq_result['total'] ?? 0);
-    
+
     // Get AGGREGATE total returned and damaged from ALL pengembalian records (incl. current one being finalized)
     // This counts pengembalian with status IN ('Being Inspected', 'Completed') to include the current inspection
     $agg = $conn->prepare("
@@ -170,9 +173,9 @@ try {
     $agg_result = $agg->get_result()->fetch_assoc();
     $total_returned = (int)($agg_result['total_kembali'] ?? 0);
     $total_damaged = (int)($agg_result['total_rusak'] ?? 0);
-    
+
     $sisa = $total_items - $total_returned;
-    
+
     // Determine status based on how many items are returned vs total
     if ($sisa <= 0 && $total_items > 0) {
         // All items returned - regardless of damage status, mark as 'Returned'
@@ -192,7 +195,7 @@ try {
         $chkPending->bind_param("ii", $peminjaman_id, $pengembalian_id);
         $chkPending->execute();
         $pendingCount = (int)($chkPending->get_result()->fetch_assoc()['cnt'] ?? 0);
-        
+
         if ($pendingCount > 0) {
             // There are still pending return requests → keep as 'Return in Process'
             $final_status = 'Return in Process';
@@ -209,7 +212,7 @@ try {
         $upd_peminjaman = $conn->prepare("UPDATE peminjaman SET status = ? WHERE id = ?");
         $upd_peminjaman->bind_param("si", $final_status, $peminjaman_id);
     }
-    
+
     if (!$upd_peminjaman->execute()) {
         throw new Exception("Failed to update borrowing status: " . $upd_peminjaman->error);
     }
@@ -255,4 +258,3 @@ try {
     http_response_code(500);
     echo json_encode(["status" => false, "message" => $e->getMessage()]);
 }
-

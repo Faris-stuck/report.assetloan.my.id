@@ -240,16 +240,22 @@
                         </div>
                         <div class="card-body table-responsive">
                             <table class="table table-bordered align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Borrowing Code</th>
-                                        <th>Name</th>
-                                        <th>NRP</th>
-                                        <th>Items</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
+                                <thead>
+                                    <tr style="background: #3b5998; color: #fff !important;">
+                                        <th style="color: #fff !important;">No</th>
+                                        <th style="cursor:pointer; color: #fff !important;" onclick="sortTable('kode')">
+                                            Borrowing Code <i class="feather-arrow-up fs-10" id="sort-kode"></i>
+                                        </th>
+                                        <th style="cursor:pointer; color: #fff !important;" onclick="sortTable('nama')">
+                                            Name <i class="feather-arrow-up fs-10" id="sort-nama"></i>
+                                        </th>
+                                        <th style="color: #fff !important;">NRP</th>
+                                        <th style="color: #fff !important;">Items</th>
+                                        <th style="cursor:pointer; color: #fff !important;" onclick="sortTable('tanggal')">
+                                            Date <i class="feather-arrow-up fs-10" id="sort-tanggal"></i>
+                                        </th>
+                                        <th style="color: #fff !important;">Status</th>
+                                        <th width="10%" style="color: #fff !important;">Action</th>
                                     </tr>
                                     <tr style="background: #4a69bd;">
                                         <td></td>
@@ -620,6 +626,7 @@
             formData.append('items', JSON.stringify(items));
             if (reason) formData.append('rejection_reason', reason);
 
+            alert('Processing approval decisions...');
             fetch(BASE_URL + "/api/approver/approve-items.php", {
                 method: "POST",
                 body: formData,

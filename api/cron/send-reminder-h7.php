@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ============================================================
  * EMAIL REMINDER: Send Daily Reminder D-7 to D-0
@@ -20,22 +21,6 @@
 // ============================================================
 // 1. SMTP CONFIGURATION — from config/email.php (NOT HARDCODED)
 // ============================================================
-// ============================================================
-// 0. CRON SECURITY (OPTIONAL)
-// Disabled by default for testing.
-// To enable token protection later, set:
-//   CRON_REQUIRE_TOKEN_REMINDER=1
-// ============================================================
-$requireToken = (string) (getenv('CRON_REQUIRE_TOKEN_REMINDER') ?: '') === '1';
-if (php_sapi_name() !== 'cli' && $requireToken) {
-    $token = $_GET['token'] ?? '';
-    if ($token !== (getenv('CRON_SECRET') ?: 'K0m4tsu_Cr0n_2026')) {
-        http_response_code(403);
-        echo 'Forbidden: Invalid cron token';
-        exit;
-    }
-}
-
 require_once __DIR__ . '/../../config/email.php';
 
 // ============================================================
@@ -265,7 +250,8 @@ exit(0);
 // ============================================================
 // FUNCTION: HTML Email Template — dynamic based on remaining days
 // ============================================================
-function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari) {
+function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari)
+{
     // Dynamic message based on remaining days
     if ($sisaHari <= 0) {
         $pesanAlert = '<strong>⚠️ Warning!</strong> Your item borrowing period <strong>is due today</strong>. Please return immediately.';
@@ -437,9 +423,10 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
 // ============================================================
 // FUNCTION: Plain Text Email Template — dynamic based on remaining days
 // ============================================================
-function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari) {
-    $pesanSisa = $sisaHari <= 0 
-        ? "Your item borrowing period is DUE TODAY." 
+function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari)
+{
+    $pesanSisa = $sisaHari <= 0
+        ? "Your item borrowing period is DUE TODAY."
         : "Your item borrowing period will end in {$sisaHari} days (date {$tglKembali}).";
 
     return "Hello {$nama},

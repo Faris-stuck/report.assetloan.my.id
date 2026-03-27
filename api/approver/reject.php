@@ -29,25 +29,27 @@ if (!$id) {
 $conn->begin_transaction();
 
 try {
-    // Cek status saat ini - hanya bisa ditolak jika masih Menunggu Persetujuan
+    // Cek status saat ini - hanya bisa ditolak jika masih Menunggu Persetujuan atau Partial Approved
     $stmt_check = $conn->prepare("SELECT status FROM peminjaman WHERE id = ? FOR UPDATE");
     $stmt_check->bind_param("i", $id);
     $stmt_check->execute();
     $current = $stmt_check->get_result()->fetch_assoc();
-    
+
     if (!$current) {
         throw new Exception("Borrowing not found");
     }
-    
-    if ($current['status'] === 'Rejected' || $current['status'] === 'Returned') {
-        throw new Exception("Borrowing already has status '{$current['status']}', cannot be rejected again");
+
+    // VALIDASI STATUS: hanya 'Waiting for Approval' dan 'Partial Approved' yang boleh di-reject
+    $allowed_status = ['Waiting for Approval', 'Partial Approved'];
+    if (!in_array($current['status'], $allowed_status)) {
+        throw new Exception("Borrowing with status '{$current['status']}' cannot be rejected. Only 'Waiting for Approval' and 'Partial Approved' can be rejected.");
     }
-    
+
     // Update peminjaman status to Rejected
     $stmt_update = $conn->prepare("UPDATE peminjaman SET status='Rejected', catatan=? WHERE id=?");
     $stmt_update->bind_param("si", $rejection_reason, $id);
     $stmt_update->execute();
-    
+
     // Restore stok_tersedia - use approved units from peminjaman_units if they exist
     $chk_units = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
     $chk_units->bind_param("i", $id);
@@ -70,17 +72,17 @@ try {
     }
     $stmt_detail->execute();
     $detail_query = $stmt_detail->get_result();
-    
+
     while ($detail = $detail_query->fetch_assoc()) {
         $barang_id = intval($detail['barang_id']);
         $jumlah = intval($detail['jumlah']);
-        
+
         // Restore stock, cap at stok_total to prevent over-restore
         $stmt_restore = $conn->prepare("UPDATE barang SET stok_tersedia = LEAST(stok_total, stok_tersedia + ?) WHERE id = ?");
         $stmt_restore->bind_param("ii", $jumlah, $barang_id);
         $stmt_restore->execute();
     }
-    
+
     $conn->commit();
 
     // Kirim email notifikasi penolakan ke user
@@ -90,7 +92,7 @@ try {
     } catch (Exception $emailEx) {
         error_log("[EMAIL ERROR] approver/reject: " . $emailEx->getMessage());
     }
-    
+
     echo json_encode([
         "status" => true,
         "message" => "Borrowing rejected and item stock restored"
@@ -103,4 +105,3 @@ try {
         "message" => "Error: " . $e->getMessage()
     ]);
 }
-?>

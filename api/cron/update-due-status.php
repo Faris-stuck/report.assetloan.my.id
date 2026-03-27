@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ============================================================
  * CRON: Auto-Update Dynamic Return Status
@@ -25,18 +26,6 @@
  * 
  * ============================================================
  */
-
-// ============================================================
-// 0. CRON SECURITY — Verify token for web access
-// ============================================================
-if (php_sapi_name() !== 'cli') {
-    $token = $_GET['token'] ?? '';
-    if ($token !== (getenv('CRON_SECRET') ?: 'K0m4tsu_Cr0n_2026')) {
-        http_response_code(403);
-        echo 'Forbidden: Invalid cron token';
-        exit;
-    }
-}
 
 // ============================================================
 // 1. OUTPUT HEADER
@@ -81,8 +70,6 @@ $sql_active = "
        OR status = 'Overdue'
        OR status = 'Partially Returned'
        OR status = 'Return in Process'
-       OR status = 'Partial Approved'
-       OR status = 'Approved'
     ORDER BY rencana_kembali ASC
 ";
 
@@ -123,7 +110,6 @@ $sql_detail = "
     FROM peminjaman 
     WHERE status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue'
        OR status = 'Partially Returned' OR status = 'Return in Process'
-       OR status = 'Partial Approved' OR status = 'Approved'
     ORDER BY rencana_kembali ASC
 ";
 

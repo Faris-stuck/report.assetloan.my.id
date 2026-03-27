@@ -283,6 +283,7 @@ function simpanEditBarang() {
     const editKetEl2 = document.getElementById('edit_keterangan');
     data.append("keterangan", editKetEl2 ? editKetEl2.value : '');
 
+    alert('Saving item data...');
     fetch(`${API_BASE_URL}/barang/update.php`, {
         method: "POST",
         body: data

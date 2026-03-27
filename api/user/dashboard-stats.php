@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API: User Dashboard Statistics
  * Purpose: Get user's peminjaman statistics
@@ -15,15 +16,15 @@ if (session_status() === PHP_SESSION_NONE) {
 
 try {
     SessionValidator::requireRole(['user']);
-    
+
     // Get user ID from session
     $user_id = SessionValidator::getUserId();
     if (!$user_id) {
         throw new Exception("User ID not found");
     }
-    
+
     $stats = [];
-    
+
     // 1. Waiting for Approval
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
@@ -32,16 +33,16 @@ try {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['menunggu_persetujuan'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
-    
-    // 2. Approved
+
+    // 2. Partial Approved
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND status = 'Approved'
+        WHERE user_id = ? AND status = 'Partial Approved'
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
-    $stats['disetujui'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
-    
+    $stats['sebagian_disetujui'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
+
     // 3. Rejected
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
@@ -50,7 +51,7 @@ try {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['ditolak'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
-    
+
     // 4. Borrowed (active)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
@@ -59,7 +60,7 @@ try {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['sedang_dipinjam'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
-    
+
     // 5. Returned
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
@@ -68,7 +69,7 @@ try {
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $stats['dikembalikan'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
-    
+
     // 6. Recent peminjaman
     $stmt = $conn->prepare("
         SELECT 
@@ -94,14 +95,13 @@ try {
         ];
     }
     $stats['recent_peminjaman'] = $recent;
-    
+
     echo json_encode([
         'status' => true,
         'data' => $stats,
         'user_id' => $user_id,
         'timestamp' => date('Y-m-d H:i:s')
     ]);
-    
 } catch (Exception $e) {
     http_response_code(400);
     echo json_encode([
@@ -109,4 +109,3 @@ try {
         'message' => $e->getMessage()
     ]);
 }
-?>

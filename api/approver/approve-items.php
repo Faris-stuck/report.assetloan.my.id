@@ -1,4 +1,5 @@
 <?php
+
 /**
  * API: Process partial approval for borrowing items (per-unit)
  * 
@@ -24,20 +25,20 @@ header('Content-Type: application/json');
 
 try {
     SessionValidator::requireRole(['manager', 'admin']);
-    
+
     $peminjaman_id = intval($_POST['peminjaman_id'] ?? 0);
     $items_json = $_POST['items'] ?? '[]';
     $reject_reason = trim($_POST['rejection_reason'] ?? ($_POST['reject_reason'] ?? ''));
-    
+
     if (!$peminjaman_id) {
         throw new Exception('Borrowing ID is required.');
     }
-    
+
     $items_decisions = json_decode($items_json, true);
     if (!is_array($items_decisions) || empty($items_decisions)) {
         throw new Exception('Invalid or empty items data.');
     }
-    
+
     // Validate all items have required fields and valid status
     foreach ($items_decisions as $idx => $item) {
         if (!isset($item['detail_peminjaman_id']) || !isset($item['unit_number']) || !isset($item['status'])) {
@@ -47,23 +48,23 @@ try {
             throw new Exception("Item at index $idx has invalid status: " . $item['status']);
         }
     }
-    
+
     $conn->begin_transaction();
-    
+
     // 1. Verify peminjaman exists and is pending
     $stmt_check = $conn->prepare("SELECT id, status, rencana_kembali FROM peminjaman WHERE id = ? FOR UPDATE");
     $stmt_check->bind_param("i", $peminjaman_id);
     $stmt_check->execute();
     $peminjaman = $stmt_check->get_result()->fetch_assoc();
-    
+
     if (!$peminjaman) {
         throw new Exception("Borrowing not found.");
     }
-    
+
     if ($peminjaman['status'] !== 'Waiting for Approval') {
         throw new Exception("Borrowing status is '{$peminjaman['status']}', can only process 'Waiting for Approval'.");
     }
-    
+
     // 2. Get detail_peminjaman rows
     $stmt_detail = $conn->prepare("
         SELECT dp.id, dp.barang_id, dp.jumlah, dp.lokasi, dp.expected_return, dp.kondisi_pinjam,
@@ -75,23 +76,23 @@ try {
     $stmt_detail->bind_param("i", $peminjaman_id);
     $stmt_detail->execute();
     $detail_rows = $stmt_detail->get_result()->fetch_all(MYSQLI_ASSOC);
-    
+
     if (empty($detail_rows)) {
         throw new Exception("No detail items found for this borrowing.");
     }
-    
+
     // Build a map of detail_peminjaman rows by id
     $detail_map = [];
     foreach ($detail_rows as $row) {
         $detail_map[$row['id']] = $row;
     }
-    
+
     // 3. Check if peminjaman_units already exist
     $stmt_units_check = $conn->prepare("SELECT COUNT(*) as cnt FROM peminjaman_units WHERE peminjaman_id = ?");
     $stmt_units_check->bind_param("i", $peminjaman_id);
     $stmt_units_check->execute();
     $units_exist = $stmt_units_check->get_result()->fetch_assoc()['cnt'] > 0;
-    
+
     // 4. If units don't exist, create them from detail_peminjaman
     if (!$units_exist) {
         $stmt_insert_unit = $conn->prepare("
@@ -99,17 +100,18 @@ try {
             (peminjaman_id, detail_peminjaman_id, barang_id, unit_number, unit_display, return_status, expected_return, created_at) 
             VALUES (?, ?, ?, ?, ?, 'Waiting for Approval', ?, NOW())
         ");
-        
+
         foreach ($detail_rows as $detail) {
             $qty = (int)$detail['jumlah'];
             $expected = $detail['expected_return'] ?: $peminjaman['rencana_kembali'];
             for ($i = 1; $i <= $qty; $i++) {
                 $display = "Unit $i of $qty";
-                $stmt_insert_unit->bind_param("iiiiss", 
-                    $peminjaman_id, 
-                    $detail['id'], 
-                    $detail['barang_id'], 
-                    $i, 
+                $stmt_insert_unit->bind_param(
+                    "iiiiss",
+                    $peminjaman_id,
+                    $detail['id'],
+                    $detail['barang_id'],
+                    $i,
                     $display,
                     $expected
                 );
@@ -119,16 +121,16 @@ try {
             }
         }
     }
-    
+
     // 5. Process each decision - update peminjaman_units
     $manager_id = SessionValidator::getUserId();
     $approved_count = 0;
     $rejected_count = 0;
     $total_count = count($items_decisions);
-    
+
     // Track rejected qty per barang_id for stock restore
     $rejected_stock = []; // barang_id => qty to restore
-    
+
     $stmt_update_unit = $conn->prepare("
         UPDATE peminjaman_units 
         SET approval_status = ?, 
@@ -137,12 +139,12 @@ try {
             return_status = ?
         WHERE peminjaman_id = ? AND detail_peminjaman_id = ? AND unit_number = ?
     ");
-    
+
     foreach ($items_decisions as $item) {
         $detail_id = intval($item['detail_peminjaman_id']);
         $unit_num = intval($item['unit_number']);
         $decision = $item['status']; // 'approved'/'Approved' or 'rejected'/'Rejected'
-        
+
         if ($decision === 'approved' || $decision === 'Approved') {
             $approval_status = 'Approved';
             $return_status = 'Not Yet Returned'; // Approved = ready to be borrowed
@@ -151,7 +153,7 @@ try {
             $approval_status = 'Rejected';
             $return_status = 'Rejected'; // Rejected
             $rejected_count++;
-            
+
             // Track stock to restore
             if (isset($detail_map[$detail_id])) {
                 $bid = $detail_map[$detail_id]['barang_id'];
@@ -159,22 +161,26 @@ try {
                 $rejected_stock[$bid]++;
             }
         }
-        
-        $stmt_update_unit->bind_param("sisiii", 
-            $approval_status, 
-            $manager_id, 
-            $return_status, 
-            $peminjaman_id, 
-            $detail_id, 
+
+        $stmt_update_unit->bind_param(
+            "sisiii",
+            $approval_status,
+            $manager_id,
+            $return_status,
+            $peminjaman_id,
+            $detail_id,
             $unit_num
         );
-        
+
         if (!$stmt_update_unit->execute()) {
             throw new Exception("Failed to update unit: " . $stmt_update_unit->error);
         }
     }
-    
+
     // 6. Determine overall status
+    // First check if this is a re-approval of Partial Approved status
+    $current_pem_status = $peminjaman['status'] ?? 'Waiting for Approval';
+
     if ($approved_count === $total_count) {
         $overall_status = 'Borrowed';
     } elseif ($rejected_count === $total_count) {
@@ -182,10 +188,17 @@ try {
     } else {
         $overall_status = 'Partial Approved';
     }
-    
+
+    // 6b. Handle Partial Approved → Bor    ✓ No syntax errors detected in api/approver/list-by-status.phprowed conversion
+    // If current status is 'Partial Approved' and now all units are approved → upgrade to Borrowed
+    if ($current_pem_status === 'Partial Approved' && $overall_status === 'Borrowed') {
+        // All remaining items in Partial Approved are now approved
+        $overall_status = 'Borrowed';
+    }
+
     // 7. Update peminjaman record
     $tanggal_disetujui = ($approved_count > 0) ? date('Y-m-d') : null;
-    
+
     if ($tanggal_disetujui) {
         $stmt_update_peminjaman = $conn->prepare("
             UPDATE peminjaman 
@@ -201,11 +214,11 @@ try {
         ");
         $stmt_update_peminjaman->bind_param("ssi", $overall_status, $reject_reason, $peminjaman_id);
     }
-    
+
     if (!$stmt_update_peminjaman->execute()) {
         throw new Exception("Failed to update borrowing status: " . $stmt_update_peminjaman->error);
     }
-    
+
     // 8. Restore stock for rejected units (cap at stok_total)
     if (!empty($rejected_stock)) {
         $stmt_restore = $conn->prepare("
@@ -216,9 +229,9 @@ try {
             $stmt_restore->execute();
         }
     }
-    
+
     $conn->commit();
-    
+
     // 9. Send email notifications
     if ($overall_status === 'Borrowed' || $overall_status === 'Partial Approved') {
         // Some items approved - send approval email
@@ -231,7 +244,7 @@ try {
             error_log("[EMAIL ERROR] approve-items approved: " . $emailEx->getMessage());
         }
     }
-    
+
     if ($overall_status === 'Rejected') {
         // All rejected - send rejection email
         try {
@@ -243,7 +256,7 @@ try {
             error_log("[EMAIL ERROR] approve-items rejected: " . $emailEx->getMessage());
         }
     }
-    
+
     echo json_encode([
         "status" => true,
         "message" => "Borrowing successfully processed.",
@@ -253,7 +266,6 @@ try {
         "rejected_count" => $rejected_count,
         "items_processed" => $total_count
     ]);
-
 } catch (Exception $e) {
     if (isset($conn) && $conn->errno) {
         $conn->rollback();
@@ -264,4 +276,3 @@ try {
         "message" => $e->getMessage()
     ]);
 }
-?>

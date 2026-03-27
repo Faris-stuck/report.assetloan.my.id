@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 
 try {
     SessionValidator::requireRole(['admin', 'manager']);
-    
+
     $status = $_GET['status'] ?? 'Waiting for Approval';
     $include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
     $approval_history = isset($_GET['approval_history']) && $_GET['approval_history'] === '1';
@@ -102,11 +102,12 @@ try {
                     THEN (SELECT COUNT(*) FROM peminjaman_units pu WHERE pu.detail_peminjaman_id = dp.id AND pu.approval_status = 'Approved')
                     ELSE dp.jumlah
                 END as jumlah,
-                dp.lokasi
+                dp.lokasi,
+                dp.expected_return
             FROM detail_peminjaman dp
             LEFT JOIN barang b ON dp.barang_id = b.id
             WHERE dp.peminjaman_id = ?
-            HAVING jumlah > 0
+            ORDER BY dp.id ASC
         ");
         $stmt_detail->bind_param("i", $row['id']);
         $stmt_detail->execute();
@@ -121,7 +122,8 @@ try {
                 'barang_id' => $detail_row['barang_id'],
                 'nama_barang' => $detail_row['nama_barang'],
                 'jumlah' => $detail_row['jumlah'],
-                'lokasi' => $detail_row['lokasi']
+                'lokasi' => $detail_row['lokasi'],
+                'expected_return' => $detail_row['expected_return'] ?? null
             ];
         }
 
@@ -253,11 +255,9 @@ try {
         "status" => true,
         "data" => $data
     ]);
-
 } catch (Exception $e) {
     echo json_encode([
         "status" => false,
         "message" => $e->getMessage()
     ]);
 }
-?>
