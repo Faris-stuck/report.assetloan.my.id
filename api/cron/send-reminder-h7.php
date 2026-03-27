@@ -170,17 +170,17 @@ while ($row = $result->fetch_assoc()) {
 
     // 1. USER (borrowing owner)
     if (!empty($emailUser) && filter_var($emailUser, FILTER_VALIDATE_EMAIL)) {
-        $recipients[] = ['email' => $emailUser, 'nama' => $namaUser];
+        $recipients[] = ['email' => $emailUser, 'nama' => $namaUser, 'audience' => 'borrower'];
     }
 
     // 2. ALL ADMINS
     foreach ($adminList as $admin) {
-        $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama']];
+        $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama'], 'audience' => 'admin'];
     }
 
     // 3. ALL PIC_BARANG
     foreach ($picList as $pic) {
-        $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama']];
+        $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama'], 'audience' => 'pic_barang'];
     }
 
     // DEDUPLICATION
@@ -197,12 +197,34 @@ while ($row = $result->fetch_assoc()) {
     // ---------------------------------------------------------
     // Send email to ALL recipients using LOOP
     // ---------------------------------------------------------
-    $subject   = 'Item Return Reminder - ' . $kodePeminjaman;
-    $htmlBody  = buildReminderEmailBody($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
-    $plainBody = buildReminderEmailPlainText($namaUser, $kodePeminjaman, $tanggalPinjam, $tanggalKembali, $sisaHari);
-
     $sentCount = 0;
     foreach ($recipients as $r) {
+        $audience = $r['audience'] ?? 'borrower';
+        $isBorrower = ($audience === 'borrower');
+        $subject = $isBorrower
+            ? 'Item Return Reminder - ' . $kodePeminjaman
+            : 'Borrowing Due Alert - ' . $kodePeminjaman;
+        $htmlBody = buildReminderEmailBody(
+            $r['nama'],
+            $kodePeminjaman,
+            $tanggalPinjam,
+            $tanggalKembali,
+            $sisaHari,
+            $audience,
+            $namaUser,
+            $emailUser
+        );
+        $plainBody = buildReminderEmailPlainText(
+            $r['nama'],
+            $kodePeminjaman,
+            $tanggalPinjam,
+            $tanggalKembali,
+            $sisaHari,
+            $audience,
+            $namaUser,
+            $emailUser
+        );
+
         if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'], $plainBody)) {
             error_log("[EMAIL] send-reminder-h7: EMAIL SENT TO: " . $r['email'] . " for {$kodePeminjaman}");
             echo "<span style='color: #a6e3a1;'>[OK]     Reminder sent to: {$r['email']}</span>\n";
@@ -250,30 +272,78 @@ exit(0);
 // ============================================================
 // FUNCTION: HTML Email Template — dynamic based on remaining days
 // ============================================================
-function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari)
+function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari, $audience = 'borrower', $borrowerName = '', $borrowerEmail = '')
 {
+    $isBorrower = ($audience === 'borrower');
+    $safeRecipientName = htmlspecialchars($nama ?: 'User');
+    $safeBorrowerName = htmlspecialchars($borrowerName ?: '-');
+    $safeBorrowerEmail = htmlspecialchars($borrowerEmail ?: '-');
+
     // Dynamic message based on remaining days
-    if ($sisaHari <= 0) {
-        $pesanAlert = '<strong>⚠️ Warning!</strong> Your item borrowing period <strong>is due today</strong>. Please return immediately.';
-        $alertBg    = '#fee2e2';
-        $alertBorder = '#ef4444';
-        $alertColor  = '#991b1b';
-        $headerBg    = 'linear-gradient(135deg, #991b1b, #dc2626)';
-        $headerTitle = '🚨 Item Return Due Today!';
-    } elseif ($sisaHari === 1) {
-        $pesanAlert = '<strong>⚠️ Warning!</strong> Your item borrowing period will end <strong>tomorrow</strong>.';
-        $alertBg    = '#fef3c7';
-        $alertBorder = '#f59e0b';
-        $alertColor  = '#92400e';
-        $headerBg    = 'linear-gradient(135deg, #92400e, #d97706)';
-        $headerTitle = '⏰ Item Return Tomorrow!';
+    if ($isBorrower) {
+        if ($sisaHari <= 0) {
+            $pesanAlert = '<strong>Warning!</strong> Your item borrowing period <strong>is due today</strong>. Please return immediately.';
+            $alertBg    = '#fee2e2';
+            $alertBorder = '#ef4444';
+            $alertColor  = '#991b1b';
+            $headerBg    = 'linear-gradient(135deg, #991b1b, #dc2626)';
+            $headerTitle = 'Item Return Due Today';
+        } elseif ($sisaHari === 1) {
+            $pesanAlert = '<strong>Warning!</strong> Your item borrowing period will end <strong>tomorrow</strong>.';
+            $alertBg    = '#fef3c7';
+            $alertBorder = '#f59e0b';
+            $alertColor  = '#92400e';
+            $headerBg    = 'linear-gradient(135deg, #92400e, #d97706)';
+            $headerTitle = 'Item Return Tomorrow';
+        } else {
+            $pesanAlert = '<strong>Reminder:</strong> Your item borrowing period will end in <strong>' . $sisaHari . ' days</strong>.';
+            $alertBg    = '#fef3c7';
+            $alertBorder = '#f59e0b';
+            $alertColor  = '#92400e';
+            $headerBg    = 'linear-gradient(135deg, #1e3a8a, #2563eb)';
+            $headerTitle = 'Item Return Reminder';
+        }
+
+        $introText = 'Here are your borrowing details:';
+        $closingText = 'Please return the items before the above date to avoid late returns.';
+        $footerNote = 'This email is sent automatically by the system. If you have already returned the items, please ignore this email.';
+        $extraRows = '';
     } else {
-        $pesanAlert = '<strong>Warning!</strong> Your item borrowing period will end in <strong>' . $sisaHari . ' days</strong>.';
-        $alertBg    = '#fef3c7';
-        $alertBorder = '#f59e0b';
-        $alertColor  = '#92400e';
-        $headerBg    = 'linear-gradient(135deg, #1e3a8a, #2563eb)';
-        $headerTitle = '⚠️ Item Return Reminder';
+        if ($sisaHari <= 0) {
+            $pesanAlert = '<strong>Alert:</strong> A borrowing record under <strong>' . $safeBorrowerName . '</strong> is <strong>due today</strong> and needs follow-up.';
+            $alertBg    = '#fee2e2';
+            $alertBorder = '#ef4444';
+            $alertColor  = '#991b1b';
+            $headerBg    = 'linear-gradient(135deg, #991b1b, #dc2626)';
+            $headerTitle = 'Borrowing Due Alert';
+        } elseif ($sisaHari === 1) {
+            $pesanAlert = '<strong>Alert:</strong> A borrowing record under <strong>' . $safeBorrowerName . '</strong> will be <strong>due tomorrow</strong>.';
+            $alertBg    = '#fef3c7';
+            $alertBorder = '#f59e0b';
+            $alertColor  = '#92400e';
+            $headerBg    = 'linear-gradient(135deg, #92400e, #d97706)';
+            $headerTitle = 'Borrowing Due Alert';
+        } else {
+            $pesanAlert = '<strong>Alert:</strong> A borrowing record under <strong>' . $safeBorrowerName . '</strong> will be due in <strong>' . $sisaHari . ' days</strong>.';
+            $alertBg    = '#fef3c7';
+            $alertBorder = '#f59e0b';
+            $alertColor  = '#92400e';
+            $headerBg    = 'linear-gradient(135deg, #1e3a8a, #2563eb)';
+            $headerTitle = 'Borrowing Due Alert';
+        }
+
+        $introText = 'This is a monitoring notification for a borrowing record that is approaching its return deadline.';
+        $closingText = 'Please follow up with the borrower if necessary.';
+        $footerNote = 'This is an automated monitoring email sent to Admin/PIC. If the items have already been returned, please ignore this email.';
+        $extraRows = '
+                    <tr>
+                        <td>Borrower</td>
+                        <td><strong>' . $safeBorrowerName . '</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Borrower Email</td>
+                        <td>' . $safeBorrowerEmail . '</td>
+                    </tr>';
     }
 
     return '
@@ -372,7 +442,7 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
                 <p>Komatsu Indonesia - Borrowing System</p>
             </div>
             <div class="body">
-                <p>Hello <strong>' . htmlspecialchars($nama) . '</strong>,</p>
+                <p>Hello <strong>' . $safeRecipientName . '</strong>,</p>
                 
                 <div class="alert-box">
                     ' . $pesanAlert . '
@@ -382,9 +452,10 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
                     ' . ($sisaHari <= 0 ? 'DUE TODAY' : $sisaHari . ' Days Remaining') . '
                 </div>
                 
-                <p>Here are your borrowing details:</p>
+                <p>' . $introText . '</p>
                 
                 <table class="info-table">
+                    ' . $extraRows . '
                     <tr>
                         <td>Borrowing Code</td>
                         <td><strong>' . htmlspecialchars($kode) . '</strong></td>
@@ -399,16 +470,16 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
                     </tr>
                     <tr>
                         <td>Days Remaining</td>
-                        <td><strong style="color: ' . ($sisaHari <= 1 ? '#dc2626' : '#2563eb') . ';">' . ($sisaHari <= 0 ? 'Today!' : $sisaHari . ' days') . '</strong></td>
+                        <td><strong style="color: ' . ($sisaHari <= 1 ? '#dc2626' : '#2563eb') . ';">' . ($sisaHari <= 0 ? 'Today' : $sisaHari . ' days') . '</strong></td>
                     </tr>
                 </table>
                 
-                <p>Please return the items before the above date to avoid late returns.</p>
+                <p>' . $closingText . '</p>
                 
                 <p>Thank you for your attention and cooperation.</p>
                 
                 <p style="margin-top: 24px; color: #6b7280; font-size: 13px;">
-                    <em>This email is sent automatically by the system. If you have already returned the items, please ignore this email.</em>
+                    <em>' . $footerNote . '</em>
                 </p>
             </div>
             <div class="footer">
@@ -423,26 +494,60 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
 // ============================================================
 // FUNCTION: Plain Text Email Template — dynamic based on remaining days
 // ============================================================
-function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari)
+function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari, $audience = 'borrower', $borrowerName = '', $borrowerEmail = '')
 {
-    $pesanSisa = $sisaHari <= 0
-        ? "Your item borrowing period is DUE TODAY."
-        : "Your item borrowing period will end in {$sisaHari} days (date {$tglKembali}).";
+    $isBorrower = ($audience === 'borrower');
+    $recipientName = $nama ?: 'User';
+    $borrowerLabel = $borrowerName ?: '-';
+    $borrowerEmailLabel = $borrowerEmail ?: '-';
 
-    return "Hello {$nama},
+    if ($isBorrower) {
+        $pesanSisa = $sisaHari <= 0
+            ? "Your item borrowing period is due today."
+            : ($sisaHari === 1
+                ? "Your item borrowing period will end tomorrow ({$tglKembali})."
+                : "Your item borrowing period will end in {$sisaHari} days ({$tglKembali}).");
+
+        return "Hello {$recipientName},
 
 {$pesanSisa}
 
 Borrowing Details:
-- Borrowing Code  : {$kode}
-- Borrow Date     : {$tglPinjam}
-- Return Deadline  : {$tglKembali}
-- Days Remaining   : " . ($sisaHari <= 0 ? 'TODAY!' : "{$sisaHari} days") . "
+- Borrowing Code : {$kode}
+- Borrow Date    : {$tglPinjam}
+- Return Deadline: {$tglKembali}
+- Days Remaining : " . ($sisaHari <= 0 ? 'Today' : "{$sisaHari} days") . "
 
-Please return the items before the above date.
+Please return the items before the above date to avoid late returns.
 
 Thank you.
 
 ---
 This email is sent automatically by the Komatsu Indonesia Borrowing System.";
+    }
+
+    $pesanSisa = $sisaHari <= 0
+        ? "A borrowing record under {$borrowerLabel} is due today and needs follow-up."
+        : ($sisaHari === 1
+            ? "A borrowing record under {$borrowerLabel} will be due tomorrow ({$tglKembali})."
+            : "A borrowing record under {$borrowerLabel} will be due in {$sisaHari} days ({$tglKembali}).");
+
+    return "Hello {$recipientName},
+
+{$pesanSisa}
+
+Borrowing Details:
+- Borrower       : {$borrowerLabel}
+- Borrower Email : {$borrowerEmailLabel}
+- Borrowing Code : {$kode}
+- Borrow Date    : {$tglPinjam}
+- Return Deadline: {$tglKembali}
+- Days Remaining : " . ($sisaHari <= 0 ? 'Today' : "{$sisaHari} days") . "
+
+Please follow up with the borrower if necessary.
+
+Thank you.
+
+---
+This is an automated monitoring email from the Komatsu Indonesia Borrowing System for Admin/PIC recipients.";
 }
