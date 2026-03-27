@@ -292,7 +292,7 @@
 
     <script>
         (function () {
-            const api = BASE_URL + '/api/approver/list-by-status.php?status=Approved&include_due=1';
+            const api = BASE_URL + '/api/approver/list-by-status.php?approval_history=1';
             function escapeHtml(s) { if (!s && s !== 0) return ''; return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
             function readField(item, keys) { for (const k of keys) if (item[k] !== undefined) return item[k]; return ''; }
             async function load() {

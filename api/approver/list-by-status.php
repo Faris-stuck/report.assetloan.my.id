@@ -8,9 +8,49 @@ try {
     
     $status = $_GET['status'] ?? 'Waiting for Approval';
     $include_due = isset($_GET['include_due']) && $_GET['include_due'] === '1';
+    $approval_history = isset($_GET['approval_history']) && $_GET['approval_history'] === '1';
 
     // Query untuk mengambil data peminjaman dengan detail
-    if ($include_due) {
+    if ($approval_history) {
+        // Manager approval history view:
+        // include requests that have at least one unit/detail approved by manager,
+        // regardless of current runtime status (due/overdue/returned/etc).
+        $stmt = $conn->prepare("
+            SELECT
+                p.id,
+                p.kode_peminjaman,
+                p.nama_peminjam,
+                p.nrp,
+                p.tanggal_pinjam,
+                p.rencana_kembali,
+                p.status,
+                p.catatan,
+                p.lokasi_umum
+            FROM peminjaman p
+            WHERE (
+                EXISTS (
+                    SELECT 1
+                    FROM peminjaman_units pu
+                    JOIN users u ON u.id = pu.approved_by
+                    WHERE pu.peminjaman_id = p.id
+                      AND pu.approval_status = 'Approved'
+                      AND u.role = 'manager'
+                )
+                OR (
+                    NOT EXISTS (SELECT 1 FROM peminjaman_units pu2 WHERE pu2.peminjaman_id = p.id)
+                    AND EXISTS (
+                        SELECT 1
+                        FROM detail_peminjaman dp
+                        JOIN users u2 ON u2.id = dp.approved_by
+                        WHERE dp.peminjaman_id = p.id
+                          AND dp.approval_status = 'approved'
+                          AND u2.role = 'manager'
+                    )
+                )
+            )
+            ORDER BY p.tanggal_pinjam DESC, p.id DESC
+        ");
+    } elseif ($include_due) {
         // Include all active statuses: Borrowed + Partial Approved + Due% + Overdue
         $stmt = $conn->prepare("
             SELECT
@@ -85,49 +125,110 @@ try {
             ];
         }
 
-        // Merge pengembalian details (if any) to surface damaged counts for approvers
-        $qk = $conn->prepare("SELECT id FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
-        $qk->bind_param("i", $row['id']);
-        $qk->execute();
-        $hk = $qk->get_result()->fetch_assoc();
-        if ($hk) {
-            $peng_id = (int)$hk['id'];
-            $sd = $conn->prepare("SELECT barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
-            $sd->bind_param("i", $peng_id);
-            $sd->execute();
-            $rd = $sd->get_result();
-            $map = [];
-            $total_items = 0;
-            $total_rusak = 0;
-            while ($r = $rd->fetch_assoc()) {
-                $map[(int)$r['barang_id']] = $r;
-            }
-            foreach ($detail_barang as &$bi) {
-                $total_items += $bi['jumlah'];
-                $bid = (int)$bi['barang_id'];
-                if (isset($map[$bid])) {
-                    $bi['jumlah_kembali'] = (int)$map[$bid]['jumlah_kembali'];
-                    $bi['jumlah_rusak'] = (int)$map[$bid]['jumlah_rusak'];
-                    $bi['kondisi_kembali'] = $map[$bid]['kondisi_kembali'];
-                    $total_rusak += (int)$map[$bid]['jumlah_rusak'];
-                }
-            }
-            if ($total_rusak > 0) {
-                if ($total_rusak < $total_items) {
-                    $row['status'] = 'Partially Damaged';
-                    $row['status_en'] = 'Partially Damaged';
-                } else {
-                    $row['status'] = 'Fully Damaged';
-                    $row['status_en'] = 'Fully Damaged';
-                }
-            } else {
-                $row['status_en'] = $row['status'];
-            }
-        }
+        if ($approval_history) {
+            // Force history-only status label:
+            // - Approved: all reviewed units approved
+            // - Partial Approved: mix approved with rejected/pending units
+            $approved_count = 0;
+            $rejected_count = 0;
+            $pending_count = 0;
+            $unit_total = 0;
 
-        // REAL-TIME DUE STATUS (use nearest expected return considering extends)
-        $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
-        $row['status'] = computeDueStatus($row['status'], $nearest_expected ?? $row['rencana_kembali']);
+            $sq = $conn->prepare("
+                SELECT
+                    SUM(CASE WHEN pu.approval_status = 'Approved' THEN 1 ELSE 0 END) AS approved_count,
+                    SUM(CASE WHEN pu.approval_status = 'Rejected' THEN 1 ELSE 0 END) AS rejected_count,
+                    SUM(CASE WHEN pu.approval_status = 'Pending' OR pu.approval_status IS NULL THEN 1 ELSE 0 END) AS pending_count,
+                    COUNT(*) AS unit_total
+                FROM peminjaman_units pu
+                WHERE pu.peminjaman_id = ?
+            ");
+            $sq->bind_param("i", $row['id']);
+            $sq->execute();
+            $sum = $sq->get_result()->fetch_assoc();
+            if ($sum) {
+                $approved_count = (int)($sum['approved_count'] ?? 0);
+                $rejected_count = (int)($sum['rejected_count'] ?? 0);
+                $pending_count = (int)($sum['pending_count'] ?? 0);
+                $unit_total = (int)($sum['unit_total'] ?? 0);
+            }
+
+            // Fallback for legacy records without peminjaman_units
+            if ($unit_total === 0) {
+                $sq2 = $conn->prepare("
+                    SELECT
+                        SUM(CASE WHEN dp.approval_status = 'approved' THEN 1 ELSE 0 END) AS approved_count,
+                        SUM(CASE WHEN dp.approval_status = 'rejected' THEN 1 ELSE 0 END) AS rejected_count,
+                        SUM(CASE WHEN dp.approval_status = 'pending' OR dp.approval_status IS NULL THEN 1 ELSE 0 END) AS pending_count,
+                        COUNT(*) AS unit_total
+                    FROM detail_peminjaman dp
+                    WHERE dp.peminjaman_id = ?
+                ");
+                $sq2->bind_param("i", $row['id']);
+                $sq2->execute();
+                $sum2 = $sq2->get_result()->fetch_assoc();
+                if ($sum2) {
+                    $approved_count = (int)($sum2['approved_count'] ?? 0);
+                    $rejected_count = (int)($sum2['rejected_count'] ?? 0);
+                    $pending_count = (int)($sum2['pending_count'] ?? 0);
+                    $unit_total = (int)($sum2['unit_total'] ?? 0);
+                }
+            }
+
+            // Safety: if somehow no approved items, skip from history result
+            if ($approved_count <= 0) {
+                continue;
+            }
+
+            $is_partial = ($rejected_count > 0 || $pending_count > 0);
+            $row['status'] = $is_partial ? 'Partial Approved' : 'Approved';
+            $row['status_en'] = $row['status'];
+            $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
+        } else {
+            // Merge pengembalian details (if any) to surface damaged counts for approvers
+            $qk = $conn->prepare("SELECT id FROM pengembalian WHERE peminjaman_id = ? ORDER BY id DESC LIMIT 1");
+            $qk->bind_param("i", $row['id']);
+            $qk->execute();
+            $hk = $qk->get_result()->fetch_assoc();
+            if ($hk) {
+                $peng_id = (int)$hk['id'];
+                $sd = $conn->prepare("SELECT barang_id, jumlah_kembali, kondisi_kembali, jumlah_rusak FROM detail_pengembalian WHERE pengembalian_id = ?");
+                $sd->bind_param("i", $peng_id);
+                $sd->execute();
+                $rd = $sd->get_result();
+                $map = [];
+                $total_items = 0;
+                $total_rusak = 0;
+                while ($r = $rd->fetch_assoc()) {
+                    $map[(int)$r['barang_id']] = $r;
+                }
+                foreach ($detail_barang as &$bi) {
+                    $total_items += $bi['jumlah'];
+                    $bid = (int)$bi['barang_id'];
+                    if (isset($map[$bid])) {
+                        $bi['jumlah_kembali'] = (int)$map[$bid]['jumlah_kembali'];
+                        $bi['jumlah_rusak'] = (int)$map[$bid]['jumlah_rusak'];
+                        $bi['kondisi_kembali'] = $map[$bid]['kondisi_kembali'];
+                        $total_rusak += (int)$map[$bid]['jumlah_rusak'];
+                    }
+                }
+                if ($total_rusak > 0) {
+                    if ($total_rusak < $total_items) {
+                        $row['status'] = 'Partially Damaged';
+                        $row['status_en'] = 'Partially Damaged';
+                    } else {
+                        $row['status'] = 'Fully Damaged';
+                        $row['status_en'] = 'Fully Damaged';
+                    }
+                } else {
+                    $row['status_en'] = $row['status'];
+                }
+            }
+
+            // REAL-TIME DUE STATUS (use nearest expected return considering extends)
+            $nearest_expected = getNearestExpectedReturn($conn, $row['id']);
+            $row['status'] = computeDueStatus($row['status'], $nearest_expected ?? $row['rencana_kembali']);
+        }
 
         $data[] = [
             'id' => $row['id'],
