@@ -30,10 +30,12 @@ function getExtendWithPeminjamanAndUser($conn, $extendId) {
             e.alasan,
             p.kode_peminjaman,
             p.nama_peminjam,
+            p.nrp,
             p.tanggal_pinjam,
             p.rencana_kembali,
             u.email,
-            u.nama AS nama_user
+            u.nama AS nama_user,
+            u.nrp AS nrp_user
         FROM extend_peminjaman e
         JOIN peminjaman p ON e.peminjaman_id = p.id
         JOIN users u ON p.user_id = u.id
@@ -72,8 +74,9 @@ function sendExtendRequestEmail($conn, $extendId) {
         return false;
     }
 
-    $namaUser    = $data['nama_user'] ?: $data['nama_peminjam'];
-    $emailUser   = $data['email'];
+    $borrower    = getBorrowerIdentity($data);
+    $namaUser    = $borrower['nama'];
+    $emailUser   = $borrower['email'];
     $kode        = $data['kode_peminjaman'];
     $tglPinjam   = date('d F Y', strtotime($data['tanggal_pinjam']));
     $tglPerpanjang = date('d F Y', strtotime($data['tanggal_perpanjang']));
@@ -130,14 +133,7 @@ function sendExtendRequestEmail($conn, $extendId) {
                 <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
-            <tr>
-                <td>Borrower Name</td>
-                <td>' . htmlspecialchars($namaUser) . '</td>
-            </tr>
-            <tr>
-                <td>Borrower Email</td>
-                <td>' . htmlspecialchars($emailUser) . '</td>
-            </tr>
+            ' . buildBorrowerIdentityRows($borrower) . '
             <tr>
                 <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>

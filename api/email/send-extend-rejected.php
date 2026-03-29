@@ -35,10 +35,12 @@ function sendExtendRejectedEmail($conn, $extendId) {
             p.id AS peminjaman_id,
             p.kode_peminjaman,
             p.nama_peminjam,
+            p.nrp,
             p.tanggal_pinjam,
             p.rencana_kembali,
             u.email,
-            u.nama AS nama_user
+            u.nama AS nama_user,
+            u.nrp AS nrp_user
         FROM extend_peminjaman e
         JOIN peminjaman p ON e.peminjaman_id = p.id
         JOIN users u ON p.user_id = u.id
@@ -61,8 +63,9 @@ function sendExtendRejectedEmail($conn, $extendId) {
 
     $data = $result->fetch_assoc();
 
-    $nama   = $data['nama_user'] ?: $data['nama_peminjam'];
-    $email  = $data['email'];
+    $borrower = getBorrowerIdentity($data);
+    $nama   = $borrower['nama'];
+    $email  = $borrower['email'];
     $kode   = $data['kode_peminjaman'];
     $tglPinjam         = date('d F Y', strtotime($data['tanggal_pinjam']));
     $tglKembaliSaatIni = date('d F Y', strtotime($data['rencana_kembali']));
@@ -119,10 +122,7 @@ function sendExtendRejectedEmail($conn, $extendId) {
                 <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
-            <tr>
-                <td>Borrower Name</td>
-                <td>' . htmlspecialchars($nama) . '</td>
-            </tr>
+            ' . buildBorrowerIdentityRows($borrower) . '
             <tr>
                 <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>

@@ -657,6 +657,58 @@ function buildEmailTemplate($title, $bodyHtml) {
 }
 
 /**
+ * Normalize borrower identity from loan/extend/user query results.
+ *
+ * @param array $data
+ * @return array{nama:string,email:string,nrp:string}
+ */
+function getBorrowerIdentity(array $data) {
+    $nama = trim((string)($data['nama_peminjam'] ?? ''));
+    if ($nama === '') {
+        $nama = trim((string)($data['nama_user'] ?? ''));
+    }
+
+    $email = trim((string)($data['email'] ?? ''));
+
+    $nrp = trim((string)($data['nrp'] ?? ''));
+    if ($nrp === '') {
+        $nrp = trim((string)($data['nrp_user'] ?? ''));
+    }
+
+    return [
+        'nama' => $nama !== '' ? $nama : '-',
+        'email' => $email !== '' ? $email : '-',
+        'nrp' => $nrp !== '' ? $nrp : '-',
+    ];
+}
+
+/**
+ * Build standard borrower identity rows for email info tables.
+ *
+ * @param array $dataOrBorrower
+ * @return string
+ */
+function buildBorrowerIdentityRows(array $dataOrBorrower) {
+    $borrower = isset($dataOrBorrower['nama'], $dataOrBorrower['email'], $dataOrBorrower['nrp'])
+        ? $dataOrBorrower
+        : getBorrowerIdentity($dataOrBorrower);
+
+    return '
+            <tr>
+                <td>Borrower Name</td>
+                <td>' . htmlspecialchars($borrower['nama']) . '</td>
+            </tr>
+            <tr>
+                <td>Borrower Email</td>
+                <td>' . htmlspecialchars($borrower['email']) . '</td>
+            </tr>
+            <tr>
+                <td>Borrower NRP</td>
+                <td>' . htmlspecialchars($borrower['nrp']) . '</td>
+            </tr>';
+}
+
+/**
  * ============================================================
  * HELPER FUNCTIONS: Retrieve emails DYNAMICALLY from database
  * No hardcoded emails — all from the users table
@@ -851,13 +903,15 @@ function getPeminjamanWithUser($conn, $peminjamanId) {
             p.id,
             p.kode_peminjaman,
             p.nama_peminjam,
+            p.nrp,
             p.tanggal_pinjam,
             p.rencana_kembali,
             p.tanggal_kembali,
             p.status,
             p.catatan,
             u.email,
-            u.nama AS nama_user
+            u.nama AS nama_user,
+            u.nrp AS nrp_user
         FROM peminjaman p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = ?

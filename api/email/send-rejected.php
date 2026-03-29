@@ -34,8 +34,9 @@ function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Loan') {
         return false;
     }
 
-    $nama   = $data['nama_user'] ?: $data['nama_peminjam'];
-    $email  = $data['email'];
+    $borrower = getBorrowerIdentity($data);
+    $nama   = $borrower['nama'];
+    $email  = $borrower['email'];
     $kode   = $data['kode_peminjaman'];
     $catatan = $data['catatan'] ?: '-';
     $tglPinjam   = date('d F Y', strtotime($data['tanggal_pinjam']));
@@ -91,10 +92,7 @@ function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Loan') {
                 <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
-            <tr>
-                <td>Borrower Name</td>
-                <td>' . htmlspecialchars($nama) . '</td>
-            </tr>
+            ' . buildBorrowerIdentityRows($borrower) . '
             <tr>
                 <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>

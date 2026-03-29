@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once "../koneksi.php";
+require_once __DIR__ . "/../koneksi.php";
 
 function jsonResponse(int $code, bool $status, string $message): void
 {
@@ -38,7 +38,7 @@ function sendResetToken(mysqli $conn, string $email, bool $isResend = false): vo
 {
     ensureResetColumns($conn);
 
-    $stmt = $conn->prepare("SELECT id, nama, reset_token FROM users WHERE email = ?");
+    $stmt = $conn->prepare("SELECT id, nama, nrp, email, reset_token FROM users WHERE email = ?");
     if (!$stmt) {
         jsonResponse(500, false, "Internal server error");
     }
@@ -71,13 +71,27 @@ function sendResetToken(mysqli $conn, string $email, bool $isResend = false): vo
         $subject = $isResend
             ? "Resend Password Reset Token - Komatsu Indonesia Borrowing System"
             : "Password Reset Token - Komatsu Indonesia Borrowing System";
-        $body = "<h3>Password Reset</h3>
-                 <p>Hello <strong>{$user['nama']}</strong>,</p>
-                 <p>Your password reset verification token is:</p>
-                 <h2 style='color:#1e3a8a; letter-spacing:4px;'>{$token}</h2>
-                 <p>This token expires in <strong>15 minutes</strong>.</p>
-                 <p><strong>Use the latest token only.</strong> Any previous token is no longer valid.</p>
-                 <p>If you did not request this, please ignore this email.</p>";
+        $safeName = htmlspecialchars((string)($user['nama'] ?? '-'));
+        $safeToken = htmlspecialchars($token);
+        $borrowerRows = buildBorrowerIdentityRows([
+            'nama' => (string)($user['nama'] ?? '-'),
+            'email' => (string)($user['email'] ?? $email),
+            'nrp' => (string)($user['nrp'] ?? '-'),
+        ]);
+        $body = buildEmailTemplate(
+            'Password Reset Token',
+            "<p>Hello <strong>{$safeName}</strong>,</p>
+             <p>Your password reset verification token is:</p>
+             <div class='info-box' style='text-align:center;'>
+                 <div style='font-size:30px; font-weight:700; letter-spacing:4px; color:#1e3a8a;'>{$safeToken}</div>
+             </div>
+             <table class='info-table'>
+                {$borrowerRows}
+             </table>
+             <p>This token expires in <strong>15 minutes</strong>.</p>
+             <p><strong>Use the latest token only.</strong> Any previous token is no longer valid.</p>
+             <p>If you did not request this, please ignore this email.</p>"
+        );
 
         // User action path must return quickly; do not fallback to sync when dispatch fails.
         $sent = sendEmail($email, $subject, $body, $user['nama'], '', ['noSyncFallback' => true]);

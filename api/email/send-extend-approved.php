@@ -34,8 +34,9 @@ function sendExtendApprovedEmail($conn, $peminjamanId, $newDate = null) {
         return false;
     }
 
-    $nama  = $data['nama_user'] ?: $data['nama_peminjam'];
-    $email = $data['email'];
+    $borrower = getBorrowerIdentity($data);
+    $nama  = $borrower['nama'];
+    $email = $borrower['email'];
     $kode  = $data['kode_peminjaman'];
     $tglPinjam       = date('d F Y', strtotime($data['tanggal_pinjam']));
     $tglKembaliBaru  = $newDate 
@@ -92,10 +93,7 @@ function sendExtendApprovedEmail($conn, $peminjamanId, $newDate = null) {
                 <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
-            <tr>
-                <td>Borrower Name</td>
-                <td>' . htmlspecialchars($nama) . '</td>
-            </tr>
+            ' . buildBorrowerIdentityRows($borrower) . '
             <tr>
                 <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>

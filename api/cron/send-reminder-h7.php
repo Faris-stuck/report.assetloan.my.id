@@ -69,6 +69,7 @@ $sql = "
         p.id,
         p.kode_peminjaman,
         p.nama_peminjam,
+        p.nrp,
         p.rencana_kembali,
         COALESCE(pu_near.nearest_return, p.rencana_kembali) AS effective_return,
         p.tanggal_pinjam,
@@ -76,7 +77,8 @@ $sql = "
         p.last_reminder_date,
         DATEDIFF(COALESCE(pu_near.nearest_return, p.rencana_kembali), CURDATE()) AS sisa_hari,
         u.email,
-        u.nama AS nama_user
+        u.nama AS nama_user,
+        u.nrp AS nrp_user
     FROM peminjaman p
     JOIN users u ON p.user_id = u.id
     LEFT JOIN (
@@ -150,8 +152,10 @@ $gagal    = 0;
 
 while ($row = $result->fetch_assoc()) {
     $peminjaman_id  = $row['id'];
-    $namaUser       = $row['nama_user'] ?: $row['nama_peminjam'];
-    $emailUser      = $row['email'];
+    $borrower       = getBorrowerIdentity($row);
+    $namaUser       = $borrower['nama'];
+    $emailUser      = $borrower['email'];
+    $borrowerNrp    = $borrower['nrp'];
     $kodePeminjaman = $row['kode_peminjaman'];
     $tanggalPinjam  = date('d F Y', strtotime($row['tanggal_pinjam']));
     $tanggalKembali = date('d F Y', strtotime($row['effective_return']));
@@ -159,7 +163,7 @@ while ($row = $result->fetch_assoc()) {
     $statusPinjaman = $row['status'];
 
     echo "-----------------------------------------------------------\n";
-    echo "[PROSES] Kode: {$kodePeminjaman} | {$namaUser} | {$emailUser}\n";
+    echo "[PROSES] Kode: {$kodePeminjaman} | {$namaUser} | {$emailUser} | {$borrowerNrp}\n";
     echo "         Status: {$statusPinjaman} | Sisa: {$sisaHari} hari\n";
     echo "         Pinjam: {$tanggalPinjam} → Kembali: {$tanggalKembali}\n";
 
@@ -212,7 +216,8 @@ while ($row = $result->fetch_assoc()) {
             $sisaHari,
             $audience,
             $namaUser,
-            $emailUser
+            $emailUser,
+            $borrowerNrp
         );
         $plainBody = buildReminderEmailPlainText(
             $r['nama'],
@@ -222,7 +227,8 @@ while ($row = $result->fetch_assoc()) {
             $sisaHari,
             $audience,
             $namaUser,
-            $emailUser
+            $emailUser,
+            $borrowerNrp
         );
 
         if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'], $plainBody)) {
@@ -272,12 +278,13 @@ exit(0);
 // ============================================================
 // FUNCTION: HTML Email Template — dynamic based on remaining days
 // ============================================================
-function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari, $audience = 'borrower', $borrowerName = '', $borrowerEmail = '')
+function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari, $audience = 'borrower', $borrowerName = '', $borrowerEmail = '', $borrowerNrp = '')
 {
     $isBorrower = ($audience === 'borrower');
     $safeRecipientName = htmlspecialchars($nama ?: 'User');
     $safeBorrowerName = htmlspecialchars($borrowerName ?: '-');
     $safeBorrowerEmail = htmlspecialchars($borrowerEmail ?: '-');
+    $safeBorrowerNrp = htmlspecialchars($borrowerNrp ?: '-');
 
     // Dynamic message based on remaining days
     if ($isBorrower) {
@@ -307,7 +314,19 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
         $introText = 'Here are your borrowing details:';
         $closingText = 'Please return the items before the above date to avoid late returns.';
         $footerNote = 'This email is sent automatically by the system. If you have already returned the items, please ignore this email.';
-        $extraRows = '';
+        $extraRows = '
+                    <tr>
+                        <td>Borrower Name</td>
+                        <td><strong>' . $safeBorrowerName . '</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Borrower Email</td>
+                        <td>' . $safeBorrowerEmail . '</td>
+                    </tr>
+                    <tr>
+                        <td>Borrower NRP</td>
+                        <td>' . $safeBorrowerNrp . '</td>
+                    </tr>';
     } else {
         if ($sisaHari <= 0) {
             $pesanAlert = '<strong>Alert:</strong> A borrowing record under <strong>' . $safeBorrowerName . '</strong> is <strong>due today</strong> and needs follow-up.';
@@ -337,12 +356,16 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
         $footerNote = 'This is an automated monitoring email sent to Admin/PIC. If the items have already been returned, please ignore this email.';
         $extraRows = '
                     <tr>
-                        <td>Borrower</td>
+                        <td>Borrower Name</td>
                         <td><strong>' . $safeBorrowerName . '</strong></td>
                     </tr>
                     <tr>
                         <td>Borrower Email</td>
                         <td>' . $safeBorrowerEmail . '</td>
+                    </tr>
+                    <tr>
+                        <td>Borrower NRP</td>
+                        <td>' . $safeBorrowerNrp . '</td>
                     </tr>';
     }
 
@@ -494,12 +517,13 @@ function buildReminderEmailBody($nama, $kode, $tglPinjam, $tglKembali, $sisaHari
 // ============================================================
 // FUNCTION: Plain Text Email Template — dynamic based on remaining days
 // ============================================================
-function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari, $audience = 'borrower', $borrowerName = '', $borrowerEmail = '')
+function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sisaHari, $audience = 'borrower', $borrowerName = '', $borrowerEmail = '', $borrowerNrp = '')
 {
     $isBorrower = ($audience === 'borrower');
     $recipientName = $nama ?: 'User';
     $borrowerLabel = $borrowerName ?: '-';
     $borrowerEmailLabel = $borrowerEmail ?: '-';
+    $borrowerNrpLabel = $borrowerNrp ?: '-';
 
     if ($isBorrower) {
         $pesanSisa = $sisaHari <= 0
@@ -513,6 +537,9 @@ function buildReminderEmailPlainText($nama, $kode, $tglPinjam, $tglKembali, $sis
 {$pesanSisa}
 
 Borrowing Details:
+- Borrower Name  : {$borrowerLabel}
+- Borrower Email : {$borrowerEmailLabel}
+- Borrower NRP   : {$borrowerNrpLabel}
 - Borrowing Code : {$kode}
 - Borrow Date    : {$tglPinjam}
 - Return Deadline: {$tglKembali}
@@ -537,8 +564,9 @@ This email is sent automatically by the Komatsu Indonesia Borrowing System.";
 {$pesanSisa}
 
 Borrowing Details:
-- Borrower       : {$borrowerLabel}
+- Borrower Name  : {$borrowerLabel}
 - Borrower Email : {$borrowerEmailLabel}
+- Borrower NRP   : {$borrowerNrpLabel}
 - Borrowing Code : {$kode}
 - Borrow Date    : {$tglPinjam}
 - Return Deadline: {$tglKembali}

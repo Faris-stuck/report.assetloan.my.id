@@ -33,8 +33,9 @@ function sendReturnRequestEmail($conn, $peminjamanId) {
         return false;
     }
 
-    $namaUser   = $data['nama_user'] ?: $data['nama_peminjam'];
-    $emailUser  = $data['email'];
+    $borrower   = getBorrowerIdentity($data);
+    $namaUser   = $borrower['nama'];
+    $emailUser  = $borrower['email'];
     $kode       = $data['kode_peminjaman'];
     $tglPinjam  = date('d F Y', strtotime($data['tanggal_pinjam']));
     $tglKembali = date('d F Y', strtotime($data['rencana_kembali']));
@@ -91,14 +92,7 @@ function sendReturnRequestEmail($conn, $peminjamanId) {
                 <td>Loan Code</td>
                 <td><strong>' . htmlspecialchars($kode) . '</strong></td>
             </tr>
-            <tr>
-                <td>Borrower Name</td>
-                <td>' . htmlspecialchars($namaUser) . '</td>
-            </tr>
-            <tr>
-                <td>Borrower Email</td>
-                <td>' . htmlspecialchars($emailUser) . '</td>
-            </tr>
+            ' . buildBorrowerIdentityRows($borrower) . '
             <tr>
                 <td>Borrow Date</td>
                 <td>' . htmlspecialchars($tglPinjam) . '</td>
