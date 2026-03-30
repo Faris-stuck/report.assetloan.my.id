@@ -12,6 +12,7 @@
  *   - Trigger manually via browser URL (token disabled by default for testing) or via CLI
  *   - Check borrowings with rencana_kembali between D-7 to D-0
  *   - Send email reminder once per day per borrowing
+ *   - Reminder is sent only to the borrower to avoid email spam to other roles
  *   - Do not resend if page is refreshed on the same day
  *   - Uses the last_reminder_date column for tracking
  * 
@@ -136,16 +137,7 @@ if ($totalRows === 0) {
 }
 
 // ============================================================
-// 6. FETCH ADMIN + PIC_BARANG LIST (once only, used for all borrowings)
-// ============================================================
-$adminList = getAdminEmails($conn);
-$picList   = getPicBarangEmails($conn);
-
-echo "[INFO] Admins found: " . count($adminList) . " people\n";
-echo "[INFO] PIC Items found: " . count($picList) . " people\n\n";
-
-// ============================================================
-// 7. LOOP & SEND EMAIL TO ALL PARTIES (USER + ADMIN + PIC)
+// 6. LOOP & SEND REMINDER TO BORROWER ONLY
 // ============================================================
 $berhasil = 0;
 $gagal    = 0;
@@ -167,82 +159,42 @@ while ($row = $result->fetch_assoc()) {
     echo "         Status: {$statusPinjaman} | Sisa: {$sisaHari} hari\n";
     echo "         Pinjam: {$tanggalPinjam} → Kembali: {$tanggalKembali}\n";
 
-    // ============================================================
-    // COLLECT ALL RECIPIENTS INTO ARRAY
-    // ============================================================
-    $recipients = [];
-
-    // 1. USER (borrowing owner)
-    if (!empty($emailUser) && filter_var($emailUser, FILTER_VALIDATE_EMAIL)) {
-        $recipients[] = ['email' => $emailUser, 'nama' => $namaUser, 'audience' => 'borrower'];
-    }
-
-    // 2. ALL ADMINS
-    foreach ($adminList as $admin) {
-        $recipients[] = ['email' => $admin['email'], 'nama' => $admin['nama'], 'audience' => 'admin'];
-    }
-
-    // 3. ALL PIC_BARANG
-    foreach ($picList as $pic) {
-        $recipients[] = ['email' => $pic['email'], 'nama' => $pic['nama'], 'audience' => 'pic_barang'];
-    }
-
-    // DEDUPLICATION
-    $recipients = buildUniqueRecipients(...array_map(fn($r) => $r, $recipients));
-
-    if (empty($recipients)) {
-        echo "[SKIP]   No valid recipients for borrowing #{$peminjaman_id}\n\n";
+    if (empty($emailUser) || !filter_var($emailUser, FILTER_VALIDATE_EMAIL)) {
+        echo "[SKIP]   Borrower email is invalid or empty for borrowing #{$peminjaman_id}\n\n";
         $gagal++;
         continue;
     }
 
-    echo "         Recipients: " . count($recipients) . " people (user + admin + PIC)\n";
+    echo "         Recipient: {$emailUser} (borrower only)\n";
 
-    // ---------------------------------------------------------
-    // Send email to ALL recipients using LOOP
-    // ---------------------------------------------------------
-    $sentCount = 0;
-    foreach ($recipients as $r) {
-        $audience = $r['audience'] ?? 'borrower';
-        $isBorrower = ($audience === 'borrower');
-        $subject = $isBorrower
-            ? 'Item Return Reminder - ' . $kodePeminjaman
-            : 'Borrowing Due Alert - ' . $kodePeminjaman;
-        $htmlBody = buildReminderEmailBody(
-            $r['nama'],
-            $kodePeminjaman,
-            $tanggalPinjam,
-            $tanggalKembali,
-            $sisaHari,
-            $audience,
-            $namaUser,
-            $emailUser,
-            $borrowerNrp
-        );
-        $plainBody = buildReminderEmailPlainText(
-            $r['nama'],
-            $kodePeminjaman,
-            $tanggalPinjam,
-            $tanggalKembali,
-            $sisaHari,
-            $audience,
-            $namaUser,
-            $emailUser,
-            $borrowerNrp
-        );
+    $subject = 'Item Return Reminder - ' . $kodePeminjaman;
+    $htmlBody = buildReminderEmailBody(
+        $namaUser,
+        $kodePeminjaman,
+        $tanggalPinjam,
+        $tanggalKembali,
+        $sisaHari,
+        'borrower',
+        $namaUser,
+        $emailUser,
+        $borrowerNrp
+    );
+    $plainBody = buildReminderEmailPlainText(
+        $namaUser,
+        $kodePeminjaman,
+        $tanggalPinjam,
+        $tanggalKembali,
+        $sisaHari,
+        'borrower',
+        $namaUser,
+        $emailUser,
+        $borrowerNrp
+    );
 
-        if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'], $plainBody)) {
-            error_log("[EMAIL] send-reminder-h7: EMAIL SENT TO: " . $r['email'] . " for {$kodePeminjaman}");
-            echo "<span style='color: #a6e3a1;'>[OK]     Reminder sent to: {$r['email']}</span>\n";
-            $sentCount++;
-        } else {
-            error_log("[EMAIL] send-reminder-h7: EMAIL FAILED TO: " . $r['email'] . " for {$kodePeminjaman}");
-            echo "<span style='color: #f38ba8;'>[FAILED] Email failed to send to: {$r['email']}</span>\n";
-        }
-    }
-
-    if ($sentCount > 0) {
+    if (sendEmail($emailUser, $subject, $htmlBody, $namaUser, $plainBody)) {
         $berhasil++;
+        error_log("[EMAIL] send-reminder-h7: EMAIL SENT TO BORROWER: " . $emailUser . " for {$kodePeminjaman}");
+        echo "<span style='color: #a6e3a1;'>[OK]     Reminder sent to borrower: {$emailUser}</span>\n";
 
         // Update last_reminder_date to prevent resending today
         $stmtUpdate = $conn->prepare("UPDATE peminjaman SET last_reminder_date = CURDATE() WHERE id = ?");
@@ -250,9 +202,10 @@ while ($row = $result->fetch_assoc()) {
         $stmtUpdate->execute();
         $stmtUpdate->close();
         echo "         last_reminder_date updated to: " . date('Y-m-d') . "\n";
-        echo "         Total sent: {$sentCount}/" . count($recipients) . " recipients\n\n";
+        echo "         Total sent: 1/1 recipient\n\n";
     } else {
-        echo "<span style='color: #f38ba8;'>[FAILED] All emails failed for: {$kodePeminjaman}</span>\n\n";
+        error_log("[EMAIL] send-reminder-h7: EMAIL FAILED TO BORROWER: " . $emailUser . " for {$kodePeminjaman}");
+        echo "<span style='color: #f38ba8;'>[FAILED] Reminder failed for borrower: {$emailUser}</span>\n\n";
         $gagal++;
     }
 }
