@@ -13,8 +13,8 @@ try {
 
     $stats = [];
 
-    // Borrowed
-    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')");
+    // Borrowed (includes Partial Approved and Due statuses)
+    $stmt = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE (status = 'Borrowed' OR status = 'Partial Approved' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')");
     $stmt->execute();
     $stats['sedang_dipinjam'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
 
@@ -47,7 +47,7 @@ try {
     $stmt = $conn->prepare("
         SELECT id, kode_peminjaman, nama_peminjam, status, tanggal_pinjam, rencana_kembali
         FROM peminjaman
-        WHERE (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
+        WHERE (status = 'Borrowed' OR status = 'Partial Approved' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
         ORDER BY rencana_kembali ASC
         LIMIT 5
     ");

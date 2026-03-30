@@ -52,7 +52,7 @@ try {
      * 
      * Status mapping to display categories:
      * - "Waiting for Approval": Only status = 'Waiting for Approval'
-     * - "Borrowed": 'Borrowed' + 'Partially Returned' + 'Return in Process' + 'Due*' + 'Overdue'
+     * - "Borrowed": 'Borrowed' + 'Partial Approved' + 'Partially Returned' + 'Return in Process' + 'Due*' + 'Overdue'
      * - "Returned": 'Returned' + 'Partially Damaged' + 'Fully Damaged' + 'Completed'
      * - "Rejected": Only status = 'Rejected'
      */
@@ -73,7 +73,7 @@ try {
     $stmt->close();
 
     // 2. Borrowed (active loans - includes Due patterns and partial returns)
-    $query2 = "SELECT COUNT(*) as total FROM peminjaman WHERE (status IN ('Borrowed', 'Partially Returned', 'Return in Process') OR status LIKE 'Due%' OR status = 'Overdue')" . $dateWhereClause;
+    $query2 = "SELECT COUNT(*) as total FROM peminjaman WHERE (status IN ('Borrowed', 'Partial Approved', 'Partially Returned', 'Return in Process') OR status LIKE 'Due%' OR status = 'Overdue')" . $dateWhereClause;
     $stmt = $conn->prepare($query2);
     if (!$stmt) {
         throw new Exception("Query 2 Error: " . $conn->error);

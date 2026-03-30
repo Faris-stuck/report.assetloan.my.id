@@ -52,10 +52,10 @@ try {
     $stmt->execute();
     $stats['ditolak'] = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
 
-    // 4. Borrowed (active)
+    // 4. Borrowed (active, includes Partial Approved and Due statuses)
     $stmt = $conn->prepare("
         SELECT COUNT(*) as total FROM peminjaman 
-        WHERE user_id = ? AND (status = 'Borrowed' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
+        WHERE user_id = ? AND (status = 'Borrowed' OR status = 'Partial Approved' OR status LIKE 'Due%' OR status = 'Overdue' OR status = 'Partially Returned' OR status = 'Return in Process')
     ");
     $stmt->bind_param("i", $user_id);
     $stmt->execute();

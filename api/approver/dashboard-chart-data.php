@@ -41,7 +41,7 @@ try {
         $stmt = $conn->prepare("
             SELECT
                 SUM(CASE WHEN status = 'Waiting for Approval' THEN 1 ELSE 0 END) AS menunggu,
-                SUM(CASE WHEN status IN ('Borrowed','Return in Process','Partially Returned')
+                SUM(CASE WHEN status IN ('Borrowed','Partial Approved','Return in Process','Partially Returned')
                           OR status LIKE 'Due%' OR status = 'Overdue' THEN 1 ELSE 0 END) AS dipinjam,
                 SUM(CASE WHEN status = 'Returned' THEN 1 ELSE 0 END) AS dikembalikan,
                 SUM(CASE WHEN status = 'Rejected'      THEN 1 ELSE 0 END) AS ditolak
@@ -53,7 +53,7 @@ try {
         $stmt = $conn->prepare("
             SELECT
                 SUM(CASE WHEN status = 'Waiting for Approval' THEN 1 ELSE 0 END) AS menunggu,
-                SUM(CASE WHEN status IN ('Borrowed','Return in Process','Partially Returned')
+                SUM(CASE WHEN status IN ('Borrowed','Partial Approved','Return in Process','Partially Returned')
                           OR status LIKE 'Due%' OR status = 'Overdue' THEN 1 ELSE 0 END) AS dipinjam,
                 SUM(CASE WHEN status = 'Returned' THEN 1 ELSE 0 END) AS dikembalikan,
                 SUM(CASE WHEN status = 'Rejected'      THEN 1 ELSE 0 END) AS ditolak
