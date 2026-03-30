@@ -292,13 +292,38 @@ try {
     $ratioStart = isset($_GET['ratio_start']) ? $_GET['ratio_start'] : date('Y-m-d', strtotime('-29 days'));
     $ratioEnd = isset($_GET['ratio_end']) ? $_GET['ratio_end'] : date('Y-m-d');
 
-    $stmtBorrowed = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Borrowed' AND tanggal_pinjam BETWEEN ? AND ?");
+    $stmtBorrowed = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM peminjaman
+        WHERE (
+            status IN ('Borrowed', 'Partial Approved', 'Return in Process', 'Partially Returned')
+            OR status LIKE 'Due%'
+            OR status = 'Overdue'
+        )
+        AND DATE(tanggal_pinjam) BETWEEN ? AND ?
+    ");
     $stmtBorrowed->bind_param('ss', $ratioStart, $ratioEnd);
     $stmtBorrowed->execute();
     $borrowedCount = (int)$stmtBorrowed->get_result()->fetch_assoc()['total'];
     $stmtBorrowed->close();
 
-    $stmtReturned = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Returned' AND tanggal_pinjam BETWEEN ? AND ?");
+    $stmtPartialApproved = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM peminjaman
+        WHERE status = 'Partial Approved'
+          AND DATE(tanggal_pinjam) BETWEEN ? AND ?
+    ");
+    $stmtPartialApproved->bind_param('ss', $ratioStart, $ratioEnd);
+    $stmtPartialApproved->execute();
+    $partialApprovedCount = (int)$stmtPartialApproved->get_result()->fetch_assoc()['total'];
+    $stmtPartialApproved->close();
+
+    $stmtReturned = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM peminjaman
+        WHERE status IN ('Returned', 'Partially Damaged', 'Fully Damaged', 'Completed')
+          AND DATE(tanggal_pinjam) BETWEEN ? AND ?
+    ");
     $stmtReturned->bind_param('ss', $ratioStart, $ratioEnd);
     $stmtReturned->execute();
     $returnedCount = (int)$stmtReturned->get_result()->fetch_assoc()['total'];
@@ -306,6 +331,7 @@ try {
 
     $stats['loan_vs_return_ratio'] = [
         'borrowed' => $borrowedCount,
+        'partial_approved' => $partialApprovedCount,
         'returned' => $returnedCount
     ];
 

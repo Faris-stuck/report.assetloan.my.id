@@ -180,13 +180,41 @@ try {
     $ratioStart = isset($_GET['ratio_start']) ? $_GET['ratio_start'] : date('Y-m-d', strtotime('-29 days'));
     $ratioEnd = isset($_GET['ratio_end']) ? $_GET['ratio_end'] : date('Y-m-d');
 
-    $stmtBorrowed = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status = 'Borrowed' AND p.tanggal_pinjam BETWEEN ? AND ?");
+    $stmtBorrowed = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM peminjaman p
+        WHERE p.user_id = ?
+          AND (
+              p.status IN ('Borrowed', 'Partial Approved', 'Return in Process', 'Partially Returned')
+              OR p.status LIKE 'Due%'
+              OR p.status = 'Overdue'
+          )
+          AND DATE(p.tanggal_pinjam) BETWEEN ? AND ?
+    ");
     $stmtBorrowed->bind_param('iss', $user_id, $ratioStart, $ratioEnd);
     $stmtBorrowed->execute();
     $borrowedCount = (int)$stmtBorrowed->get_result()->fetch_assoc()['total'];
     $stmtBorrowed->close();
 
-    $stmtReturned = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman p WHERE p.user_id = ? AND p.status = 'Returned' AND p.tanggal_pinjam BETWEEN ? AND ?");
+    $stmtPartialApproved = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM peminjaman p
+        WHERE p.user_id = ?
+          AND p.status = 'Partial Approved'
+          AND DATE(p.tanggal_pinjam) BETWEEN ? AND ?
+    ");
+    $stmtPartialApproved->bind_param('iss', $user_id, $ratioStart, $ratioEnd);
+    $stmtPartialApproved->execute();
+    $partialApprovedCount = (int)$stmtPartialApproved->get_result()->fetch_assoc()['total'];
+    $stmtPartialApproved->close();
+
+    $stmtReturned = $conn->prepare("
+        SELECT COUNT(*) as total
+        FROM peminjaman p
+        WHERE p.user_id = ?
+          AND p.status IN ('Returned', 'Partially Damaged', 'Fully Damaged', 'Completed')
+          AND DATE(p.tanggal_pinjam) BETWEEN ? AND ?
+    ");
     $stmtReturned->bind_param('iss', $user_id, $ratioStart, $ratioEnd);
     $stmtReturned->execute();
     $returnedCount = (int)$stmtReturned->get_result()->fetch_assoc()['total'];
@@ -194,6 +222,7 @@ try {
 
     $data['loan_vs_return_ratio'] = [
         'borrowed' => $borrowedCount,
+        'partial_approved' => $partialApprovedCount,
         'returned' => $returnedCount
     ];
 

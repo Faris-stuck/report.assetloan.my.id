@@ -110,13 +110,6 @@
                         </ul>
                     </li>
                 </ul>
-                <div class="card text-center">
-                    <div class="card-body">
-                        <i class="feather-sunrise fs-4 text-dark"></i>
-                        <h6 class="mt-4 text-dark fw-bolder">Approver Panel</h6>
-                        <p class="fs-11 my-3 text-dark">Manage approvals and monitor item borrowing reports.</p>
-                    </div>
-                </div>
             </div>
         </div>
     </nav>
@@ -225,8 +218,33 @@
             <!-- [ Main Content ] start -->
             <div class="main-content">
                 <div class="row">
-                    <!-- Main content area - kosong sesuai permintaan -->
-
+                    <div class="col-lg-12">
+                        <div class="card stretch stretch-full">
+                            <div class="card-header">
+                                <h6 class="mb-0">Borrowing Data</h6>
+                            </div>
+                            <div class="card-body table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Loan Code</th>
+                                            <th>Borrower Name</th>
+                                            <th>NRP</th>
+                                            <th>Loan Date</th>
+                                            <th>Expected Return</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablePeminjaman">
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- [ Main Content ] end -->
@@ -271,49 +289,65 @@
     <script src="../../assets/js/config/api.js"></script>
     <!--! END API CONFIG !-->
     <script>
+        function getStatusBadgeClass(status) {
+            if (status === 'Waiting for Approval' || status === 'Pending Approval') return 'bg-warning text-dark';
+            if (status === 'Approved' || status === 'Partial Approved') return 'bg-info';
+            if (status === 'Borrowed') return 'bg-primary';
+            if (status === 'Overdue' || status === 'Due Today') return 'bg-danger';
+            if (typeof status === 'string' && status.startsWith('Due')) return 'bg-warning text-dark';
+            if (status === 'Partially Returned') return 'bg-warning text-dark';
+            if (status === 'Return in Process' || status === 'Return In Progress') return 'bg-info text-dark';
+            if (status === 'Returned') return 'bg-success';
+            if (status === 'Rejected' || status === 'Cancelled') return 'bg-danger';
+            return 'bg-secondary';
+        }
+
+        function escapeHtml(value) {
+            const stringValue = value === null || value === undefined || value === '' ? '-' : String(value);
+            const div = document.createElement('div');
+            div.textContent = stringValue;
+            return div.innerHTML;
+        }
+
         // Load laporan peminjaman dari database (untuk Manager/Approver)
         function loadLaporanPeminjaman() {
+            const tbody = document.getElementById('tablePeminjaman');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>';
+
             fetch(API_BASE_URL + '/peminjaman/get_all.php', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
-                    let content = '<h4 class="mb-4">Borrowing Report</h4>';
-                    content += '<table class="table table-hover table-striped"><thead class="table-light"><tr>';
-                    content += '<th>No</th><th>Loan Code</th><th>Borrower Name</th><th>NRP</th>';
-                    content += '<th>Loan Date</th><th>Expected Return</th><th>Status</th>';
-                    content += '</tr></thead><tbody>';
+                    tbody.innerHTML = '';
 
                     if (!res.status || !res.data || res.data.length === 0) {
-                        content += '<tr><td colspan="7" class="text-center text-muted">No borrowing data</td></tr>';
-                    } else {
-                        res.data.forEach((p, index) => {
-                            let statusBadge = 'bg-secondary';
-                            if (p.status === 'Waiting for Approval') statusBadge = 'bg-warning text-dark';
-                            else if (p.status === 'Approved') statusBadge = 'bg-info';
-                            else if (p.status === 'Borrowed') statusBadge = 'bg-primary';
-                            else if (p.status === 'Overdue' || p.status === 'Due Today') statusBadge = 'bg-danger';
-                            else if (p.status.startsWith('Due')) statusBadge = 'bg-warning text-dark';
-                            else if (p.status === 'Partially Returned') statusBadge = 'bg-warning text-dark';
-                            else if (p.status === 'Return in Process') statusBadge = 'bg-info text-dark';
-                            else if (p.status === 'Returned') statusBadge = 'bg-success';
-                            else if (p.status === 'Rejected') statusBadge = 'bg-danger';
-                            else if (p.status === 'Partial Approved') statusBadge = 'bg-info';
-                            else if (p.status === 'Cancelled') statusBadge = 'bg-danger';
-
-                            const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
-                            const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';
-
-                            content += `<tr><td>${index + 1}</td><td><strong>${p.kode_peminjaman || '-'}</strong></td>`;
-                            content += `<td>${p.nama_peminjam || '-'}</td><td>${p.nrp || '-'}</td>`;
-                            content += `<td>${tanggalPinjam}</td><td>${rencanaKembali}</td>`;
-                            content += `<td><span class="badge ${statusBadge}">${p.status}</span></td></tr>`;
-                        });
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No borrowing data</td></tr>';
+                        return;
                     }
 
-                    document.querySelector('main .nxl-content').innerHTML = content + '</tbody></table>';
+                    res.data.forEach((p, index) => {
+                        const loanCode = p.kode || p.kode_peminjaman || '-';
+                        const borrowerName = p.nama || p.nama_peminjam || '-';
+                        const status = p.status_en || p.status || '-';
+                        const statusBadge = getStatusBadgeClass(status);
+                        const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
+                        const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';
+
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td><strong>${escapeHtml(loanCode)}</strong></td>
+                                <td>${escapeHtml(borrowerName)}</td>
+                                <td>${escapeHtml(p.nrp)}</td>
+                                <td>${escapeHtml(tanggalPinjam)}</td>
+                                <td>${escapeHtml(rencanaKembali)}</td>
+                                <td><span class="badge ${statusBadge}">${escapeHtml(status)}</span></td>
+                            </tr>
+                        `;
+                    });
                 })
                 .catch(err => {
                     console.error('Error loading laporan:', err);
-                    document.querySelector('main .nxl-content').innerHTML = '<div class="alert alert-danger">Error loading data. Check database connection.</div>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Check database connection.</td></tr>';
                 });
         }
 
