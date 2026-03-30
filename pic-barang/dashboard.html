@@ -313,14 +313,19 @@
                 <!-- End Row 4 -->
 
                 <!-- Row 5: Item Data -->
+                <!--
                 <div class="row">
+                    -->
                     <!-- Chart: Data Barang -->
+                    <!--
                     <div class="col-xxl-12 col-lg-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header">
                                 <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
                                     <h5 class="card-title">Item Data</h5>
+                                    -->
                                     <!-- Dropdown Nama Barang Filter -->
+                                    <!--
                                     <div class="dropdown" style="width: 200px;">
                                         <button
                                             class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
@@ -350,6 +355,7 @@
                     </div>
 
                 </div>
+                -->
             </div>
             <!-- [ Main Content ] end -->
         </div>
@@ -411,24 +417,6 @@
                     }
                     renderStatusChart(statusData);
 
-                    // Populate kategori filter dropdown
-                    const categories = data.categories || [];
-                    if (categories.length > 0) {
-                        const dataBarangList = document.getElementById('dataBarangList');
-
-                        const topBarangNames = (data.top_barang || []).map(item => item.nama);
-                        const allBarangNames = (data.all_barang || []).map(item => item.nama);
-                        const uniqueBarangNames = [...new Set([...topBarangNames, ...allBarangNames])];
-
-                        dataBarangList.innerHTML = uniqueBarangNames.map(nama => `
-                            <a class="dropdown-item" href="#" onclick="selectDataBarang('${escapeHtml(nama)}'); return false;">
-                                <small>${escapeHtml(nama)}</small>
-                            </a>
-                        `).join('');
-
-                        setupDataBarangSearch(uniqueBarangNames);
-                    }
-
                     // Render Inventory Chart
                     const topBarang = data.top_barang || [];
                     if (topBarang.length > 0) {
@@ -438,13 +426,36 @@
                             '<div class="text-center text-muted py-5">No borrowing data yet</div>';
                     }
 
-                    // Render Item Data Chart
-                    const allBarang = data.all_barang || [];
-                    if (allBarang.length > 0) {
-                        renderItemDataChart(allBarang);
-                    } else {
-                        document.getElementById('itemDataChart').innerHTML =
-                            '<div class="text-center text-muted py-5">No item data yet</div>';
+                    // Populate and render Item Data chart only when the UI card is present
+                    const itemDataChartEl = document.getElementById('itemDataChart');
+                    if (itemDataChartEl) {
+                        const categories = data.categories || [];
+                        if (categories.length > 0) {
+                            const dataBarangList = document.getElementById('dataBarangList');
+
+                            const topBarangNames = (data.top_barang || []).map(item => item.nama);
+                            const allBarangNames = (data.all_barang || []).map(item => item.nama);
+                            const uniqueBarangNames = [...new Set([...topBarangNames, ...allBarangNames])];
+
+                            if (dataBarangList) {
+                                dataBarangList.innerHTML = uniqueBarangNames.map(nama => `
+                                    <a class="dropdown-item" href="#" onclick="selectDataBarang('${escapeHtml(nama)}'); return false;">
+                                        <small>${escapeHtml(nama)}</small>
+                                    </a>
+                                `).join('');
+                            }
+
+                            setupDataBarangSearch(uniqueBarangNames);
+                        }
+
+                        // Render Item Data Chart
+                        const allBarang = data.all_barang || [];
+                        if (allBarang.length > 0) {
+                            renderItemDataChart(allBarang);
+                        } else {
+                            itemDataChartEl.innerHTML =
+                                '<div class="text-center text-muted py-5">No item data yet</div>';
+                        }
                     }
 
                     // Initialize New Products Carousel
@@ -605,6 +616,8 @@
                 itemDataChartInstance.destroy();
                 itemDataChartInstance = null;
             }
+            const el = document.getElementById('itemDataChart');
+            if (!el) return;
 
             const names = allBarang.map(item => item.nama);
             const peminjaman = allBarang.map(item => parseInt(item.jumlah_peminjaman) || 0);
@@ -665,7 +678,7 @@
             };
 
             if (window.ApexCharts) {
-                itemDataChartInstance = new ApexCharts(document.querySelector('#itemDataChart'), options);
+                itemDataChartInstance = new ApexCharts(el, options);
                 itemDataChartInstance.render();
             }
         }
@@ -711,10 +724,12 @@
 
         async function selectDataBarang(namaBarang) {
             selectedNamaBarangDataBarang = namaBarang || 'all';
-            document.getElementById('dataBarangSelected').textContent =
-                namaBarang === 'all' ? 'All Items' : namaBarang;
+            const selectedLabel = document.getElementById('dataBarangSelected');
+            if (selectedLabel) {
+                selectedLabel.textContent = namaBarang === 'all' ? 'All Items' : namaBarang;
+            }
             const dropdownBtn = document.getElementById('dataBarangDropdownBtn');
-            const dropdown = bootstrap.Dropdown.getInstance(dropdownBtn);
+            const dropdown = dropdownBtn ? bootstrap.Dropdown.getInstance(dropdownBtn) : null;
             if (dropdown) dropdown.hide();
             await updateDataBarangChart(namaBarang);
         }
@@ -734,6 +749,8 @@
         // UPDATE Data Barang Chart by nama barang
         async function updateDataBarangChart(namaBarang) {
             try {
+                const itemDataChartEl = document.getElementById('itemDataChart');
+                if (!itemDataChartEl) return;
                 const response = await fetch(BASE_URL + '/api/pic_barang/dashboard-chart-data.php');
                 const result = await response.json();
                 if (result.status && result.data) {
@@ -744,7 +761,7 @@
                     if (allBarang.length > 0) {
                         renderItemDataChart(allBarang);
                     } else {
-                        document.getElementById('itemDataChart').innerHTML =
+                        itemDataChartEl.innerHTML =
                             '<div class="text-center text-muted py-5">No data for selected item</div>';
                     }
                 }

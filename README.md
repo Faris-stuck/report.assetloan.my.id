@@ -25,3 +25,10 @@ Run once per clone:
 git config core.autocrlf false
 git config core.filemode false
 ```
+
+## Presentation Material
+
+Presentation-ready project notes and slide content are available in:
+
+- `PRESENTASI_PROJECT_PEMINJAMAN.md`
+- `STRUKTUR_PROJECT_DAN_DATABASE.md`
