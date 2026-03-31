@@ -246,20 +246,45 @@ try {
     $trendMonthStart = $trendMonth . '-01';
     $trendMonthEnd = date('Y-m-t', strtotime($trendMonthStart)) . ' 23:59:59';
 
+    $trendJoin = "LEFT JOIN (
+        SELECT
+            peminjaman_id,
+            SUM(CASE WHEN approval_status = 'Approved' THEN 1 ELSE 0 END) AS approved_count,
+            SUM(CASE WHEN approval_status = 'Rejected' THEN 1 ELSE 0 END) AS rejected_count
+        FROM peminjaman_units
+        GROUP BY peminjaman_id
+    ) pu_initial ON pu_initial.peminjaman_id = p.id";
+
+    $trendApprovedCount = "COALESCE(pu_initial.approved_count, 0)";
+    $trendRejectedCount = "COALESCE(pu_initial.rejected_count, 0)";
+
     $trendCase = "CASE
-        WHEN p.status IN ('Borrowed','Returned') THEN 'Approve'
+        WHEN $trendApprovedCount > 0 AND $trendRejectedCount > 0 THEN 'Partial Approved'
+        WHEN $trendApprovedCount > 0 THEN 'Approved'
+        WHEN $trendRejectedCount > 0 THEN 'Rejected'
         WHEN p.status = 'Partial Approved' THEN 'Partial Approved'
+        WHEN p.tanggal_disetujui IS NOT NULL THEN 'Approved'
         WHEN p.status = 'Rejected' THEN 'Rejected'
+        WHEN p.status IN ('Borrowed','Returned','Return in Process','Partially Returned','Partially Damaged','Fully Damaged','Completed')
+             OR p.status LIKE 'Due%'
+             OR p.status = 'Overdue' THEN 'Approved'
         ELSE NULL END";
 
     $trendDateCol = "CASE
-        WHEN p.status IN ('Borrowed','Returned','Partial Approved') THEN p.tanggal_disetujui
+        WHEN $trendApprovedCount > 0 THEN COALESCE(p.tanggal_disetujui, p.created_at)
+        WHEN $trendRejectedCount > 0 THEN p.created_at
+        WHEN p.status = 'Partial Approved' THEN COALESCE(p.tanggal_disetujui, p.created_at)
+        WHEN p.tanggal_disetujui IS NOT NULL THEN COALESCE(p.tanggal_disetujui, p.created_at)
         WHEN p.status = 'Rejected' THEN p.created_at
+        WHEN p.status IN ('Borrowed','Returned','Return in Process','Partially Returned','Partially Damaged','Fully Damaged','Completed')
+             OR p.status LIKE 'Due%'
+             OR p.status = 'Overdue' THEN COALESCE(p.tanggal_disetujui, p.created_at)
         ELSE NULL END";
 
     $baseline = [];
     $sqlB = "SELECT $trendCase AS status_group, COUNT(*) AS cnt
              FROM peminjaman p
+             {$trendJoin}
              WHERE ($trendCase) IS NOT NULL
                AND ($trendDateCol) < ?
              GROUP BY status_group";
@@ -276,6 +301,7 @@ try {
     $sqlW = "SELECT LEAST(CEIL(DAY(($trendDateCol)) / 7.0), 4) AS week_num,
                     $trendCase AS status_group, COUNT(*) AS cnt
              FROM peminjaman p
+             {$trendJoin}
              WHERE ($trendCase) IS NOT NULL
                AND ($trendDateCol) >= ?
                AND ($trendDateCol) <= ?
