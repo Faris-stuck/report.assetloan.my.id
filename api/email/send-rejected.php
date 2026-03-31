@@ -113,20 +113,24 @@ function sendRejectedEmail($conn, $peminjamanId, $konteks = 'Loan') {
     $fullHtml = buildEmailTemplate('❌ ' . $konteks . ' Rejected', $bodyHtml);
 
     // ============================================================
-    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
+    // QUEUE EMAIL TO ALL RECIPIENTS
     // ============================================================
-    $totalSent = 0;
+    $totalQueued = 0;
     foreach ($recipients as $r) {
-        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
-            error_log("[EMAIL] send-rejected: EMAIL SENT TO: " . $r['email']);
-            $totalSent++;
+        if (queueEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
+            error_log("[EMAIL] send-rejected: EMAIL QUEUED TO: " . $r['email']);
+            $totalQueued++;
         } else {
-            error_log("[EMAIL] send-rejected: EMAIL FAILED TO: " . $r['email']);
+            error_log("[EMAIL] send-rejected: EMAIL QUEUE FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-rejected: Total sent {$totalSent}/" . count($recipients) . " for borrowing #{$peminjamanId} ({$konteks})");
-    return $totalSent > 0;
+    if ($totalQueued > 0) {
+        dispatchEmailQueueWorker();
+    }
+
+    error_log("[EMAIL] send-rejected: Total queued {$totalQueued}/" . count($recipients) . " for borrowing #{$peminjamanId} ({$konteks})");
+    return $totalQueued > 0;
 }
 
 // ============================================================

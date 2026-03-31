@@ -73,11 +73,11 @@ function sendResetToken(mysqli $conn, string $email, bool $isResend = false): vo
             : "Password Reset Token - Komatsu Indonesia Borrowing System";
         $safeName = htmlspecialchars((string)($user['nama'] ?? '-'));
         $safeToken = htmlspecialchars($token);
-        $borrowerRows = buildBorrowerIdentityRows([
+        $identityRows = buildBorrowerIdentityRows([
             'nama' => (string)($user['nama'] ?? '-'),
             'email' => (string)($user['email'] ?? $email),
             'nrp' => (string)($user['nrp'] ?? '-'),
-        ]);
+        ], 'generic');
         $body = buildEmailTemplate(
             'Password Reset Token',
             "<p>Hello <strong>{$safeName}</strong>,</p>
@@ -86,18 +86,18 @@ function sendResetToken(mysqli $conn, string $email, bool $isResend = false): vo
                  <div style='font-size:30px; font-weight:700; letter-spacing:4px; color:#1e3a8a;'>{$safeToken}</div>
              </div>
              <table class='info-table'>
-                {$borrowerRows}
+                {$identityRows}
              </table>
              <p>This token expires in <strong>15 minutes</strong>.</p>
              <p><strong>Use the latest token only.</strong> Any previous token is no longer valid.</p>
              <p>If you did not request this, please ignore this email.</p>"
         );
 
-        // User action path must return quickly; do not fallback to sync when dispatch fails.
-        $sent = sendEmail($email, $subject, $body, $user['nama'], '', ['noSyncFallback' => true]);
-        if (!$sent) {
+        $queued = queueEmail($email, $subject, $body, $user['nama']);
+        if (!$queued) {
             jsonResponse(500, false, "Failed to send verification token. Please try resend.");
         }
+        dispatchEmailQueueWorker();
     } catch (Throwable $emailEx) {
         error_log("[EMAIL ERROR] forgot-password token: " . $emailEx->getMessage());
         jsonResponse(500, false, "Failed to send verification token. Please try resend.");

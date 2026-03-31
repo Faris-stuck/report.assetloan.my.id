@@ -149,20 +149,24 @@ function sendExtendRejectedEmail($conn, $extendId) {
     $fullHtml = buildEmailTemplate('❌ Extension Rejected', $bodyHtml);
 
     // ============================================================
-    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
+    // QUEUE EMAIL TO ALL RECIPIENTS
     // ============================================================
-    $totalSent = 0;
+    $totalQueued = 0;
     foreach ($recipients as $r) {
-        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
-            error_log("[EMAIL] send-extend-rejected: EMAIL SENT TO: " . $r['email']);
-            $totalSent++;
+        if (queueEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
+            error_log("[EMAIL] send-extend-rejected: EMAIL QUEUED TO: " . $r['email']);
+            $totalQueued++;
         } else {
-            error_log("[EMAIL] send-extend-rejected: EMAIL FAILED TO: " . $r['email']);
+            error_log("[EMAIL] send-extend-rejected: EMAIL QUEUE FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-extend-rejected: Total sent {$totalSent}/" . count($recipients) . " for extend #{$extendId}");
-    return $totalSent > 0;
+    if ($totalQueued > 0) {
+        dispatchEmailQueueWorker();
+    }
+
+    error_log("[EMAIL] send-extend-rejected: Total queued {$totalQueued}/" . count($recipients) . " for extend #{$extendId}");
+    return $totalQueued > 0;
 }
 
 // ============================================================

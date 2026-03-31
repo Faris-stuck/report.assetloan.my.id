@@ -4,7 +4,7 @@
  * EMAIL QUEUE WORKER (CLI)
  * ============================================================
  *
- * Processes queued email payloads written by sendEmail() fallback.
+ * Processes queued email payloads written by queue-first delivery.
  * This worker is intended to run in detached/background mode.
  *
  * Usage:

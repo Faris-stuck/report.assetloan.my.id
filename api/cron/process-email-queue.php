@@ -4,8 +4,8 @@
  * CRON: PROCESS EMAIL QUEUE
  * ============================================================
  *
- * Processes queued email payloads that were persisted when
- * background dispatch or SMTP send failed in user-triggered flows.
+ * Processes queued email payloads persisted by queue-first delivery
+ * and retry/failure handling in user-triggered flows.
  *
  * Access:
  *   - CLI:

@@ -163,26 +163,51 @@ function _requeueOrFailLockedEmail($lockedPath, $payload, $errorMessage) {
     $payload['attempts'] = $attempts;
     $payload['last_error'] = substr((string)$errorMessage, 0, 500);
     $payload['updated_at'] = date('c');
+    $encodedPayload = json_encode($payload, JSON_UNESCAPED_SLASHES);
+    $queuePath = substr($lockedPath, 0, -5); // remove .lock
 
-    $maxAttempts = max(1, (int)(getenv('EMAIL_QUEUE_MAX_ATTEMPTS') ?: 5));
+    $maxAttempts = max(1, (int)(getenv('EMAIL_QUEUE_MAX_ATTEMPTS') ?: 20));
     if ($attempts >= $maxAttempts) {
         $failedName = basename(substr($lockedPath, 0, -5));
         $failedPath = _getEmailQueueFailedDir() . '/failed_' . $failedName;
-        @file_put_contents($failedPath, json_encode($payload, JSON_UNESCAPED_SLASHES), LOCK_EX);
+
+        if ($encodedPayload === false) {
+            error_log("[EMAIL QUEUE] Failed to encode payload for failed queue; restoring original queue file: {$queuePath}");
+            @rename($lockedPath, $queuePath);
+            return 'requeued';
+        }
+
+        $failedWritten = @file_put_contents($failedPath, $encodedPayload, LOCK_EX);
+        if ($failedWritten === false) {
+            error_log("[EMAIL QUEUE] Failed to move payload to failed queue; restoring original queue file: {$queuePath}");
+            @rename($lockedPath, $queuePath);
+            return 'requeued';
+        }
+
         @unlink($lockedPath);
         error_log("[EMAIL QUEUE] Moved to failed queue after {$attempts} attempts: {$failedPath}");
         return 'failed';
     }
 
-    $backoff = min(900, (int)pow(2, max(0, $attempts - 1)) * 15); // 15s, 30s, 60s, ...
+    $backoff = min(3600, (int)pow(2, max(0, $attempts - 1)) * 15); // 15s, 30s, 60s, ... capped at 1 hour
     $payload['next_attempt_at'] = time() + $backoff;
+    $encodedPayload = json_encode($payload, JSON_UNESCAPED_SLASHES);
 
-    $queuePath = substr($lockedPath, 0, -5); // remove .lock
-    $written = @file_put_contents($queuePath, json_encode($payload, JSON_UNESCAPED_SLASHES), LOCK_EX);
-    @unlink($lockedPath);
+    if ($encodedPayload === false) {
+        error_log("[EMAIL QUEUE] Failed to encode payload for retry; restoring original queue file: {$queuePath}");
+        @rename($lockedPath, $queuePath);
+        return 'requeued';
+    }
+
+    $written = @file_put_contents($queuePath, $encodedPayload, LOCK_EX);
+    if ($written !== false) {
+        @unlink($lockedPath);
+        return 'requeued';
+    }
+
+    @rename($lockedPath, $queuePath);
     if ($written === false) {
-        error_log("[EMAIL QUEUE] Failed to requeue email: {$queuePath}");
-        return 'failed';
+        error_log("[EMAIL QUEUE] Failed to rewrite retry payload; restored original queue file: {$queuePath}");
     }
     return 'requeued';
 }
@@ -268,11 +293,54 @@ function processEmailQueue($maxPerRun = 25) {
     return $summary;
 }
 
+function _isCliContext() {
+    return php_sapi_name() === 'cli';
+}
+
+function _isHttpRequestContext() {
+    return !_isCliContext();
+}
+
 /**
- * Send email using PHPMailer + SMTP Gmail
+ * Persist an email payload into the shared queue.
  *
- * Tries non-blocking background dispatch first on all OS.
- * Falls back to synchronous sending unless disabled via options.
+ * @param string $to
+ * @param string $subject
+ * @param string $htmlBody
+ * @param string $toName
+ * @param string $plainBody
+ * @return bool
+ */
+function queueEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '') {
+    $to = trim((string)$to);
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        error_log("[EMAIL QUEUE] Invalid recipient email: {$to}");
+        return false;
+    }
+
+    return _enqueueEmailForRetry(
+        _buildQueuedEmailPayload($to, $subject, $htmlBody, $toName, $plainBody)
+    );
+}
+
+/**
+ * Try to start the queue worker in background. Failure is non-fatal because cron remains the backup.
+ *
+ * @return bool true when the worker process was started, false when queued emails must wait for cron
+ */
+function dispatchEmailQueueWorker() {
+    $dispatched = _dispatchQueueWorkerBackground();
+    if (!$dispatched) {
+        error_log("[EMAIL QUEUE] Queue worker could not be started immediately; queued messages remain pending for cron");
+    }
+    return $dispatched;
+}
+
+/**
+ * Send email using queue-first delivery for HTTP requests.
+ *
+ * HTTP requests enqueue first and never fall back to synchronous SMTP.
+ * CLI/worker/cron contexts continue using synchronous SMTP unless the caller opts into queueing.
  *
  * @param string $to         Recipient email
  * @param string $subject    Email subject
@@ -281,46 +349,27 @@ function processEmailQueue($maxPerRun = 25) {
  * @param string $plainBody  Plain text email body fallback (optional)
  * @param array  $options    Optional flags:
  *                           - forceSync (bool): send synchronously
- *                           - preferBackground (bool): try background dispatch first (default true)
- *                           - noSyncFallback (bool): don't fallback to sync when background fails
- * @return bool              true if dispatched/sent, false if failed
+ *                           - skipDispatch (bool): queue only, caller will dispatch worker manually
+ * @return bool              true if queued/sent successfully, false if failed
  */
 function sendEmail($to, $subject, $htmlBody, $toName = '', $plainBody = '', $options = []) {
     $forceSync = is_array($options) && !empty($options['forceSync']);
-    $preferBackground = !is_array($options) || !array_key_exists('preferBackground', $options)
-        ? true
-        : !empty($options['preferBackground']);
-    $noSyncFallback = is_array($options) && !empty($options['noSyncFallback']);
+    $skipDispatch = is_array($options) && !empty($options['skipDispatch']);
 
-    // Force synchronous send (used for user-triggered flows that must not delay).
-    if ($forceSync) {
+    if ($forceSync || _isCliContext()) {
         return _sendEmailSync($to, $subject, $htmlBody, $toName, $plainBody);
     }
 
-    if ($preferBackground) {
-        // Try non-blocking background dispatch first.
-        $dispatched = _dispatchEmailBackground($to, $subject, $htmlBody, $toName, $plainBody);
-        if ($dispatched) {
-            return true;
-        }
-
-        if ($noSyncFallback) {
-            // Keep request fast: queue for retry instead of blocking user flow.
-            $queued = _enqueueEmailForRetry(_buildQueuedEmailPayload($to, $subject, $htmlBody, $toName, $plainBody));
-            if ($queued) {
-                if (!_dispatchQueueWorkerBackground()) {
-                    error_log("[EMAIL QUEUE] Queue worker could not be started immediately; message remains queued");
-                }
-                return true;
-            }
-            error_log("[EMAIL] Background dispatch failed, queue fallback failed, and sync fallback disabled for {$to}");
-            return false;
-        }
+    $queued = queueEmail($to, $subject, $htmlBody, $toName, $plainBody);
+    if (!$queued) {
+        return false;
     }
 
-    // Fallback: send synchronously if background dispatch failed
-    error_log("[EMAIL] Falling back to synchronous send for {$to}");
-    return _sendEmailSync($to, $subject, $htmlBody, $toName, $plainBody);
+    if (!$skipDispatch && _isHttpRequestContext()) {
+        dispatchEmailQueueWorker();
+    }
+
+    return true;
 }
 
 /**
@@ -683,27 +732,51 @@ function getBorrowerIdentity(array $data) {
 }
 
 /**
- * Build standard borrower identity rows for email info tables.
+ * Resolve label set for identity rows shown in system email.
+ *
+ * @param string $context
+ * @return array{name:string,email:string,nrp:string}
+ */
+function getEmailIdentityLabels($context = 'borrower') {
+    if ($context === 'generic') {
+        return [
+            'name' => 'Name',
+            'email' => 'Email',
+            'nrp' => 'NRP',
+        ];
+    }
+
+    return [
+        'name' => 'Borrower Name',
+        'email' => 'Borrower Email',
+        'nrp' => 'Borrower NRP',
+    ];
+}
+
+/**
+ * Build identity rows for email info tables.
  *
  * @param array $dataOrBorrower
+ * @param string $context borrower|generic
  * @return string
  */
-function buildBorrowerIdentityRows(array $dataOrBorrower) {
+function buildBorrowerIdentityRows(array $dataOrBorrower, $context = 'borrower') {
     $borrower = isset($dataOrBorrower['nama'], $dataOrBorrower['email'], $dataOrBorrower['nrp'])
         ? $dataOrBorrower
         : getBorrowerIdentity($dataOrBorrower);
+    $labels = getEmailIdentityLabels($context);
 
     return '
             <tr>
-                <td>Borrower Name</td>
+                <td>' . htmlspecialchars($labels['name']) . '</td>
                 <td>' . htmlspecialchars($borrower['nama']) . '</td>
             </tr>
             <tr>
-                <td>Borrower Email</td>
+                <td>' . htmlspecialchars($labels['email']) . '</td>
                 <td>' . htmlspecialchars($borrower['email']) . '</td>
             </tr>
             <tr>
-                <td>Borrower NRP</td>
+                <td>' . htmlspecialchars($labels['nrp']) . '</td>
                 <td>' . htmlspecialchars($borrower['nrp']) . '</td>
             </tr>';
 }
@@ -801,17 +874,20 @@ function getEmailsByRole($conn, $role) {
  * @param string $role      Role target
  * @param string $subject   Subject email
  * @param string $htmlBody  Body HTML
- * @return int              Number of emails successfully sent
+ * @return int              Number of emails successfully queued
  */
 function sendEmailToRole($conn, $role, $subject, $htmlBody) {
     $users = getEmailsByRole($conn, $role);
-    $sent = 0;
+    $queued = 0;
     foreach ($users as $user) {
-        if (sendEmail($user['email'], $subject, $htmlBody, $user['nama'])) {
-            $sent++;
+        if (queueEmail($user['email'], $subject, $htmlBody, $user['nama'])) {
+            $queued++;
         }
     }
-    return $sent;
+    if ($queued > 0 && _isHttpRequestContext()) {
+        dispatchEmailQueueWorker();
+    }
+    return $queued;
 }
 
 /**
@@ -869,25 +945,28 @@ function buildUniqueRecipients(...$sources) {
 }
 
 /**
- * Send email to all recipients using LOOP
- * REQUIRED: Each recipient gets their own sendEmail() call
+ * Queue email to all recipients using LOOP
+ * REQUIRED: Each recipient gets their own queueEmail() call
  *
  * @param array  $recipients  Array of ['nama'=>..., 'email'=>...]
  * @param string $subject     Subject email
  * @param string $htmlBody    Full HTML body email
- * @return int                Number of emails successfully sent
+ * @return int                Number of emails successfully queued
  */
 function sendEmailToAll($recipients, $subject, $htmlBody) {
-    $totalSent = 0;
+    $totalQueued = 0;
     foreach ($recipients as $r) {
-        if (sendEmail($r['email'], $subject, $htmlBody, $r['nama'])) {
-            error_log("[EMAIL] EMAIL SENT TO: " . $r['email'] . " (" . $r['nama'] . ")");
-            $totalSent++;
+        if (queueEmail($r['email'], $subject, $htmlBody, $r['nama'])) {
+            error_log("[EMAIL] EMAIL QUEUED TO: " . $r['email'] . " (" . $r['nama'] . ")");
+            $totalQueued++;
         } else {
-            error_log("[EMAIL] EMAIL FAILED TO: " . $r['email'] . " (" . $r['nama'] . ")");
+            error_log("[EMAIL] EMAIL QUEUE FAILED TO: " . $r['email'] . " (" . $r['nama'] . ")");
         }
     }
-    return $totalSent;
+    if ($totalQueued > 0 && _isHttpRequestContext()) {
+        dispatchEmailQueueWorker();
+    }
+    return $totalQueued;
 }
 
 /**

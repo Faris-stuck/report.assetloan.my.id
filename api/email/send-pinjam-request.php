@@ -114,20 +114,24 @@ function sendPinjamRequestEmail($conn, $peminjamanId) {
     $fullHtml = buildEmailTemplate('📋 New Loan Request', $bodyHtml);
 
     // ============================================================
-    // SEND EMAIL USING LOOP TO ALL RECIPIENTS
+    // QUEUE EMAIL TO ALL RECIPIENTS
     // ============================================================
-    $totalSent = 0;
+    $totalQueued = 0;
     foreach ($recipients as $r) {
-        if (sendEmail($r['email'], $subject, $fullHtml, $r['nama'], '', ['noSyncFallback' => true])) {
-            error_log("[EMAIL] send-pinjam-request: EMAIL SENT TO: " . $r['email']);
-            $totalSent++;
+        if (queueEmail($r['email'], $subject, $fullHtml, $r['nama'])) {
+            error_log("[EMAIL] send-pinjam-request: EMAIL QUEUED TO: " . $r['email']);
+            $totalQueued++;
         } else {
-            error_log("[EMAIL] send-pinjam-request: EMAIL FAILED TO: " . $r['email']);
+            error_log("[EMAIL] send-pinjam-request: EMAIL QUEUE FAILED TO: " . $r['email']);
         }
     }
 
-    error_log("[EMAIL] send-pinjam-request: Total sent {$totalSent}/" . count($recipients) . " for borrowing #{$peminjamanId}");
-    return $totalSent > 0;
+    if ($totalQueued > 0) {
+        dispatchEmailQueueWorker();
+    }
+
+    error_log("[EMAIL] send-pinjam-request: Total queued {$totalQueued}/" . count($recipients) . " for borrowing #{$peminjamanId}");
+    return $totalQueued > 0;
 }
 
 // ============================================================
