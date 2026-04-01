@@ -136,8 +136,8 @@ try {
             FROM peminjaman
             WHERE tanggal_pinjam BETWEEN ? AND ?
             GROUP BY user_id, nama_peminjam
-            ORDER BY jumlah DESC
-            LIMIT 10
+            ORDER BY jumlah DESC, nama_peminjam ASC
+            LIMIT 5
         ");
         $stmt->bind_param('ss', $tanggal_awal_user, $tanggal_akhir_user);
     } else {
@@ -146,8 +146,8 @@ try {
                    COUNT(*) AS jumlah
             FROM peminjaman
             GROUP BY user_id, nama_peminjam
-            ORDER BY jumlah DESC
-            LIMIT 10
+            ORDER BY jumlah DESC, nama_peminjam ASC
+            LIMIT 5
         ");
     }
     $stmt->execute();

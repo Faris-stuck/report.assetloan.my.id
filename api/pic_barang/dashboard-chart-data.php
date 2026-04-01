@@ -129,10 +129,10 @@ try {
     $tanggal_awal_user = isset($_GET['tanggal_awal_user']) ? trim($_GET['tanggal_awal_user']) : null;
     $tanggal_akhir_user = isset($_GET['tanggal_akhir_user']) ? trim($_GET['tanggal_akhir_user']) : null;
     if ($tanggal_awal_user && $tanggal_akhir_user) {
-        $stmtUser = $conn->prepare("SELECT nama_peminjam AS nama, COUNT(*) AS jumlah FROM peminjaman WHERE tanggal_pinjam BETWEEN ? AND ? GROUP BY user_id, nama_peminjam ORDER BY jumlah DESC LIMIT 10");
+        $stmtUser = $conn->prepare("SELECT nama_peminjam AS nama, COUNT(*) AS jumlah FROM peminjaman WHERE tanggal_pinjam BETWEEN ? AND ? GROUP BY user_id, nama_peminjam ORDER BY jumlah DESC, nama_peminjam ASC LIMIT 5");
         $stmtUser->bind_param('ss', $tanggal_awal_user, $tanggal_akhir_user);
     } else {
-        $stmtUser = $conn->prepare("SELECT nama_peminjam AS nama, COUNT(*) AS jumlah FROM peminjaman GROUP BY user_id, nama_peminjam ORDER BY jumlah DESC LIMIT 10");
+        $stmtUser = $conn->prepare("SELECT nama_peminjam AS nama, COUNT(*) AS jumlah FROM peminjaman GROUP BY user_id, nama_peminjam ORDER BY jumlah DESC, nama_peminjam ASC LIMIT 5");
     }
     $stmtUser->execute();
     $userResult = $stmtUser->get_result();
