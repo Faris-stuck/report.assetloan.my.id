@@ -212,41 +212,8 @@ try {
         'returned' => $returnedCount
     ];
 
-    // ===== APPROVAL STATUS PIE CHART =====
-    $approvalStart = isset($_GET['approval_start']) ? $_GET['approval_start'] : date('Y-m-d', strtotime('-29 days'));
-    $approvalEnd = isset($_GET['approval_end']) ? $_GET['approval_end'] : date('Y-m-d');
-
-    $stmtApprove = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE status NOT IN ('Waiting for Approval','Partial Approved','Rejected') AND tanggal_disetujui BETWEEN ? AND ?");
-    $stmtApprove->bind_param('ss', $approvalStart, $approvalEnd);
-    $stmtApprove->execute();
-    $approveCount = (int)$stmtApprove->get_result()->fetch_assoc()['total'];
-    $stmtApprove->close();
-
-    $stmtPartial = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Partial Approved' AND tanggal_disetujui BETWEEN ? AND ?");
-    $stmtPartial->bind_param('ss', $approvalStart, $approvalEnd);
-    $stmtPartial->execute();
-    $partialCount = (int)$stmtPartial->get_result()->fetch_assoc()['total'];
-    $stmtPartial->close();
-
-    $rejectedEnd = $approvalEnd . ' 23:59:59';
-    $stmtRejected = $conn->prepare("SELECT COUNT(*) as total FROM peminjaman WHERE status = 'Rejected' AND created_at BETWEEN ? AND ?");
-    $stmtRejected->bind_param('ss', $approvalStart, $rejectedEnd);
-    $stmtRejected->execute();
-    $rejectedCount = (int)$stmtRejected->get_result()->fetch_assoc()['total'];
-    $stmtRejected->close();
-
-    $data['approval_status'] = [
-        'approve' => $approveCount,
-        'partial_approved' => $partialCount,
-        'rejected' => $rejectedCount
-    ];
-
-    // ===== LOAN STATUS TREND =====
-    $trendMonth = isset($_GET['trend_month']) ? $_GET['trend_month'] : date('Y-m');
-    $trendMonthStart = $trendMonth . '-01';
-    $trendMonthEnd = date('Y-m-t', strtotime($trendMonthStart)) . ' 23:59:59';
-
-    $trendJoin = "LEFT JOIN (
+    // Shared initial approval classification for approval and trend cards.
+    $initialStatusJoin = "LEFT JOIN (
         SELECT
             peminjaman_id,
             SUM(CASE WHEN approval_status = 'Approved' THEN 1 ELSE 0 END) AS approved_count,
@@ -255,13 +222,13 @@ try {
         GROUP BY peminjaman_id
     ) pu_initial ON pu_initial.peminjaman_id = p.id";
 
-    $trendApprovedCount = "COALESCE(pu_initial.approved_count, 0)";
-    $trendRejectedCount = "COALESCE(pu_initial.rejected_count, 0)";
+    $initialApprovedCount = "COALESCE(pu_initial.approved_count, 0)";
+    $initialRejectedCount = "COALESCE(pu_initial.rejected_count, 0)";
 
-    $trendCase = "CASE
-        WHEN $trendApprovedCount > 0 AND $trendRejectedCount > 0 THEN 'Partial Approved'
-        WHEN $trendApprovedCount > 0 THEN 'Approved'
-        WHEN $trendRejectedCount > 0 THEN 'Rejected'
+    $initialStatusCase = "CASE
+        WHEN $initialApprovedCount > 0 AND $initialRejectedCount > 0 THEN 'Partial Approved'
+        WHEN $initialApprovedCount > 0 THEN 'Approved'
+        WHEN $initialRejectedCount > 0 THEN 'Rejected'
         WHEN p.status = 'Partial Approved' THEN 'Partial Approved'
         WHEN p.tanggal_disetujui IS NOT NULL THEN 'Approved'
         WHEN p.status = 'Rejected' THEN 'Rejected'
@@ -270,9 +237,9 @@ try {
              OR p.status = 'Overdue' THEN 'Approved'
         ELSE NULL END";
 
-    $trendDateCol = "CASE
-        WHEN $trendApprovedCount > 0 THEN COALESCE(p.tanggal_disetujui, p.created_at)
-        WHEN $trendRejectedCount > 0 THEN p.created_at
+    $initialStatusDateCol = "CASE
+        WHEN $initialApprovedCount > 0 THEN COALESCE(p.tanggal_disetujui, p.created_at)
+        WHEN $initialRejectedCount > 0 THEN p.created_at
         WHEN p.status = 'Partial Approved' THEN COALESCE(p.tanggal_disetujui, p.created_at)
         WHEN p.tanggal_disetujui IS NOT NULL THEN COALESCE(p.tanggal_disetujui, p.created_at)
         WHEN p.status = 'Rejected' THEN p.created_at
@@ -280,6 +247,48 @@ try {
              OR p.status LIKE 'Due%'
              OR p.status = 'Overdue' THEN COALESCE(p.tanggal_disetujui, p.created_at)
         ELSE NULL END";
+
+    // ===== APPROVAL STATUS PIE CHART =====
+    $approvalStart = isset($_GET['approval_start']) ? $_GET['approval_start'] : date('Y-m-d', strtotime('-29 days'));
+    $approvalEnd = isset($_GET['approval_end']) ? $_GET['approval_end'] : date('Y-m-d');
+    $approvalEndTs = $approvalEnd . ' 23:59:59';
+
+    $approvalCounts = [
+        'Approved' => 0,
+        'Partial Approved' => 0,
+        'Rejected' => 0
+    ];
+
+    $sqlApproval = "SELECT $initialStatusCase AS status_group, COUNT(*) AS total
+                    FROM peminjaman p
+                    {$initialStatusJoin}
+                    WHERE ($initialStatusCase) IS NOT NULL
+                      AND ($initialStatusDateCol) >= ?
+                      AND ($initialStatusDateCol) <= ?
+                    GROUP BY status_group";
+    $stmtApproval = $conn->prepare($sqlApproval);
+    $stmtApproval->bind_param('ss', $approvalStart, $approvalEndTs);
+    $stmtApproval->execute();
+    $resApproval = $stmtApproval->get_result();
+    while ($row = $resApproval->fetch_assoc()) {
+        $approvalCounts[$row['status_group']] = (int)$row['total'];
+    }
+    $stmtApproval->close();
+
+    $data['approval_status'] = [
+        'approve' => $approvalCounts['Approved'],
+        'partial_approved' => $approvalCounts['Partial Approved'],
+        'rejected' => $approvalCounts['Rejected']
+    ];
+
+    // ===== LOAN STATUS TREND =====
+    $trendMonth = isset($_GET['trend_month']) ? $_GET['trend_month'] : date('Y-m');
+    $trendMonthStart = $trendMonth . '-01';
+    $trendMonthEnd = date('Y-m-t', strtotime($trendMonthStart)) . ' 23:59:59';
+
+    $trendJoin = $initialStatusJoin;
+    $trendCase = $initialStatusCase;
+    $trendDateCol = $initialStatusDateCol;
 
     $baseline = [];
     $sqlB = "SELECT $trendCase AS status_group, COUNT(*) AS cnt
