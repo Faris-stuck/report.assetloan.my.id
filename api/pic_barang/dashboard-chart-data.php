@@ -107,15 +107,22 @@ try {
     $data['categories'] = $categories;
 
     // ── 3. Top 5 Most Frequently Borrowed Items (lifetime, no filters) ──
+    $topBarangMonth = $_GET['top_barang_month'] ?? date('Y-m');
+    if (!preg_match('/^\d{4}-\d{2}$/', $topBarangMonth)) {
+        $topBarangMonth = date('Y-m');
+    }
+
     $stmtTop = $conn->prepare("
         SELECT b.nama_barang, SUM(dp.jumlah) AS total_qty_dipinjam, MAX(p.created_at) AS last_borrowed
         FROM detail_peminjaman dp
         JOIN barang b ON b.id = dp.barang_id
         JOIN peminjaman p ON p.id = dp.peminjaman_id
+        WHERE DATE_FORMAT(p.tanggal_pinjam, '%Y-%m') = ?
         GROUP BY b.id, b.nama_barang
         ORDER BY total_qty_dipinjam DESC, last_borrowed DESC
         LIMIT 5
     ");
+    $stmtTop->bind_param('s', $topBarangMonth);
     $stmtTop->execute();
     $topResult = $stmtTop->get_result();
     $top_barang = [];

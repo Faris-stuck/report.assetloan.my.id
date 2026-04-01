@@ -267,7 +267,11 @@
                     <div class="col-xxl-6 col-lg-12 mb-3">
                         <div class="card stretched-card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">Top 5 Most Frequently Borrowed Items (Per Item)</h5>
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
+                                    <h5 class="card-title mb-0">Top 5 Most Frequently Borrowed Items This Month (Per Item)</h5>
+                                    <select id="topBarangMonthFilter" class="form-select form-select-sm"
+                                        style="width: auto; min-width: 160px;"></select>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div id="inventoryChart" style="height: 350px;"></div>
@@ -441,13 +445,15 @@
         // Top User Filter (Date Range - INDEPENDENT)
         let startDateTopUser = null;
         let endDateTopUser = null;
+        let topBarangMonth = '';
 
         // Load Dashboard Chart Data
         document.addEventListener('DOMContentLoaded', async () => {
+            populateTopBarangMonthFilter();
             // Load initial data
             await loadStatusChart();
 
-            // Load Top 5 Borrowed Items (lifetime, no filters)
+            // Load Top 5 Borrowed Items (current month by default)
             try {
                 const topResponse = await fetch(BASE_URL + '/api/approver/dashboard-chart-data.php');
                 const topResult = await topResponse.json();
@@ -457,7 +463,7 @@
                         renderInventoryChart(topBarang);
                     } else {
                         document.getElementById('inventoryChart').innerHTML =
-                            '<div class="text-center text-muted py-5">No borrowing data yet</div>';
+                            '<div class="text-center text-muted py-5">No borrowing data for selected month</div>';
                     }
 
                     // Initialize New Products Carousel
@@ -632,7 +638,7 @@
             const el = document.getElementById('inventoryChart');
             if (!el) return;
             if (!topBarang || topBarang.length === 0) {
-                el.innerHTML = '<div class="text-center text-muted py-5">No borrowing data yet</div>';
+                el.innerHTML = '<div class="text-center text-muted py-5">No borrowing data for selected month</div>';
                 return;
             }
             el.innerHTML = '';
@@ -664,6 +670,62 @@
             };
             inventoryChartInstance = new ApexCharts(el, options);
             inventoryChartInstance.render();
+        }
+
+        function populateTopBarangMonthFilter() {
+            const sel = document.getElementById('topBarangMonthFilter');
+            if (!sel || sel.options.length > 0) return;
+
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                const lbl = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = lbl;
+                if (i === 0) {
+                    opt.selected = true;
+                    topBarangMonth = val;
+                }
+                sel.appendChild(opt);
+            }
+
+            sel.addEventListener('change', () => {
+                topBarangMonth = sel.value;
+                loadInventoryChart();
+            });
+        }
+
+        async function loadInventoryChart() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (topBarangMonth) params.append('top_barang_month', topBarangMonth);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+                const inventoryEl = document.getElementById('inventoryChart');
+                if (!inventoryEl) return;
+
+                if (result.status && result.data) {
+                    const topBarang = result.data.top_barang || [];
+                    if (topBarang.length > 0) {
+                        renderInventoryChart(topBarang);
+                    } else {
+                        inventoryEl.innerHTML = '<div class="text-center text-muted py-5">No borrowing data for selected month</div>';
+                    }
+                } else {
+                    inventoryEl.innerHTML = '<div class="text-center text-danger py-5">Failed to load item data</div>';
+                }
+            } catch (error) {
+                console.error('Error loading top borrowed items chart:', error);
+                const inventoryEl = document.getElementById('inventoryChart');
+                if (inventoryEl) {
+                    inventoryEl.innerHTML = '<div class="text-center text-danger py-5">Error loading item data</div>';
+                }
+            }
         }
 
         // Chart: Top User Peminjam
