@@ -24,3 +24,4 @@ Desktop.ini
 
 # Test/tooling caches
 .phpunit.result.cache
+/config/ai_agent.php
