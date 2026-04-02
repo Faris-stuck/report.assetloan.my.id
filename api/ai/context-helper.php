@@ -473,21 +473,29 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
     $inventory = aiAgentFetchSingleRow($conn, "
         SELECT
             COUNT(*) AS total_items,
-            COALESCE(SUM(stok_total), 0) AS total_stock,
-            COALESCE(SUM(stok_tersedia), 0) AS available_stock,
             COALESCE(SUM(stok_rusak), 0) AS damaged_stock,
             COALESCE(SUM(CASE WHEN stok_tersedia <= safety_stock THEN 1 ELSE 0 END), 0) AS low_stock_items
         FROM barang
     ");
+    $topStockItem = aiAgentFetchTopStockItem($conn);
     if (!empty($inventory)) {
-        $lines[] = sprintf(
-            'Inventory live: %d master item, stok total %d, stok tersedia %d, stok rusak %d, item low stock %d.',
-            (int) ($inventory['total_items'] ?? 0),
-            (int) ($inventory['total_stock'] ?? 0),
-            (int) ($inventory['available_stock'] ?? 0),
-            (int) ($inventory['damaged_stock'] ?? 0),
-            (int) ($inventory['low_stock_items'] ?? 0)
-        );
+        $topStockLine = aiAgentFormatTopStockLine($topStockItem);
+        if ($topStockLine !== '') {
+            $lines[] = sprintf(
+                'Inventory live: %d master item, %s, stok rusak total %d, item low stock %d.',
+                (int) ($inventory['total_items'] ?? 0),
+                $topStockLine,
+                (int) ($inventory['damaged_stock'] ?? 0),
+                (int) ($inventory['low_stock_items'] ?? 0)
+            );
+        } else {
+            $lines[] = sprintf(
+                'Inventory live: %d master item, stok rusak total %d, item low stock %d.',
+                (int) ($inventory['total_items'] ?? 0),
+                (int) ($inventory['damaged_stock'] ?? 0),
+                (int) ($inventory['low_stock_items'] ?? 0)
+            );
+        }
     }
 
     $lowStockRows = aiAgentFetchRows($conn, '
@@ -692,6 +700,29 @@ function aiAgentGetSchemaMap(mysqli $conn, array $tables): array
     }
 
     return $map;
+}
+
+function aiAgentFetchTopStockItem(mysqli $conn): array
+{
+    return aiAgentFetchSingleRow($conn, '
+        SELECT nama_barang, stok_tersedia
+        FROM barang
+        WHERE stok_tersedia > 0
+        ORDER BY stok_tersedia DESC, nama_barang ASC
+        LIMIT 1
+    ');
+}
+
+function aiAgentFormatTopStockLine(array $row): string
+{
+    $name = trim((string) ($row['nama_barang'] ?? ''));
+    $available = (int) ($row['stok_tersedia'] ?? 0);
+
+    if ($name === '' || $available <= 0) {
+        return '';
+    }
+
+    return 'barang dengan stok tersedia paling banyak adalah ' . $name . ' (' . $available . ' unit tersedia)';
 }
 
 function aiAgentGetDatabaseName(mysqli $conn): string

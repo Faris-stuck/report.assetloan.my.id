@@ -446,17 +446,26 @@ function aiAgentGetPublicSnapshotLines(mysqli $conn, string $role, int $userId):
     $inventory = aiAgentFetchSingleRow($conn, '
         SELECT
             COUNT(*) AS total_items,
-            COALESCE(SUM(stok_tersedia), 0) AS available_stock,
             COALESCE(SUM(CASE WHEN stok_tersedia <= safety_stock THEN 1 ELSE 0 END), 0) AS low_stock_items
         FROM barang
     ');
+    $topStockItem = function_exists('aiAgentFetchTopStockItem') ? aiAgentFetchTopStockItem($conn) : [];
+    $topStockLine = function_exists('aiAgentFormatTopStockLine') ? aiAgentFormatTopStockLine($topStockItem) : '';
     if (!empty($inventory)) {
-        $lines[] = sprintf(
-            'Ringkasan inventaris saat ini: %d item master, stok tersedia %d, item low stock %d.',
-            (int) ($inventory['total_items'] ?? 0),
-            (int) ($inventory['available_stock'] ?? 0),
-            (int) ($inventory['low_stock_items'] ?? 0)
-        );
+        if ($topStockLine !== '') {
+            $lines[] = sprintf(
+                'Ringkasan inventaris saat ini: %d item master, %s, item low stock %d.',
+                (int) ($inventory['total_items'] ?? 0),
+                $topStockLine,
+                (int) ($inventory['low_stock_items'] ?? 0)
+            );
+        } else {
+            $lines[] = sprintf(
+                'Ringkasan inventaris saat ini: %d item master, item low stock %d.',
+                (int) ($inventory['total_items'] ?? 0),
+                (int) ($inventory['low_stock_items'] ?? 0)
+            );
+        }
     }
 
     $loanCounts = aiAgentFetchLabelTotals($conn, 'SELECT status AS label, COUNT(*) AS total FROM peminjaman GROUP BY status');
