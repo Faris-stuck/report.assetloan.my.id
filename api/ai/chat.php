@@ -3,6 +3,7 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../session-helper.php';
 require_once __DIR__ . '/context-helper.php';
+require_once __DIR__ . '/config-helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -15,29 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 SessionValidator::requireRole(['user', 'manager', 'admin', 'pic_barang']);
 
-$configCandidates = [
-    __DIR__ . '/../../config/ai_agent.php',
+$config = aiAgentLoadConfig([
     __DIR__ . '/../../config/ai_agent.example.php',
-];
-$configPath = null;
-
-foreach ($configCandidates as $candidate) {
-    if (file_exists($candidate)) {
-        $configPath = $candidate;
-        break;
-    }
-}
-
-if ($configPath === null) {
-    http_response_code(500);
-    echo json_encode([
-        'status' => 'error',
-        'error' => 'AI agent configuration is missing.',
-    ]);
-    exit;
-}
-
-$config = require $configPath;
+    __DIR__ . '/../../config/ai_agent.php',
+]);
 $agentName = trim((string) ($config['agent_name'] ?? 'Hermes Agent'));
 $agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
 $agentApiKey = trim((string) ($config['api_key'] ?? ''));
@@ -710,7 +692,3 @@ function aiAgentExtractProviderError(array $decoded): string
 
     return '';
 }
-
-
-
-
