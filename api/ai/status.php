@@ -4,12 +4,13 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../session-helper.php';
 require_once __DIR__ . '/../koneksi.php';
 require_once __DIR__ . '/config-helper.php';
+require_once __DIR__ . '/runtime-helper.php';
 
 SessionValidator::requireRole(['admin']);
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../../config/ai_agent.example.php',
     __DIR__ . '/../../config/ai_agent.php',
+    __DIR__ . '/../../config/ai_agent.example.php',
 ]);
 
 $agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
@@ -60,12 +61,20 @@ $checks = [
         'sensitive_duration_minutes' => (int) ($config['sensitive_access_duration_minutes'] ?? 0),
     ],
     'php' => [
-        'ok' => extension_loaded('curl') && extension_loaded('json'),
+        'ok' => extension_loaded('json') && aiAgentHasHttpTransport(),
         'version' => PHP_VERSION,
         'extensions' => [
             'curl' => extension_loaded('curl'),
             'json' => extension_loaded('json'),
             'mbstring' => extension_loaded('mbstring'),
+            'openssl' => extension_loaded('openssl'),
+        ],
+        'ini' => [
+            'allow_url_fopen' => aiAgentIniFlagEnabled('allow_url_fopen'),
+        ],
+        'transports' => [
+            'http_available' => aiAgentHasHttpTransport(),
+            'stream_socket_client' => function_exists('stream_socket_client'),
         ],
     ],
     'assets' => [
@@ -103,33 +112,22 @@ function aiAgentProbeProviderReachability(string $baseUrl): array
         ];
     }
 
-    if (!function_exists('curl_init')) {
-        return [
-            'ok' => false,
-            'reachable' => false,
-            'http_code' => 0,
-            'error' => 'cURL extension is not available.',
-        ];
-    }
-
-    $curl = curl_init($baseUrl);
-    curl_setopt_array($curl, [
-        CURLOPT_NOBODY => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_FOLLOWLOCATION => true,
+    $probe = aiAgentHttpRequest('GET', $baseUrl, [
+        'headers' => [
+            'Connection: close',
+        ],
+        'timeout' => 10,
+        'connect_timeout' => 5,
     ]);
 
-    curl_exec($curl);
-    $error = curl_error($curl);
-    $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-    curl_close($curl);
+    $httpCode = (int) ($probe['http_code'] ?? 0);
+    $error = trim((string) ($probe['error'] ?? ''));
 
     return [
-        'ok' => $httpCode > 0 && $error === '',
+        'ok' => $httpCode > 0,
         'reachable' => $httpCode > 0,
         'http_code' => $httpCode,
         'error' => $error,
+        'transport' => (string) ($probe['transport'] ?? 'unknown'),
     ];
 }

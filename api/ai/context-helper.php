@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../koneksi.php';
+require_once __DIR__ . '/runtime-helper.php';
 
 function aiAgentBuildGroundingContext(mysqli $conn, array $options = []): string
 {
@@ -149,8 +150,8 @@ function aiAgentBuildOutboundMessage(mysqli $conn, array $options = []): string
     $userMessage = trim((string) ($options['message'] ?? ''));
     $outbound = $groundingContext . "\n\n[USER_MESSAGE]\n" . $userMessage;
 
-    if (function_exists('mb_strlen') && function_exists('mb_substr') && mb_strlen($outbound) > 12000) {
-        $outbound = mb_substr($outbound, 0, 12000);
+    if (aiAgentStringLength($outbound) > 12000) {
+        $outbound = aiAgentStringSubstring($outbound, 0, 12000);
     }
 
     return $outbound;
@@ -993,12 +994,8 @@ function aiAgentCleanText(string $text, int $maxLength): string
         return '';
     }
 
-    if (function_exists('mb_strlen') && function_exists('mb_substr') && mb_strlen($text) > $maxLength) {
-        return mb_substr($text, 0, $maxLength);
-    }
-
-    if (strlen($text) > $maxLength) {
-        return substr($text, 0, $maxLength);
+    if (aiAgentStringLength($text) > $maxLength) {
+        return aiAgentStringSubstring($text, 0, $maxLength);
     }
 
     return $text;

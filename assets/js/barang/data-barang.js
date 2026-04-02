@@ -1,6 +1,20 @@
 /* ===============================
    LOAD DATA BARANG
 ================================ */
+function getStockStatusBadgeClass(status) {
+    const normalized = String(status || '').trim().toLowerCase();
+
+    if (normalized === 'habis' || normalized === 'out of stock') {
+        return 'bg-danger';
+    }
+
+    if (normalized === 'menipis' || normalized === 'low stock') {
+        return 'bg-warning text-dark';
+    }
+
+    return 'bg-success';
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     loadBarang();
 
@@ -165,9 +179,7 @@ function loadBarang() {
             tbody.innerHTML = "";
 
             res.data.forEach((item, i) => {
-                let statusBadge = "bg-success";
-                if (item.status === "Out of Stock") statusBadge = "bg-danger";
-                else if (item.status === "Low Stock") statusBadge = "bg-warning";
+                const statusBadge = getStockStatusBadgeClass(item.status);
 
                 tbody.innerHTML += `
                 <tr>

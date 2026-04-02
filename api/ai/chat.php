@@ -4,6 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../session-helper.php';
 require_once __DIR__ . '/context-helper.php';
 require_once __DIR__ . '/config-helper.php';
+require_once __DIR__ . '/runtime-helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -17,8 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 SessionValidator::requireRole(['user', 'manager', 'admin', 'pic_barang']);
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../../config/ai_agent.example.php',
     __DIR__ . '/../../config/ai_agent.php',
+    __DIR__ . '/../../config/ai_agent.example.php',
 ]);
 $agentName = trim((string) ($config['agent_name'] ?? 'Hermes Agent'));
 $agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
@@ -60,7 +61,7 @@ if ($message === '') {
     exit;
 }
 
-if (mb_strlen($message) > 2000) {
+if (aiAgentStringLength($message) > 2000) {
     http_response_code(422);
     echo json_encode([
         'status' => 'error',
@@ -194,30 +195,26 @@ $providerPayload = [
 session_write_close();
 
 $startedAt = microtime(true);
-$curl = curl_init($agentBaseUrl . '/chat/completions');
-curl_setopt_array($curl, [
-    CURLOPT_POST => true,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POSTFIELDS => json_encode($providerPayload, JSON_UNESCAPED_UNICODE),
-    CURLOPT_HTTPHEADER => [
+$providerResponse = aiAgentHttpRequest('POST', $agentBaseUrl . '/chat/completions', [
+    'headers' => [
         'Authorization: Bearer ' . $agentApiKey,
         'Content-Type: application/json',
     ],
-    CURLOPT_TIMEOUT => max(5, $agentTimeout),
-    CURLOPT_CONNECTTIMEOUT => 10,
+    'body' => json_encode($providerPayload, JSON_UNESCAPED_UNICODE),
+    'timeout' => max(5, $agentTimeout),
+    'connect_timeout' => 10,
 ]);
 
-$result = curl_exec($curl);
-$curlError = curl_error($curl);
-$httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-curl_close($curl);
+$result = (string) ($providerResponse['body'] ?? '');
+$transportError = trim((string) ($providerResponse['error'] ?? ''));
+$httpCode = (int) ($providerResponse['http_code'] ?? 0);
 
-if ($result === false) {
+if ($httpCode <= 0 && $result === '') {
     http_response_code(502);
     echo json_encode([
         'status' => 'error',
         'error' => 'Failed to connect to AI provider.',
-        'details' => $curlError,
+        'details' => $transportError !== '' ? $transportError : 'No HTTP transport available for outbound AI request.',
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
@@ -617,10 +614,8 @@ function aiAgentSanitizeHistoryMessages(array $history, string $sensitiveAccessP
             continue;
         }
 
-        if (function_exists('mb_strlen') && function_exists('mb_substr') && mb_strlen($content) > 1200) {
-            $content = mb_substr($content, 0, 1200);
-        } elseif (strlen($content) > 1200) {
-            $content = substr($content, 0, 1200);
+        if (aiAgentStringLength($content) > 1200) {
+            $content = aiAgentStringSubstring($content, 0, 1200);
         }
 
         $messages[] = [

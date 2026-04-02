@@ -17,6 +17,20 @@ function formatDollar(angka) {
     return formatted;
 }
 
+function getStockStatusBadgeClass(status) {
+    const normalized = String(status || '').trim().toLowerCase();
+
+    if (normalized === "habis" || normalized === "out of stock") {
+        return "bg-danger";
+    }
+
+    if (normalized === "menipis" || normalized === "low stock") {
+        return "bg-warning text-dark";
+    }
+
+    return "bg-success";
+}
+
 
 // Global variable to store purchase data for modal editing
 let currentBarangPurchases = [];
@@ -65,12 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Update badge stok tersedia dengan styling yang sesuai
             const stokTersediaBadgeEl = document.getElementById("stokTersediaBadge");
             stokTersediaBadgeEl.innerText = b.stok_tersedia;
-            stokTersediaBadgeEl.className = "badge " +
-                (res.status_barang === "Out of Stock"
-                    ? "bg-danger"
-                    : res.status_barang === "Low Stock"
-                        ? "bg-warning"
-                        : "bg-success");
+            stokTersediaBadgeEl.className = "badge " + getStockStatusBadgeClass(res.status_barang);
             document.getElementById("statusBarang").innerText = b.status_Barang;
 
             // KONDISI
@@ -90,13 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // STATUS
             const statusEl = document.getElementById("statusBarang");
             statusEl.innerText = res.status_barang;
-            statusEl.className =
-                "badge " +
-                (res.status_barang === "Out of Stock"
-                    ? "bg-danger"
-                    : res.status_barang === "Low Stock"
-                        ? "bg-warning"
-                        : "bg-success");
+            statusEl.className = "badge " + getStockStatusBadgeClass(res.status_barang);
         })
     // .catch(err => {
     //     console.log(err);
