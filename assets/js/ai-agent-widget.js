@@ -7,11 +7,20 @@
     window.__hermesAgentWidgetLoaded = true;
 
     var aiBaseUrl = window.BASE_URL || '';
+    var MAX_ACTIVE_MESSAGES = 40;
+    var MAX_REQUEST_HISTORY = 8;
+    var MAX_ARCHIVES = 15;
+    var MAX_ARCHIVE_MESSAGES = 60;
+
     var state = {
         user: null,
         history: [],
+        archives: [],
         sending: false,
-        isOpen: false
+        isOpen: false,
+        pendingOutgoing: null,
+        activePane: 'chat',
+        selectedArchiveId: null
     };
     var elements = {};
 
@@ -55,12 +64,13 @@
             '</button>' +
             '<section class="hermes-agent-widget__panel" aria-label="Hermes Agent Chat">' +
             '    <div class="hermes-agent-widget__header">' +
-            '        <div>' +
+            '        <div class="hermes-agent-widget__header-copy">' +
             '            <div class="hermes-agent-widget__eyebrow">AI Assistant</div>' +
             '            <h2 class="hermes-agent-widget__title">Hermes Agent</h2>' +
             '            <p class="hermes-agent-widget__subtitle">Terhubung ke agent internal Anda.</p>' +
             '        </div>' +
             '        <div class="hermes-agent-widget__header-actions">' +
+            '            <button class="hermes-agent-widget__action" type="button" data-action="history" title="Riwayat chat" aria-label="Riwayat chat">Riwayat</button>' +
             '            <button class="hermes-agent-widget__action" type="button" data-action="reset" title="Chat baru" aria-label="Chat baru">Reset</button>' +
             '            <button class="hermes-agent-widget__action" type="button" data-action="close" title="Tutup" aria-label="Tutup">X</button>' +
             '        </div>' +
@@ -84,6 +94,7 @@
         elements.form = container.querySelector('[data-form]');
         elements.input = container.querySelector('[data-input]');
         elements.submit = container.querySelector('[data-submit]');
+        elements.history = container.querySelector('[data-action="history"]');
         elements.reset = container.querySelector('[data-action="reset"]');
         elements.close = container.querySelector('[data-action="close"]');
         elements.subtitle = container.querySelector('.hermes-agent-widget__subtitle');
@@ -100,11 +111,10 @@
             setOpenState(false);
         });
 
-        elements.reset.addEventListener('click', function () {
-            resetConversation();
-        });
-
+        elements.history.addEventListener('click', handleHistoryToggle);
+        elements.reset.addEventListener('click', handleResetAction);
         elements.form.addEventListener('submit', handleSubmit);
+        elements.messages.addEventListener('click', handleArchivePanelClick);
 
         elements.input.addEventListener('keydown', function (event) {
             if (event.key === 'Enter' && !event.shiftKey) {
@@ -129,6 +139,14 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function truncateText(value, maxLength) {
+        var text = String(value || '').trim();
+        if (text.length <= maxLength) {
+            return text;
+        }
+        return text.slice(0, Math.max(0, maxLength - 1)).trim() + '...';
     }
 
     function getSavedUser() {
@@ -157,6 +175,10 @@
         return getStoragePrefix() + ':history';
     }
 
+    function getArchiveStorageKey() {
+        return getStoragePrefix() + ':archives';
+    }
+
     function getPanelStorageKey() {
         return getStoragePrefix() + ':open';
     }
@@ -178,6 +200,157 @@
         };
     }
 
+    function normalizeStoredMessages(messages, limit) {
+        if (!Array.isArray(messages)) {
+            return [];
+        }
+
+        return messages
+            .filter(function (message) {
+                return message && typeof message === 'object';
+            })
+            .map(function (message) {
+                var role = message.role === 'user' ? 'user' : (message.role === 'system' ? 'system' : 'assistant');
+                var content = String(message.content || '').trim();
+                var timestamp = Number(message.timestamp) || Date.now();
+
+                if (!content) {
+                    return null;
+                }
+
+                return {
+                    role: role,
+                    content: content,
+                    timestamp: timestamp
+                };
+            })
+            .filter(Boolean)
+            .slice(-(limit || MAX_ACTIVE_MESSAGES));
+    }
+
+    function hasMeaningfulConversation(messages) {
+        return normalizeStoredMessages(messages, MAX_ARCHIVE_MESSAGES).some(function (message) {
+            return message.role === 'user';
+        });
+    }
+
+    function formatTimestamp(timestamp) {
+        var date = new Date(timestamp || Date.now());
+        return date.toLocaleTimeString('id-ID', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function formatArchiveTimestamp(timestamp) {
+        var date = new Date(timestamp || Date.now());
+        return date.toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    function createArchiveTitle(messages) {
+        var normalized = normalizeStoredMessages(messages, MAX_ARCHIVE_MESSAGES);
+        var firstUserMessage = normalized.find(function (message) {
+            return message.role === 'user';
+        });
+
+        if (firstUserMessage) {
+            return truncateText(firstUserMessage.content, 42);
+        }
+
+        return 'Percakapan ' + formatArchiveTimestamp(normalized[normalized.length - 1] ? normalized[normalized.length - 1].timestamp : Date.now());
+    }
+
+    function createArchivePreview(messages) {
+        var normalized = normalizeStoredMessages(messages, MAX_ARCHIVE_MESSAGES);
+        var previewMessage = normalized.find(function (message) {
+            return message.role === 'user';
+        }) || normalized.find(function (message) {
+            return message.role === 'assistant';
+        }) || normalized[0];
+
+        return previewMessage ? truncateText(previewMessage.content, 120) : 'Percakapan tanpa isi.';
+    }
+
+    function buildArchiveRecord(messages) {
+        var normalized = normalizeStoredMessages(messages, MAX_ARCHIVE_MESSAGES);
+        if (!hasMeaningfulConversation(normalized)) {
+            return null;
+        }
+
+        return {
+            id: 'conv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+            title: createArchiveTitle(normalized),
+            preview: createArchivePreview(normalized),
+            created_at: normalized[0] ? normalized[0].timestamp : Date.now(),
+            updated_at: normalized[normalized.length - 1] ? normalized[normalized.length - 1].timestamp : Date.now(),
+            count: normalized.length,
+            messages: normalized
+        };
+    }
+
+    function conversationsMatch(leftMessages, rightMessages) {
+        var left = normalizeStoredMessages(leftMessages, MAX_ARCHIVE_MESSAGES);
+        var right = normalizeStoredMessages(rightMessages, MAX_ARCHIVE_MESSAGES);
+
+        if (left.length !== right.length) {
+            return false;
+        }
+
+        for (var i = 0; i < left.length; i += 1) {
+            if (left[i].role !== right[i].role || left[i].content !== right[i].content) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function archiveCurrentConversation() {
+        var record = buildArchiveRecord(state.history);
+        if (!record) {
+            return false;
+        }
+
+        var alreadyExists = state.archives.some(function (archive) {
+            return conversationsMatch(archive.messages, record.messages);
+        });
+        if (alreadyExists) {
+            return false;
+        }
+
+        state.archives.unshift(record);
+        state.archives = state.archives.slice(0, MAX_ARCHIVES);
+        saveArchivedConversations();
+        return true;
+    }
+
+    function normalizeArchiveRecord(record) {
+        if (!record || typeof record !== 'object') {
+            return null;
+        }
+
+        var messages = normalizeStoredMessages(record.messages, MAX_ARCHIVE_MESSAGES);
+        if (!messages.length) {
+            return null;
+        }
+
+        return {
+            id: String(record.id || ('conv-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8))),
+            title: truncateText(record.title || createArchiveTitle(messages), 42),
+            preview: truncateText(record.preview || createArchivePreview(messages), 120),
+            created_at: Number(record.created_at) || messages[0].timestamp || Date.now(),
+            updated_at: Number(record.updated_at) || messages[messages.length - 1].timestamp || Date.now(),
+            count: Number(record.count) || messages.length,
+            messages: messages
+        };
+    }
+
     function loadConversation() {
         var fallbackMessage = createGreetingMessage();
         try {
@@ -188,12 +361,8 @@
             }
 
             var parsed = JSON.parse(raw);
-            if (!Array.isArray(parsed) || parsed.length === 0) {
-                state.history = [fallbackMessage];
-                return;
-            }
-
-            state.history = parsed.slice(-40);
+            var normalized = normalizeStoredMessages(parsed, MAX_ACTIVE_MESSAGES);
+            state.history = normalized.length ? normalized : [fallbackMessage];
         } catch (error) {
             state.history = [fallbackMessage];
         }
@@ -201,15 +370,58 @@
 
     function saveConversation() {
         try {
-            localStorage.setItem(getHistoryStorageKey(), JSON.stringify(state.history.slice(-40)));
+            localStorage.setItem(getHistoryStorageKey(), JSON.stringify(normalizeStoredMessages(state.history, MAX_ACTIVE_MESSAGES)));
         } catch (error) {
             console.warn('Hermes Agent: failed to save conversation', error);
         }
     }
 
-    function renderMessages() {
-        if (!elements.messages) return;
+    function loadArchivedConversations() {
+        try {
+            var raw = localStorage.getItem(getArchiveStorageKey());
+            if (!raw) {
+                state.archives = [];
+                return;
+            }
 
+            var parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                state.archives = [];
+                return;
+            }
+
+            state.archives = parsed
+                .map(normalizeArchiveRecord)
+                .filter(Boolean)
+                .slice(0, MAX_ARCHIVES);
+        } catch (error) {
+            state.archives = [];
+        }
+    }
+
+    function saveArchivedConversations() {
+        try {
+            localStorage.setItem(getArchiveStorageKey(), JSON.stringify(state.archives.slice(0, MAX_ARCHIVES)));
+        } catch (error) {
+            console.warn('Hermes Agent: failed to save archived conversations', error);
+        }
+    }
+
+    function getArchiveById(archiveId) {
+        return state.archives.find(function (archive) {
+            return archive.id === archiveId;
+        }) || null;
+    }
+
+    function syncPaneState() {
+        var isChatPane = state.activePane === 'chat';
+        elements.container.classList.toggle('is-history-pane', !isChatPane);
+        if (elements.form) {
+            elements.form.style.display = isChatPane ? '' : 'none';
+        }
+    }
+
+    function renderChatMessages() {
         if (!state.history.length && !state.sending) {
             elements.messages.innerHTML = '<div class="hermes-agent-widget__empty">Mulai percakapan dengan Hermes Agent.</div>';
             return;
@@ -227,6 +439,16 @@
                 '</div>';
         });
 
+        if (state.pendingOutgoing) {
+            html +=
+                '<div class="hermes-agent-widget__message-row hermes-agent-widget__message-row--user">' +
+                '    <div class="hermes-agent-widget__bubble hermes-agent-widget__bubble--user">' +
+                '        <div>' + escapeHtml(state.pendingOutgoing.content) + '</div>' +
+                '        <div class="hermes-agent-widget__meta">' + formatTimestamp(state.pendingOutgoing.timestamp) + '</div>' +
+                '    </div>' +
+                '</div>';
+        }
+
         if (state.sending) {
             html +=
                 '<div class="hermes-agent-widget__message-row hermes-agent-widget__message-row--assistant">' +
@@ -238,15 +460,106 @@
         }
 
         elements.messages.innerHTML = html;
-        elements.messages.scrollTop = elements.messages.scrollHeight;
     }
 
-    function formatTimestamp(timestamp) {
-        var date = new Date(timestamp || Date.now());
-        return date.toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit'
+    function renderArchiveList() {
+        if (!state.archives.length) {
+            elements.messages.innerHTML =
+                '<div class="hermes-agent-widget__history-shell">' +
+                '    <div class="hermes-agent-widget__history-topbar">' +
+                '        <div class="hermes-agent-widget__history-topbar-actions">' +
+                '            <button class="hermes-agent-widget__history-back" type="button" data-history-action="back">Kembali</button>' +
+                '            <button class="hermes-agent-widget__history-button hermes-agent-widget__history-button--primary" type="button" data-history-action="new">Chat Baru</button>' +
+                '        </div>' +
+                '        <div class="hermes-agent-widget__history-heading">Riwayat Chat</div>' +
+                '    </div>' +
+                '    <div class="hermes-agent-widget__history-empty">Belum ada percakapan yang tersimpan di riwayat.</div>' +
+                '</div>';
+            return;
+        }
+
+        var cards = state.archives.map(function (archive) {
+            return (
+                '<article class="hermes-agent-widget__history-card">' +
+                '    <div class="hermes-agent-widget__history-card-title">' + escapeHtml(archive.title) + '</div>' +
+                '    <div class="hermes-agent-widget__history-card-preview">' + escapeHtml(archive.preview) + '</div>' +
+                '    <div class="hermes-agent-widget__history-card-meta">' + escapeHtml(formatArchiveTimestamp(archive.updated_at)) + ' | ' + archive.count + ' pesan</div>' +
+                '    <div class="hermes-agent-widget__history-card-actions">' +
+                '        <button class="hermes-agent-widget__history-button" type="button" data-history-action="view" data-history-id="' + escapeHtml(archive.id) + '">Lihat</button>' +
+                '        <button class="hermes-agent-widget__history-button" type="button" data-history-action="load" data-history-id="' + escapeHtml(archive.id) + '">Muat</button>' +
+                '        <button class="hermes-agent-widget__history-button hermes-agent-widget__history-button--danger" type="button" data-history-action="delete" data-history-id="' + escapeHtml(archive.id) + '">Hapus</button>' +
+                '    </div>' +
+                '</article>'
+            );
+        }).join('');
+
+        elements.messages.innerHTML =
+            '<div class="hermes-agent-widget__history-shell">' +
+            '    <div class="hermes-agent-widget__history-topbar">' +
+            '        <div class="hermes-agent-widget__history-topbar-actions">' +
+            '            <button class="hermes-agent-widget__history-back" type="button" data-history-action="back">Kembali</button>' +
+            '            <button class="hermes-agent-widget__history-button hermes-agent-widget__history-button--primary" type="button" data-history-action="new">Chat Baru</button>' +
+            '        </div>' +
+            '        <div class="hermes-agent-widget__history-heading">Riwayat Chat</div>' +
+            '    </div>' +
+            '    <div class="hermes-agent-widget__history-list">' + cards + '</div>' +
+            '</div>';
+    }
+
+    function renderArchiveDetail() {
+        var archive = getArchiveById(state.selectedArchiveId);
+        if (!archive) {
+            state.activePane = 'history-list';
+            state.selectedArchiveId = null;
+            renderMessages();
+            return;
+        }
+
+        var html =
+            '<div class="hermes-agent-widget__history-shell">' +
+            '    <div class="hermes-agent-widget__history-topbar">' +
+            '        <button class="hermes-agent-widget__history-back" type="button" data-history-action="list">Kembali</button>' +
+            '        <div>' +
+            '            <div class="hermes-agent-widget__history-heading">' + escapeHtml(archive.title) + '</div>' +
+            '            <div class="hermes-agent-widget__history-subheading">' + escapeHtml(formatArchiveTimestamp(archive.updated_at)) + ' | ' + archive.count + ' pesan</div>' +
+            '        </div>' +
+            '    </div>' +
+            '    <div class="hermes-agent-widget__history-detail-actions">' +
+            '        <button class="hermes-agent-widget__history-button hermes-agent-widget__history-button--primary" type="button" data-history-action="new">Chat Baru</button>' +
+            '        <button class="hermes-agent-widget__history-button" type="button" data-history-action="load" data-history-id="' + escapeHtml(archive.id) + '">Muat ke Chat</button>' +
+            '        <button class="hermes-agent-widget__history-button hermes-agent-widget__history-button--danger" type="button" data-history-action="delete" data-history-id="' + escapeHtml(archive.id) + '">Hapus</button>' +
+            '    </div>' +
+            '    <div class="hermes-agent-widget__history-transcript">';
+
+        archive.messages.forEach(function (message) {
+            var role = message.role === 'user' ? 'user' : (message.role === 'system' ? 'system' : 'assistant');
+            html +=
+                '<div class="hermes-agent-widget__message-row hermes-agent-widget__message-row--' + role + '">' +
+                '    <div class="hermes-agent-widget__bubble hermes-agent-widget__bubble--' + role + '">' +
+                '        <div>' + escapeHtml(message.content) + '</div>' +
+                '        <div class="hermes-agent-widget__meta">' + formatTimestamp(message.timestamp) + '</div>' +
+                '    </div>' +
+                '</div>';
         });
+
+        html += '    </div></div>';
+        elements.messages.innerHTML = html;
+    }
+
+    function renderMessages() {
+        if (!elements.messages) return;
+
+        syncPaneState();
+
+        if (state.activePane === 'history-list') {
+            renderArchiveList();
+        } else if (state.activePane === 'history-detail') {
+            renderArchiveDetail();
+        } else {
+            renderChatMessages();
+        }
+
+        elements.messages.scrollTop = state.activePane === 'chat' ? elements.messages.scrollHeight : 0;
     }
 
     function setOpenState(isOpen) {
@@ -263,7 +576,7 @@
         if (state.isOpen) {
             renderMessages();
             setTimeout(function () {
-                if (elements.input) {
+                if (elements.input && state.activePane === 'chat') {
                     elements.input.focus();
                 }
             }, 120);
@@ -288,6 +601,9 @@
     }
 
     function resetConversation() {
+        state.pendingOutgoing = null;
+        state.activePane = 'chat';
+        state.selectedArchiveId = null;
         state.history = [createGreetingMessage()];
         saveConversation();
         renderMessages();
@@ -297,15 +613,211 @@
         }
     }
 
+    function focusComposerSoon() {
+        if (!elements.input) {
+            return;
+        }
+
+        setTimeout(function () {
+            elements.input.focus();
+        }, 120);
+    }
+
+    function startFreshConversation() {
+        if (hasMeaningfulConversation(state.history)) {
+            archiveCurrentConversation();
+        }
+
+        resetConversation();
+        focusComposerSoon();
+    }
+
+    async function revokeSensitiveAccess(reason) {
+        var response = await fetch(aiBaseUrl + '/api/ai/lock.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                reason: reason || 'manual'
+            })
+        });
+
+        var result = await response.json().catch(function () {
+            return {};
+        });
+
+        if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Gagal menutup akses sensitif Hermes Agent.');
+        }
+
+        return result;
+    }
+
+    async function handleResetAction() {
+        if (state.sending) {
+            return;
+        }
+
+        var archived = archiveCurrentConversation();
+        resetConversation();
+
+        try {
+            var result = await revokeSensitiveAccess('reset');
+            var notices = [];
+            if (archived) {
+                notices.push('Percakapan sebelumnya disimpan ke riwayat.');
+            }
+            if (result.revoked) {
+                notices.push('Akses sensitif ditutup.');
+            }
+            if (!notices.length) {
+                notices.push('Chat baru dimulai.');
+            }
+            pushMessage('system', notices.join(' '));
+        } catch (error) {
+            pushMessage('system', archived ? 'Percakapan sebelumnya disimpan ke riwayat. Chat baru dimulai, tetapi akses sensitif belum berhasil ditutup.' : (error.message || 'Chat baru dimulai.'));
+        }
+    }
+
+
+    function handleHistoryToggle() {
+        if (state.activePane === 'chat') {
+            state.activePane = 'history-list';
+            state.selectedArchiveId = null;
+        } else {
+            state.activePane = 'chat';
+            state.selectedArchiveId = null;
+        }
+
+        renderMessages();
+    }
+
+    function handleArchivePanelClick(event) {
+        var trigger = event.target.closest('[data-history-action]');
+        if (!trigger) {
+            return;
+        }
+
+        var action = trigger.getAttribute('data-history-action');
+        var archiveId = trigger.getAttribute('data-history-id');
+
+        if (action === 'back') {
+            state.activePane = 'chat';
+            state.selectedArchiveId = null;
+            renderMessages();
+            return;
+        }
+
+        if (action === 'list') {
+            state.activePane = 'history-list';
+            state.selectedArchiveId = null;
+            renderMessages();
+            return;
+        }
+
+        if (action === 'view' && archiveId) {
+            state.activePane = 'history-detail';
+            state.selectedArchiveId = archiveId;
+            renderMessages();
+            return;
+        }
+
+        if (action === 'new') {
+            startFreshConversation();
+            return;
+        }
+
+        if (action === 'load' && archiveId) {
+            loadArchiveConversation(archiveId);
+            return;
+        }
+
+        if (action === 'delete' && archiveId) {
+            deleteArchiveConversation(archiveId);
+        }
+    }
+
+    function loadArchiveConversation(archiveId) {
+        if (state.sending) {
+            return;
+        }
+
+        var archive = getArchiveById(archiveId);
+        if (!archive) {
+            return;
+        }
+
+        var currentHadMeaningfulContent = hasMeaningfulConversation(state.history);
+        if (currentHadMeaningfulContent && !conversationsMatch(state.history, archive.messages)) {
+            archiveCurrentConversation();
+        }
+
+        state.pendingOutgoing = null;
+        state.activePane = 'chat';
+        state.selectedArchiveId = null;
+        state.history = normalizeStoredMessages(archive.messages, MAX_ACTIVE_MESSAGES);
+        saveConversation();
+        renderMessages();
+
+        if (elements.input) {
+            setTimeout(function () {
+                elements.input.focus();
+            }, 120);
+        }
+    }
+
+    function deleteArchiveConversation(archiveId) {
+        var archive = getArchiveById(archiveId);
+        if (!archive) {
+            return;
+        }
+
+        if (window.confirm('Hapus riwayat chat ini?')) {
+            state.archives = state.archives.filter(function (item) {
+                return item.id !== archiveId;
+            });
+            saveArchivedConversations();
+
+            if (state.selectedArchiveId === archiveId) {
+                state.selectedArchiveId = null;
+                state.activePane = 'history-list';
+            }
+
+            renderMessages();
+        }
+    }
+
     function pushMessage(role, content, timestamp) {
         state.history.push({
             role: role,
             content: content,
             timestamp: timestamp || Date.now()
         });
-        state.history = state.history.slice(-40);
+        state.history = normalizeStoredMessages(state.history, MAX_ACTIVE_MESSAGES);
         saveConversation();
         renderMessages();
+    }
+
+    function buildRequestHistory() {
+        return state.history
+            .filter(function (message) {
+                return message && (message.role === 'user' || message.role === 'assistant');
+            })
+            .slice(-MAX_REQUEST_HISTORY)
+            .map(function (message) {
+                var content = String(message.content || '').trim();
+                if (!content) {
+                    return null;
+                }
+
+                return {
+                    role: message.role,
+                    content: content.slice(0, 1200)
+                };
+            })
+            .filter(Boolean);
     }
 
     async function handleSubmit(event) {
@@ -313,7 +825,7 @@
             event.preventDefault();
         }
 
-        if (state.sending || !elements.input) {
+        if (state.sending || !elements.input || state.activePane !== 'chat') {
             return;
         }
 
@@ -322,7 +834,13 @@
             return;
         }
 
-        pushMessage('user', message);
+        var requestHistory = buildRequestHistory();
+        var submittedAt = Date.now();
+
+        state.pendingOutgoing = {
+            content: 'Pesan sedang dikirim...',
+            timestamp: submittedAt
+        };
         elements.input.value = '';
         autoResizeTextarea();
         state.sending = true;
@@ -338,6 +856,7 @@
                 },
                 body: JSON.stringify({
                     message: message,
+                    history: requestHistory,
                     page_context: {
                         path: window.location.pathname || '',
                         title: document.title || '',
@@ -354,12 +873,22 @@
             });
 
             if (!response.ok || result.status !== 'ok' || !result.reply) {
-                throw new Error(result.error || 'Hermes Agent sedang tidak bisa merespons.');
+                var requestError = new Error(result.error || 'Hermes Agent sedang tidak bisa merespons.');
+                requestError.result = result;
+                throw requestError;
             }
 
+            state.pendingOutgoing = null;
+            pushMessage('user', String(result.user_message_display || message).trim() || 'Pesan terkirim.', submittedAt);
             pushMessage('assistant', String(result.reply).trim(), (result.timestamp || 0) * 1000 || Date.now());
         } catch (error) {
-            pushMessage('system', error.message || 'Terjadi kesalahan saat menghubungi Hermes Agent.');
+            state.pendingOutgoing = null;
+
+            if (error && error.result && error.result.user_message_display) {
+                pushMessage('user', String(error.result.user_message_display).trim() || 'Pesan terkirim.', submittedAt);
+            }
+
+            pushMessage('system', (error && error.message) || 'Terjadi kesalahan saat menghubungi Hermes Agent.');
         } finally {
             state.sending = false;
             elements.submit.disabled = false;
@@ -373,6 +902,7 @@
             state.user = fallbackUser;
             updateHeader();
             loadConversation();
+            loadArchivedConversations();
             renderMessages();
         }
 
@@ -397,6 +927,7 @@
 
             updateHeader();
             loadConversation();
+            loadArchivedConversations();
             renderMessages();
             restoreOpenState();
         } catch (error) {
@@ -409,6 +940,7 @@
                 };
                 updateHeader();
                 loadConversation();
+                loadArchivedConversations();
                 renderMessages();
                 restoreOpenState();
             }
@@ -423,6 +955,7 @@
         createWidgetMarkup();
         updateHeader();
         loadConversation();
+        loadArchivedConversations();
         renderMessages();
         restoreOpenState();
         hydrateCurrentUser();
@@ -434,3 +967,5 @@
         initializeWidget();
     }
 })();
+
+

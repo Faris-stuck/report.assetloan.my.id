@@ -112,13 +112,17 @@
     border: 0;
     background: rgba(255, 255, 255, 0.16);
     color: #fff;
-    width: 34px;
+    min-width: 34px;
     height: 34px;
+    padding: 0 12px;
     border-radius: 12px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .hermes-agent-widget__messages {
@@ -295,3 +299,147 @@
         border-radius: 18px;
     }
 }
+
+.hermes-agent-widget__header-copy {
+    min-width: 0;
+    flex: 1;
+}
+
+.hermes-agent-widget__header-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 190px;
+}
+
+.hermes-agent-widget__history-shell {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.hermes-agent-widget__history-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hermes-agent-widget__history-topbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hermes-agent-widget__history-heading {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.hermes-agent-widget__history-subheading {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.hermes-agent-widget__history-back,
+.hermes-agent-widget__history-button {
+    border: 0;
+    border-radius: 12px;
+    padding: 9px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.hermes-agent-widget__history-back,
+.hermes-agent-widget__history-button {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.hermes-agent-widget__history-button--danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.hermes-agent-widget__history-button--primary {
+    background: linear-gradient(135deg, #0047ab 0%, #00a6fb 100%);
+    color: #fff;
+}
+
+.hermes-agent-widget__history-empty {
+    border-radius: 18px;
+    padding: 24px 18px;
+    background: #ffffff;
+    border: 1px dashed rgba(15, 23, 42, 0.12);
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.hermes-agent-widget__history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.hermes-agent-widget__history-card {
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.hermes-agent-widget__history-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.hermes-agent-widget__history-card-preview {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.hermes-agent-widget__history-card-meta {
+    margin-top: 8px;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.hermes-agent-widget__history-card-actions,
+.hermes-agent-widget__history-detail-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.hermes-agent-widget__history-transcript {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+@media (max-width: 767.98px) {
+    .hermes-agent-widget__header-actions {
+        max-width: 100%;
+        gap: 6px;
+    }
+
+    .hermes-agent-widget__action {
+        padding: 0 10px;
+        font-size: 11px;
+    }
+
+    .hermes-agent-widget__history-topbar {
+        flex-direction: column;
+    }
+}
+
