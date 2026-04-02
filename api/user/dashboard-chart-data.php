@@ -359,6 +359,7 @@ try {
             lokasi
         FROM barang
         WHERE DATE_FORMAT(created_at, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
+          AND stok_tersedia > 0
         ORDER BY created_at DESC
     ");
     $stmtNewProducts->execute();

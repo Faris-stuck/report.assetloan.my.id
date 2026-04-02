@@ -82,11 +82,15 @@
     color: #fff;
 }
 
+.hermes-agent-widget__eyebrow,
+.hermes-agent-widget__title {
+    color: rgba(255, 255, 255, 0.8);
+}
+
 .hermes-agent-widget__eyebrow {
     font-size: 11px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    opacity: 0.8;
 }
 
 .hermes-agent-widget__title {
