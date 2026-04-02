@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 26 Mar 2026 pada 10.17
+-- Waktu pembuatan: 02 Apr 2026 pada 02.42
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -47,8 +47,8 @@ CREATE TABLE `barang` (
 --
 
 INSERT INTO `barang` (`id`, `kode_barang`, `nama_barang`, `kategori`, `lokasi`, `stok_total`, `stok_tersedia`, `safety_stock`, `kondisi`, `keterangan`, `created_at`, `stok_rusak`) VALUES
-(150, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 50, 37, 1, 'Good', 'Work Requirements', '2026-03-09 07:25:26', 1),
-(151, 'ADC-LAP-02', 'Laptop Lenovo Ideapad Slim 3', 'Laptop', 'ICT-MAIN OFFICE', 20, 20, 1, 'Good', 'Work Requirement', '2026-03-09 08:12:30', 0),
+(150, 'ADC-LAP-01', 'Laptop Lenovo Thinkpad', 'Laptop', 'ICT - MAIN OFFICE', 50, 26, 1, 'Good', 'Work Requirements', '2026-03-09 07:25:26', 1),
+(151, 'ADC-LAP-02', 'Laptop Lenovo Ideapad Slim 3', 'Laptop', 'ICT-MAIN OFFICE', 20, 16, 1, 'Good', 'Work Requirement', '2026-03-09 08:12:30', 0),
 (152, 'ADC-LAP-03', 'Laptop Lenovo IDeapad Slim 5', 'Laptop', 'ICT - MAIN OFFICE', 20, 17, 1, 'Good', 'Work Requirement\r\n', '2026-03-09 22:30:36', 0),
 (153, 'ADC-MOUSE-01', 'Mouse Logitech', 'Mouse', 'ICT - MAIN OFFICE', 20, 18, 1, 'Good', 'Work Requirement', '2026-03-09 22:31:01', 0),
 (154, 'ADC-MOUSE-02', 'Mouse Robot', 'Mouse', 'ICT - MAIN OFFICE', 20, 18, 1, 'Good', 'Work Requirement\r\n', '2026-03-09 22:31:44', 0),
@@ -56,7 +56,8 @@ INSERT INTO `barang` (`id`, `kode_barang`, `nama_barang`, `kategori`, `lokasi`, 
 (156, 'ADC-KEYB-02', 'Keyboard Robot', 'Keyboard', 'ICT - MAIN OFFICE', 20, 20, 1, 'Good', 'Work Requirement\r\n', '2026-03-09 22:33:29', 0),
 (157, 'ADC-LAP-04', 'Laptop Lenovo Legion', 'Laptop', 'ICT - MAIN OFFICE', 20, 19, 1, 'Good', 'Work Requirement\r\n', '2026-03-09 22:34:14', 0),
 (158, 'ADC-MON-01', 'Monitor ThinkVision', 'Monitor', 'ICT - MAIN OFFICE', 20, 20, 1, 'Good', 'Work Requirement', '2026-03-09 22:35:08', 0),
-(159, 'ADC-MON-02', 'Monitor Robot', 'Monitor', 'ICT - MAIN OFFICE', 20, 20, 1, 'Good', 'Work Requirement', '2026-03-09 22:35:40', 0);
+(159, 'ADC-MON-02', 'Monitor Robot', 'Monitor', 'ICT - MAIN OFFICE', 20, 20, 1, 'Good', 'Work Requirement', '2026-03-09 22:35:40', 0),
+(160, 'ADC-LAP-05', 'LAPTOP LENOVO IDEAPAD 5', 'Laptop', 'ICT - MAIN OFFICE', 0, 0, 1, 'Good', 'WORK REQUIREMENTS', '2026-04-01 08:23:17', 0);
 
 -- --------------------------------------------------------
 
@@ -99,7 +100,10 @@ INSERT INTO `detail_peminjaman` (`id`, `peminjaman_id`, `barang_id`, `lokasi`, `
 (148, 105, 150, 'ICT - MAIN OFFICE', 5, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-10 07:18:29'),
 (149, 106, 152, 'ICT - MAIN OFFICE', 5, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-10 13:14:26'),
 (150, 107, 150, 'ICT - MAIN OFFICE', 2, '2026-03-30', 'Good', 'pending', NULL, NULL, NULL, '2026-03-10 13:25:29'),
-(153, 113, 150, 'ICT - MAIN OFFICE', 3, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-11 13:21:23');
+(153, 113, 150, 'ICT - MAIN OFFICE', 3, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-11 13:21:23'),
+(169, 129, 150, 'ICT - MAIN OFFICE', 7, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-27 10:12:53'),
+(191, 151, 151, 'ICT-MAIN OFFICE', 5, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-03-30 07:58:54'),
+(192, 152, 150, 'ICT - MAIN OFFICE', 5, NULL, 'Good', 'pending', NULL, NULL, NULL, '2026-04-01 08:38:54');
 
 -- --------------------------------------------------------
 
@@ -241,13 +245,16 @@ CREATE TABLE `peminjaman` (
 
 INSERT INTO `peminjaman` (`id`, `kode_peminjaman`, `user_id`, `nama_peminjam`, `nrp`, `lokasi_umum`, `tanggal_pinjam`, `rencana_kembali`, `tanggal_disetujui`, `status`, `catatan`, `rejection_reason`, `created_at`, `tanggal_kembali`, `last_reminder_date`) VALUES
 (101, 'PMJ-1773099504', 1025, 'Faris User', '48479373', 'FABRIKASI', '2026-03-10', '2026-03-16', '2026-03-10', 'Returned', 'TES NOTES USER', 'TES REJECTION MANAGER (REJECT 2)', '2026-03-10 06:38:24', '2026-03-10', NULL),
-(102, 'PMJ-1773099747', 1025, 'Faris User', '48479373', 'HYDRAULIC', '2026-03-10', '2026-04-01', '2026-03-10', 'Due In 6 Days', 'TES NOTES USER', '', '2026-03-10 06:42:27', NULL, '2026-03-26'),
+(102, 'PMJ-1773099747', 1025, 'Faris User', '48479373', 'HYDRAULIC', '2026-03-10', '2026-04-01', '2026-03-10', 'Overdue', 'TES NOTES USER', '', '2026-03-10 06:42:27', NULL, NULL),
 (103, 'PMJ-1773099800', 1025, 'Faris User', '48479373', 'FABRIKASI', '2026-03-10', '2026-03-16', '2026-03-10', 'Overdue', 'TES NOTES', 'TES NOTES MANAGER (APPROVE 1)', '2026-03-10 06:43:20', NULL, NULL),
 (104, 'PMJ-1773099829', 1025, 'Faris User', '48479373', 'HYDRAULIC', '2026-03-10', '2026-03-16', NULL, 'Rejected', 'TES NOTES USER', 'TES NOTES MANAGER (REJECT ALL)', '2026-03-10 06:43:49', NULL, NULL),
 (105, 'PMJ-1773101909', 1025, 'Faris User', '48479373', 'FABRIKASI', '2026-03-10', '2026-03-16', '2026-03-10', 'Overdue', 'TES NOTES USER', 'TES REJECT 2', '2026-03-10 07:18:29', NULL, NULL),
 (106, 'PMJ-1773123266', 1025, 'Faris User', '48479373', 'KBN', '2026-03-10', '2026-03-25', '2026-03-10', 'Overdue', '', 'tes tolak', '2026-03-10 13:14:26', NULL, NULL),
 (107, 'PMJ-1773123929', 1025, 'Faris User', '48479373', 'Kbn', '2026-03-10', '2026-03-30', '2026-03-10', 'Returned', '', '', '2026-03-10 13:25:29', '2026-03-10', NULL),
-(113, 'PMJ-1773210083', 1025, 'Faris User', '48479373', 'kbn', '2026-03-11', '2026-03-31', NULL, 'Waiting for Approval', 'tes notes', NULL, '2026-03-11 13:21:23', NULL, NULL);
+(113, 'PMJ-1773210083', 1025, 'Faris User', '48479373', 'kbn', '2026-03-11', '2026-03-31', '2026-03-27', 'Overdue', 'tes notes', '', '2026-03-11 13:21:23', NULL, NULL),
+(129, 'PMJ-1774581173', 1025, 'Faris User', '48479373', 'KBN', '2026-03-27', '2026-04-01', '2026-03-27', 'Overdue', 'TES NOTES', 'TES TOLAK SEBAGIAN', '2026-03-27 10:12:53', NULL, NULL),
+(151, 'PMJ-1774832334', 1025, 'Faris User', '48479373', 'KBN', '2026-03-30', '2026-04-07', '2026-03-30', 'Due In 5 Days', 'TES NOTES', 'TEST PARTIAL APPROVED', '2026-03-30 07:58:54', NULL, NULL),
+(152, 'PMJ-1775007534', 1025, 'Faris User', '48479373', 'TEST LOCATION', '2026-04-01', '2026-04-07', NULL, 'Waiting for Approval', 'TEST NOTE', NULL, '2026-04-01 08:38:54', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -314,9 +321,21 @@ INSERT INTO `peminjaman_units` (`id`, `peminjaman_id`, `detail_peminjaman_id`, `
 (180, 106, 149, 152, 5, 'Unit 5 of 5', 'Not Yet Returned', '2026-03-25', NULL, NULL, 'Approved', 1023, '2026-03-10 13:15:12', NULL, '2026-03-10 13:15:12'),
 (181, 107, 150, 150, 1, 'Unit 1 of 2', 'Returned', '2026-03-30', NULL, NULL, 'Approved', 1023, '2026-03-10 13:25:40', NULL, '2026-03-10 13:25:40'),
 (182, 107, 150, 150, 2, 'Unit 2 of 2', 'Returned', '2026-03-30', NULL, NULL, 'Approved', 1023, '2026-03-10 13:25:40', NULL, '2026-03-10 13:25:40'),
-(183, 113, 153, 150, 1, 'Unit 1', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09'),
+(183, 113, 153, 150, 1, 'Unit 1', 'Not Yet Returned', NULL, NULL, NULL, 'Approved', 1022, '2026-03-27 10:09:46', NULL, '2026-03-12 13:47:09'),
 (184, 113, 153, 150, 2, 'Unit 2', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09'),
-(185, 113, 153, 150, 3, 'Unit 3', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09');
+(185, 113, 153, 150, 3, 'Unit 3', 'Not Yet Returned', NULL, NULL, NULL, 'Pending', NULL, NULL, NULL, '2026-03-12 13:47:09'),
+(205, 129, 169, 150, 1, 'Unit 1 of 7', 'Not Yet Returned', '2026-04-01', NULL, NULL, 'Approved', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(206, 129, 169, 150, 2, 'Unit 2 of 7', 'Not Yet Returned', '2026-04-01', NULL, NULL, 'Approved', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(207, 129, 169, 150, 3, 'Unit 3 of 7', 'Not Yet Returned', '2026-04-01', NULL, NULL, 'Approved', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(208, 129, 169, 150, 4, 'Unit 4 of 7', 'Not Yet Returned', '2026-04-01', NULL, NULL, 'Approved', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(209, 129, 169, 150, 5, 'Unit 5 of 7', 'Rejected', '2026-04-01', NULL, NULL, 'Rejected', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(210, 129, 169, 150, 6, 'Unit 6 of 7', 'Not Yet Returned', '2026-04-01', NULL, NULL, 'Approved', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(211, 129, 169, 150, 7, 'Unit 7 of 7', 'Not Yet Returned', '2026-04-01', NULL, NULL, 'Approved', 1023, '2026-03-27 10:32:12', NULL, '2026-03-27 10:32:12'),
+(272, 151, 191, 151, 1, 'Unit 1 of 5', 'Not Yet Returned', '2026-04-07', NULL, NULL, 'Approved', 1023, '2026-03-30 08:01:58', NULL, '2026-03-30 08:01:57'),
+(273, 151, 191, 151, 2, 'Unit 2 of 5', 'Not Yet Returned', '2026-04-07', NULL, NULL, 'Approved', 1023, '2026-03-30 08:01:58', NULL, '2026-03-30 08:01:57'),
+(274, 151, 191, 151, 3, 'Unit 3 of 5', 'Rejected', '2026-04-07', NULL, NULL, 'Rejected', 1023, '2026-03-30 08:01:58', NULL, '2026-03-30 08:01:58'),
+(275, 151, 191, 151, 4, 'Unit 4 of 5', 'Not Yet Returned', '2026-04-07', NULL, NULL, 'Approved', 1023, '2026-03-30 08:01:58', NULL, '2026-03-30 08:01:58'),
+(276, 151, 191, 151, 5, 'Unit 5 of 5', 'Not Yet Returned', '2026-04-07', NULL, NULL, 'Approved', 1023, '2026-03-30 08:01:58', NULL, '2026-03-30 08:01:58');
 
 -- --------------------------------------------------------
 
@@ -412,11 +431,13 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `nama`, `nrp`, `email`, `password`, `role`, `created_at`, `reset_token`, `reset_token_expires`) VALUES
-(1, 'Admin Sistem', '100001', 'admin@komatsu.co.id', '123456', 'admin', '2026-01-27 15:59:06', NULL, NULL),
-(1022, 'Faris Admin', '49583984', 'azmiariffaris@gmail.com', '123456', 'admin', '2026-03-09 07:17:47', '501450', '2026-03-26 10:54:50'),
+(1, 'Admin', '10000', 'admin@komatsu.co.id', '123456', 'admin', '2026-01-27 15:59:06', NULL, NULL),
+(1022, 'Faris Admin', '49583984', 'azmiariffaris@gmail.com', '123456', 'admin', '2026-03-09 07:17:47', '652254', '2026-03-30 07:10:13'),
 (1023, 'Faris Manager', '202480392', 'azmiariffaris1@gmail.com', '123456', 'manager', '2026-03-09 07:18:27', NULL, NULL),
 (1024, 'Faris Pic Barang', '48573837', 'azmiariffaris2@gmail.com', '123456', 'pic_barang', '2026-03-09 07:19:07', NULL, NULL),
-(1025, 'Faris User', '48479373', 'azmiariffaris3@gmail.com', '654321', 'user', '2026-03-09 07:19:41', '449524', '2026-03-26 12:14:07');
+(1025, 'Faris User', '48479373', 'azmiariffaris3@gmail.com', '123456', 'user', '2026-03-09 07:19:41', '449524', '2026-03-26 12:14:07'),
+(1056, 'TEST ADMIN', '826826', 'testadmin@gmail.com', '123456', 'admin', '2026-03-31 07:13:23', NULL, NULL),
+(1057, 'Test user', '24242', 'testuser@gmail.com', '123456', 'user', '2026-03-31 07:13:52', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -558,13 +579,13 @@ ALTER TABLE `vendor`
 -- AUTO_INCREMENT untuk tabel `barang`
 --
 ALTER TABLE `barang`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=160;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=161;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_peminjaman`
 --
 ALTER TABLE `detail_peminjaman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=169;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_pengembalian`
@@ -594,13 +615,13 @@ ALTER TABLE `pembelian_barang`
 -- AUTO_INCREMENT untuk tabel `peminjaman`
 --
 ALTER TABLE `peminjaman`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=153;
 
 --
 -- AUTO_INCREMENT untuk tabel `peminjaman_units`
 --
 ALTER TABLE `peminjaman_units`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=205;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=277;
 
 --
 -- AUTO_INCREMENT untuk tabel `pengembalian`
@@ -624,7 +645,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT untuk tabel `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1056;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1058;
 
 --
 -- AUTO_INCREMENT untuk tabel `vendor`
