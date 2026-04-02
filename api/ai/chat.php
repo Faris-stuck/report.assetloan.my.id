@@ -293,13 +293,13 @@ function aiAgentBuildModePrompt(array $options = []): string
 
     if ($isSensitiveRequest && !$hasSensitiveAccess) {
         if ($canUnlockSensitiveAccess) {
-            return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah password akses diberikan.';
+            return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Jangan menganggap struktur atau data tidak tersedia hanya karena user sedang berada di halaman lain; gunakan konteks seluruh aplikasi dan snapshot live yang tersedia. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah password akses diberikan.';
         }
 
-        return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah memasukkan password akses yang benar.';
+        return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Jangan menganggap struktur atau data tidak tersedia hanya karena user sedang berada di halaman lain; gunakan konteks seluruh aplikasi dan snapshot live yang tersedia. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah memasukkan password akses yang benar.';
     }
 
-    return 'Mode publik aktif. Prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal kecuali sistem secara eksplisit mengaktifkan mode sensitif untuk admin yang sudah memasukkan password.';
+    return 'Mode publik aktif. Prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal kecuali sistem secara eksplisit mengaktifkan mode sensitif untuk admin yang sudah memasukkan password. Halaman aktif hanya konteks tambahan, bukan batas pengetahuan; jika pertanyaan membahas area lain, gunakan struktur seluruh aplikasi dan snapshot live yang tersedia.';
 }
 
 function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): string
@@ -321,6 +321,8 @@ function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): 
         'Jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal.',
         'Jika user meminta detail teknis internal, bantu dulu dengan versi aman lalu jelaskan bahwa detail internal butuh password akses.',
         'Tetap akurat terhadap struktur role, menu, dan alur bisnis aplikasi ini.',
+        'Jangan mengatakan data, menu, atau modul tidak tersedia hanya karena halaman aktif berbeda, selama konteks PROJECT atau snapshot live memang tersedia.',
+        'Gunakan halaman aktif sebagai konteks tambahan, tetapi untuk pertanyaan lintas menu tetap pakai struktur aplikasi secara keseluruhan.',
     ];
     foreach ($publicRules as $rule) {
         $lines[] = '- ' . $rule;
@@ -359,7 +361,7 @@ function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): 
     foreach (aiAgentGetPublicDataModelLines() as $line) {
         $lines[] = '- ' . $line;
     }
-    foreach (aiAgentGetPublicSnapshotLines($conn, $role, $userId) as $line) {
+    foreach (aiAgentGetPublicSnapshotLines($conn, $role, $userId, $focusScopes, $message) as $line) {
         $lines[] = '- ' . $line;
     }
     $lines[] = '[/PUBLIC_DATA]';
@@ -372,10 +374,12 @@ function aiAgentGetPublicProjectLines(string $role): array
 {
     $lines = [
         'Aplikasi ini adalah sistem peminjaman barang berbasis web dengan role admin, manager, user, dan PIC barang.',
-        'Area Admin memiliki menu Dashboard, Pengaturan, User, Barang, Peminjaman, Peminjam, Pengembalian, dan Laporan.',
-        'Area Manager memiliki menu Dashboard, Persetujuan, dan Laporan.',
-        'Area User memiliki menu Dashboard, Profil, Riwayat, Peminjaman, dan Pengembalian.',
-        'Area PIC Barang memiliki menu Dashboard, Profil, Update Barang, dan Pengembalian.',
+        'Area Admin di navigasi memakai menu Dashboard, Item / Inventory, Item Loan, Item Return, dan Administrator.',
+        'Submenu Admin yang terlihat di UI adalah Grafik / Informasi, Item Data, Item Detail, Request Loan, List Loan, Approval, Return Loan, User List, dan Role List.',
+        'Area Manager di navigasi memakai menu Dashboard, Approvals, dan Reports dengan submenu Dashboard, Pending Approval, Approved, Rejected, Borrowing Report, dan Stock Report.',
+        'Area User di navigasi memakai menu Dashboards, Borrowing, Return, dan History dengan submenu Dashboard, Request Borrowing, Borrowing Status, Request Return, dan Borrowing History.',
+        'Area PIC Barang di navigasi memakai menu Dashboards, Update, dan Return dengan submenu Dashboard, Update Item, dan Return Item.',
+        'Pengelolaan vendor admin tidak muncul sebagai submenu Vendor terpisah di navigasi utama; aksesnya berada di Item / Inventory > Item Detail melalui tombol Edit Vendor atau modal Manage Vendors.',
     ];
 
     $roleHints = [
@@ -395,12 +399,12 @@ function aiAgentGetPublicProjectLines(string $role): array
 function aiAgentGetPublicWorkflowLines(array $focusScopes, string $role): array
 {
     $workflowMap = [
-        'users' => 'Penambahan user dilakukan dari area Admin pada menu User. Admin membuka form pembuatan user, mengisi identitas seperti nama, NRP, email, memilih role, lalu menyimpan.',
+        'users' => 'Penambahan user dilakukan dari area Admin pada menu Administrator > User List. Admin membuka form user, mengisi identitas seperti nama, NRP, email, memilih role, lalu menyimpan.',
         'peminjaman' => 'Pengajuan pinjam dilakukan dari area User pada menu Peminjaman. User memilih barang, mengisi kebutuhan peminjaman dan rencana kembali, lalu mengirim pengajuan untuk approval.',
         'approval' => 'Approval dilakukan dari area Manager atau Admin pada menu Persetujuan atau daftar pengajuan menunggu persetujuan. Approver meninjau item lalu menyetujui atau menolak.',
         'pengembalian' => 'Pengembalian diajukan dari area User pada menu Pengembalian, lalu diperiksa oleh Admin atau PIC Barang sampai proses selesai.',
         'extend' => 'Perpanjangan dilakukan dari alur pinjaman aktif. User mengajukan tanggal kembali baru lalu menunggu persetujuan.',
-        'barang' => 'Pengelolaan inventaris dilakukan dari menu Barang untuk admin atau Update Barang untuk PIC Barang.',
+        'barang' => 'Pengelolaan inventaris admin dilakukan dari menu Item / Inventory dengan submenu Item Data dan Item Detail. Pengelolaan vendor dilakukan dari Item / Inventory > Item Detail melalui tombol Edit Vendor atau modal Manage Vendors, bukan dari submenu Vendor terpisah. Untuk PIC Barang, pengelolaan item dilakukan dari menu Update > Update Item.',
         'laporan' => 'Laporan tersedia pada menu Laporan untuk admin dan manager.',
         'auth' => 'Profil dan perubahan data akun dilakukan dari area Profil sesuai role masing-masing.',
         'dashboard' => 'Dashboard tiap role menampilkan ringkasan operasional yang relevan dengan tugas role tersebut.',
@@ -439,9 +443,10 @@ function aiAgentGetPublicDataModelLines(): array
     ];
 }
 
-function aiAgentGetPublicSnapshotLines(mysqli $conn, string $role, int $userId): array
+function aiAgentGetPublicSnapshotLines(mysqli $conn, string $role, int $userId, array $focusScopes = [], string $message = ''): array
 {
     $lines = [];
+    $messageLower = strtolower($message);
 
     $inventory = aiAgentFetchSingleRow($conn, '
         SELECT
@@ -476,6 +481,34 @@ function aiAgentGetPublicSnapshotLines(mysqli $conn, string $role, int $userId):
     $returnCounts = aiAgentFetchLabelTotals($conn, 'SELECT status AS label, COUNT(*) AS total FROM pengembalian GROUP BY status');
     if (!empty($returnCounts)) {
         $lines[] = 'Ringkasan status pengembalian saat ini: ' . aiAgentFormatCountMap($returnCounts) . '.';
+    }
+
+    $wantsVendorContext = $role === 'admin'
+        && (aiAgentFocusContains($focusScopes, ['barang']) || strpos($messageLower, 'vendor') !== false);
+    if ($wantsVendorContext) {
+        $vendorCountRow = aiAgentFetchSingleRow($conn, 'SELECT COUNT(*) AS total_vendor FROM vendor');
+        $totalVendor = (int) ($vendorCountRow['total_vendor'] ?? 0);
+        $lines[] = 'Jumlah vendor terdaftar saat ini: ' . $totalVendor . '.';
+
+        if ($totalVendor > 0) {
+            $vendorLimit = $totalVendor > 15 ? 15 : $totalVendor;
+            $vendorRows = aiAgentFetchRows(
+                $conn,
+                'SELECT nama_vendor FROM vendor ORDER BY nama_vendor ASC LIMIT ' . (int) $vendorLimit
+            );
+            $vendorNames = [];
+            foreach ($vendorRows as $vendorRow) {
+                $vendorName = trim((string) ($vendorRow['nama_vendor'] ?? ''));
+                if ($vendorName !== '') {
+                    $vendorNames[] = $vendorName;
+                }
+            }
+
+            if (!empty($vendorNames)) {
+                $label = $totalVendor > $vendorLimit ? 'Contoh vendor terdaftar saat ini' : 'Daftar vendor terdaftar saat ini';
+                $lines[] = $label . ': ' . implode(', ', $vendorNames) . '.';
+            }
+        }
     }
 
     if ($role === 'manager') {

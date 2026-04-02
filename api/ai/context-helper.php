@@ -162,10 +162,11 @@ function aiAgentGetProjectOverviewLines(): array
     return [
         'Root utama PROJECT: admin/, manager/, user/, pic-barang/, api/, assets/, config/, phpmailer/, peminjaman.sql, index.html, register.html, forgot-password.html.',
         'Role resmi aplikasi: admin, manager, user, dan pic_barang.',
-        'Frontend admin mencakup dashboard, pengaturan, user, barang, peminjaman, peminjam, pengembalian, dan laporan.',
-        'Frontend manager mencakup dashboard, persetujuan, dan laporan.',
-        'Frontend user mencakup dashboard, profil, riwayat, peminjaman, dan pengembalian.',
-        'Frontend PIC barang mencakup dashboard, profil, update-barang, dan pengembalian.',
+        'Frontend admin memakai menu Dashboard, Item / Inventory, Item Loan, Item Return, dan Administrator.',
+        'Di area admin, submenu yang tampak di navigasi adalah Grafik / Informasi, Item Data, Item Detail, Request Loan, List Loan, Approval, Return Loan, User List, dan Role List.',
+        'Frontend manager memakai menu Dashboard, Approvals, dan Reports dengan submenu Dashboard, Pending Approval, Approved, Rejected, Borrowing Report, dan Stock Report.',
+        'Frontend user memakai menu Dashboards, Borrowing, Return, dan History dengan submenu Dashboard, Request Borrowing, Borrowing Status, Request Return, dan Borrowing History.',
+        'Frontend PIC barang memakai menu Dashboards, Update, dan Return dengan submenu Dashboard, Update Item, dan Return Item.',
         'Backend utama berada di api/auth, api/user, api/approver, api/admin, api/peminjaman, api/pengembalian, api/extend, api/barang, api/pic_barang, api/vendor, api/email, api/cron.',
         'Koneksi database dan kalkulasi status utama terpusat di api/koneksi.php, sedangkan kontrol session ada di api/session-helper.php.',
         'Widget AI dimuat global lewat assets/js/base-url.js, assets/js/ai-agent-widget.js, lalu request ke api/ai/chat.php yang menggunakan api/ai/context-helper.php.',
@@ -322,10 +323,10 @@ function aiAgentGetWorkflowLines(array $focusScopes): array
         'approval' => 'Approval manager atau admin berjalan dari manager/persetujuan/menunggu-approval.html atau admin/peminjaman/admin-approval.html ke api/approver/approve-items.php; backend bisa approval parsial per item atau per unit, membuat peminjaman_units, lalu menghasilkan status Borrowed, Rejected, atau Partial Approved.',
         'pengembalian' => 'Pengembalian dimulai dari user/pengembalian/ajukan-pengembalian.html lalu diperiksa admin atau PIC di api/pengembalian/inspect.php; backend memperbarui stok_tersedia atau stok_rusak dan menyimpulkan status peminjaman menjadi Returned, Partially Returned, Return in Process, atau Borrowed.',
         'extend' => 'Perpanjangan berjalan melalui api/extend/request.php; backend membuat extend_peminjaman status Pending dan extend_peminjaman_items untuk item atau unit yang diperpanjang.',
-        'barang' => 'Inventaris dan stok dikelola lewat halaman admin/barang/, pic-barang/update-barang/, serta backend barang atau vendor; tabel kunci untuk stok adalah barang, vendor, dan pembelian_barang.',
+        'barang' => 'Inventaris admin dikelola dari menu Item / Inventory dengan submenu Item Data dan Item Detail. Pengelolaan vendor tidak berada pada submenu terpisah, tetapi tersedia dari halaman Item Detail melalui tombol Edit Vendor atau modal Manage Vendors. Untuk PIC Barang, update item dilakukan dari menu Update dengan submenu Update Item.',
         'laporan' => 'Laporan stok, peminjaman, dan pengembalian tersedia di halaman admin/laporan/ dan manager/laporan/.',
         'email' => 'Notifikasi email dan reminder jatuh tempo berada di modul api/email/ dan api/cron/.',
-        'users' => 'Manajemen akun dan role berada di halaman admin/user/ serta endpoint admin seperti api/admin/roles.php.',
+        'users' => 'Manajemen akun dan role admin berada di menu Administrator dengan submenu User List dan Role List.',
     ];
 
     $selectedScopes = ['peminjaman', 'approval', 'pengembalian', 'extend'];
