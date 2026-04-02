@@ -15,8 +15,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 SessionValidator::requireRole(['user', 'manager', 'admin', 'pic_barang']);
 
-$configPath = __DIR__ . '/../../config/ai_agent.php';
-if (!file_exists($configPath)) {
+$configCandidates = [
+    __DIR__ . '/../../config/ai_agent.php',
+    __DIR__ . '/../../config/ai_agent.example.php',
+];
+$configPath = null;
+
+foreach ($configCandidates as $candidate) {
+    if (file_exists($candidate)) {
+        $configPath = $candidate;
+        break;
+    }
+}
+
+if ($configPath === null) {
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
@@ -549,6 +561,7 @@ function aiAgentStripSensitivePassword(string $message, string $password): strin
     }
 
     $cleaned = str_replace($password, ' ', $message);
+    $cleaned = preg_replace('/\b(password|pass|pwd|kata\s*sandi|sandi)\b\s*[:=\-]?\s*/iu', ' ', (string) $cleaned);
     $cleaned = preg_replace('/\s+/', ' ', $cleaned);
     $cleaned = trim((string) $cleaned, " \t\n\r\0\x0B,.:;|-_");
 
