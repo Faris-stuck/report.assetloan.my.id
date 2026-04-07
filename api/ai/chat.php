@@ -938,7 +938,7 @@ function aiAgentReplyContradictsLiveRoleCount(string $replyLower, string $role, 
         }
 
         $numbers = [];
-        if (preg_match_all('/\b' . $pattern . '\b[^0-9]{0,24}\b(\d+)\b/iu', $replyLower, $matchesAfter)) {
+        if (preg_match_all('/\b' . $pattern . '\b[^0-9]{0,16}\b(\d+)\b/iu', $replyLower, $matchesAfter)) {
             $numbers = array_merge($numbers, $matchesAfter[1] ?? []);
         }
         if (preg_match_all('/\b(\d+)\b[^a-z0-9]{0,6}\b' . $pattern . '\b/iu', $replyLower, $matchesBefore)) {
