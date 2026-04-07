@@ -642,7 +642,7 @@
 
         // Load items untuk modal form
         function loadItemsForModal() {
-            fetch(BASE_URL + "/api/barang/get.php")
+            fetch(BASE_URL + "/api/barang/get.php?paginate=0")
                 .then(res => res.json())
                 .then(res => {
                     let html = "";

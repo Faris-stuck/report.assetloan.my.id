@@ -255,7 +255,7 @@
     <script src="../../assets/js/config/api.js"></script>
     <script>
         function loadLaporanStok() {
-            fetch(API_BASE_URL + '/barang/get.php', { credentials: 'same-origin' })
+            fetch(API_BASE_URL + '/barang/get.php?paginate=0', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
                     let html = '<h4 class="mb-4">Item Stock Report</h4><table class="table table-hover"><thead class="table-light"><tr>';

@@ -15,6 +15,333 @@ function getStockStatusBadgeClass(status) {
     return 'bg-success';
 }
 
+let currentPage = 1;
+let perPage = 10;
+let sortField = '';
+let sortAsc = true;
+let barangFilterTimer = null;
+let latestBarangTableRequestId = 0;
+
+function normalizeBarangFilterValue(value) {
+    return String(value || '').trim();
+}
+
+function populateBarangFilterSelect(selectId, values, defaultLabel = 'All') {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    const currentValue = select.value;
+    const uniqueValues = Array.from(
+        new Set(
+            values
+                .map(value => normalizeBarangFilterValue(value))
+                .filter(Boolean)
+        )
+    ).sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML = `<option value="">${defaultLabel}</option>`;
+    uniqueValues.forEach((value) => {
+        select.innerHTML += `<option value="${value}">${value}</option>`;
+    });
+
+    if (uniqueValues.includes(currentValue)) {
+        select.value = currentValue;
+    }
+}
+
+function getBarangFilterValues() {
+    return {
+        no: document.getElementById('filterNo')?.value.trim() || '',
+        itemCode: normalizeBarangFilterValue(document.getElementById('filterItemCode')?.value),
+        itemName: normalizeBarangFilterValue(document.getElementById('filterItemName')?.value),
+        category: normalizeBarangFilterValue(document.getElementById('filterCategory')?.value),
+        location: normalizeBarangFilterValue(document.getElementById('filterLocation')?.value),
+        safetyStock: document.getElementById('filterSafetyStock')?.value.trim() || '',
+        condition: normalizeBarangFilterValue(document.getElementById('filterCondition')?.value),
+        status: normalizeBarangFilterValue(document.getElementById('filterStatus')?.value)
+    };
+}
+
+function getCurrentPerPage() {
+    const perPageElement = document.getElementById('perPage');
+    return parseInt(perPageElement?.value, 10) || perPage || 10;
+}
+
+function buildBarangQueryParams(options = {}) {
+    const filters = getBarangFilterValues();
+    const params = new URLSearchParams();
+    const shouldPaginate = options.paginate !== false;
+
+    if (filters.no) params.set('no', filters.no);
+    if (filters.itemCode) params.set('item_code', filters.itemCode);
+    if (filters.itemName) params.set('item_name', filters.itemName);
+    if (filters.category) params.set('category', filters.category);
+    if (filters.location) params.set('location', filters.location);
+    if (filters.safetyStock) params.set('safety_stock', filters.safetyStock);
+    if (filters.condition) params.set('condition', filters.condition);
+    if (filters.status) params.set('status', filters.status);
+
+    if (sortField) {
+        params.set('sort', sortField);
+        params.set('order', sortAsc ? 'asc' : 'desc');
+    }
+
+    if (shouldPaginate) {
+        perPage = getCurrentPerPage();
+        params.set('paginate', '1');
+        params.set('page', String(currentPage));
+        params.set('per_page', String(perPage));
+    } else {
+        params.set('paginate', '0');
+    }
+
+    return params;
+}
+
+function updateShowingInfo(from, to, total) {
+    const el = document.getElementById('showingInfo');
+    if (!el) return;
+
+    if (total === 0) {
+        el.textContent = 'Showing 0 entries';
+        return;
+    }
+
+    el.textContent = `Showing ${from} to ${to} of ${total} entries`;
+}
+
+function updateShowingInfoFromMeta(meta) {
+    if (!meta) {
+        updateShowingInfo(0, 0, 0);
+        return;
+    }
+
+    const from = Number(meta.from || 0);
+    const to = Number(meta.to || 0);
+    const total = Number(meta.filtered_records || 0);
+    updateShowingInfo(from, to, total);
+}
+
+function updateSortIndicator() {
+    const icon = document.getElementById('sort-nama_barang');
+    if (!icon) return;
+
+    if (sortField === 'nama_barang') {
+        icon.className = `feather-${sortAsc ? 'arrow-up' : 'arrow-down'} fs-10`;
+    } else {
+        icon.className = 'feather-arrow-up fs-10';
+    }
+}
+
+function renderPagination(totalPages) {
+    const ul = document.getElementById('pagination');
+    if (!ul) return;
+
+    ul.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    const liPrev = document.createElement('li');
+    liPrev.className = 'page-item' + (currentPage === 1 ? ' disabled' : '');
+    liPrev.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage - 1})">‹</a>`;
+    ul.appendChild(liPrev);
+
+    for (let i = 1; i <= totalPages; i++) {
+        if (totalPages > 7 && i > 3 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
+            if (i === 4 || i === totalPages - 2) {
+                const liDots = document.createElement('li');
+                liDots.className = 'page-item disabled';
+                liDots.innerHTML = '<span class="page-link">…</span>';
+                ul.appendChild(liDots);
+            }
+            continue;
+        }
+
+        const li = document.createElement('li');
+        li.className = 'page-item' + (i === currentPage ? ' active' : '');
+        li.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${i})">${i}</a>`;
+        ul.appendChild(li);
+    }
+
+    const liNext = document.createElement('li');
+    liNext.className = 'page-item' + (currentPage === totalPages ? ' disabled' : '');
+    liNext.innerHTML = `<a class="page-link" href="javascript:void(0)" onclick="goToPage(${currentPage + 1})">›</a>`;
+    ul.appendChild(liNext);
+}
+
+function renderBarangTable(data) {
+    const tbody = document.getElementById('tabelBarang');
+    if (!tbody) throw new Error('Table element #tabelBarang not found');
+
+    if (!data.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="11" class="text-center py-4 text-muted">
+                    No data found
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = data.map((item) => {
+        const statusBadge = getStockStatusBadgeClass(item.status);
+        const rowNo = item.row_no ?? item._rowNo ?? '';
+
+        return `
+            <tr>
+                <td class="text-center">
+                    <input type="radio" name="pilihBarang" value="${item.id}">
+                </td>
+                <td>${rowNo}</td>
+                <td>${item.kode_barang}</td>
+                <td>${item.nama_barang}</td>
+                <td>${item.kategori || '-'}</td>
+                <td>${item.lokasi}</td>
+                <td>${item.safety_stock}</td>
+                <td>${item.stok_tersedia}</td>
+                <td>
+                    <span class="badge ${item.kondisi === 'Damaged' ? 'bg-danger' : 'bg-success'}">
+                        ${item.kondisi}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge ${statusBadge}">
+                        ${item.status}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <a href="detail-barang.html?id=${item.id}" class="btn btn-sm btn-outline-primary">
+                        Detail
+                    </a>
+                </td>
+            </tr>`;
+    }).join('');
+}
+
+function populateBarangFilterOptions(filterOptions) {
+    if (!filterOptions) return;
+
+    if (Array.isArray(filterOptions.condition)) {
+        populateBarangFilterSelect('filterCondition', filterOptions.condition, 'All');
+    }
+
+    if (Array.isArray(filterOptions.status)) {
+        populateBarangFilterSelect('filterStatus', filterOptions.status, 'All');
+    }
+}
+
+function fetchBarangData(options = {}) {
+    const params = buildBarangQueryParams(options).toString();
+    const url = `${API_BASE_URL}/barang/get.php?${params}`;
+
+    return fetch(url)
+        .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            return res.json();
+        })
+        .then((res) => {
+            if (!res || !res.status || !Array.isArray(res.data)) {
+                throw new Error(res?.message || 'Invalid response format');
+            }
+
+            return res;
+        });
+}
+
+function loadBarang(options = {}) {
+    const shouldPaginate = options.paginate !== false && !!document.getElementById('perPage');
+    const requestId = ++latestBarangTableRequestId;
+
+    return fetchBarangData({ paginate: shouldPaginate })
+        .then((res) => {
+            if (requestId !== latestBarangTableRequestId) {
+                return res;
+            }
+
+            populateBarangFilterOptions(res.filter_options);
+            updateSortIndicator();
+
+            if (shouldPaginate) {
+                currentPage = Number(res.meta?.page || currentPage || 1);
+                perPage = Number(res.meta?.per_page || getCurrentPerPage());
+                updateShowingInfoFromMeta(res.meta);
+                renderPagination(Number(res.meta?.total_pages || 0));
+            } else {
+                const total = Array.isArray(res.data) ? res.data.length : 0;
+                updateShowingInfo(total ? 1 : 0, total, total);
+                renderPagination(0);
+            }
+
+            renderBarangTable(res.data);
+            return res;
+        })
+        .catch((err) => {
+            if (requestId !== latestBarangTableRequestId) {
+                return;
+            }
+
+            console.error('loadBarang error:', err);
+            const errMsg = err?.message || 'Unknown error';
+            console.log('API_BASE_URL value:', API_BASE_URL);
+            const tbody = document.getElementById('tabelBarang');
+            if (tbody) {
+                tbody.innerHTML = `<tr><td colspan="11" class="text-center py-4 text-danger">Failed to load data: ${errMsg}</td></tr>`;
+            }
+            updateShowingInfo(0, 0, 0);
+            renderPagination(0);
+        });
+}
+
+function applyFilters(resetPage = true, useDebounce = true) {
+    if (resetPage) currentPage = 1;
+
+    clearTimeout(barangFilterTimer);
+
+    if (useDebounce) {
+        barangFilterTimer = setTimeout(() => {
+            loadBarang();
+        }, 300);
+        return;
+    }
+
+    loadBarang();
+}
+
+function sortTable(field) {
+    clearTimeout(barangFilterTimer);
+
+    if (sortField === field) {
+        sortAsc = !sortAsc;
+    } else {
+        sortField = field;
+        sortAsc = true;
+    }
+
+    currentPage = 1;
+    loadBarang();
+}
+
+function changePerPage() {
+    clearTimeout(barangFilterTimer);
+    currentPage = 1;
+    perPage = getCurrentPerPage();
+    loadBarang();
+}
+
+function goToPage(page) {
+    clearTimeout(barangFilterTimer);
+    const nextPage = parseInt(page, 10) || 1;
+    if (nextPage < 1) return;
+    currentPage = nextPage;
+    loadBarang();
+}
+
+window.applyFilters = applyFilters;
+window.sortTable = sortTable;
+window.changePerPage = changePerPage;
+window.goToPage = goToPage;
+
 document.addEventListener("DOMContentLoaded", function () {
     loadBarang();
 
@@ -163,63 +490,6 @@ document.addEventListener("DOMContentLoaded", function () {
 }); // End DOMContentLoaded
 
 /* ===============================
-   FETCH DATA BARANG
-================================ */
-function loadBarang() {
-    fetch(`${API_BASE_URL}/barang/get.php`)
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            return res.json();
-        })
-        .then(res => {
-            if (!res || !res.data) throw new Error('Invalid response format: missing data field');
-
-            const tbody = document.getElementById("tabelBarang");
-            if (!tbody) throw new Error('Table element #tabelBarang not found');
-            tbody.innerHTML = "";
-
-            res.data.forEach((item, i) => {
-                const statusBadge = getStockStatusBadgeClass(item.status);
-
-                tbody.innerHTML += `
-                <tr>
-                    <td class="text-center">
-                        <input type="radio" name="pilihBarang" value="${item.id}">
-                    </td>
-                    <td>${i + 1}</td>
-                    <td>${item.kode_barang}</td>
-                    <td>${item.nama_barang}</td>
-                    <td>${item.kategori || '-'}</td>
-                    <td>${item.lokasi}</td>
-                    <td>${item.safety_stock}</td>
-                    <td>${item.stok_tersedia}</td>
-                    <td>
-                        <span class="badge ${item.kondisi === 'Damaged' ? 'bg-danger' : 'bg-success'}">
-                            ${item.kondisi}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge ${statusBadge}">
-                            ${item.status}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        <a href="detail-barang.html?id=${item.id}" class="btn btn-sm btn-outline-primary">
-                            Detail
-                        </a>
-                    </td>
-                </tr>`;
-            });
-        })
-        .catch((err) => {
-            console.error('loadBarang error:', err);
-            const errMsg = err?.message || 'Unknown error';
-            console.log('API_BASE_URL value:', API_BASE_URL);
-            alert(`Failed to load item data: ${errMsg}`);
-        });
-}
-
-/* ===============================
    AMBIL ID BARANG
 ================================ */
 function getSelectedBarangId() {
@@ -357,11 +627,11 @@ window.openAddModal = openAddModal;
 window.hapusBarang = hapusBarang;
 // Export CSV
 function exportCSV() {
-    fetch(`${API_BASE_URL}/barang/get.php`)
-        .then(r => r.json())
+    fetchBarangData({ paginate: false })
         .then(res => {
             if (!res.status) return alert('Failed to fetch data');
             const data = res.data;
+            if (!data.length) return alert('No data available to export');
             const headers = ['id', 'kode_barang', 'nama_barang', 'lokasi', 'safety_stock', 'stok_total', 'stok_tersedia', 'kondisi', 'status', 'keterangan'];
             const rows = data.map(d => headers.map(h => '"' + ((d[h] === null || d[h] === undefined) ? '' : String(d[h]).replace(/"/g, '""')) + '"').join(','));
             const csv = headers.join(',') + '\n' + rows.join('\n');
@@ -380,16 +650,17 @@ function exportCSV() {
 
 // Print list (open new window with table)
 function printList() {
-    fetch(`${API_BASE_URL}/barang/get.php`)
-        .then(r => r.json())
+    fetchBarangData({ paginate: false })
         .then(res => {
             if (!res.status) return alert('Failed to fetch data');
             const data = res.data;
+            if (!data.length) return alert('No data available to print');
             let html = '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%;">';
             html += '<thead><tr><th>NO</th><th>Code</th><th>Name</th><th>Location</th><th>Stock</th><th>Condition</th><th>Notes</th></tr></thead>';
             html += '<tbody>';
-            data.forEach((d, i) => {
-                html += `<tr><tr></tr><td>${i + 1}</td><td>${d.kode_barang}</td><td>${d.nama_barang}</td><td>${d.lokasi}</td><td>${d.stok_tersedia}</td><td>${d.kondisi}</td><td>${d.keterangan || ''}</td></tr>`;
+            data.forEach((d) => {
+                const rowNo = d.row_no ?? '';
+                html += `<tr><td>${rowNo}</td><td>${d.kode_barang}</td><td>${d.nama_barang}</td><td>${d.lokasi}</td><td>${d.stok_tersedia}</td><td>${d.kondisi}</td><td>${d.keterangan || ''}</td></tr>`;
             });
             html += '</tbody></table>';
             const w = window.open('', '_blank');

@@ -679,7 +679,7 @@
 
         // Load items untuk modal form
         function loadItemsForModal() {
-            fetch(BASE_URL + "/api/barang/get.php")
+            fetch(BASE_URL + "/api/barang/get.php?paginate=0")
                 .then(res => res.json())
                 .then(res => {
                     let html = "";
@@ -1283,7 +1283,7 @@
                                     <div class="fw-semibold">${escapeHtml(u.nama_barang)}</div>
                                     <div class="small text-muted"><code>${escapeHtml(u.kode_barang)}</code></div>
                                 </td>
-                                <td class="text-center"><span class="badge bg-light text-dark">Unit ${escapeHtml(u.unit_display)}</span></td>
+                                <td class="text-center"><span class="badge bg-light text-dark">${escapeHtml(u.unit_display)}</span></td>
                                 <td class="text-center">1</td>
                                 <td class="text-center"><span class="badge ${badgeClass}">${escapeHtml(u.return_status)}</span></td>
                                 <td class="text-center">${escapeHtml(u.expected_return)}</td>

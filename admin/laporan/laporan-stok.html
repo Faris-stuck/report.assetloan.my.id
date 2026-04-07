@@ -356,7 +356,7 @@
     <script>
         // Load laporan stok dari database
         function loadLaporanStok() {
-            fetch(API_BASE_URL + '/barang/get.php', { credentials: 'same-origin' })
+            fetch(API_BASE_URL + '/barang/get.php?paginate=0', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
                     const tbody = document.getElementById('tableStok');

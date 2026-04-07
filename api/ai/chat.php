@@ -3,6 +3,9 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../session-helper.php';
 require_once __DIR__ . '/context-helper.php';
+require_once __DIR__ . '/codebase-helper.php';
+require_once __DIR__ . '/index-helper.php';
+require_once __DIR__ . '/tool-helper.php';
 require_once __DIR__ . '/config-helper.php';
 require_once __DIR__ . '/runtime-helper.php';
 
@@ -75,6 +78,11 @@ if (isset($payload['page_context']) && is_array($payload['page_context'])) {
     $pageContext = $payload['page_context'];
 }
 
+$pageSnapshot = [];
+if (isset($pageContext['ui_snapshot']) && is_array($pageContext['ui_snapshot'])) {
+    $pageSnapshot = $pageContext['ui_snapshot'];
+}
+
 $history = [];
 if (isset($payload['history']) && is_array($payload['history'])) {
     $history = $payload['history'];
@@ -82,11 +90,12 @@ if (isset($payload['history']) && is_array($payload['history'])) {
 
 $sessionRole = SessionValidator::getRole();
 $sessionUserId = (int) SessionValidator::getUserId();
-$canUnlockSensitiveAccess = $sessionRole === 'admin';
+$canUnlockTechnicalAccess = $sessionRole === 'admin';
+$canUnlockBusinessOverride = true;
 $userMessageDisplay = $message;
 $passwordWasSubmitted = false;
 
-if (!$canUnlockSensitiveAccess) {
+if (!$canUnlockTechnicalAccess) {
     aiAgentRevokeSensitiveAccess();
 }
 
@@ -94,15 +103,21 @@ if ($sensitiveAccessPassword !== '' && aiAgentMessageContainsPassword($message, 
     $passwordWasSubmitted = true;
     $userMessageDisplay = aiAgentMaskSensitiveMessage($message, $sensitiveAccessPassword);
 
-    if ($canUnlockSensitiveAccess) {
+    if ($canUnlockBusinessOverride) {
+        aiAgentGrantBusinessOverrideAccess($sensitiveAccessDurationMinutes);
+    }
+
+    if ($canUnlockTechnicalAccess) {
         aiAgentGrantSensitiveAccess($sensitiveAccessDurationMinutes);
     } else {
         aiAgentRevokeSensitiveAccess();
     }
 }
 
-$sensitiveAccessExpiresAt = $canUnlockSensitiveAccess ? aiAgentGetSensitiveAccessExpiresAt() : 0;
-$hasSensitiveAccess = $canUnlockSensitiveAccess && $sensitiveAccessExpiresAt > time();
+$businessOverrideExpiresAt = $canUnlockBusinessOverride ? aiAgentGetBusinessOverrideExpiresAt() : 0;
+$hasBusinessOverrideAccess = $canUnlockBusinessOverride && $businessOverrideExpiresAt > time();
+$sensitiveAccessExpiresAt = $canUnlockTechnicalAccess ? aiAgentGetSensitiveAccessExpiresAt() : 0;
+$hasSensitiveAccess = $canUnlockTechnicalAccess && $sensitiveAccessExpiresAt > time();
 $effectiveMessage = aiAgentStripSensitivePassword($message, $sensitiveAccessPassword);
 if ($effectiveMessage === '') {
     $effectiveMessage = $passwordWasSubmitted ? '' : $message;
@@ -110,9 +125,13 @@ if ($effectiveMessage === '') {
 
 if ($passwordWasSubmitted && $effectiveMessage === '') {
     session_write_close();
-    $replyMessage = $canUnlockSensitiveAccess
-        ? 'Akses detail teknis internal berhasil dibuka selama ' . $sensitiveAccessDurationMinutes . ' menit. Selama periode ini saya bisa menjelaskan nama file, path, database, tabel, dan detail teknis lain jika Anda memang memintanya.'
-        : 'Akses detail teknis internal hanya tersedia untuk admin. Password Anda sudah disensor, tetapi mode sensitif tidak dibuka untuk role Anda saat ini.';
+    if ($canUnlockTechnicalAccess) {
+        $replyMessage = 'Akses data lintas-role dan detail teknis internal berhasil dibuka selama ' . $sensitiveAccessDurationMinutes . ' menit. Dalam periode ini saya bisa memakai data live lintas role, dan untuk admin saya juga bisa menjelaskan file, path, database, tabel, serta detail teknis jika memang diminta.';
+    } elseif ($canUnlockBusinessOverride) {
+        $replyMessage = 'Akses data lintas-role berhasil dibuka selama ' . $sensitiveAccessDurationMinutes . ' menit. Selama periode ini saya boleh memakai data live di luar scope role normal Anda, tetapi detail teknis internal tetap dikunci karena itu khusus admin.';
+    } else {
+        $replyMessage = 'Password Anda sudah disensor, tetapi mode override tidak tersedia untuk role Anda saat ini.';
+    }
     echo json_encode([
         'status' => 'ok',
         'reply' => $replyMessage,
@@ -121,6 +140,8 @@ if ($passwordWasSubmitted && $effectiveMessage === '') {
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'business_override_active' => $hasBusinessOverrideAccess,
+        'business_override_expires_at' => $businessOverrideExpiresAt,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -130,33 +151,62 @@ if ($effectiveMessage === '') {
     $effectiveMessage = $message;
 }
 
-$isSensitiveRequest = aiAgentMessageRequestsSensitiveInfo($effectiveMessage);
-$useSensitiveGrounding = $hasSensitiveAccess && $isSensitiveRequest;
-$groundingContext = $useSensitiveGrounding
-    ? aiAgentBuildGroundingContext($conn, [
-        'role' => $sessionRole,
-        'user_id' => $sessionUserId,
-        'message' => $effectiveMessage,
-        'page_path' => (string) ($pageContext['path'] ?? ''),
-        'page_title' => (string) ($pageContext['title'] ?? ''),
-        'page_heading' => (string) ($pageContext['heading'] ?? ''),
-    ])
-    : aiAgentBuildPublicGroundingContext($conn, [
-        'role' => $sessionRole,
-        'user_id' => $sessionUserId,
-        'message' => $effectiveMessage,
-        'page_path' => (string) ($pageContext['path'] ?? ''),
-        'page_title' => (string) ($pageContext['title'] ?? ''),
-        'page_heading' => (string) ($pageContext['heading'] ?? ''),
-    ]);
+$accessDecision = aiAgentEvaluateRuntimeAccess([
+    'config' => $config,
+    'role' => $sessionRole,
+    'message' => $effectiveMessage,
+    'page_context' => $pageContext,
+    'page_snapshot' => $pageSnapshot,
+    'has_sensitive_access' => $hasSensitiveAccess,
+    'has_business_override_access' => $hasBusinessOverrideAccess,
+]);
+$isSensitiveRequest = !empty($accessDecision['requires_any_elevated_access']);
+$useSensitiveGrounding = !empty($accessDecision['should_use_elevated_grounding']);
+$toolRuntimeContext = aiAgentBuildToolRuntimeContext($conn, [
+    'config' => $config,
+    'role' => $sessionRole,
+    'user_id' => $sessionUserId,
+    'message' => $effectiveMessage,
+    'history' => $history,
+    'page_context' => $pageContext,
+    'page_snapshot' => $pageSnapshot,
+    'has_sensitive_access' => $hasSensitiveAccess,
+    'has_business_override_access' => $hasBusinessOverrideAccess,
+    'is_sensitive_request' => $isSensitiveRequest,
+    'use_sensitive_grounding' => $useSensitiveGrounding,
+    'access_decision' => $accessDecision,
+]);
+$groundingContext = trim((string) ($toolRuntimeContext['grounding'] ?? ''));
+if ($groundingContext === '') {
+    $groundingContext = $useSensitiveGrounding
+        ? aiAgentBuildGroundingContext($conn, [
+            'role' => $sessionRole,
+            'user_id' => $sessionUserId,
+            'message' => $effectiveMessage,
+            'page_path' => (string) ($pageContext['path'] ?? ''),
+            'page_title' => (string) ($pageContext['title'] ?? ''),
+            'page_heading' => (string) ($pageContext['heading'] ?? ''),
+        ])
+        : aiAgentBuildPublicGroundingContext($conn, [
+            'role' => $sessionRole,
+            'user_id' => $sessionUserId,
+            'message' => $effectiveMessage,
+            'page_path' => (string) ($pageContext['path'] ?? ''),
+            'page_title' => (string) ($pageContext['title'] ?? ''),
+            'page_heading' => (string) ($pageContext['heading'] ?? ''),
+        ]);
+}
 
 $modePrompt = aiAgentBuildModePrompt([
     'agent_name' => $agentName,
     'has_sensitive_access' => $hasSensitiveAccess,
-    'can_unlock_sensitive_access' => $canUnlockSensitiveAccess,
+    'has_business_override_access' => $hasBusinessOverrideAccess,
+    'can_unlock_sensitive_access' => $canUnlockTechnicalAccess,
     'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+    'business_override_expires_at' => $businessOverrideExpiresAt,
     'is_sensitive_request' => $isSensitiveRequest,
     'use_sensitive_grounding' => $useSensitiveGrounding,
+    'access_decision' => $accessDecision,
 ]);
 
 $messages = [
@@ -218,6 +268,8 @@ if ($httpCode <= 0 && $result === '') {
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'business_override_active' => $hasBusinessOverrideAccess,
+        'business_override_expires_at' => $businessOverrideExpiresAt,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -232,6 +284,8 @@ if (!is_array($decoded)) {
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'business_override_active' => $hasBusinessOverrideAccess,
+        'business_override_expires_at' => $businessOverrideExpiresAt,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -246,6 +300,8 @@ if ($httpCode >= 400) {
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'business_override_active' => $hasBusinessOverrideAccess,
+        'business_override_expires_at' => $businessOverrideExpiresAt,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -265,6 +321,11 @@ if ($reply === '') {
     exit;
 }
 
+$reply = aiAgentRedactPublicReplySensitiveIdentifiers($reply, [
+    'session_user_id' => $sessionUserId,
+    'allow_sensitive_identifiers' => $useSensitiveGrounding,
+]);
+
 $processingTimeMs = (int) round((microtime(true) - $startedAt) * 1000);
 
 echo json_encode([
@@ -275,6 +336,8 @@ echo json_encode([
     'user_message_display' => $userMessageDisplay,
     'sensitive_access_active' => $hasSensitiveAccess,
     'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+    'business_override_active' => $hasBusinessOverrideAccess,
+    'business_override_expires_at' => $businessOverrideExpiresAt,
     'reply_contains_sensitive' => $useSensitiveGrounding,
 ], JSON_UNESCAPED_UNICODE);
 
@@ -282,24 +345,38 @@ function aiAgentBuildModePrompt(array $options = []): string
 {
     $agentName = trim((string) ($options['agent_name'] ?? 'Hermes Agent'));
     $hasSensitiveAccess = !empty($options['has_sensitive_access']);
+    $hasBusinessOverrideAccess = !empty($options['has_business_override_access']);
     $canUnlockSensitiveAccess = !empty($options['can_unlock_sensitive_access']);
     $sensitiveAccessExpiresAt = (int) ($options['sensitive_access_expires_at'] ?? 0);
+    $businessOverrideExpiresAt = (int) ($options['business_override_expires_at'] ?? 0);
     $isSensitiveRequest = !empty($options['is_sensitive_request']);
     $useSensitiveGrounding = !empty($options['use_sensitive_grounding']);
+    $accessDecision = isset($options['access_decision']) && is_array($options['access_decision']) ? $options['access_decision'] : [];
+    $technicalRequested = !empty($accessDecision['technical_requested']);
+    $requiresScopeOverride = !empty($accessDecision['requires_scope_override']);
+    $hasScopeOverrideAccess = !empty($accessDecision['has_scope_override_access']);
 
-    if ($useSensitiveGrounding) {
-        return $agentName . ' sedang berada pada mode sensitif terotorisasi sampai sekitar ' . aiAgentFormatAccessExpiryLabel($sensitiveAccessExpiresAt) . '. Anda boleh menyebut nama file, folder, path, endpoint, database, tabel, kolom, dan detail backend internal hanya jika user memang memintanya secara jelas. Untuk pertanyaan biasa, tetap prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, dan alur penggunaan.';
+    if ($technicalRequested && $useSensitiveGrounding && $hasSensitiveAccess) {
+        return $agentName . ' sedang berada pada mode sensitif terotorisasi sampai sekitar ' . aiAgentFormatAccessExpiryLabel($sensitiveAccessExpiresAt) . '. Anda menerima tool layer runtime berisi metadata halaman, data live, observasi implementasi, dan context kode frontend/backend yang relevan. Anda boleh menyebut nama file, folder, path, endpoint, database, tabel, kolom, dan detail backend internal hanya jika user memang memintanya secara jelas. Untuk pertanyaan biasa, tetap prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, dan alur penggunaan.';
     }
 
-    if ($isSensitiveRequest && !$hasSensitiveAccess) {
+    if ($hasScopeOverrideAccess && $useSensitiveGrounding) {
+        return $agentName . ' sedang berada pada mode override data lintas-role sampai sekitar ' . aiAgentFormatAccessExpiryLabel($businessOverrideExpiresAt) . '. Anda menerima tool layer runtime berisi metadata halaman, data live, dan observasi implementasi yang boleh melampaui scope role normal sesi ini. Pakai akses ini hanya untuk menjawab kebutuhan data bisnis terbaru. Tetap jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal kecuali mode sensitif teknis admin juga aktif.';
+    }
+
+    if ($technicalRequested && !$hasSensitiveAccess) {
         if ($canUnlockSensitiveAccess) {
-            return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Jangan menganggap struktur atau data tidak tersedia hanya karena user sedang berada di halaman lain; gunakan konteks seluruh aplikasi dan snapshot live yang tersedia. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah password akses diberikan.';
+            return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Anda tetap menerima tool layer runtime berisi metadata halaman, data live, dan observasi implementasi dinamis, tetapi jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Jangan menganggap struktur atau data tidak tersedia hanya karena user sedang berada di halaman lain; gunakan konteks seluruh aplikasi dan data live yang tersedia. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah password akses diberikan.';
         }
 
-        return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Jangan menganggap struktur atau data tidak tersedia hanya karena user sedang berada di halaman lain; gunakan konteks seluruh aplikasi dan snapshot live yang tersedia. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah memasukkan password akses yang benar.';
+        return 'Mode publik aktif. Pertanyaan user menyentuh detail teknis internal. Anda tetap menerima tool layer runtime berisi metadata halaman, data live, dan observasi implementasi dinamis, tetapi jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal. Tetap bantu dengan jawaban aman berbasis menu, submenu, card, halaman, tombol, dan langkah penggunaan. Jangan menganggap struktur atau data tidak tersedia hanya karena user sedang berada di halaman lain; gunakan konteks seluruh aplikasi dan data live yang tersedia. Tutup dengan catatan singkat bahwa detail teknis internal dikunci dan hanya admin yang bisa membukanya setelah memasukkan password akses yang benar.';
     }
 
-    return 'Mode publik aktif. Prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal kecuali sistem secara eksplisit mengaktifkan mode sensitif untuk admin yang sudah memasukkan password. Halaman aktif hanya konteks tambahan, bukan batas pengetahuan; jika pertanyaan membahas area lain, gunakan struktur seluruh aplikasi dan snapshot live yang tersedia.';
+    if ($requiresScopeOverride && !$hasScopeOverrideAccess) {
+        return 'Mode publik aktif. Pertanyaan user meminta data bisnis di luar scope role saat ini. Anda tetap menerima metadata halaman, data live, dan observasi implementasi dinamis, tetapi data yang boleh dipakai hanya yang masih berada dalam scope role aktif. Jawab dengan jujur berdasarkan akses yang tersedia, jangan mengarang data lintas-role, jangan sebut user_id atau identifier internal mentah, dan tutup dengan catatan singkat bahwa akses lintas-role memerlukan password override. Detail teknis internal tetap terkunci.';
+    }
+
+    return 'Mode publik aktif. Prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Data live dalam scope role aktif boleh dipakai tanpa password. Anda menerima tool layer runtime berisi metadata halaman, data live, dan observasi implementasi dinamis, tetapi jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, user_id, primary key, atau identifier internal mentah kecuali sistem secara eksplisit mengaktifkan mode sensitif teknis untuk admin. Halaman aktif hanya konteks tambahan, bukan batas pengetahuan; jika pertanyaan membahas area lain, gunakan struktur seluruh aplikasi dan data live yang tersedia selama masih sesuai scope role.';
 }
 
 function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): string
@@ -319,6 +396,7 @@ function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): 
     $publicRules = [
         'Jawab dengan istilah menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis.',
         'Jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal.',
+        'Jangan menyebut user_id, id akun, primary key, atau identifier internal mentah milik user di jawaban publik.',
         'Jika user meminta detail teknis internal, bantu dulu dengan versi aman lalu jelaskan bahwa detail internal butuh password akses.',
         'Tetap akurat terhadap struktur role, menu, dan alur bisnis aplikasi ini.',
         'Jangan mengatakan data, menu, atau modul tidak tersedia hanya karena halaman aktif berbeda, selama konteks PROJECT atau snapshot live memang tersedia.',
@@ -380,6 +458,7 @@ function aiAgentGetPublicProjectLines(string $role): array
         'Area User di navigasi memakai menu Dashboards, Borrowing, Return, dan History dengan submenu Dashboard, Request Borrowing, Borrowing Status, Request Return, dan Borrowing History.',
         'Area PIC Barang di navigasi memakai menu Dashboards, Update, dan Return dengan submenu Dashboard, Update Item, dan Return Item.',
         'Pengelolaan vendor admin tidak muncul sebagai submenu Vendor terpisah di navigasi utama; aksesnya berada di Item / Inventory > Item Detail melalui tombol Edit Vendor atau modal Manage Vendors.',
+        'Hermes Agent adalah widget AI internal yang tersedia lintas role dan dipakai untuk membantu menjawab pertanyaan berdasarkan konteks aplikasi, snapshot live, dan grounding backend.',
     ];
 
     $roleHints = [
@@ -408,6 +487,7 @@ function aiAgentGetPublicWorkflowLines(array $focusScopes, string $role): array
         'laporan' => 'Laporan tersedia pada menu Laporan untuk admin dan manager.',
         'auth' => 'Profil dan perubahan data akun dilakukan dari area Profil sesuai role masing-masing.',
         'dashboard' => 'Dashboard tiap role menampilkan ringkasan operasional yang relevan dengan tugas role tersebut.',
+        'ai' => 'Hermes Agent membaca pertanyaan, riwayat chat, dan konteks halaman aktif, lalu backend menyiapkan grounding sebelum permintaan dikirim ke model AI.',
     ];
 
     $selected = [];
@@ -541,14 +621,35 @@ function aiAgentGetSensitiveAccessExpiresAt(): int
     return $expiresAt;
 }
 
+function aiAgentGetBusinessOverrideExpiresAt(): int
+{
+    $expiresAt = (int) ($_SESSION['ai_business_override_expires_at'] ?? 0);
+    if ($expiresAt <= time()) {
+        unset($_SESSION['ai_business_override_expires_at']);
+        return 0;
+    }
+
+    return $expiresAt;
+}
+
 function aiAgentGrantSensitiveAccess(int $durationMinutes): void
 {
     $_SESSION['ai_sensitive_access_expires_at'] = time() + max(1, $durationMinutes) * 60;
 }
 
+function aiAgentGrantBusinessOverrideAccess(int $durationMinutes): void
+{
+    $_SESSION['ai_business_override_expires_at'] = time() + max(1, $durationMinutes) * 60;
+}
+
 function aiAgentRevokeSensitiveAccess(): void
 {
     unset($_SESSION['ai_sensitive_access_expires_at']);
+}
+
+function aiAgentRevokeBusinessOverrideAccess(): void
+{
+    unset($_SESSION['ai_business_override_expires_at']);
 }
 
 function aiAgentFormatAccessExpiryLabel(int $timestamp): string
@@ -591,41 +692,7 @@ function aiAgentStripSensitivePassword(string $message, string $password): strin
 
 function aiAgentMessageRequestsSensitiveInfo(string $message): bool
 {
-    $source = strtolower(trim($message));
-    if ($source === '') {
-        return false;
-    }
-
-    $keywords = [
-        'nama file',
-        'file php',
-        'file html',
-        'folder',
-        'path',
-        'direktori',
-        'database',
-        'db ',
-        'schema',
-        'sql',
-        'tabel',
-        'table',
-        'kolom',
-        'query',
-        'endpoint',
-        'api ',
-        'source code',
-        'kode backend',
-        'lokasi file',
-        'struktur folder',
-    ];
-
-    foreach ($keywords as $keyword) {
-        if ($keyword !== '' && strpos($source, $keyword) !== false) {
-            return true;
-        }
-    }
-
-    return false;
+    return aiAgentMessageRequestsTechnicalInfo($message, aiAgentGetToolLayerConfig());
 }
 
 function aiAgentSanitizeHistoryMessages(array $history, string $sensitiveAccessPassword = '', bool $allowSensitiveHistory = false): array
@@ -728,4 +795,40 @@ function aiAgentExtractProviderError(array $decoded): string
     }
 
     return '';
+}
+
+function aiAgentRedactPublicReplySensitiveIdentifiers(string $reply, array $options = []): string
+{
+    $allowSensitiveIdentifiers = !empty($options['allow_sensitive_identifiers']);
+    if ($allowSensitiveIdentifiers) {
+        return $reply;
+    }
+
+    $sessionUserId = (int) ($options['session_user_id'] ?? 0);
+    $redacted = $reply;
+
+    $genericPatterns = [
+        '/\buser[_\s-]?id\b\s*[:=]?\s*\d+\b/iu',
+        '/\bid\s+akun\b\s*[:=]?\s*\d+\b/iu',
+        '/\bprimary\s+key\b\s*[:=]?\s*\d+\b/iu',
+    ];
+    foreach ($genericPatterns as $pattern) {
+        $redacted = preg_replace($pattern, 'akun aktif yang sedang login', $redacted);
+    }
+
+    if ($sessionUserId > 0) {
+        $specificPatterns = [
+            '/\buser[_\s-]?id\b\s*[:=]?\s*' . preg_quote((string) $sessionUserId, '/') . '\b/iu',
+            '/\bid\s+akun\b\s*[:=]?\s*' . preg_quote((string) $sessionUserId, '/') . '\b/iu',
+            '/\b' . preg_quote((string) $sessionUserId, '/') . '\b(?=\s*(?:yang sedang login|milik akun aktif))/iu',
+        ];
+        foreach ($specificPatterns as $pattern) {
+            $redacted = preg_replace($pattern, 'akun aktif yang sedang login', $redacted);
+        }
+    }
+
+    $redacted = preg_replace('/\(\s*akun aktif yang sedang login\s*\)/iu', '', (string) $redacted);
+    $redacted = preg_replace('/\s{2,}/', ' ', (string) $redacted);
+
+    return trim((string) $redacted);
 }

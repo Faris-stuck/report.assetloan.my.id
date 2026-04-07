@@ -3,6 +3,10 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../session-helper.php';
 require_once __DIR__ . '/../koneksi.php';
+require_once __DIR__ . '/context-helper.php';
+require_once __DIR__ . '/codebase-helper.php';
+require_once __DIR__ . '/index-helper.php';
+require_once __DIR__ . '/tool-helper.php';
 require_once __DIR__ . '/config-helper.php';
 require_once __DIR__ . '/runtime-helper.php';
 
@@ -29,6 +33,10 @@ $assetChecks = [
 
 $providerProbe = aiAgentProbeProviderReachability($agentBaseUrl);
 $databaseName = null;
+$projectIndexStatus = aiAgentGetProjectIndexStatusSnapshot($conn, [
+    'config' => $config,
+]);
+$projectIndexSummary = aiAgentSummarizeProjectIndexState($projectIndexStatus);
 
 if (isset($conn) && $conn instanceof mysqli && !$conn->connect_errno) {
     $dbResult = $conn->query('SELECT DATABASE() AS db_name');
@@ -82,6 +90,19 @@ $checks = [
         'files' => $assetChecks,
     ],
     'provider' => $providerProbe,
+    'project_index' => [
+        'ok' => !empty($projectIndexSummary['enabled']) && !empty($projectIndexSummary['available']),
+        'rebuild_required' => !empty($projectIndexSummary['rebuild_required']),
+        'reason' => (string) ($projectIndexSummary['reason'] ?? ''),
+        'reason_label' => aiAgentFormatProjectIndexReason((string) ($projectIndexSummary['reason'] ?? '')),
+        'project_index_summary' => $projectIndexSummary['project_index_summary'] ?? [],
+        'feature_manifest_summary' => $projectIndexSummary['feature_manifest_summary'] ?? [],
+        'watcher_signal' => $projectIndexSummary['watcher_signal'] ?? [],
+        'lock' => $projectIndexSummary['lock'] ?? [],
+        'paths' => $projectIndexSummary['paths'] ?? [],
+        'meta' => $projectIndexSummary['meta'] ?? [],
+        'current' => $projectIndexSummary['current'] ?? [],
+    ],
 ];
 
 $allOk = true;

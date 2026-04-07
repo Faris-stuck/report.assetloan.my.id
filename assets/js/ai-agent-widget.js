@@ -820,6 +820,132 @@
             .filter(Boolean);
     }
 
+    function isSnapshotElementVisible(element) {
+        if (!element || typeof element.getClientRects !== 'function') {
+            return false;
+        }
+
+        return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
+    }
+
+    function collectSnapshotTexts(selectors, maxItems) {
+        var items = [];
+        var seen = {};
+
+        selectors.forEach(function (selector) {
+            document.querySelectorAll(selector).forEach(function (element) {
+                if (!isSnapshotElementVisible(element)) {
+                    return;
+                }
+
+                var text = String(element.textContent || '').replace(/\s+/g, ' ').trim();
+                if (!text || text.length > 80 || seen[text]) {
+                    return;
+                }
+
+                seen[text] = true;
+                items.push(text);
+            });
+        });
+
+        return items.slice(0, maxItems || 10);
+    }
+
+    function collectSnapshotFilterLabels(maxItems) {
+        var items = [];
+        var seen = {};
+
+        document.querySelectorAll('table thead input, table thead select, .card input, .card select').forEach(function (element) {
+            if (!isSnapshotElementVisible(element)) {
+                return;
+            }
+
+            var text = String(
+                element.getAttribute('placeholder')
+                || element.getAttribute('aria-label')
+                || element.name
+                || element.id
+                || ''
+            ).replace(/\s+/g, ' ').trim();
+
+            if (!text || text.length > 80 || seen[text]) {
+                return;
+            }
+
+            seen[text] = true;
+            items.push(text);
+        });
+
+        return items.slice(0, maxItems || 12);
+    }
+
+    function collectSnapshotFormMetadata(maxItems) {
+        var items = [];
+        var seen = {};
+
+        document.querySelectorAll('form').forEach(function (form) {
+            if (!isSnapshotElementVisible(form)) {
+                return;
+            }
+
+            var label = String(
+                form.getAttribute('id')
+                || form.getAttribute('name')
+                || form.getAttribute('action')
+                || ''
+            ).replace(/\s+/g, ' ').trim();
+
+            if (!label || label.length > 100 || seen[label]) {
+                return;
+            }
+
+            seen[label] = true;
+            items.push(label);
+        });
+
+        return items.slice(0, maxItems || 10);
+    }
+
+    function collectSnapshotStructureStats() {
+        var stats = [];
+        var tableCount = document.querySelectorAll('table').length;
+        var formCount = document.querySelectorAll('form').length;
+        var modalCount = document.querySelectorAll('.modal').length;
+        var buttonCount = document.querySelectorAll('button, .btn, a.btn').length;
+
+        stats.push('tables=' + tableCount);
+        stats.push('forms=' + formCount);
+        stats.push('modals=' + modalCount);
+        stats.push('actions=' + buttonCount);
+
+        return stats;
+    }
+
+    function getRouteSegments() {
+        return String(window.location.pathname || '')
+            .split('/')
+            .filter(function (segment) {
+                return !!segment;
+            })
+            .slice(-8);
+    }
+
+    function buildPageUiSnapshot() {
+        return {
+            breadcrumbs: collectSnapshotTexts(['.breadcrumb-item', '.breadcrumb li'], 8),
+            cards: collectSnapshotTexts(['.page-header-title h5', '.card-header h3', '.card-header h4', '.card-header h5', '.card h3', '.card h4', '.card h5'], 10),
+            buttons: collectSnapshotTexts(['button', '.btn', 'a.btn'], 14),
+            table_headers: collectSnapshotTexts(['table thead tr:first-child th'], 14),
+            filters: collectSnapshotFilterLabels(12),
+            labels: collectSnapshotTexts(['form label', '.modal label'], 14),
+            links: collectSnapshotTexts(['nav a', '.nxl-submenu a', '.breadcrumb a', 'a[href]:not(.btn)'], 14),
+            forms: collectSnapshotFormMetadata(10),
+            modals: collectSnapshotTexts(['.modal .modal-title'], 10),
+            sections: collectSnapshotTexts(['section h1', 'section h2', 'section h3', '.card-body h3', '.card-body h4', '.card-body h5'], 12),
+            stats: collectSnapshotStructureStats()
+        };
+    }
+
     async function handleSubmit(event) {
         if (event && typeof event.preventDefault === 'function') {
             event.preventDefault();
@@ -859,11 +985,14 @@
                     history: requestHistory,
                     page_context: {
                         path: window.location.pathname || '',
+                        query: window.location.search || '',
                         title: document.title || '',
                         heading: document.querySelector('.page-header-title h5')
                             ? document.querySelector('.page-header-title h5').textContent.trim()
                             : '',
-                        role: detectRoleFromPath()
+                        role: detectRoleFromPath(),
+                        route_segments: getRouteSegments(),
+                        ui_snapshot: buildPageUiSnapshot()
                     }
                 })
             });

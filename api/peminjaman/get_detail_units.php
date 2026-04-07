@@ -178,6 +178,7 @@ try {
         // Read return_status directly from database
         $db_return_status = $row['return_status'];
         $expected_return_raw = $row['expected_return'];
+        $effective_expected_return_raw = $expected_return_raw ?: ($peminjaman['rencana_kembali'] ?? null);
         $approval_status = $row['approval_status'] ?? null;
         
         // For Pending Approval, treat as not returned (hasn't been approved yet)
@@ -209,11 +210,13 @@ try {
             if (!$is_returned) {
                 $display_return_status = $master_status;
             }
-        } elseif (!$is_returned && $db_return_status !== 'Return in Process' && $expected_return_raw) {
-            // Active unit: compute due-proximity from per-unit expected_return (from DB)
+        } elseif (!$is_returned && $db_return_status !== 'Return in Process' && $effective_expected_return_raw) {
+            // Active unit: compute due-proximity from per-unit expected_return.
+            // If the unit row is missing expected_return, fall back to the master
+            // rencana_kembali so the detail modal stays aligned with header status.
             $retDate = false;
-            if (preg_match('/^\d{4}-\d{2}-\d{2}/', $expected_return_raw)) {
-                $retDate = DateTime::createFromFormat('Y-m-d', substr($expected_return_raw, 0, 10), $tz);
+            if (preg_match('/^\d{4}-\d{2}-\d{2}/', $effective_expected_return_raw)) {
+                $retDate = DateTime::createFromFormat('Y-m-d', substr($effective_expected_return_raw, 0, 10), $tz);
             }
             if ($retDate) {
                 $retDate->setTime(0, 0, 0);
@@ -233,8 +236,8 @@ try {
         }
 
         // Track earliest expected return for non-returned units
-        if (!$is_returned && $expected_return_raw) {
-            $ts = strtotime($expected_return_raw);
+        if (!$is_returned && $effective_expected_return_raw) {
+            $ts = strtotime($effective_expected_return_raw);
             if ($ts && ($earliest_return === null || $ts < $earliest_return)) {
                 $earliest_return = $ts;
             }
@@ -250,7 +253,7 @@ try {
             'qty'                  => 1,
             'return_status'        => $display_return_status,     // FROM DATABASE + due proximity
             'approval_status'      => $approval_status,           // FROM DATABASE (Approved/Rejected/null)
-            'expected_return'      => $expected_return_raw ? date('d/m/Y', strtotime($expected_return_raw)) : '-', // FROM DATABASE
+            'expected_return'      => $effective_expected_return_raw ? date('d/m/Y', strtotime($effective_expected_return_raw)) : '-', // FROM DATABASE or master fallback
             'kondisi_pinjam'       => $row['kondisi_pinjam'],
             'kondisi_kembali'      => $row['kondisi_kembali'],    // FROM DATABASE
             'tanggal_kembali'      => $row['tanggal_kembali'],    // FROM DATABASE

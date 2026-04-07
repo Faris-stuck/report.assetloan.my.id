@@ -40,7 +40,7 @@ function aiAgentBuildGroundingContext(mysqli $conn, array $options = []): string
     $lines[] = '- Role yang dipakai agent: ' . $agentRole . '.';
 
     if ($userId > 0) {
-        $lines[] = '- User ID aktif: ' . $userId . '.';
+        $lines[] = '- Akun login aktif sudah tervalidasi untuk sesi ini.';
     }
 
     if ($module !== '') {
@@ -271,6 +271,12 @@ function aiAgentGetRelevantFileLines(array $focusScopes, string $role): array
             'admin/laporan/',
             'manager/laporan/',
         ],
+        'ai' => [
+            'api/ai/',
+            'assets/js/ai-agent-widget.js',
+            'assets/css/ai-agent-widget.css',
+            'config/ai_agent.example.php',
+        ],
         'auth' => [
             'api/auth/login.php',
             'api/auth/logout.php',
@@ -327,6 +333,7 @@ function aiAgentGetWorkflowLines(array $focusScopes): array
         'laporan' => 'Laporan stok, peminjaman, dan pengembalian tersedia di halaman admin/laporan/ dan manager/laporan/.',
         'email' => 'Notifikasi email dan reminder jatuh tempo berada di modul api/email/ dan api/cron/.',
         'users' => 'Manajemen akun dan role admin berada di menu Administrator dengan submenu User List dan Role List.',
+        'ai' => 'Hermes Agent berjalan dari widget frontend assets/js/ai-agent-widget.js ke backend api/ai/chat.php, lalu grounding utamanya dibentuk oleh api/ai/context-helper.php dan helper AI terkait.',
     ];
 
     $selectedScopes = ['peminjaman', 'approval', 'pengembalian', 'extend'];
@@ -910,6 +917,9 @@ function aiAgentInferModule(string $pagePath, string $pageTitle, string $pageHea
         'update-barang' => 'barang dan stok',
         'persetujuan' => 'approval',
         'approval' => 'approval',
+        'hermes' => 'ai assistant',
+        'chat' => 'ai assistant',
+        'assistant' => 'ai assistant',
         'profil' => 'profil user',
         'user' => 'manajemen user',
         'pengaturan' => 'pengaturan role',
@@ -935,6 +945,7 @@ function aiAgentResolveFocusScopes(string $message, string $module, string $page
         'laporan' => 'laporan',
         'barang dan stok' => 'barang',
         'approval' => 'approval',
+        'ai assistant' => 'ai',
         'profil user' => 'auth',
         'manajemen user' => 'users',
         'pengaturan role' => 'users',
@@ -956,6 +967,7 @@ function aiAgentResolveFocusScopes(string $message, string $module, string $page
         'laporan' => ['laporan', 'report'],
         'auth' => ['login', 'logout', 'session', 'profil', 'password', 'register'],
         'users' => ['manajemen user', 'buat user', 'role sistem', 'hak akses', 'akun'],
+        'ai' => ['ai', 'hermes', 'chatbot', 'assistant', 'widget', 'mode sensitif', 'prompt', 'grounding', 'dinamis', 'statis', 'backend'],
     ];
 
     foreach ($keywordMap as $scope => $keywords) {

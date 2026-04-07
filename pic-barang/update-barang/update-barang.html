@@ -277,31 +277,90 @@
                         <!-- ===================================================== -->
 
 
-                        <div class="card-body table-responsive">
+                        <div class="card-body p-0">
+                            <div class="px-3 pt-3">
+                                <p class="text-muted fs-12 mb-2" id="showingInfo">Showing 0 entries</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered align-middle mb-0" id="barangTable">
+                                    <thead>
+                                        <tr style="background: #3b5998; color: #fff !important;">
+                                            <th class="text-center" style="color: #fff !important;">Select</th>
+                                            <th style="color: #fff !important;">No</th>
+                                            <th style="color: #fff !important;">Item Code</th>
+                                            <th style="cursor:pointer; color: #fff !important;" onclick="sortTable('nama_barang')">
+                                                Item Name <i class="feather-arrow-up fs-10" id="sort-nama_barang"></i>
+                                            </th>
+                                            <th style="color: #fff !important;">Category</th>
+                                            <th style="color: #fff !important;">Location</th>
+                                            <th style="color: #fff !important;">Safety Stock</th>
+                                            <th style="color: #fff !important;">Stock</th>
+                                            <th style="color: #fff !important;">Condition</th>
+                                            <th style="color: #fff !important;">Status</th>
+                                            <th class="text-center" style="color: #fff !important;">Action</th>
+                                        </tr>
+                                        <tr style="background: #4a69bd;">
+                                            <td></td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterNo" placeholder="Filter no..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterItemCode" placeholder="Filter item code..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterItemName" placeholder="Filter item name..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterCategory" placeholder="Filter category..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterLocation" placeholder="Filter location..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterSafetyStock" placeholder="Filter safety stock..." oninput="applyFilters()">
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterCondition" onchange="applyFilters(true, false)">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterStatus" onchange="applyFilters(true, false)">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </thead>
 
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="text-center">Select</th>
-                                        <th>No</th>
-                                        <th>Item Code</th>
-                                        <th>Item Name</th>
-                                        <th>Category</th>
-                                        <th>Location</th>
-                                        <th>Safety Stock</th>
-                                        <th>Stock</th>
-                                        <th>Condition</th>
-                                        <th>Status</th>
-                                        <th class="text-center">Action</th>
-                                    </tr>
-                                </thead>
+                                    <tbody id="tabelBarang">
+                                        <!-- DATA FROM API -->
+                                    </tbody>
 
-                                <tbody id="tabelBarang">
-                                    <!-- DATA FROM API -->
-                                </tbody>
-
-                            </table>
-
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12">Show</span>
+                                <select class="form-select form-select-sm" style="width:75px;" id="perPage" onchange="changePerPage()">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="fs-12">entries</span>
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+                            </nav>
                         </div>
                     </div>
                     <!-- [ Data Barang Table ] end -->
