@@ -20,8 +20,8 @@ if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'POST'], true)) {
 }
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../../config/ai_agent.php',
     __DIR__ . '/../../config/ai_agent.example.php',
+    __DIR__ . '/../../config/ai_agent.php',
 ]);
 $requestData = aiAgentReadProjectIndexControlRequest();
 $auth = aiAgentAuthorizeProjectIndexControl($config, $requestData);

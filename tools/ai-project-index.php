@@ -27,8 +27,8 @@ if ($command === 'help' || !in_array($command, ['status', 'signal', 'rebuild'], 
 }
 
 $config = aiAgentLoadConfig([
-    $projectRoot . '/config/ai_agent.php',
     $projectRoot . '/config/ai_agent.example.php',
+    $projectRoot . '/config/ai_agent.php',
 ]);
 
 $result = [

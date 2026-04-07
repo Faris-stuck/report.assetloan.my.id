@@ -28,7 +28,8 @@ function aiAgentGetProjectIndexConfig(array $config = []): array
         'max_age_seconds' => max(30, (int) ($config['project_index_max_age_seconds'] ?? 300)),
         'max_file_size_bytes' => max(20000, (int) ($config['project_index_max_file_size_bytes'] ?? 200000)),
         'max_relevant_entries' => max(2, (int) ($config['project_index_max_relevant_entries'] ?? 6)),
-        'manifest_version' => 1,
+        'fingerprint_mode' => 'content_hash',
+        'manifest_version' => 2,
     ];
 }
 
@@ -382,9 +383,10 @@ function aiAgentComputeProjectFilesystemState(string $projectRoot): array
         $absolutePath = $projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
         $mtime = is_file($absolutePath) ? (int) @filemtime($absolutePath) : 0;
         $size = is_file($absolutePath) ? (int) @filesize($absolutePath) : 0;
+        $contentHash = aiAgentComputeProjectFileContentHash($absolutePath);
 
         $latestMtime = max($latestMtime, $mtime);
-        $signatures[] = $relativePath . '|' . $size . '|' . $mtime;
+        $signatures[] = $relativePath . '|' . $size . '|' . $mtime . '|' . $contentHash;
     }
 
     return [
@@ -393,6 +395,16 @@ function aiAgentComputeProjectFilesystemState(string $projectRoot): array
         'fingerprint' => hash('sha256', implode("\n", $signatures)),
         'files' => $files,
     ];
+}
+
+function aiAgentComputeProjectFileContentHash(string $absolutePath): string
+{
+    if (!is_file($absolutePath) || !is_readable($absolutePath)) {
+        return '';
+    }
+
+    $hash = @hash_file('sha256', $absolutePath);
+    return is_string($hash) ? $hash : '';
 }
 
 function aiAgentComputeSchemaFingerprint(array $schemaIndex): string
@@ -726,6 +738,7 @@ function aiAgentRebuildProjectIndexBundle(
         'generated_at' => time(),
         'generated_at_iso' => date('c'),
         'project_root' => $projectRoot,
+        'project_fingerprint_mode' => (string) ($indexConfig['fingerprint_mode'] ?? 'content_hash'),
         'project_fingerprint' => (string) ($filesystemState['fingerprint'] ?? ''),
         'schema_fingerprint' => $schemaFingerprint,
         'total_files' => (int) ($filesystemState['total_files'] ?? 0),

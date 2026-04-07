@@ -700,12 +700,14 @@ function aiAgentNormalizeToolPageSnapshot($snapshot): array
         'buttons' => [],
         'table_headers' => [],
         'filters' => [],
+        'active_filters' => [],
         'labels' => [],
         'links' => [],
         'forms' => [],
         'modals' => [],
         'sections' => [],
         'stats' => [],
+        'table_facts' => [],
     ];
 
     if (!is_array($snapshot)) {
@@ -859,6 +861,14 @@ function aiAgentToolPageMetadata(array $options = []): array
         $lines[] = 'Kolom tabel yang terlihat: ' . implode(', ', array_slice($pageSnapshot['table_headers'], 0, 10)) . '.';
     }
 
+    if (!empty($pageSnapshot['active_filters'])) {
+        $lines[] = 'Filter aktif yang sedang terpasang di browser: ' . implode(', ', array_slice($pageSnapshot['active_filters'], 0, 8)) . '.';
+    }
+
+    if (!empty($pageSnapshot['table_facts'])) {
+        $lines[] = 'Fakta tabel yang sedang terlihat di browser: ' . implode(', ', array_slice($pageSnapshot['table_facts'], 0, 6)) . '.';
+    }
+
     if (!empty($pageSnapshot['forms'])) {
         $lines[] = 'Form yang terdeteksi dari browser: ' . implode(', ', array_slice($pageSnapshot['forms'], 0, 8)) . '.';
     }
@@ -967,6 +977,8 @@ function aiAgentToolProjectIndex(array $options = []): array
             . ' endpoint API, dan '
             . (int) ($summary['scripts'] ?? 0)
             . ' script frontend.';
+        $lines[] = 'Index ini membaca file groundable utama PROJECT seperti .php, .html, .js, .css, .md, dan .sql. Folder vendor, assets vendor/minified, tmp, cache, node_modules, binary, dan gambar tidak dipakai sebagai sumber grounding isi.';
+        $lines[] = 'Saat menjawab, runtime tidak membawa seluruh isi PROJECT sekaligus; hanya entri manifest, file linked, dan tabel database yang paling relevan dengan pertanyaan yang dimasukkan ke grounding. Jika bukti exact belum ada di konteks ini, jawaban harus jujur menyebut konteks belum cukup.';
     }
 
     if (!empty($featureSummary)) {
@@ -1027,6 +1039,9 @@ function aiAgentToolProjectIndex(array $options = []): array
     if (!empty($meta['project_fingerprint'])) {
         $technicalLines[] = '- Project fingerprint aktif: ' . $meta['project_fingerprint'] . '.';
     }
+    if (!empty($meta['project_fingerprint_mode'])) {
+        $technicalLines[] = '- Project fingerprint mode: ' . $meta['project_fingerprint_mode'] . '.';
+    }
     if (!empty($meta['schema_fingerprint'])) {
         $technicalLines[] = '- Schema fingerprint aktif: ' . $meta['schema_fingerprint'] . '.';
     }
@@ -1067,9 +1082,11 @@ function aiAgentToolUiSnapshot(array $options = []): array
         'breadcrumbs' => 'Breadcrumb browser',
         'cards' => 'Card atau section aktif',
         'filters' => 'Filter yang terlihat',
+        'active_filters' => 'Nilai filter aktif',
         'links' => 'Link navigasi atau aksi yang terlihat',
         'modals' => 'Modal title yang terlihat',
         'stats' => 'Statistik struktur UI',
+        'table_facts' => 'Fakta tabel yang terlihat',
     ];
 
     foreach ($labels as $key => $label) {
@@ -1226,6 +1243,8 @@ function aiAgentToolLiveData(mysqli $conn, array $options = []): array
     $role = trim((string) ($options['role'] ?? 'user'));
     $userId = (int) ($options['user_id'] ?? 0);
     $message = aiAgentCleanText((string) ($options['message'] ?? ''), 1600);
+    $pageContext = isset($options['page_context']) && is_array($options['page_context']) ? $options['page_context'] : [];
+    $pageSnapshot = aiAgentNormalizeToolPageSnapshot($options['page_snapshot'] ?? []);
     $sharedState = isset($options['shared_state']) && is_array($options['shared_state']) ? $options['shared_state'] : [];
     $schemaIndex = isset($sharedState['schema_index']) && is_array($sharedState['schema_index']) ? $sharedState['schema_index'] : [];
     $relevantTables = isset($sharedState['relevant_tables']) && is_array($sharedState['relevant_tables']) ? $sharedState['relevant_tables'] : [];
@@ -1246,8 +1265,31 @@ function aiAgentToolLiveData(mysqli $conn, array $options = []): array
         $lines[] = 'Snapshot live ini hanya memakai data yang berada dalam scope role aktif, tanpa perlu password.';
     }
 
+    $userRoleBundle = aiAgentBuildUserRoleLiveDetailBundle($conn, [
+        'message' => $message,
+        'role' => $role,
+        'page_context' => $pageContext,
+        'page_snapshot' => $pageSnapshot,
+        'access_decision' => $accessDecision,
+        'schema_index' => $schemaIndex,
+    ]);
+    foreach (($userRoleBundle['lines'] ?? []) as $detailLine) {
+        $detailLine = trim((string) $detailLine);
+        if ($detailLine !== '') {
+            $lines[] = $detailLine;
+        }
+    }
+
+    $handledTables = isset($userRoleBundle['handled_tables']) && is_array($userRoleBundle['handled_tables'])
+        ? array_values(array_unique(array_map('strval', $userRoleBundle['handled_tables'])))
+        : [];
+    $hasSpecialLiveDetail = !empty($userRoleBundle['lines']);
     $renderedTableCount = 0;
     foreach ($accessibleTables as $tableName) {
+        if (in_array($tableName, $handledTables, true)) {
+            continue;
+        }
+
         if (!isset($schemaIndex[$tableName])) {
             continue;
         }
@@ -1301,7 +1343,7 @@ function aiAgentToolLiveData(mysqli $conn, array $options = []): array
         }
     }
 
-    if ($renderedTableCount === 0) {
+    if ($renderedTableCount === 0 && !$hasSpecialLiveDetail) {
         $lines[] = 'Belum ada snapshot live yang cocok dengan scope role dan konteks pertanyaan saat ini.';
     }
 
@@ -1319,6 +1361,193 @@ function aiAgentToolLiveData(mysqli $conn, array $options = []): array
         'safe_lines' => $lines,
         'technical_lines' => [],
     ];
+}
+
+function aiAgentBuildUserRoleLiveDetailBundle(mysqli $conn, array $options = []): array
+{
+    $role = trim((string) ($options['role'] ?? 'user'));
+    $message = strtolower(aiAgentCleanText((string) ($options['message'] ?? ''), 1600));
+    $pageContext = isset($options['page_context']) && is_array($options['page_context']) ? $options['page_context'] : [];
+    $pageSnapshot = isset($options['page_snapshot']) && is_array($options['page_snapshot'])
+        ? $options['page_snapshot']
+        : aiAgentNormalizeToolPageSnapshot($options['page_snapshot'] ?? []);
+    $schemaIndex = isset($options['schema_index']) && is_array($options['schema_index']) ? $options['schema_index'] : [];
+
+    $bundle = [
+        'lines' => [],
+        'handled_tables' => [],
+    ];
+
+    if ($role !== 'admin' || !isset($schemaIndex['users'])) {
+        return $bundle;
+    }
+
+    if (!aiAgentPageContextFocusesUserRoleData($message, $pageContext, $pageSnapshot)) {
+        return $bundle;
+    }
+
+    $roleCounts = aiAgentFetchLabelTotals($conn, 'SELECT role AS label, COUNT(*) AS total FROM users GROUP BY role');
+    if (empty($roleCounts)) {
+        return $bundle;
+    }
+
+    $bundle['handled_tables'][] = 'users';
+    $bundle['lines'][] = 'Distribusi akun live saat ini per role dari tabel users: ' . aiAgentFormatCountMap($roleCounts) . '.';
+    $bundle['lines'][] = 'Role yang benar-benar aktif di data live users saat ini hanya: ' . implode(', ', array_keys($roleCounts)) . '. Jangan tambahkan label role lain di jawaban jika tidak muncul di data live ini.';
+
+    $requestedRoles = aiAgentExtractRequestedLiveRoles($message, $pageSnapshot);
+    foreach ($requestedRoles as $requestedRole) {
+        $total = aiAgentQueryLiveUserCountByRole($conn, $requestedRole);
+        $bundle['lines'][] = 'Jumlah akun live dengan role ' . $requestedRole . ' saat ini: ' . $total . '.';
+        if (!array_key_exists($requestedRole, $roleCounts)) {
+            $bundle['lines'][] = 'Label role ' . $requestedRole . ' tidak muncul sebagai role aktif pada data live users saat ini.';
+        }
+    }
+
+    $activeRoleFilter = aiAgentExtractActiveRoleFilterFromSnapshot($pageSnapshot);
+    if ($activeRoleFilter !== '') {
+        $bundle['lines'][] = 'Filter role aktif di halaman browser saat ini: ' . $activeRoleFilter . '.';
+        $bundle['lines'][] = 'Jumlah akun live yang cocok dengan filter role ' . $activeRoleFilter . ' saat ini: ' . aiAgentQueryLiveUserCountByRole($conn, $activeRoleFilter) . '.';
+    }
+
+    return $bundle;
+}
+
+function aiAgentPageContextFocusesUserRoleData(string $message, array $pageContext = [], array $pageSnapshot = []): bool
+{
+    $pagePath = strtolower(aiAgentNormalizeProjectRelativePath((string) ($pageContext['path'] ?? '')));
+    $pageTitle = strtolower(aiAgentCleanText((string) ($pageContext['title'] ?? ''), 160));
+    $pageHeading = strtolower(aiAgentCleanText((string) ($pageContext['heading'] ?? ''), 160));
+    $snapshotBlob = strtolower(implode(' ', array_merge(
+        $pageSnapshot['breadcrumbs'] ?? [],
+        $pageSnapshot['cards'] ?? [],
+        $pageSnapshot['table_headers'] ?? [],
+        $pageSnapshot['filters'] ?? [],
+        $pageSnapshot['active_filters'] ?? [],
+        $pageSnapshot['table_facts'] ?? [],
+        $pageSnapshot['links'] ?? []
+    )));
+
+    foreach ([
+        'admin/user/',
+        'admin/pengaturan',
+        'user list',
+        'role list',
+        'administrator',
+        'akun',
+        'role ',
+        'pic_barang',
+    ] as $needle) {
+        if (($needle !== '' && strpos($pagePath, $needle) !== false)
+            || ($needle !== '' && strpos($pageTitle, $needle) !== false)
+            || ($needle !== '' && strpos($pageHeading, $needle) !== false)
+            || ($needle !== '' && strpos($snapshotBlob, $needle) !== false)
+            || ($needle !== '' && strpos($message, trim($needle)) !== false)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function aiAgentExtractRequestedLiveRoles(string $message, array $pageSnapshot = []): array
+{
+    $requestedRoles = [];
+    $sources = [$message];
+
+    $activeRoleFilter = aiAgentExtractActiveRoleFilterFromSnapshot($pageSnapshot);
+    if ($activeRoleFilter !== '') {
+        $requestedRoles[] = $activeRoleFilter;
+    }
+
+    $sources = array_merge($sources, $pageSnapshot['active_filters'] ?? []);
+    foreach ($sources as $source) {
+        $source = strtolower(aiAgentCleanText((string) $source, 200));
+        if ($source === '') {
+            continue;
+        }
+
+        foreach (['admin', 'manager', 'user', 'pic_barang', 'pic barang'] as $candidate) {
+            if (strpos($source, strtolower($candidate)) !== false) {
+                $normalized = aiAgentNormalizeLiveRoleValue($candidate);
+                if ($normalized !== '') {
+                    $requestedRoles[] = $normalized;
+                }
+            }
+        }
+    }
+
+    return array_values(array_unique(array_filter($requestedRoles)));
+}
+
+function aiAgentExtractActiveRoleFilterFromSnapshot(array $pageSnapshot = []): string
+{
+    foreach (($pageSnapshot['active_filters'] ?? []) as $filterLine) {
+        $parts = explode('=', (string) $filterLine, 2);
+        if (count($parts) !== 2) {
+            continue;
+        }
+
+        $key = strtolower(preg_replace('/[^a-z0-9]+/', '', (string) ($parts[0] ?? '')));
+        $value = aiAgentNormalizeLiveRoleValue((string) ($parts[1] ?? ''));
+        if ($value === '') {
+            continue;
+        }
+
+        if (strpos($key, 'role') !== false) {
+            return $value;
+        }
+    }
+
+    return '';
+}
+
+function aiAgentNormalizeLiveRoleValue(string $value): string
+{
+    $value = strtolower(trim($value));
+    if ($value === '') {
+        return '';
+    }
+
+    $normalized = preg_replace('/[^a-z0-9_ ]+/', ' ', $value);
+    $normalized = preg_replace('/\s+/', ' ', (string) $normalized);
+    $normalized = trim((string) $normalized);
+
+    $map = [
+        'all' => '',
+        'all roles' => '',
+        'semua' => '',
+        'semua role' => '',
+        'user biasa' => 'user',
+        'requester' => 'user',
+        'approver' => 'manager',
+        'pic barang' => 'pic_barang',
+        'pic' => 'pic_barang',
+    ];
+
+    if (isset($map[$normalized])) {
+        return $map[$normalized];
+    }
+
+    return str_replace(' ', '_', $normalized);
+}
+
+function aiAgentQueryLiveUserCountByRole(mysqli $conn, string $role): int
+{
+    $role = aiAgentNormalizeLiveRoleValue($role);
+    if ($role === '') {
+        $row = aiAgentFetchSingleRow($conn, 'SELECT COUNT(*) AS total_rows FROM users');
+        return (int) ($row['total_rows'] ?? 0);
+    }
+
+    $row = aiAgentFetchSingleRow(
+        $conn,
+        'SELECT COUNT(*) AS total_rows FROM users WHERE role = ?',
+        's',
+        [$role]
+    );
+
+    return (int) ($row['total_rows'] ?? 0);
 }
 
 function aiAgentBuildBorrowingLiveDetailLines(mysqli $conn, array $options = []): array

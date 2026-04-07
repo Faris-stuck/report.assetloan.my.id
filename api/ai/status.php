@@ -13,8 +13,8 @@ require_once __DIR__ . '/runtime-helper.php';
 SessionValidator::requireRole(['admin']);
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../../config/ai_agent.php',
     __DIR__ . '/../../config/ai_agent.example.php',
+    __DIR__ . '/../../config/ai_agent.php',
 ]);
 
 $agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');

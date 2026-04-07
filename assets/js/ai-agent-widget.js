@@ -851,6 +851,19 @@
         return items.slice(0, maxItems || 10);
     }
 
+    function normalizeSnapshotText(value, maxLength) {
+        var text = String(value || '').replace(/\s+/g, ' ').trim();
+        if (!text) {
+            return '';
+        }
+
+        if (maxLength && text.length > maxLength) {
+            return text.slice(0, maxLength);
+        }
+
+        return text;
+    }
+
     function collectSnapshotFilterLabels(maxItems) {
         var items = [];
         var seen = {};
@@ -860,13 +873,14 @@
                 return;
             }
 
-            var text = String(
+            var text = normalizeSnapshotText(
                 element.getAttribute('placeholder')
                 || element.getAttribute('aria-label')
                 || element.name
                 || element.id
-                || ''
-            ).replace(/\s+/g, ' ').trim();
+                || '',
+                80
+            );
 
             if (!text || text.length > 80 || seen[text]) {
                 return;
@@ -877,6 +891,86 @@
         });
 
         return items.slice(0, maxItems || 12);
+    }
+
+    function collectSnapshotActiveFilters(maxItems) {
+        var items = [];
+        var seen = {};
+
+        document.querySelectorAll('table thead input, table thead select, input[id*="filter"], select[id*="filter"], input[name*="filter"], select[name*="filter"]').forEach(function (element) {
+            if (!isSnapshotElementVisible(element)) {
+                return;
+            }
+
+            var tagName = String(element.tagName || '').toLowerCase();
+            var inputType = String(element.type || '').toLowerCase();
+            if (inputType === 'password' || inputType === 'hidden') {
+                return;
+            }
+
+            var key = normalizeSnapshotText(
+                element.name
+                || element.id
+                || element.getAttribute('aria-label')
+                || element.getAttribute('placeholder')
+                || '',
+                60
+            );
+            if (!key) {
+                return;
+            }
+
+            var value = '';
+            if (tagName === 'select') {
+                var selectedOption = element.options && element.selectedIndex >= 0
+                    ? element.options[element.selectedIndex]
+                    : null;
+                value = normalizeSnapshotText(
+                    element.value
+                    || (selectedOption ? selectedOption.textContent : ''),
+                    60
+                );
+            } else {
+                value = normalizeSnapshotText(element.value, 60);
+            }
+
+            if (!value) {
+                return;
+            }
+
+            var item = key + '=' + value;
+            if (seen[item]) {
+                return;
+            }
+
+            seen[item] = true;
+            items.push(item);
+        });
+
+        return items.slice(0, maxItems || 12);
+    }
+
+    function collectSnapshotTableFacts(maxItems) {
+        var items = [];
+        var seen = {};
+
+        ['#showingInfo', '.dataTables_info', '#filterRoleLabel'].forEach(function (selector) {
+            document.querySelectorAll(selector).forEach(function (element) {
+                if (!isSnapshotElementVisible(element)) {
+                    return;
+                }
+
+                var text = normalizeSnapshotText(element.textContent || '', 120);
+                if (!text || seen[text]) {
+                    return;
+                }
+
+                seen[text] = true;
+                items.push(text);
+            });
+        });
+
+        return items.slice(0, maxItems || 8);
     }
 
     function collectSnapshotFormMetadata(maxItems) {
@@ -937,12 +1031,14 @@
             buttons: collectSnapshotTexts(['button', '.btn', 'a.btn'], 14),
             table_headers: collectSnapshotTexts(['table thead tr:first-child th'], 14),
             filters: collectSnapshotFilterLabels(12),
+            active_filters: collectSnapshotActiveFilters(12),
             labels: collectSnapshotTexts(['form label', '.modal label'], 14),
             links: collectSnapshotTexts(['nav a', '.nxl-submenu a', '.breadcrumb a', 'a[href]:not(.btn)'], 14),
             forms: collectSnapshotFormMetadata(10),
             modals: collectSnapshotTexts(['.modal .modal-title'], 10),
             sections: collectSnapshotTexts(['section h1', 'section h2', 'section h3', '.card-body h3', '.card-body h4', '.card-body h5'], 12),
-            stats: collectSnapshotStructureStats()
+            stats: collectSnapshotStructureStats(),
+            table_facts: collectSnapshotTableFacts(8)
         };
     }
 

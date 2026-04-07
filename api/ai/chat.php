@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 SessionValidator::requireRole(['user', 'manager', 'admin', 'pic_barang']);
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../../config/ai_agent.php',
     __DIR__ . '/../../config/ai_agent.example.php',
+    __DIR__ . '/../../config/ai_agent.php',
 ]);
 $agentName = trim((string) ($config['agent_name'] ?? 'Hermes Agent'));
 $agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
@@ -321,6 +321,13 @@ if ($reply === '') {
     exit;
 }
 
+$reply = aiAgentApplyTruthfulnessGuard($reply, $conn, [
+    'message' => $effectiveMessage,
+    'role' => $sessionRole,
+    'page_context' => $pageContext,
+    'page_snapshot' => $pageSnapshot,
+]);
+
 $reply = aiAgentRedactPublicReplySensitiveIdentifiers($reply, [
     'session_user_id' => $sessionUserId,
     'allow_sensitive_identifiers' => $useSensitiveGrounding,
@@ -373,10 +380,10 @@ function aiAgentBuildModePrompt(array $options = []): string
     }
 
     if ($requiresScopeOverride && !$hasScopeOverrideAccess) {
-        return 'Mode publik aktif. Pertanyaan user meminta data bisnis di luar scope role saat ini. Anda tetap menerima metadata halaman, data live, dan observasi implementasi dinamis, tetapi data yang boleh dipakai hanya yang masih berada dalam scope role aktif. Jawab dengan jujur berdasarkan akses yang tersedia, jangan mengarang data lintas-role, jangan sebut user_id atau identifier internal mentah, dan tutup dengan catatan singkat bahwa akses lintas-role memerlukan password override. Detail teknis internal tetap terkunci.';
+        return 'Mode publik aktif. Pertanyaan user meminta data bisnis di luar scope role saat ini. Anda tetap menerima metadata halaman, data live, dan observasi implementasi dinamis, tetapi data yang boleh dipakai hanya yang masih berada dalam scope role aktif. Jawab dengan jujur berdasarkan akses yang tersedia, jangan mengarang data lintas-role, jangan sebut user_id atau identifier internal mentah, jangan menambah kategori role atau label bisnis yang tidak muncul di data live, dan jika angka exact belum tersedia di tool layer maka akui bahwa konteks belum cukup untuk angka pasti. Tutup dengan catatan singkat bahwa akses lintas-role memerlukan password override. Detail teknis internal tetap terkunci.';
     }
 
-    return 'Mode publik aktif. Prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Data live dalam scope role aktif boleh dipakai tanpa password. Anda menerima tool layer runtime berisi metadata halaman, data live, dan observasi implementasi dinamis, tetapi jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, user_id, primary key, atau identifier internal mentah kecuali sistem secara eksplisit mengaktifkan mode sensitif teknis untuk admin. Halaman aktif hanya konteks tambahan, bukan batas pengetahuan; jika pertanyaan membahas area lain, gunakan struktur seluruh aplikasi dan data live yang tersedia selama masih sesuai scope role.';
+    return 'Mode publik aktif. Prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Data live dalam scope role aktif boleh dipakai tanpa password. Anda menerima tool layer runtime berisi metadata halaman, data live, dan observasi implementasi dinamis, tetapi jangan menyebut nama file, folder, path, endpoint, database, tabel, kolom, query, user_id, primary key, atau identifier internal mentah kecuali sistem secara eksplisit mengaktifkan mode sensitif teknis untuk admin. Jangan menambah kategori role atau label bisnis yang tidak muncul di data live. Jika tool layer belum memberi bukti exact untuk angka, daftar, atau klaim spesifik, katakan konteks belum cukup dan jangan menebak. Halaman aktif hanya konteks tambahan, bukan batas pengetahuan; jika pertanyaan membahas area lain, gunakan struktur seluruh aplikasi dan data live yang tersedia selama masih sesuai scope role.';
 }
 
 function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): string
@@ -399,6 +406,10 @@ function aiAgentBuildPublicGroundingContext(mysqli $conn, array $options = []): 
         'Jangan menyebut user_id, id akun, primary key, atau identifier internal mentah milik user di jawaban publik.',
         'Jika user meminta detail teknis internal, bantu dulu dengan versi aman lalu jelaskan bahwa detail internal butuh password akses.',
         'Tetap akurat terhadap struktur role, menu, dan alur bisnis aplikasi ini.',
+        'Jika tool layer memberi angka live, label role, atau daftar kategori spesifik, gunakan persis angka dan label itu tanpa menambah kategori baru.',
+        'Jangan menebak role seperti superadmin, akun sistem internal, atau label lain jika label tersebut tidak muncul eksplisit di data live.',
+        'Jika tool layer tidak memberi bukti exact untuk angka, daftar, atau klaim spesifik, katakan dengan jujur bahwa konteks yang tersedia belum cukup untuk memastikan detail itu.',
+        'Jika user bertanya cakupan seluruh PROJECT, jelaskan bahwa index dinamis membaca file groundable utama dan runtime hanya membawa subset file serta tabel yang paling relevan ke prompt.',
         'Jangan mengatakan data, menu, atau modul tidak tersedia hanya karena halaman aktif berbeda, selama konteks PROJECT atau snapshot live memang tersedia.',
         'Gunakan halaman aktif sebagai konteks tambahan, tetapi untuk pertanyaan lintas menu tetap pakai struktur aplikasi secara keseluruhan.',
     ];
@@ -831,4 +842,135 @@ function aiAgentRedactPublicReplySensitiveIdentifiers(string $reply, array $opti
     $redacted = preg_replace('/\s{2,}/', ' ', (string) $redacted);
 
     return trim((string) $redacted);
+}
+
+function aiAgentApplyTruthfulnessGuard(string $reply, mysqli $conn, array $options = []): string
+{
+    $guarded = aiAgentApplyUserRoleTruthGuard($reply, $conn, $options);
+    return trim($guarded);
+}
+
+function aiAgentApplyUserRoleTruthGuard(string $reply, mysqli $conn, array $options = []): string
+{
+    $message = strtolower(aiAgentCleanText((string) ($options['message'] ?? ''), 1600));
+    $role = trim((string) ($options['role'] ?? 'user'));
+    $pageContext = isset($options['page_context']) && is_array($options['page_context']) ? $options['page_context'] : [];
+    $pageSnapshot = aiAgentNormalizeToolPageSnapshot($options['page_snapshot'] ?? []);
+
+    if ($role !== 'admin') {
+        return $reply;
+    }
+
+    if (!aiAgentPageContextFocusesUserRoleData($message, $pageContext, $pageSnapshot)) {
+        return $reply;
+    }
+
+    $roleCounts = aiAgentFetchLabelTotals($conn, 'SELECT role AS label, COUNT(*) AS total FROM users GROUP BY role');
+    if (empty($roleCounts)) {
+        return $reply;
+    }
+
+    $replyLower = strtolower(aiAgentCleanText($reply, 6000));
+    $requestedRoles = aiAgentExtractRequestedLiveRoles($message, $pageSnapshot);
+    $activeRoleFilter = aiAgentExtractActiveRoleFilterFromSnapshot($pageSnapshot);
+    if ($activeRoleFilter !== '') {
+        $requestedRoles[] = $activeRoleFilter;
+    }
+    $requestedRoles = array_values(array_unique(array_filter(array_map('aiAgentNormalizeLiveRoleValue', $requestedRoles))));
+
+    $shouldOverride = false;
+    foreach ([
+        'superadmin',
+        'super admin',
+        'akun sistem internal',
+        'system internal',
+        'internal account',
+        'guest',
+        'owner',
+    ] as $forbiddenLabel) {
+        if (strpos($replyLower, $forbiddenLabel) !== false) {
+            $shouldOverride = true;
+            break;
+        }
+    }
+
+    if (!$shouldOverride) {
+        foreach ($requestedRoles as $requestedRole) {
+            $liveTotal = (int) ($roleCounts[$requestedRole] ?? 0);
+            if (aiAgentReplyContradictsLiveRoleCount($replyLower, $requestedRole, $liveTotal)) {
+                $shouldOverride = true;
+                break;
+            }
+        }
+    }
+
+    if (!$shouldOverride) {
+        return $reply;
+    }
+
+    return aiAgentBuildUserRoleTruthCorrectionReply($roleCounts, $requestedRoles, $activeRoleFilter);
+}
+
+function aiAgentReplyContradictsLiveRoleCount(string $replyLower, string $role, int $liveTotal): bool
+{
+    $variants = array_values(array_unique(array_filter([
+        strtolower($role),
+        strtolower(str_replace('_', ' ', $role)),
+    ])));
+
+    foreach ($variants as $variant) {
+        $pattern = preg_quote($variant, '/');
+
+        if ($liveTotal > 0) {
+            if (preg_match('/(?:belum ada|tidak ada|0 akun|0 user|nol akun).{0,40}\b' . $pattern . '\b/iu', $replyLower)) {
+                return true;
+            }
+            if (preg_match('/\b' . $pattern . '\b.{0,40}(?:belum ada|tidak ada|0 akun|0 user|nol akun)/iu', $replyLower)) {
+                return true;
+            }
+        } elseif ($liveTotal === 0) {
+            if (preg_match('/\b' . $pattern . '\b.{0,40}\b([1-9]\d*)\b/iu', $replyLower)) {
+                return true;
+            }
+            if (preg_match('/\b([1-9]\d*)\b.{0,40}\b' . $pattern . '\b/iu', $replyLower)) {
+                return true;
+            }
+        }
+
+        $numbers = [];
+        if (preg_match_all('/\b' . $pattern . '\b[^0-9]{0,24}\b(\d+)\b/iu', $replyLower, $matchesAfter)) {
+            $numbers = array_merge($numbers, $matchesAfter[1] ?? []);
+        }
+        if (preg_match_all('/\b(\d+)\b[^a-z0-9]{0,6}\b' . $pattern . '\b/iu', $replyLower, $matchesBefore)) {
+            $numbers = array_merge($numbers, $matchesBefore[1] ?? []);
+        }
+
+        foreach ($numbers as $number) {
+            if ((int) $number !== $liveTotal) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+function aiAgentBuildUserRoleTruthCorrectionReply(array $roleCounts, array $requestedRoles = [], string $activeRoleFilter = ''): string
+{
+    $parts = [
+        'Berdasarkan data live tabel users saat ini, distribusi role yang benar adalah ' . aiAgentFormatCountMap($roleCounts) . '.',
+        'Role yang benar-benar aktif di data live saat ini hanya: ' . implode(', ', array_keys($roleCounts)) . '.',
+    ];
+
+    foreach ($requestedRoles as $requestedRole) {
+        $parts[] = 'Jumlah akun dengan role ' . $requestedRole . ' saat ini: ' . (int) ($roleCounts[$requestedRole] ?? 0) . '.';
+    }
+
+    if ($activeRoleFilter !== '') {
+        $parts[] = 'Filter role aktif di halaman browser saat ini adalah ' . $activeRoleFilter . ', jadi jumlah akun yang cocok dengan filter tersebut saat ini: ' . (int) ($roleCounts[$activeRoleFilter] ?? 0) . '.';
+    }
+
+    $parts[] = 'Saya tidak boleh menambahkan label role lain yang tidak muncul di data live ini.';
+
+    return implode(' ', array_values(array_unique($parts)));
 }
