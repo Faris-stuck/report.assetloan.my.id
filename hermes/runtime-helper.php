@@ -389,3 +389,187 @@ function aiAgentDecodeChunkedBody(string $body): string
 
     return $decoded !== '' ? $decoded : $body;
 }
+
+/**
+ * Priority 4: Call extended provider (fallback)
+ */
+function aiAgentCallExtendedProvider(array $extConfig, string $systemPrompt, array $messages = []): array
+{
+    if (empty($extConfig['enabled']) || empty($extConfig['base_url']) || empty($extConfig['api_key'])) {
+        return [
+            'ok' => false,
+            'error' => 'Extended provider not configured',
+            'provider' => 'none',
+        ];
+    }
+
+    $type = strtolower(trim($extConfig['type'] ?? 'openai'));
+
+    if ($type === 'openai') {
+        return aiAgentCallOpenAIProvider($extConfig, $systemPrompt, $messages);
+    } elseif ($type === 'anthropic') {
+        return aiAgentCallAnthropicProvider($extConfig, $systemPrompt, $messages);
+    } elseif ($type === 'local') {
+        return aiAgentCallLocalOllamaProvider($extConfig, $systemPrompt, $messages);
+    }
+
+    return [
+        'ok' => false,
+        'error' => 'Unsupported extended provider type: ' . $type,
+        'provider' => $type,
+    ];
+}
+
+/**
+ * Call OpenAI-compatible provider
+ */
+function aiAgentCallOpenAIProvider(array $extConfig, string $systemPrompt, array $messages): array
+{
+    $payload = [
+        'model' => $extConfig['model'] ?? 'gpt-4o-mini',
+        'messages' => array_merge(
+            [['role' => 'system', 'content' => $systemPrompt]],
+            array_map(function ($msg) {
+                return [
+                    'role' => ($msg['role'] ?? 'user') === 'user' ? 'user' : 'assistant',
+                    'content' => trim((string) ($msg['content'] ?? '')),
+                ];
+            }, $messages)
+        ),
+        'temperature' => 0.15,
+        'max_tokens' => 900,
+    ];
+
+    $result = aiAgentHttpRequest('POST', rtrim($extConfig['base_url'], '/') . '/chat/completions', [
+        'headers' => [
+            'Authorization: Bearer ' . $extConfig['api_key'],
+            'Content-Type: application/json',
+        ],
+        'body' => json_encode($payload),
+        'timeout' => max(5, (int) ($extConfig['timeout'] ?? 30)),
+    ]);
+
+    if (!$result['ok']) {
+        return [
+            'ok' => false,
+            'error' => $result['error'] ?? 'Request failed',
+            'provider' => 'openai',
+            'http_code' => $result['http_code'] ?? 0,
+        ];
+    }
+
+    $decoded = json_decode($result['body'], true);
+    if (!is_array($decoded)) {
+        return [
+            'ok' => false,
+            'error' => 'Invalid JSON response from provider',
+            'provider' => 'openai',
+        ];
+    }
+
+    if (isset($decoded['error'])) {
+        return [
+            'ok' => false,
+            'error' => $decoded['error']['message'] ?? 'Provider error',
+            'provider' => 'openai',
+        ];
+    }
+
+    $reply = '';
+    if (isset($decoded['choices'][0]['message']['content'])) {
+        $reply = trim((string) $decoded['choices'][0]['message']['content']);
+    }
+
+    if ($reply === '') {
+        return [
+            'ok' => false,
+            'error' => 'No content in provider response',
+            'provider' => 'openai',
+        ];
+    }
+
+    return [
+        'ok' => true,
+        'provider' => 'openai',
+        'model' => $extConfig['model'] ?? 'gpt-4o-mini',
+        'reply' => $reply,
+        'usage' => $decoded['usage'] ?? null,
+    ];
+}
+
+/**
+ * Call Anthropic Claude provider (stub for future implementation)
+ */
+function aiAgentCallAnthropicProvider(array $extConfig, string $systemPrompt, array $messages): array
+{
+    // Anthropic API requires different message format (Messages API v1)
+    // Stub untuk future implementation
+    return [
+        'ok' => false,
+        'error' => 'Anthropic provider not yet implemented',
+        'provider' => 'anthropic',
+    ];
+}
+
+/**
+ * Call local Ollama provider
+ */
+function aiAgentCallLocalOllamaProvider(array $extConfig, string $systemPrompt, array $messages): array
+{
+    $payload = [
+        'model' => $extConfig['model'] ?? 'mistral',
+        'messages' => array_merge(
+            [['role' => 'system', 'content' => $systemPrompt]],
+            array_map(function ($msg) {
+                return [
+                    'role' => ($msg['role'] ?? 'user') === 'user' ? 'user' : 'assistant',
+                    'content' => trim((string) ($msg['content'] ?? '')),
+                ];
+            }, $messages)
+        ),
+        'stream' => false,
+        'temperature' => 0.15,
+    ];
+
+    $result = aiAgentHttpRequest('POST', rtrim($extConfig['base_url'], '/') . '/api/chat', [
+        'headers' => [
+            'Content-Type: application/json',
+        ],
+        'body' => json_encode($payload),
+        'timeout' => max(5, (int) ($extConfig['timeout'] ?? 30)),
+    ]);
+
+    if (!$result['ok']) {
+        return [
+            'ok' => false,
+            'error' => $result['error'] ?? 'Local provider request failed',
+            'provider' => 'local',
+            'http_code' => $result['http_code'] ?? 0,
+        ];
+    }
+
+    $decoded = json_decode($result['body'], true);
+    if (!is_array($decoded)) {
+        return [
+            'ok' => false,
+            'error' => 'Invalid response from local provider',
+            'provider' => 'local',
+        ];
+    }
+
+    $reply = trim((string) ($decoded['message']['content'] ?? ''));
+    if ($reply === '') {
+        return [
+            'ok' => false,
+            'error' => 'No content in local provider response',
+            'provider' => 'local',
+        ];
+    }
+
+    return [
+        'ok' => true,
+        'provider' => 'local',
+        'model' => $extConfig['model'] ?? 'mistral',
+        'reply' => $reply,
+    ];
+}

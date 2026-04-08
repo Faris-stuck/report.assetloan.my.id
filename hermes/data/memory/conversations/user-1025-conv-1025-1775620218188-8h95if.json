@@ -1,0 +1,18 @@
+{
+    "conversation_id": "conv-1025-1775620218188-8h95if",
+    "role": "user",
+    "user_id": 1025,
+    "updated_at": 1775620238,
+    "messages": [
+        {
+            "role": "user",
+            "content": "why?",
+            "timestamp": 1775620238
+        },
+        {
+            "role": "assistant",
+            "content": "Berikut penjelasan sesuai aturan sistem sesi anda:\n1. Sesi anda saat ini berjalan dengan **role `user` standar**, mode publik aktif\n2. Role user tidak memiliki izin untuk mengaktifkan mode akses tambahan / sensitif, meskipun memasukkan password. Pengaktifan akses tambahan hanya bisa dilakukan oleh admin sistem secara terpisah.\n3. Untuk role anda saat ini, semua fitur bisnis normal peminjaman, pengembalian, perpanjangan, dan inventori sudah dapat digunakan penuh sesuai scope yang diizinkan.",
+            "timestamp": 1775620238
+        }
+    ]
+}

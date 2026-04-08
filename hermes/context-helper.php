@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../koneksi.php';
+require_once __DIR__ . '/../api/koneksi.php';
 require_once __DIR__ . '/runtime-helper.php';
 
 function aiAgentBuildGroundingContext(mysqli $conn, array $options = []): string
@@ -169,7 +169,7 @@ function aiAgentGetProjectOverviewLines(): array
         'Frontend PIC barang memakai menu Dashboards, Update, dan Return dengan submenu Dashboard, Update Item, dan Return Item.',
         'Backend utama berada di api/auth, api/user, api/approver, api/admin, api/peminjaman, api/pengembalian, api/extend, api/barang, api/pic_barang, api/vendor, api/email, api/cron.',
         'Koneksi database dan kalkulasi status utama terpusat di api/koneksi.php, sedangkan kontrol session ada di api/session-helper.php.',
-        'Widget AI dimuat global lewat assets/js/base-url.js, assets/js/ai-agent-widget.js, lalu request ke api/ai/chat.php yang menggunakan api/ai/context-helper.php.',
+        'Widget AI dimuat global lewat assets/js/base-url.js, assets/js/ai-agent-widget.js, lalu request ke hermes/chat.php yang menggunakan hermes/context-helper.php.',
     ];
 }
 
@@ -182,8 +182,8 @@ function aiAgentGetRelevantFileLines(array $focusScopes, string $role): array
         'peminjaman.sql',
         'api/koneksi.php',
         'api/session-helper.php',
-        'api/ai/chat.php',
-        'api/ai/context-helper.php',
+        'hermes/chat.php',
+        'hermes/context-helper.php',
         'assets/js/base-url.js',
         'assets/js/ai-agent-widget.js',
     ];
@@ -272,10 +272,10 @@ function aiAgentGetRelevantFileLines(array $focusScopes, string $role): array
             'manager/laporan/',
         ],
         'ai' => [
-            'api/ai/',
+            'hermes/',
             'assets/js/ai-agent-widget.js',
             'assets/css/ai-agent-widget.css',
-            'config/ai_agent.example.php',
+            'config/ai_agent.php',
         ],
         'auth' => [
             'api/auth/login.php',
@@ -333,7 +333,7 @@ function aiAgentGetWorkflowLines(array $focusScopes): array
         'laporan' => 'Laporan stok, peminjaman, dan pengembalian tersedia di halaman admin/laporan/ dan manager/laporan/.',
         'email' => 'Notifikasi email dan reminder jatuh tempo berada di modul api/email/ dan api/cron/.',
         'users' => 'Manajemen akun dan role admin berada di menu Administrator dengan submenu User List dan Role List.',
-        'ai' => 'Hermes Agent berjalan dari widget frontend assets/js/ai-agent-widget.js ke backend api/ai/chat.php, lalu grounding utamanya dibentuk oleh api/ai/context-helper.php dan helper AI terkait.',
+        'ai' => 'Hermes Agent berjalan dari widget frontend assets/js/ai-agent-widget.js ke backend hermes/chat.php, lalu grounding utamanya dibentuk oleh hermes/context-helper.php dan helper Hermes terkait.',
     ];
 
     $selectedScopes = ['peminjaman', 'approval', 'pengembalian', 'extend'];
@@ -1028,7 +1028,7 @@ function aiAgentDescribeProjectPaths(array $paths, int $limit = 8): string
 
 function aiAgentGetProjectRootPath(): string
 {
-    return dirname(__DIR__, 2);
+    return dirname(__DIR__);
 }
 
 function aiAgentCleanText(string $text, int $maxLength): string

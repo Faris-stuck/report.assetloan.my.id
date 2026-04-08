@@ -8,12 +8,12 @@ if (PHP_SAPI !== 'cli') {
 $projectRoot = dirname(__DIR__);
 
 require_once $projectRoot . '/api/koneksi.php';
-require_once $projectRoot . '/api/ai/context-helper.php';
-require_once $projectRoot . '/api/ai/codebase-helper.php';
-require_once $projectRoot . '/api/ai/index-helper.php';
-require_once $projectRoot . '/api/ai/tool-helper.php';
-require_once $projectRoot . '/api/ai/config-helper.php';
-require_once $projectRoot . '/api/ai/runtime-helper.php';
+require_once $projectRoot . '/hermes/context-helper.php';
+require_once $projectRoot . '/hermes/codebase-helper.php';
+require_once $projectRoot . '/hermes/index-helper.php';
+require_once $projectRoot . '/hermes/tool-helper.php';
+require_once $projectRoot . '/hermes/config-helper.php';
+require_once $projectRoot . '/hermes/runtime-helper.php';
 
 $command = strtolower(trim((string) ($_SERVER['argv'][1] ?? 'status')));
 $options = aiAgentParseProjectIndexCliOptions(array_slice($_SERVER['argv'] ?? [], 2));

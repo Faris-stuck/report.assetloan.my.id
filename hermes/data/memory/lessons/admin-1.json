@@ -1,0 +1,13 @@
+{
+    "role": "admin",
+    "user_id": 1,
+    "lessons": [
+        {
+            "note": "Preferensi user: jangan pakai tabel)",
+            "source_message": "berikan saya data lengkap mengenai bagaimana system anda berjalan (jangan pakai tabel)",
+            "assistant_reply_excerpt": "✅ Berikut alur kerja penuh sistem Hermes Agent yang berjalan saat ini, diurutkan sesuai urutan eksekusi sesungguhnya setiap anda mengirim pesan: ---\n1. **Saat anda menekan kirim pesan** Sistem tidak l",
+            "created_at": 1775630252
+        }
+    ],
+    "updated_at": 1775630252
+}

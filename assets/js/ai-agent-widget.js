@@ -16,6 +16,7 @@
         user: null,
         history: [],
         archives: [],
+        currentConversationId: null,
         sending: false,
         isOpen: false,
         pendingOutgoing: null,
@@ -183,6 +184,51 @@
         return getStoragePrefix() + ':open';
     }
 
+    function getConversationStorageKey() {
+        return getStoragePrefix() + ':conversation-id';
+    }
+
+    function normalizeConversationId(value) {
+        var normalized = String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9._:-]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 96);
+
+        return normalized || '';
+    }
+
+    function buildConversationId(seed) {
+        var basis = normalizeConversationId(seed);
+        if (basis) {
+            return basis;
+        }
+
+        var userId = state.user && state.user.user_id ? String(state.user.user_id) : 'anon';
+        return normalizeConversationId('conv-' + userId + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+    }
+
+    function loadConversationId() {
+        try {
+            var stored = normalizeConversationId(localStorage.getItem(getConversationStorageKey()));
+            state.currentConversationId = stored || buildConversationId();
+        } catch (error) {
+            state.currentConversationId = buildConversationId();
+        }
+    }
+
+    function saveConversationId() {
+        if (!state.currentConversationId) {
+            state.currentConversationId = buildConversationId();
+        }
+
+        try {
+            localStorage.setItem(getConversationStorageKey(), state.currentConversationId);
+        } catch (error) {
+            console.warn('Hermes Agent: failed to save conversation id', error);
+        }
+    }
+
     function getRoleDetails(role) {
         return roleConfig[role] || {
             label: 'User',
@@ -290,6 +336,7 @@
             created_at: normalized[0] ? normalized[0].timestamp : Date.now(),
             updated_at: normalized[normalized.length - 1] ? normalized[normalized.length - 1].timestamp : Date.now(),
             count: normalized.length,
+            server_conversation_id: state.currentConversationId || buildConversationId(),
             messages: normalized
         };
     }
@@ -347,6 +394,7 @@
             created_at: Number(record.created_at) || messages[0].timestamp || Date.now(),
             updated_at: Number(record.updated_at) || messages[messages.length - 1].timestamp || Date.now(),
             count: Number(record.count) || messages.length,
+            server_conversation_id: normalizeConversationId(record.server_conversation_id) || normalizeConversationId(record.id) || buildConversationId(),
             messages: messages
         };
     }
@@ -357,18 +405,22 @@
             var raw = localStorage.getItem(getHistoryStorageKey());
             if (!raw) {
                 state.history = [fallbackMessage];
+                loadConversationId();
                 return;
             }
 
             var parsed = JSON.parse(raw);
             var normalized = normalizeStoredMessages(parsed, MAX_ACTIVE_MESSAGES);
             state.history = normalized.length ? normalized : [fallbackMessage];
+            loadConversationId();
         } catch (error) {
             state.history = [fallbackMessage];
+            loadConversationId();
         }
     }
 
     function saveConversation() {
+        saveConversationId();
         try {
             localStorage.setItem(getHistoryStorageKey(), JSON.stringify(normalizeStoredMessages(state.history, MAX_ACTIVE_MESSAGES)));
         } catch (error) {
@@ -604,6 +656,7 @@
         state.pendingOutgoing = null;
         state.activePane = 'chat';
         state.selectedArchiveId = null;
+        state.currentConversationId = buildConversationId();
         state.history = [createGreetingMessage()];
         saveConversation();
         renderMessages();
@@ -633,7 +686,7 @@
     }
 
     async function revokeSensitiveAccess(reason) {
-        var response = await fetch(aiBaseUrl + '/api/ai/lock.php', {
+        var response = await fetch(aiBaseUrl + '/hermes/lock.php', {
             method: 'POST',
             credentials: 'same-origin',
             headers: {
@@ -757,6 +810,7 @@
         state.pendingOutgoing = null;
         state.activePane = 'chat';
         state.selectedArchiveId = null;
+        state.currentConversationId = archive.server_conversation_id || buildConversationId(archive.id);
         state.history = normalizeStoredMessages(archive.messages, MAX_ACTIVE_MESSAGES);
         saveConversation();
         renderMessages();
@@ -1058,6 +1112,9 @@
 
         var requestHistory = buildRequestHistory();
         var submittedAt = Date.now();
+        if (!state.currentConversationId) {
+            state.currentConversationId = buildConversationId();
+        }
 
         state.pendingOutgoing = {
             content: 'Pesan sedang dikirim...',
@@ -1070,7 +1127,7 @@
         renderMessages();
 
         try {
-            var response = await fetch(aiBaseUrl + '/api/ai/chat.php', {
+            var response = await fetch(aiBaseUrl + '/hermes/chat.php', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -1078,6 +1135,7 @@
                 },
                 body: JSON.stringify({
                     message: message,
+                    conversation_id: state.currentConversationId,
                     history: requestHistory,
                     page_context: {
                         path: window.location.pathname || '',
@@ -1101,6 +1159,11 @@
                 var requestError = new Error(result.error || 'Hermes Agent sedang tidak bisa merespons.');
                 requestError.result = result;
                 throw requestError;
+            }
+
+            if (result.conversation_id) {
+                state.currentConversationId = normalizeConversationId(result.conversation_id) || state.currentConversationId;
+                saveConversationId();
             }
 
             state.pendingOutgoing = null;

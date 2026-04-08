@@ -4,7 +4,7 @@ function aiAgentGetProjectIndexConfig(array $config = []): array
 {
     $storageDir = trim((string) ($config['project_index_storage_dir'] ?? ''));
     if ($storageDir === '') {
-        $storageDir = 'tmp/ai';
+        $storageDir = 'hermes/data/project-index';
     }
 
     $storageDir = aiAgentResolveProjectIndexPath($storageDir);

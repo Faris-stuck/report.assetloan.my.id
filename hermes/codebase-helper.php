@@ -249,13 +249,13 @@ function aiAgentSelectBalancedMatches(array $matches, string $pagePath, array $k
         },
         static function (array $match): bool {
             $path = (string) ($match['path'] ?? '');
-            return strpos($path, 'api/') === 0 && strpos($path, 'api/ai/') !== 0;
+            return strpos($path, 'api/') === 0;
         },
     ];
 
     if ($needsAiContext) {
         $rules[] = static function (array $match): bool {
-            return strpos((string) ($match['path'] ?? ''), 'api/ai/') === 0;
+            return strpos((string) ($match['path'] ?? ''), 'hermes/') === 0;
         };
     }
 
@@ -308,12 +308,69 @@ function aiAgentBuildCodeSearchKeywords(
     $tokens = preg_split('/\\s+/', trim((string) $source)) ?: [];
 
     $stopwords = [
-        'yang', 'dan', 'atau', 'untuk', 'dengan', 'pada', 'dari', 'agar', 'saja', 'sudah', 'belum',
-        'bisa', 'bukan', 'mengenai', 'tentang', 'seperti', 'supaya', 'tetapi', 'karena', 'kalau',
-        'saya', 'aku', 'anda', 'kamu', 'kami', 'mereka', 'tidak', 'iya', 'ya', 'kok', 'masih',
-        'full', 'lebih', 'semua', 'aktif', 'halaman', 'sistem', 'fitur', 'perubahan', 'baru',
-        'this', 'that', 'with', 'from', 'have', 'has', 'your', 'about', 'into', 'only', 'also',
-        'page', 'card', 'menu', 'sub', 'the', 'and', 'for', 'are', 'was', 'were', 'how', 'why',
+        'yang',
+        'dan',
+        'atau',
+        'untuk',
+        'dengan',
+        'pada',
+        'dari',
+        'agar',
+        'saja',
+        'sudah',
+        'belum',
+        'bisa',
+        'bukan',
+        'mengenai',
+        'tentang',
+        'seperti',
+        'supaya',
+        'tetapi',
+        'karena',
+        'kalau',
+        'saya',
+        'aku',
+        'anda',
+        'kamu',
+        'kami',
+        'mereka',
+        'tidak',
+        'iya',
+        'ya',
+        'kok',
+        'masih',
+        'full',
+        'lebih',
+        'semua',
+        'aktif',
+        'halaman',
+        'sistem',
+        'fitur',
+        'perubahan',
+        'baru',
+        'this',
+        'that',
+        'with',
+        'from',
+        'have',
+        'has',
+        'your',
+        'about',
+        'into',
+        'only',
+        'also',
+        'page',
+        'card',
+        'menu',
+        'sub',
+        'the',
+        'and',
+        'for',
+        'are',
+        'was',
+        'were',
+        'how',
+        'why',
     ];
 
     $keywords = [];
@@ -373,9 +430,14 @@ function aiAgentCollectCandidateFiles(string $projectRoot, string $pagePath, arr
 
     if (count($files) < 20) {
         $fallbackHints = ['api', 'assets/js', 'admin', 'manager', 'user', 'pic-barang', 'config'];
+        $fallbackHints = array_values(array_unique(array_merge($fallbackHints, aiAgentListTopLevelGroundingHints($projectRoot, 24))));
         foreach ($fallbackHints as $hint) {
             $absoluteHint = $projectRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $hint);
             if (!is_dir($absoluteHint)) {
+                if (is_file($absoluteHint) && aiAgentIsGroundableFile($absoluteHint) && !isset($seen[$hint])) {
+                    $seen[$hint] = true;
+                    $files[] = str_replace('\\', '/', $hint);
+                }
                 continue;
             }
 
@@ -440,7 +502,7 @@ function aiAgentBuildCandidatePathHints(string $pagePath, array $focusScopes, ar
         'dashboard' => ['admin', 'manager', 'user', 'pic-barang', 'api/admin', 'api/approver', 'api/user'],
         'laporan' => ['admin/laporan', 'manager/laporan', 'api'],
         'auth' => ['api/auth', 'api/user', 'assets/js/auth'],
-        'ai' => ['api/ai', 'assets/js/ai-agent-widget.js', 'assets/css/ai-agent-widget.css', 'config/ai_agent.example.php'],
+        'ai' => ['hermes', 'assets/js/ai-agent-widget.js', 'assets/css/ai-agent-widget.css', 'config/ai_agent.php'],
     ];
 
     foreach ($focusScopes as $scope) {
@@ -450,12 +512,14 @@ function aiAgentBuildCandidatePathHints(string $pagePath, array $focusScopes, ar
     }
 
     $joinedKeywords = ' ' . implode(' ', $keywords) . ' ';
-    if (strpos($joinedKeywords, ' ai ') !== false
+    if (
+        strpos($joinedKeywords, ' ai ') !== false
         || strpos($joinedKeywords, ' chat ') !== false
         || strpos($joinedKeywords, ' hermes ') !== false
         || strpos($joinedKeywords, ' widget ') !== false
         || strpos($joinedKeywords, ' backend ') !== false
-        || strpos($joinedKeywords, ' frontend ') !== false) {
+        || strpos($joinedKeywords, ' frontend ') !== false
+    ) {
         $hints = array_merge($hints, $scopeMap['ai']);
     }
 
@@ -618,18 +682,103 @@ function aiAgentListGroundableFiles(string $directory, string $projectRoot, int 
     return $files;
 }
 
+function aiAgentGetCodebaseVisibilityMode(): string
+{
+    $mode = strtolower(trim((string) getenv('AI_AGENT_CODEBASE_VISIBILITY_MODE')));
+    if (!in_array($mode, ['default', 'extended', 'full'], true)) {
+        $mode = 'extended';
+    }
+
+    return $mode;
+}
+
+function aiAgentGetGroundableExtensions(): array
+{
+    $extensions = ['php', 'html', 'js', 'css', 'md', 'sql'];
+    $mode = aiAgentGetCodebaseVisibilityMode();
+
+    if ($mode === 'extended' || $mode === 'full') {
+        $extensions = array_merge($extensions, ['json', 'txt', 'xml', 'yml', 'yaml', 'ini', 'ts', 'tsx', 'jsx', 'cs', 'csproj', 'sln', 'props']);
+    }
+
+    $extra = trim((string) getenv('AI_AGENT_GROUNDABLE_EXTENSIONS'));
+    if ($extra !== '') {
+        foreach (preg_split('/\s*,\s*/', $extra) ?: [] as $item) {
+            $item = strtolower(trim($item, " ."));
+            if ($item !== '') {
+                $extensions[] = $item;
+            }
+        }
+    }
+
+    return array_values(array_unique($extensions));
+}
+
+function aiAgentGetAdditionalGroundingExcludes(): array
+{
+    $raw = trim((string) getenv('AI_AGENT_GROUNDING_EXCLUDE_PATHS'));
+    if ($raw === '') {
+        return [];
+    }
+
+    $items = [];
+    foreach (preg_split('/\s*,\s*/', $raw) ?: [] as $item) {
+        $item = strtolower(trim(str_replace('\\', '/', $item)));
+        if ($item !== '') {
+            $items[] = '/' . trim($item, '/') . '/';
+        }
+    }
+
+    return array_values(array_unique($items));
+}
+
+function aiAgentListTopLevelGroundingHints(string $projectRoot, int $limit = 24): array
+{
+    $entries = @scandir($projectRoot);
+    if (!is_array($entries)) {
+        return [];
+    }
+
+    $hints = [];
+    foreach ($entries as $entry) {
+        if (!is_string($entry) || $entry === '.' || $entry === '..') {
+            continue;
+        }
+
+        $absolutePath = $projectRoot . DIRECTORY_SEPARATOR . $entry;
+        if (aiAgentShouldSkipGroundingPath($absolutePath)) {
+            continue;
+        }
+
+        $hints[] = str_replace('\\', '/', $entry);
+        if (count($hints) >= $limit) {
+            break;
+        }
+    }
+
+    return $hints;
+}
+
 function aiAgentShouldSkipGroundingPath(string $pathName): bool
 {
     $normalized = strtolower(str_replace('\\', '/', $pathName));
+    $mode = aiAgentGetCodebaseVisibilityMode();
     $blockedParts = [
         '/.git/',
-        '/assets/vendors/',
-        '/phpmailer/',
         '/vendor/',
         '/node_modules/',
-        '/tmp/',
         '/cache/',
     ];
+
+    if ($mode === 'default') {
+        $blockedParts = array_merge($blockedParts, [
+            '/assets/vendors/',
+            '/phpmailer/',
+            '/tmp/',
+        ]);
+    }
+
+    $blockedParts = array_values(array_unique(array_merge($blockedParts, aiAgentGetAdditionalGroundingExcludes())));
 
     foreach ($blockedParts as $blockedPart) {
         if (strpos($normalized, $blockedPart) !== false) {
@@ -651,7 +800,12 @@ function aiAgentIsGroundableFile(string $pathName): bool
         return false;
     }
 
-    return preg_match('/\\.(php|html|js|css|md|sql)$/i', $normalized) === 1;
+    $extensions = aiAgentGetGroundableExtensions();
+    if (empty($extensions)) {
+        return false;
+    }
+
+    return preg_match('/\\.(' . implode('|', array_map('preg_quote', $extensions)) . ')$/i', $normalized) === 1;
 }
 
 function aiAgentScoreCodeFile(
@@ -661,8 +815,7 @@ function aiAgentScoreCodeFile(
     string $pagePath,
     array $focusScopes,
     bool $isDirectlyLinked = false
-): int
-{
+): int {
     $pathLower = strtolower($relativePath);
     $contentLower = strtolower($content);
     $score = 0;
@@ -700,7 +853,7 @@ function aiAgentScoreCodeFile(
         }
     }
 
-    if (strpos($pathLower, 'api/ai/') === 0) {
+    if (strpos($pathLower, 'hermes/') === 0) {
         $score += 14;
     }
     if (strpos($pathLower, 'api/') === 0) {
@@ -799,7 +952,7 @@ function aiAgentBuildImplementationObservationLines(array $matches): array
         $contentBlob .= "\n" . $content;
 
         if ($path !== '') {
-            if (strpos($path, 'api/ai/') === 0) {
+            if (strpos($path, 'hermes/') === 0) {
                 $areas['modul ai'] = true;
             } elseif (strpos($path, 'api/') === 0) {
                 $areas['backend api'] = true;

@@ -1,8 +1,8 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../session-helper.php';
-require_once __DIR__ . '/../koneksi.php';
+require_once __DIR__ . '/../api/session-helper.php';
+require_once __DIR__ . '/../api/koneksi.php';
 require_once __DIR__ . '/context-helper.php';
 require_once __DIR__ . '/codebase-helper.php';
 require_once __DIR__ . '/index-helper.php';
@@ -20,9 +20,9 @@ if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'POST'], true)) {
 }
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../../config/ai_agent.example.php',
-    __DIR__ . '/../../config/ai_agent.php',
+    __DIR__ . '/../config/ai_agent.php',
 ]);
+aiAgentBootstrapRuntimeConfig($config);
 $requestData = aiAgentReadProjectIndexControlRequest();
 $auth = aiAgentAuthorizeProjectIndexControl($config, $requestData);
 

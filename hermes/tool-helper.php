@@ -6,6 +6,7 @@ function aiAgentBuildToolRuntimeContext(mysqli $conn, array $options = []): arra
     $message = aiAgentCleanText((string) ($options['message'] ?? ''), 1600);
     $role = trim((string) ($options['role'] ?? 'user'));
     $userId = (int) ($options['user_id'] ?? 0);
+    $conversationId = trim((string) ($options['conversation_id'] ?? 'default'));
     $pageContext = isset($options['page_context']) && is_array($options['page_context']) ? $options['page_context'] : [];
     $pageSnapshot = aiAgentNormalizeToolPageSnapshot($options['page_snapshot'] ?? ($pageContext['ui_snapshot'] ?? []));
     $history = isset($options['history']) && is_array($options['history']) ? $options['history'] : [];
@@ -39,6 +40,7 @@ function aiAgentBuildToolRuntimeContext(mysqli $conn, array $options = []): arra
         'message' => $message,
         'role' => $role,
         'user_id' => $userId,
+        'conversation_id' => $conversationId,
         'page_context' => $pageContext,
         'page_snapshot' => $pageSnapshot,
         'history' => $history,
@@ -62,6 +64,7 @@ function aiAgentBuildToolRuntimeContext(mysqli $conn, array $options = []): arra
             'message' => $message,
             'role' => $role,
             'user_id' => $userId,
+            'conversation_id' => $conversationId,
             'page_context' => $pageContext,
             'page_snapshot' => $pageSnapshot,
             'history' => $history,
@@ -99,9 +102,12 @@ function aiAgentGetToolLayerConfig(array $config = []): array
             'role_guard',
             'session_context',
             'page_metadata',
+            'memory_search',
             'project_index',
+            'workspace_visibility',
             'ui_snapshot',
             'runtime_observations',
+            'structured_task_flow',
             'live_schema',
             'live_data',
         ],
@@ -110,9 +116,12 @@ function aiAgentGetToolLayerConfig(array $config = []): array
                 'role_guard',
                 'session_context',
                 'page_metadata',
+                'memory_search',
                 'project_index',
+                'workspace_visibility',
                 'ui_snapshot',
                 'runtime_observations',
+                'structured_task_flow',
                 'live_schema',
                 'live_data',
             ],
@@ -120,9 +129,12 @@ function aiAgentGetToolLayerConfig(array $config = []): array
                 'role_guard',
                 'session_context',
                 'page_metadata',
+                'memory_search',
                 'project_index',
+                'workspace_visibility',
                 'ui_snapshot',
                 'runtime_observations',
+                'structured_task_flow',
                 'live_schema',
                 'live_data',
             ],
@@ -130,9 +142,12 @@ function aiAgentGetToolLayerConfig(array $config = []): array
                 'role_guard',
                 'session_context',
                 'page_metadata',
+                'memory_search',
                 'project_index',
+                'workspace_visibility',
                 'ui_snapshot',
                 'runtime_observations',
+                'structured_task_flow',
                 'live_schema',
                 'live_data',
             ],
@@ -140,9 +155,12 @@ function aiAgentGetToolLayerConfig(array $config = []): array
                 'role_guard',
                 'session_context',
                 'page_metadata',
+                'memory_search',
                 'project_index',
+                'workspace_visibility',
                 'ui_snapshot',
                 'runtime_observations',
+                'structured_task_flow',
                 'live_schema',
                 'live_data',
             ],
@@ -420,7 +438,7 @@ function aiAgentEvaluateRuntimeAccess(array $options = []): array
     $technicalRequested = aiAgentMessageRequestsTechnicalInfo($message, $toolConfig);
     $crossRoleRequested = aiAgentMessageRequestsCrossRoleBusinessData($message, $role, $requestedScopes, $toolConfig);
     $requiresScopeOverride = !empty($deniedScopes) || $crossRoleRequested;
-    $hasScopeOverrideAccess = $requiresScopeOverride && $hasBusinessOverrideAccess;
+    $hasScopeOverrideAccess = $requiresScopeOverride && $hasBusinessOverrideAccess && $role === 'admin';
     $canUseTechnicalTools = $technicalRequested && $hasTechnicalAccess;
 
     $effectiveScopes = $allowedScopes;
@@ -650,6 +668,9 @@ function aiAgentBuildToolSharedState(mysqli $conn, array $options = []): array
 {
     $message = aiAgentCleanText((string) ($options['message'] ?? ''), 1600);
     $config = isset($options['config']) && is_array($options['config']) ? $options['config'] : [];
+    $role = trim((string) ($options['role'] ?? 'user'));
+    $userId = (int) ($options['user_id'] ?? 0);
+    $conversationId = trim((string) ($options['conversation_id'] ?? 'default'));
     $pageContext = isset($options['page_context']) && is_array($options['page_context']) ? $options['page_context'] : [];
     $pageSnapshot = aiAgentNormalizeToolPageSnapshot($options['page_snapshot'] ?? []);
     $toolConfig = isset($options['tool_config']) && is_array($options['tool_config']) ? $options['tool_config'] : aiAgentGetToolLayerConfig();
@@ -681,6 +702,10 @@ function aiAgentBuildToolSharedState(mysqli $conn, array $options = []): array
             'limit' => (int) ($projectIndexState['paths']['max_relevant_entries'] ?? 6),
         ]
     );
+    $memoryConfig = function_exists('aiAgentGetMemoryConfig') ? aiAgentGetMemoryConfig($config) : [];
+    $memoryMatches = function_exists('aiAgentSearchMemory')
+        ? aiAgentSearchMemory($memoryConfig, $role, $userId, $conversationId, $message, (int) ($memoryConfig['max_search_results'] ?? 5))
+        : [];
 
     return [
         'keywords' => $keywords,
@@ -689,6 +714,7 @@ function aiAgentBuildToolSharedState(mysqli $conn, array $options = []): array
         'relevant_tables' => $relevantTables,
         'project_index_state' => $projectIndexState,
         'relevant_manifest_entries' => $relevantManifestEntries,
+        'memory_matches' => $memoryMatches,
     ];
 }
 
@@ -762,12 +788,18 @@ function aiAgentExecuteRuntimeTool(string $toolName, mysqli $conn, array $option
             return aiAgentToolSessionContext($options);
         case 'page_metadata':
             return aiAgentToolPageMetadata($options);
+        case 'memory_search':
+            return aiAgentToolMemorySearch($options);
         case 'project_index':
             return aiAgentToolProjectIndex($options);
+        case 'workspace_visibility':
+            return aiAgentToolWorkspaceVisibility($options);
         case 'ui_snapshot':
             return aiAgentToolUiSnapshot($options);
         case 'runtime_observations':
             return aiAgentToolRuntimeObservations($options);
+        case 'structured_task_flow':
+            return aiAgentToolStructuredTaskFlow($options);
         case 'live_schema':
             return aiAgentToolLiveSchema($conn, $options);
         case 'live_data':
@@ -826,6 +858,140 @@ function aiAgentToolSessionContext(array $options = []): array
         'technical_lines' => $canUseTechnicalTools && $userId > 0
             ? ['- Session user_id internal: ' . $userId . '.']
             : [],
+    ];
+}
+
+function aiAgentToolMemorySearch(array $options = []): array
+{
+    $sharedState = isset($options['shared_state']) && is_array($options['shared_state']) ? $options['shared_state'] : [];
+    $matches = isset($sharedState['memory_matches']) && is_array($sharedState['memory_matches']) ? $sharedState['memory_matches'] : [];
+
+    if (empty($matches)) {
+        return [
+            'safe_lines' => ['Memory search tidak menemukan recall yang cukup relevan untuk pertanyaan saat ini.'],
+            'technical_lines' => [],
+        ];
+    }
+
+    $lines = ['Memory search menemukan konteks lintas sesi yang relevan untuk membantu jawaban saat ini:'];
+    foreach (array_slice($matches, 0, 4) as $match) {
+        $content = trim((string) ($match['content'] ?? ''));
+        if ($content === '') {
+            continue;
+        }
+
+        $content = aiAgentStringLength($content) > 180 ? aiAgentStringSubstring($content, 0, 180) : $content;
+        $lines[] = '[' . (string) ($match['source'] ?? 'memory') . '] ' . $content;
+    }
+
+    return [
+        'safe_lines' => $lines,
+        'technical_lines' => [],
+    ];
+}
+
+function aiAgentToolWorkspaceVisibility(array $options = []): array
+{
+    $sharedState = isset($options['shared_state']) && is_array($options['shared_state']) ? $options['shared_state'] : [];
+    $projectIndexState = isset($sharedState['project_index_state']) && is_array($sharedState['project_index_state']) ? $sharedState['project_index_state'] : [];
+    $manifestEntries = isset($sharedState['relevant_manifest_entries']) && is_array($sharedState['relevant_manifest_entries']) ? $sharedState['relevant_manifest_entries'] : [];
+    $roleGuard = isset($options['role_guard']) && is_array($options['role_guard']) ? $options['role_guard'] : [];
+    $summary = isset($projectIndexState['project_index']['summary']) && is_array($projectIndexState['project_index']['summary'])
+        ? $projectIndexState['project_index']['summary']
+        : [];
+
+    $safeLines = [];
+    if (!empty($summary)) {
+        $safeLines[] = 'Workspace scan aktif dari root PROJECT dengan ringkasan file: total=' . (int) ($summary['total_files'] ?? 0)
+            . ', pages=' . (int) ($summary['pages'] ?? 0)
+            . ', apis=' . (int) ($summary['apis'] ?? 0)
+            . ', scripts=' . (int) ($summary['scripts'] ?? 0)
+            . ', helpers=' . (int) ($summary['helpers'] ?? 0) . '.';
+    }
+
+    if (!empty($manifestEntries)) {
+        $labels = [];
+        foreach (array_slice($manifestEntries, 0, 5) as $entry) {
+            $display = trim((string) ($entry['display_name'] ?? ($entry['path'] ?? '')));
+            if ($display !== '') {
+                $labels[] = $display;
+            }
+        }
+        if (!empty($labels)) {
+            $safeLines[] = 'Entry workspace yang paling relevan saat ini: ' . implode(', ', $labels) . '.';
+        }
+    }
+
+    $technicalLines = [];
+    if (!empty($roleGuard['can_use_technical_tools']) && !empty($manifestEntries)) {
+        foreach (array_slice($manifestEntries, 0, 6) as $entry) {
+            $path = trim((string) ($entry['path'] ?? ''));
+            if ($path !== '') {
+                $technicalLines[] = '- Workspace path relevan: ' . $path . '.';
+            }
+        }
+    }
+
+    return [
+        'safe_lines' => !empty($safeLines) ? $safeLines : ['Workspace visibility aktif, tetapi belum ada entry PROJECT yang cukup relevan untuk pertanyaan ini.'],
+        'technical_lines' => $technicalLines,
+    ];
+}
+
+function aiAgentToolStructuredTaskFlow(array $options = []): array
+{
+    $message = aiAgentCleanText((string) ($options['message'] ?? ''), 300);
+    $accessDecision = isset($options['access_decision']) && is_array($options['access_decision']) ? $options['access_decision'] : [];
+    $sharedState = isset($options['shared_state']) && is_array($options['shared_state']) ? $options['shared_state'] : [];
+    $pageContext = isset($options['page_context']) && is_array($options['page_context']) ? $options['page_context'] : [];
+
+    $intent = 'informasi umum';
+    $messageLower = strtolower($message);
+    if (strpos($messageLower, 'error') !== false || strpos($messageLower, 'bug') !== false || strpos($messageLower, 'masalah') !== false) {
+        $intent = 'diagnosis masalah';
+    } elseif (strpos($messageLower, 'buat') !== false || strpos($messageLower, 'tambah') !== false || strpos($messageLower, 'ubah') !== false) {
+        $intent = 'permintaan aksi atau perubahan';
+    } elseif (strpos($messageLower, 'laporan') !== false || strpos($messageLower, 'status') !== false || strpos($messageLower, 'data') !== false) {
+        $intent = 'permintaan data atau status';
+    }
+
+    $evidenceSources = ['page context'];
+    if (!empty($sharedState['memory_matches'])) {
+        $evidenceSources[] = 'memory recall';
+    }
+    if (!empty($sharedState['relevant_manifest_entries'])) {
+        $evidenceSources[] = 'workspace manifest';
+    }
+    if (!empty($sharedState['relevant_tables'])) {
+        $evidenceSources[] = 'live schema/data';
+    }
+
+    $safeLines = [
+        'Structured task flow aktif untuk intent: ' . $intent . '.',
+        'Langkah 1: identifikasi maksud utama user dari pesan dan konteks halaman aktif.',
+        'Langkah 2: pilih sumber bukti yang paling relevan: ' . implode(', ', $evidenceSources) . '.',
+        'Langkah 3: patuhi batas akses runtime dengan mode ' . (string) ($accessDecision['mode'] ?? 'public') . '.',
+        'Langkah 4: susun jawaban dengan urutan fakta halaman -> data live -> memory -> codebase bila diperlukan.',
+    ];
+
+    $pagePath = trim((string) ($pageContext['path'] ?? ''));
+    if ($pagePath !== '') {
+        $safeLines[] = 'Structured flow menambatkan jawaban ke halaman aktif: ' . $pagePath . '.';
+    }
+
+    $technicalLines = [];
+    if (!empty($sharedState['relevant_manifest_entries'])) {
+        foreach (array_slice($sharedState['relevant_manifest_entries'], 0, 3) as $entry) {
+            $path = trim((string) ($entry['path'] ?? ''));
+            if ($path !== '') {
+                $technicalLines[] = '- Langkah teknis kandidat memakai artefak: ' . $path . '.';
+            }
+        }
+    }
+
+    return [
+        'safe_lines' => $safeLines,
+        'technical_lines' => $technicalLines,
     ];
 }
 
@@ -1321,8 +1487,10 @@ function aiAgentToolLiveData(mysqli $conn, array $options = []): array
             }
         }
 
-        if (aiAgentSchemaTableHasColumn($tableMeta, 'stok_tersedia')
-            && aiAgentSchemaTableHasColumn($tableMeta, 'safety_stock')) {
+        if (
+            aiAgentSchemaTableHasColumn($tableMeta, 'stok_tersedia')
+            && aiAgentSchemaTableHasColumn($tableMeta, 'safety_stock')
+        ) {
             $inventorySignals = aiAgentQueryInventorySignals($conn, $tableName, $tableMeta, $scopeFilter);
             if ($inventorySignals['low_stock_total'] !== null) {
                 $summaryParts[] = 'low_stock=' . $inventorySignals['low_stock_total'];
@@ -1428,21 +1596,24 @@ function aiAgentPageContextFocusesUserRoleData(string $message, array $pageConte
         $pageSnapshot['links'] ?? []
     )));
 
-    foreach ([
-        'admin/user/',
-        'admin/pengaturan',
-        'user list',
-        'role list',
-        'administrator',
-        'akun',
-        'role ',
-        'pic_barang',
-    ] as $needle) {
+    foreach (
+        [
+            'admin/user/',
+            'admin/pengaturan',
+            'user list',
+            'role list',
+            'administrator',
+            'akun',
+            'role ',
+            'pic_barang',
+        ] as $needle
+    ) {
         if (($needle !== '' && strpos($pagePath, $needle) !== false)
             || ($needle !== '' && strpos($pageTitle, $needle) !== false)
             || ($needle !== '' && strpos($pageHeading, $needle) !== false)
             || ($needle !== '' && strpos($snapshotBlob, $needle) !== false)
-            || ($needle !== '' && strpos($message, trim($needle)) !== false)) {
+            || ($needle !== '' && strpos($message, trim($needle)) !== false)
+        ) {
             return true;
         }
     }
@@ -1561,21 +1732,111 @@ function aiAgentBuildBorrowingLiveDetailLines(mysqli $conn, array $options = [])
         return [];
     }
 
+    // Check if asking about "most borrowed items"
+    $wantsMostBorrowedAnalysis = false;
+    $detectedPeriod = '';
+
+    foreach (
+        [
+            'paling banyak',
+            'most borrow',
+            'sering',
+            'terbanyak',
+            'top borrow',
+            'popular',
+            'frequently',
+        ] as $keyword
+    ) {
+        if (strpos($message, $keyword) !== false) {
+            $wantsMostBorrowedAnalysis = true;
+            break;
+        }
+    }
+
+    // If asking for most borrowed, generate aggregation report
+    if ($wantsMostBorrowedAnalysis && strpos($message, 'bulan') !== false) {
+        $monthMatch = [];
+        if (preg_match('/\b(januari|february|februari|maret|march|april|mei|may|juni|june|juli|july|agustus|august|september|oktober|october|november|desember|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec|\d{1,2})\b/i', $message, $monthMatch)) {
+            $monthMap = [
+                'januari' => 1,
+                'january' => 1,
+                'jan' => 1,
+                'februari' => 2,
+                'february' => 2,
+                'feb' => 2,
+                'maret' => 3,
+                'march' => 3,
+                'mar' => 3,
+                'april' => 4,
+                'apr' => 4,
+                'mei' => 5,
+                'may' => 5,
+                'juni' => 6,
+                'june' => 6,
+                'jun' => 6,
+                'juli' => 7,
+                'july' => 7,
+                'jul' => 7,
+                'agustus' => 8,
+                'august' => 8,
+                'aug' => 8,
+                'september' => 9,
+                'sept' => 9,
+                'sep' => 9,
+                'oktober' => 10,
+                'october' => 10,
+                'oct' => 10,
+                'november' => 11,
+                'nov' => 11,
+                'desember' => 12,
+                'december' => 12,
+                'dec' => 12,
+            ];
+
+            $monthLower = strtolower($monthMatch[0]);
+            $monthNum = isset($monthMap[$monthLower]) ? $monthMap[$monthLower] : (int) $monthLower;
+
+            if ($monthNum >= 1 && $monthNum <= 12) {
+                $detectedPeriod = sprintf('Bulan %02d/2026', $monthNum); // Assume 2026
+                $mostBorrowedItems = aiAgentQueryMostBorrowedItems($conn, [
+                    'limit' => 5,
+                    'month_filter' => (string) $monthNum,
+                    'year_filter' => 2026,
+                ]);
+
+                if (!empty($mostBorrowedItems)) {
+                    $report = aiAgentFormatMostBorrowedItemsReport($mostBorrowedItems, 'bulan ' . sprintf('%02d/2026', $monthNum));
+                    return [trim($report)];
+                }
+            }
+        }
+    } elseif ($wantsMostBorrowedAnalysis) {
+        // All-time most borrowed query
+        $mostBorrowedItems = aiAgentQueryMostBorrowedItems($conn, ['limit' => 5]);
+        if (!empty($mostBorrowedItems)) {
+            $report = aiAgentFormatMostBorrowedItemsReport($mostBorrowedItems, '(sepanjang masa)');
+            return [trim($report)];
+        }
+    }
+
+    // Fall back to regular borrowing detail if not "most borrowed" query
     $wantsBorrowingDetail = false;
-    foreach ([
-        'overdue',
-        'due today',
-        'due in',
-        'jatuh tempo',
-        'terlambat',
-        'nama peminjam',
-        'peminjam',
-        'siapa',
-        'borrower',
-        'transaksi',
-        'pinjaman',
-        'peminjaman',
-    ] as $keyword) {
+    foreach (
+        [
+            'overdue',
+            'due today',
+            'due in',
+            'jatuh tempo',
+            'terlambat',
+            'nama peminjam',
+            'peminjam',
+            'siapa',
+            'borrower',
+            'transaksi',
+            'pinjaman',
+            'peminjaman',
+        ] as $keyword
+    ) {
         if (strpos($message, $keyword) !== false) {
             $wantsBorrowingDetail = true;
             break;
@@ -1691,8 +1952,10 @@ function aiAgentQueryBorrowingLiveRows(mysqli $conn, array $options = []): array
     foreach ($rows as $row) {
         $currentStatus = trim((string) ($row['status'] ?? ''));
         $computedStatus = $currentStatus;
-        if (!in_array($currentStatus, ['Rejected', 'Waiting for Approval'], true)
-            && function_exists('computeStatusFromUnits')) {
+        if (
+            !in_array($currentStatus, ['Rejected', 'Waiting for Approval'], true)
+            && function_exists('computeStatusFromUnits')
+        ) {
             $computedStatus = (string) computeStatusFromUnits($conn, (int) ($row['id'] ?? 0), $currentStatus);
         } elseif (function_exists('computeDueStatus')) {
             $computedStatus = (string) computeDueStatus($currentStatus, (string) ($row['rencana_kembali'] ?? ''));
@@ -1884,9 +2147,11 @@ function aiAgentBuildLiveDataScopeFilter(
             return $filter;
         }
 
-        if ($userId > 0
+        if (
+            $userId > 0
             && aiAgentSchemaTableHasColumn($tableMeta, 'user_id')
-            && !empty(array_intersect($tableScopes, ['borrowing', 'returns', 'extensions']))) {
+            && !empty(array_intersect($tableScopes, ['borrowing', 'returns', 'extensions']))
+        ) {
             $filter['where_sql'] = ' WHERE `user_id` = ?';
             $filter['bind_types'] = 'i';
             $filter['params'] = [$userId];
@@ -2038,13 +2303,13 @@ function aiAgentQueryRecentStatusRows(
     $rows = aiAgentFetchRows(
         $conn,
         'SELECT '
-        . aiAgentQuoteIdentifier($codeColumn) . ' AS code, '
-        . aiAgentQuoteIdentifier($stateColumn) . ' AS state, '
-        . aiAgentQuoteIdentifier($dateColumn) . ' AS event_date
+            . aiAgentQuoteIdentifier($codeColumn) . ' AS code, '
+            . aiAgentQuoteIdentifier($stateColumn) . ' AS state, '
+            . aiAgentQuoteIdentifier($dateColumn) . ' AS event_date
         FROM ' . $tableIdentifier
-        . ($scopeFilter['where_sql'] ?? '')
-        . $orderSql
-        . ' LIMIT ' . max(1, $limit),
+            . ($scopeFilter['where_sql'] ?? '')
+            . $orderSql
+            . ' LIMIT ' . max(1, $limit),
         (string) ($scopeFilter['bind_types'] ?? ''),
         $scopeFilter['params'] ?? []
     );
@@ -2078,8 +2343,8 @@ function aiAgentQueryInventorySignals(
     $countRow = aiAgentFetchSingleRow(
         $conn,
         'SELECT COUNT(*) AS low_stock_items FROM ' . $tableIdentifier
-        . $lowStockClause
-        . aiAgentQuoteIdentifier('stok_tersedia') . ' <= ' . aiAgentQuoteIdentifier('safety_stock'),
+            . $lowStockClause
+            . aiAgentQuoteIdentifier('stok_tersedia') . ' <= ' . aiAgentQuoteIdentifier('safety_stock'),
         (string) ($scopeFilter['bind_types'] ?? ''),
         $scopeFilter['params'] ?? []
     );
@@ -2090,14 +2355,14 @@ function aiAgentQueryInventorySignals(
     $rows = aiAgentFetchRows(
         $conn,
         'SELECT '
-        . aiAgentQuoteIdentifier($labelColumn) . ' AS label, '
-        . aiAgentQuoteIdentifier('stok_tersedia') . ' AS stok_tersedia, '
-        . aiAgentQuoteIdentifier('safety_stock') . ' AS safety_stock, '
-        . aiAgentQuoteIdentifier('kondisi') . ' AS kondisi
+            . aiAgentQuoteIdentifier($labelColumn) . ' AS label, '
+            . aiAgentQuoteIdentifier('stok_tersedia') . ' AS stok_tersedia, '
+            . aiAgentQuoteIdentifier('safety_stock') . ' AS safety_stock, '
+            . aiAgentQuoteIdentifier('kondisi') . ' AS kondisi
         FROM ' . $tableIdentifier
-        . $lowStockClause
-        . aiAgentQuoteIdentifier('stok_tersedia') . ' <= ' . aiAgentQuoteIdentifier('safety_stock')
-        . ' ORDER BY ' . aiAgentQuoteIdentifier('stok_tersedia') . ' ASC, ' . aiAgentQuoteIdentifier('safety_stock') . ' DESC, ' . aiAgentQuoteIdentifier($labelColumn) . ' ASC
+            . $lowStockClause
+            . aiAgentQuoteIdentifier('stok_tersedia') . ' <= ' . aiAgentQuoteIdentifier('safety_stock')
+            . ' ORDER BY ' . aiAgentQuoteIdentifier('stok_tersedia') . ' ASC, ' . aiAgentQuoteIdentifier('safety_stock') . ' DESC, ' . aiAgentQuoteIdentifier($labelColumn) . ' ASC
         LIMIT 3',
         (string) ($scopeFilter['bind_types'] ?? ''),
         $scopeFilter['params'] ?? []
@@ -2521,4 +2786,240 @@ function aiAgentQueryUserScopedTotal(mysqli $conn, string $tableName, int $userI
     }
 
     return (int) ($row['total_rows'] ?? 0);
+}
+
+/**
+ * Query most borrowed items (GROUP BY aggregation)
+ * Fix for accuracy issue: Hermes was hallucinating "most borrowed" data
+ */
+function aiAgentQueryMostBorrowedItems(mysqli $conn, array $options = []): array
+{
+    $limit = max(1, (int) ($options['limit'] ?? 10));
+    $monthFilter = trim((string) ($options['month_filter'] ?? ''));
+    $yearFilter = (int) ($options['year_filter'] ?? 0);
+
+    $whereSql = '';
+    $bindTypes = '';
+    $params = [];
+
+    // Build date filter for specific month if provided
+    if ($monthFilter !== '' && $yearFilter > 0) {
+        $monthNum = (int) $monthFilter;
+        if ($monthNum >= 1 && $monthNum <= 12) {
+            $startDate = sprintf('%04d-%02d-01', $yearFilter, $monthNum);
+            $endDate = sprintf('%04d-%02d-31', $yearFilter, $monthNum);
+            $whereSql = ' WHERE p.tanggal_pinjam >= ? AND p.tanggal_pinjam < DATE_ADD(?, INTERVAL 1 MONTH)';
+            $bindTypes = 'ss';
+            $params = [$startDate, $startDate];
+        }
+    }
+
+    // Build WHERE clause: combine date filter with NULL check
+    $finalWhereSql = '';
+    if ($whereSql !== '') {
+        // Month filter was provided
+        $finalWhereSql = $whereSql . ' AND b.nama_barang IS NOT NULL';
+    } else {
+        // No month filter, just the NULL check
+        $finalWhereSql = ' WHERE b.nama_barang IS NOT NULL';
+    }
+
+    $rows = aiAgentFetchRows(
+        $conn,
+        '
+            SELECT
+                b.nama_barang,
+                b.kode_barang,
+                COUNT(p.id) AS total_peminjaman,
+                MAX(p.tanggal_pinjam) AS last_borrowed_date
+            FROM peminjaman p
+            LEFT JOIN detail_peminjaman dp ON p.id = dp.peminjaman_id
+            LEFT JOIN barang b ON dp.barang_id = b.id
+            ' . $finalWhereSql . '
+            GROUP BY b.id, b.kode_barang, b.nama_barang
+            ORDER BY total_peminjaman DESC, last_borrowed_date DESC
+            LIMIT ' . max(1, $limit),
+        $bindTypes,
+        $params
+    );
+
+    return is_array($rows) ? $rows : [];
+}
+
+/**
+ * Format most borrowed items for display
+ */
+function aiAgentFormatMostBorrowedItemsReport(array $items = [], string $periodLabel = ''): string
+{
+    if (empty($items)) {
+        return 'Tidak ada data peminjaman barang untuk periode yang diminta.';
+    }
+
+    $lines = [];
+    if ($periodLabel !== '') {
+        $lines[] = '📊 Barang paling banyak dipinjam ' . $periodLabel . ':';
+    } else {
+        $lines[] = '📊 Barang paling banyak dipinjam (sepanjang masa):';
+    }
+    $lines[] = '';
+
+    $totalBorrowings = array_sum(array_map(function ($item) {
+        return (int) ($item['total_peminjaman'] ?? 0);
+    }, $items));
+
+    foreach ($items as $idx => $item) {
+        $rank = $idx + 1;
+        $itemName = trim((string) ($item['nama_barang'] ?? ''));
+        $itemCode = trim((string) ($item['kode_barang'] ?? ''));
+        $count = (int) ($item['total_peminjaman'] ?? 0);
+        $percentage = $totalBorrowings > 0 ? (int) (($count / $totalBorrowings) * 100) : 0;
+
+        if ($itemName !== '') {
+            $lines[] = '- Peringkat ' . $rank . ': ' . $itemName . ' (' . $itemCode . ')';
+            $lines[] = '  Dipinjam ' . $count . ' kali (' . $percentage . '% dari total)';
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '📌 Total peminjaman: ' . $totalBorrowings . ' transaksi';
+    $lines[] = '📌 Jumlah barang berbeda: ' . count($items) . ' item';
+
+    return implode("\n", $lines);
+}
+
+/**
+ * Priority 3: RAG Verification & Diagnostics
+ * 
+ * Verify which RAG sources were actually used in building context
+ */
+function aiAgentVerifyRAGSourcesUsed(array $sharedState = [], array $sections = []): array
+{
+    $sources = [
+        'memory_search' => [
+            'active' => !empty($sharedState['memory_matches']),
+            'count' => count($sharedState['memory_matches'] ?? []),
+            'label' => 'Long-term memory recall',
+        ],
+        'skills' => [
+            'active' => !empty($sharedState['relevant_manifest_entries']),
+            'count' => count($sharedState['relevant_manifest_entries'] ?? []),
+            'label' => 'Dynamic skill loading',
+        ],
+        'schema' => [
+            'active' => !empty($sharedState['relevant_tables']),
+            'count' => count($sharedState['relevant_tables'] ?? []),
+            'label' => 'Live database schema',
+        ],
+        'live_data' => [
+            'active' => !empty($sections['live_data']),
+            'lines' => count($sections['live_data']['safe_lines'] ?? []),
+            'label' => 'Real-time data snapshot',
+        ],
+        'project_index' => [
+            'active' => !empty($sharedState['project_index_state']['available']),
+            'entries' => count($sharedState['relevant_manifest_entries'] ?? []),
+            'label' => 'Project workspace index',
+        ],
+    ];
+
+    $activeCount = 0;
+    $totalActive = [];
+    foreach ($sources as $sourceName => $source) {
+        if ($source['active']) {
+            $activeCount += 1;
+            $totalActive[] = $sourceName;
+        }
+    }
+
+    return [
+        'sources' => $sources,
+        'active_count' => $activeCount,
+        'coverage_percentage' => (int) (($activeCount / 5) * 100),
+        'active_sources' => $totalActive,
+        'rag_fully_utilized' => $activeCount >= 4,
+    ];
+}
+
+/**
+ * Build RAG provenance report - trace source of each fact
+ */
+function aiAgentBuildRAGProvenanceReport(array $sections = []): array
+{
+    $report = [];
+
+    $toolOrder = [
+        'role_guard',
+        'session_context',
+        'page_metadata',
+        'memory_search',
+        'project_index',
+        'workspace_visibility',
+        'ui_snapshot',
+        'runtime_observations',
+        'structured_task_flow',
+        'live_schema',
+        'live_data',
+        'technical_code_context',
+    ];
+
+    foreach ($toolOrder as $toolName) {
+        if (!isset($sections[$toolName])) {
+            continue;
+        }
+
+        $toolResult = $sections[$toolName];
+        $safeLineCount = count($toolResult['safe_lines'] ?? []);
+        $techLineCount = count($toolResult['technical_lines'] ?? []);
+
+        if ($safeLineCount > 0 || $techLineCount > 0) {
+            $report[$toolName] = [
+                'safe_lines' => $safeLineCount,
+                'technical_lines' => $techLineCount,
+                'total_contribution' => $safeLineCount + $techLineCount,
+            ];
+        }
+    }
+
+    // Calculate total context contribution
+    $totalLines = array_sum(array_map(function ($item) {
+        return $item['total_contribution'] ?? 0;
+    }, $report));
+
+    return [
+        'tool_contributions' => $report,
+        'total_context_lines' => $totalLines,
+        'tools_used_count' => count($report),
+        'average_lines_per_tool' => $totalLines > 0 ? (int) ($totalLines / count($report)) : 0,
+    ];
+}
+
+/**
+ * Format RAG summary for display
+ */
+function aiAgentFormatRAGSummary(array $ragVerification = []): string
+{
+    $activeSources = $ragVerification['active_sources'] ?? [];
+    if (empty($activeSources)) {
+        return '';
+    }
+
+    $labels = [
+        'memory_search' => 'memory recall',
+        'skills' => 'skill context',
+        'schema' => 'schema',
+        'live_data' => 'live data',
+        'project_index' => 'workspace',
+    ];
+
+    $sourceLabels = [];
+    foreach ($activeSources as $source) {
+        if (isset($labels[$source])) {
+            $sourceLabels[] = $labels[$source];
+        }
+    }
+
+    $coverage = $ragVerification['coverage_percentage'] ?? 0;
+    $summary = 'RAG sources: ' . implode(', ', $sourceLabels) . ' (' . $coverage . '% coverage)';
+
+    return $summary;
 }

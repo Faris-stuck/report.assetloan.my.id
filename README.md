@@ -33,26 +33,24 @@ Presentation-ready project notes and slide content are available in:
 - `PRESENTASI_PROJECT_PEMINJAMAN.md`
 - `STRUKTUR_PROJECT_DAN_DATABASE.md`
 
-## AI Project Index Operations
+## Hermes-Style PHP Engine
 
-Hybrid project index for AI chat now supports three operation paths:
+AI chat web sekarang dijalankan langsung oleh engine PHP internal di `PROJECT/hermes`. Engine ini meniru pola Hermes seperti memory, skills, tools, dan self-improvement terbatas tanpa gateway atau process agent terpisah.
 
-- Lazy auto rebuild from `api/ai/chat.php` whenever PROJECT files or DB schema fingerprints change.
-- Manual control endpoint at `api/ai/reindex.php` for `status`, `signal`, and `rebuild`.
-- Local CLI and watcher tools in `tools/` for deploy scripts or always-on dev workflows.
+- Web chat endpoint: `hermes/chat.php`
+- Admin status endpoint: `hermes/status.php`
+- Maintenance signal endpoint: `hermes/reindex.php`
+- Runtime home: `PROJECT/hermes/home`
+- Workspace instructions: `PROJECT/hermes/AGENTS.md`
+
+Tool `tools/ai-project-index.php` tetap dipertahankan sebagai wrapper maintenance untuk project index lokal di `PROJECT/hermes/runtime/`.
 
 Examples:
 
 ```bash
 php tools/ai-project-index.php status
 php tools/ai-project-index.php signal --reason=deploy_update
-php tools/ai-project-index.php rebuild --reason=deploy_update --touch-signal
+php tools/ai-project-index.php rebuild --reason=deploy_update
 ```
 
-Windows watcher example:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\ai-project-index-watcher.ps1 -Mode rebuild
-```
-
-Optional non-session deploy access can be enabled with `AI_AGENT_PROJECT_INDEX_REINDEX_TOKEN`, then send it as `X-AI-Agent-Reindex-Token` to `api/ai/reindex.php`.
+Optional non-session deploy access can be enabled with `AI_AGENT_PROJECT_INDEX_REINDEX_TOKEN`, then send it as `X-AI-Agent-Reindex-Token` to `hermes/reindex.php`.

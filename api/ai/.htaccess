@@ -1,3 +1,0 @@
-<FilesMatch "^(?:config-helper|context-helper|runtime-helper)\.php$">
-    Require all denied
-</FilesMatch>
