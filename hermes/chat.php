@@ -409,6 +409,7 @@ $reply = aiAgentRedactPublicReplySensitiveIdentifiers($reply, [
 ]);
 
 aiAgentAppendConversationMemory($memoryConfig, $sessionRole, $sessionUserId, $conversationId, $effectiveMessage, $reply, $pageContext);
+aiAgentSetUserActiveConversationId($memoryConfig, $sessionRole, $sessionUserId, $conversationId);
 $storedNotes = aiAgentStoreLessonMemory($memoryConfig, $sessionRole, $sessionUserId, $effectiveMessage, $reply);
 aiAgentAppendReflectionLog($memoryConfig, [
     'conversation_id' => $conversationId,
@@ -451,7 +452,7 @@ if (aiAgentShouldSummarizeConversation($conversationMessages, $summaryConfig)) {
     $conversationMessages = aiAgentSummarizeConversation($conversationMessages, $summaryConfig);
 }
 
-// Load existing memory and build updated MEMORY.md
+// Load existing memory and refresh the persistent memory snapshot
 $previousMemory = aiAgentLoadMemoryMarkdown($memoryConfig, $sessionRole, $sessionUserId);
 aiAgentFlushMemoryMarkdown($memoryConfig, $sessionRole, $sessionUserId, $conversationMessages, $previousMemory);
 

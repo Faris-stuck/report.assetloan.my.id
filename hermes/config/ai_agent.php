@@ -198,7 +198,7 @@ return [
         : true,
     'memory_db_fallback_to_files' => getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES') !== false
         ? filter_var(getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES'), FILTER_VALIDATE_BOOLEAN)
-        : true,
+        : false,
     'skills_enabled' => getenv('AI_AGENT_SKILLS_ENABLED') !== false
         ? filter_var(getenv('AI_AGENT_SKILLS_ENABLED'), FILTER_VALIDATE_BOOLEAN)
         : true,

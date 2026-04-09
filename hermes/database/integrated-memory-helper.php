@@ -49,6 +49,22 @@ function aiAgentInitializeIntegratedMemoryTables($conn): bool
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
+        $conn->query(
+            "CREATE TABLE IF NOT EXISTS ai_memory_reflections (
+            id BIGINT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            conversation_id VARCHAR(255) NOT NULL DEFAULT 'default',
+            reflection_type VARCHAR(100) NOT NULL DEFAULT 'chat_turn',
+            reflection_data LONGTEXT NOT NULL COMMENT 'JSON object with reflection details',
+            created_at BIGINT NOT NULL DEFAULT 0,
+            INDEX idx_user_id (user_id),
+            INDEX idx_conversation_id (conversation_id),
+            INDEX idx_reflection_type (reflection_type),
+            INDEX idx_created_at (created_at),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
         return true;
     } catch (Throwable $e) {
         error_log('Failed to initialize integrated memory tables: ' . $e->getMessage());
@@ -247,6 +263,37 @@ function aiAgentIntegratedListConversationMemories(
     return $states;
 }
 
+function aiAgentIntegratedDeleteConversationMemory(
+    $conn,
+    int $userId,
+    string $conversationId
+): bool {
+    if (!$conn instanceof mysqli) {
+        return false;
+    }
+
+    try {
+        $stmt = $conn->prepare(
+            "DELETE FROM ai_memory_conversations
+            WHERE user_id = ? AND conversation_id = ?"
+        );
+
+        if (!$stmt) {
+            error_log('Prepare failed deleting integrated conversation memory: ' . $conn->error);
+            return false;
+        }
+
+        $stmt->bind_param('is', $userId, $conversationId);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        return (bool) $result;
+    } catch (Throwable $e) {
+        error_log('Failed to delete integrated conversation memory: ' . $e->getMessage());
+        return false;
+    }
+}
+
 function aiAgentIntegratedSaveUserProfile(
     $conn,
     int $userId,
@@ -422,12 +469,59 @@ function aiAgentIntegratedLoadUserLessons(
     }
 }
 
+function aiAgentIntegratedSaveReflectionLog($conn, array $payload): bool
+{
+    if (!$conn instanceof mysqli) {
+        return false;
+    }
+
+    try {
+        $reflectionData = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if (!is_string($reflectionData) || $reflectionData === '') {
+            $reflectionData = '{}';
+        }
+
+        $userId = max(0, (int) ($payload['user_id'] ?? 0));
+        $conversationId = trim((string) ($payload['conversation_id'] ?? 'default'));
+        if ($conversationId === '') {
+            $conversationId = 'default';
+        }
+
+        $reflectionType = trim((string) ($payload['reflection_type'] ?? 'chat_turn'));
+        if ($reflectionType === '') {
+            $reflectionType = 'chat_turn';
+        }
+
+        $createdAt = (int) ($payload['timestamp'] ?? time());
+
+        $stmt = $conn->prepare(
+            "INSERT INTO ai_memory_reflections (user_id, conversation_id, reflection_type, reflection_data, created_at)
+            VALUES (?, ?, ?, ?, ?)"
+        );
+
+        if (!$stmt) {
+            error_log('Prepare failed saving integrated reflection log: ' . $conn->error);
+            return false;
+        }
+
+        $stmt->bind_param('isssi', $userId, $conversationId, $reflectionType, $reflectionData, $createdAt);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        return $result;
+    } catch (Throwable $e) {
+        error_log('Failed to save integrated reflection log: ' . $e->getMessage());
+        return false;
+    }
+}
+
 function aiAgentIntegratedGetMemoryTablesStatus($conn): array
 {
     $tableNames = [
         'ai_memory_conversations',
         'ai_memory_profiles',
         'ai_memory_lessons',
+        'ai_memory_reflections',
     ];
 
     $status = [];

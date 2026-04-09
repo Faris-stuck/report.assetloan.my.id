@@ -188,6 +188,10 @@
         return getStoragePrefix() + ':conversation-id';
     }
 
+    function getHistoryEndpoint() {
+        return aiBaseUrl + '/hermes/history.php';
+    }
+
     function normalizeConversationId(value) {
         var normalized = String(value || '')
             .toLowerCase()
@@ -206,6 +210,189 @@
 
         var userId = state.user && state.user.user_id ? String(state.user.user_id) : 'anon';
         return normalizeConversationId('conv-' + userId + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8));
+    }
+
+    function createDefaultConversationState() {
+        return {
+            conversation_id: state.currentConversationId || buildConversationId(),
+            messages: [createGreetingMessage()]
+        };
+    }
+
+    function applyServerHistoryPayload(payload, options) {
+        var settings = options || {};
+        var requestedConversationId = normalizeConversationId(settings.requestedConversationId || '');
+        var currentConversationId = normalizeConversationId((payload && payload.current_conversation_id) || requestedConversationId || state.currentConversationId || '');
+        var currentConversation = normalizeArchiveRecord(payload && payload.current_conversation ? payload.current_conversation : null);
+        var conversations = Array.isArray(payload && payload.conversations)
+            ? payload.conversations.map(normalizeArchiveRecord).filter(Boolean).slice(0, MAX_ARCHIVES)
+            : [];
+
+        state.archives = conversations;
+
+        if (currentConversationId) {
+            state.currentConversationId = currentConversationId;
+        } else if (!state.currentConversationId) {
+            state.currentConversationId = buildConversationId();
+        }
+
+        var shouldPreserveLocalCurrent =
+            !!settings.preserveLocalCurrent
+            && requestedConversationId !== ''
+            && currentConversation === null
+            && state.currentConversationId === requestedConversationId
+            && hasMeaningfulLocalCurrentConversation();
+
+        if (currentConversation && Array.isArray(currentConversation.messages) && currentConversation.messages.length) {
+            state.history = normalizeStoredMessages(currentConversation.messages, MAX_ACTIVE_MESSAGES);
+            state.currentConversationId = currentConversation.server_conversation_id || state.currentConversationId;
+        } else if (!shouldPreserveLocalCurrent) {
+            state.history = createDefaultConversationState().messages;
+        }
+
+        saveConversation();
+        saveArchivedConversations();
+        renderMessages();
+    }
+
+    async function syncHistoryFromServer(options) {
+        var settings = options || {};
+        var requestedConversationId = normalizeConversationId(settings.currentConversationId || state.currentConversationId || '');
+        if (
+            requestedConversationId
+            && !settings.forceConversationId
+            && !!settings.preserveLocalCurrent
+            && !hasMeaningfulLocalCurrentConversation()
+        ) {
+            requestedConversationId = '';
+        }
+        var query = new URLSearchParams();
+        query.set('action', 'sync');
+        query.set('limit', String(MAX_ARCHIVES));
+        if (requestedConversationId) {
+            query.set('current_conversation_id', requestedConversationId);
+        }
+
+        var response = await fetch(getHistoryEndpoint() + '?' + query.toString(), {
+            credentials: 'same-origin'
+        });
+        var result = await response.json().catch(function () {
+            return {};
+        });
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.error || 'Gagal menyinkronkan riwayat Hermes Agent.');
+        }
+
+        applyServerHistoryPayload(result, {
+            requestedConversationId: requestedConversationId,
+            preserveLocalCurrent: !!settings.preserveLocalCurrent
+        });
+
+        return result;
+    }
+
+    async function activateConversationOnServer(conversationId) {
+        var normalizedId = normalizeConversationId(conversationId);
+        if (!normalizedId) {
+            return null;
+        }
+
+        var response = await fetch(getHistoryEndpoint(), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'activate',
+                conversation_id: normalizedId,
+                limit: MAX_ARCHIVES
+            })
+        });
+        var result = await response.json().catch(function () {
+            return {};
+        });
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.error || 'Gagal menyelaraskan percakapan aktif.');
+        }
+
+        applyServerHistoryPayload(result, {
+            requestedConversationId: normalizedId,
+            preserveLocalCurrent: true,
+            forceConversationId: true
+        });
+
+        return result;
+    }
+
+    async function selectConversationOnServer(conversationId) {
+        var normalizedId = normalizeConversationId(conversationId);
+        if (!normalizedId) {
+            return null;
+        }
+
+        var response = await fetch(getHistoryEndpoint(), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'select',
+                conversation_id: normalizedId,
+                limit: MAX_ARCHIVES
+            })
+        });
+        var result = await response.json().catch(function () {
+            return {};
+        });
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.error || 'Gagal memuat riwayat chat dari server.');
+        }
+
+        applyServerHistoryPayload(result, {
+            requestedConversationId: normalizedId,
+            preserveLocalCurrent: false
+        });
+
+        return result;
+    }
+
+    async function deleteConversationOnServer(conversationId) {
+        var normalizedId = normalizeConversationId(conversationId);
+        if (!normalizedId) {
+            return null;
+        }
+
+        var response = await fetch(getHistoryEndpoint(), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'delete',
+                conversation_id: normalizedId,
+                limit: MAX_ARCHIVES
+            })
+        });
+        var result = await response.json().catch(function () {
+            return {};
+        });
+
+        if (!response.ok || result.status !== 'ok') {
+            throw new Error(result.error || 'Gagal menghapus riwayat chat dari server.');
+        }
+
+        applyServerHistoryPayload(result, {
+            requestedConversationId: normalizeConversationId(result.current_conversation_id || ''),
+            preserveLocalCurrent: false
+        });
+
+        return result;
     }
 
     function loadConversationId() {
@@ -278,6 +465,10 @@
         return normalizeStoredMessages(messages, MAX_ARCHIVE_MESSAGES).some(function (message) {
             return message.role === 'user';
         });
+    }
+
+    function hasMeaningfulLocalCurrentConversation() {
+        return hasMeaningfulConversation(state.history) || !!state.pendingOutgoing;
     }
 
     function formatTimestamp(timestamp) {
@@ -677,11 +868,10 @@
     }
 
     function startFreshConversation() {
-        if (hasMeaningfulConversation(state.history)) {
-            archiveCurrentConversation();
-        }
-
         resetConversation();
+        activateConversationOnServer(state.currentConversationId).catch(function (error) {
+            console.warn('Hermes Agent: failed to sync fresh conversation state', error);
+        });
         focusComposerSoon();
     }
 
@@ -713,15 +903,14 @@
             return;
         }
 
-        var archived = archiveCurrentConversation();
         resetConversation();
+        activateConversationOnServer(state.currentConversationId).catch(function (error) {
+            console.warn('Hermes Agent: failed to sync reset conversation state', error);
+        });
 
         try {
             var result = await revokeSensitiveAccess('reset');
             var notices = [];
-            if (archived) {
-                notices.push('Percakapan sebelumnya disimpan ke riwayat.');
-            }
             if (result.revoked) {
                 notices.push('Akses sensitif ditutup.');
             }
@@ -730,12 +919,21 @@
             }
             pushMessage('system', notices.join(' '));
         } catch (error) {
-            pushMessage('system', archived ? 'Percakapan sebelumnya disimpan ke riwayat. Chat baru dimulai, tetapi akses sensitif belum berhasil ditutup.' : (error.message || 'Chat baru dimulai.'));
+            pushMessage('system', error.message || 'Chat baru dimulai.');
         }
     }
 
 
-    function handleHistoryToggle() {
+    async function handleHistoryToggle() {
+        try {
+            await syncHistoryFromServer({
+                currentConversationId: state.currentConversationId,
+                preserveLocalCurrent: true
+            });
+        } catch (error) {
+            console.warn('Hermes Agent: failed to refresh server history', error);
+        }
+
         if (state.activePane === 'chat') {
             state.activePane = 'history-list';
             state.selectedArchiveId = null;
@@ -792,7 +990,7 @@
         }
     }
 
-    function loadArchiveConversation(archiveId) {
+    async function loadArchiveConversation(archiveId) {
         if (state.sending) {
             return;
         }
@@ -800,11 +998,6 @@
         var archive = getArchiveById(archiveId);
         if (!archive) {
             return;
-        }
-
-        var currentHadMeaningfulContent = hasMeaningfulConversation(state.history);
-        if (currentHadMeaningfulContent && !conversationsMatch(state.history, archive.messages)) {
-            archiveCurrentConversation();
         }
 
         state.pendingOutgoing = null;
@@ -815,6 +1008,12 @@
         saveConversation();
         renderMessages();
 
+        try {
+            await selectConversationOnServer(state.currentConversationId);
+        } catch (error) {
+            console.warn('Hermes Agent: failed to mark active conversation on server', error);
+        }
+
         if (elements.input) {
             setTimeout(function () {
                 elements.input.focus();
@@ -822,24 +1021,22 @@
         }
     }
 
-    function deleteArchiveConversation(archiveId) {
+    async function deleteArchiveConversation(archiveId) {
         var archive = getArchiveById(archiveId);
         if (!archive) {
             return;
         }
 
         if (window.confirm('Hapus riwayat chat ini?')) {
-            state.archives = state.archives.filter(function (item) {
-                return item.id !== archiveId;
-            });
-            saveArchivedConversations();
-
-            if (state.selectedArchiveId === archiveId) {
-                state.selectedArchiveId = null;
-                state.activePane = 'history-list';
+            try {
+                await deleteConversationOnServer(archive.server_conversation_id || archiveId);
+                if (state.selectedArchiveId === archiveId) {
+                    state.selectedArchiveId = null;
+                    state.activePane = 'history-list';
+                }
+            } catch (error) {
+                pushMessage('system', error.message || 'Riwayat chat gagal dihapus.');
             }
-
-            renderMessages();
         }
     }
 
@@ -1169,6 +1366,12 @@
             state.pendingOutgoing = null;
             pushMessage('user', String(result.user_message_display || message).trim() || 'Pesan terkirim.', submittedAt);
             pushMessage('assistant', String(result.reply).trim(), (result.timestamp || 0) * 1000 || Date.now());
+            syncHistoryFromServer({
+                currentConversationId: state.currentConversationId,
+                preserveLocalCurrent: true
+            }).catch(function (syncError) {
+                console.warn('Hermes Agent: failed to sync history after chat', syncError);
+            });
         } catch (error) {
             state.pendingOutgoing = null;
 
@@ -1192,6 +1395,12 @@
             loadConversation();
             loadArchivedConversations();
             renderMessages();
+            syncHistoryFromServer({
+                currentConversationId: state.currentConversationId,
+                preserveLocalCurrent: true
+            }).catch(function (error) {
+                console.warn('Hermes Agent: failed to sync history using cached user', error);
+            });
         }
 
         try {
@@ -1218,6 +1427,10 @@
             loadArchivedConversations();
             renderMessages();
             restoreOpenState();
+            await syncHistoryFromServer({
+                currentConversationId: state.currentConversationId,
+                preserveLocalCurrent: true
+            });
         } catch (error) {
             if (!state.user) {
                 state.user = {
@@ -1231,6 +1444,8 @@
                 loadArchivedConversations();
                 renderMessages();
                 restoreOpenState();
+            } else {
+                console.warn('Hermes Agent: failed to sync history after user hydration', error);
             }
         }
     }

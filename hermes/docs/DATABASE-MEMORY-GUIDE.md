@@ -61,7 +61,7 @@ Edit `.env` atau file konfigurasi di `PROJECT/hermes/config/ai_agent.php`:
 'memory_db_username' => getenv('AI_AGENT_DB_USER') ?: 'root',
 'memory_db_password' => getenv('AI_AGENT_DB_PASSWORD') ?: '',
 'memory_db_auto_init' => true,  // Auto-create tables on first run
-'memory_db_fallback_to_files' => true,  // Fallback to files if DB fails
+'memory_db_fallback_to_files' => false, // Gunakan database saja, tanpa fallback file
 ```
 
 Atau set environment variables:
@@ -214,7 +214,7 @@ CREATE TABLE ai_agent_memories_cleanup_log (
 ### Hybrid Mode (Smart Fallback)
 
 ```php
-'memory_db_fallback_to_files' => true
+'memory_db_fallback_to_files' => false
 ```
 
 Jika database enabled tapi connection fails, system akan fallback ke file storage otomatis.

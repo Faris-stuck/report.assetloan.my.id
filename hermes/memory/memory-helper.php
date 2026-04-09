@@ -16,9 +16,9 @@ function aiAgentGetMemoryConfig(array $config = []): array
         'conversations_dir' => $storageDir . DIRECTORY_SEPARATOR . 'conversations',
         'lessons_dir' => $storageDir . DIRECTORY_SEPARATOR . 'lessons',
         'reflections_dir' => $storageDir . DIRECTORY_SEPARATOR . 'reflections',
-        'database_enabled' => !isset($config['memory_database_enabled']) ? false : (bool) $config['memory_database_enabled'],
+        'database_enabled' => !isset($config['memory_database_enabled']) ? true : (bool) $config['memory_database_enabled'],
         'database_fallback_to_files' => !isset($config['memory_db_fallback_to_files'])
-            ? true
+            ? false
             : (bool) $config['memory_db_fallback_to_files'],
         'max_messages_per_conversation' => max(8, (int) ($config['memory_max_messages_per_conversation'] ?? 40)),
         'max_notes_per_user' => max(5, (int) ($config['memory_max_notes_per_user'] ?? 30)),
@@ -44,6 +44,10 @@ function aiAgentResolveHermesStoragePath(string $path): string
 
 function aiAgentEnsureMemoryDirectories(array $memoryConfig = []): void
 {
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+        return;
+    }
+
     foreach (
         [
             (string) ($memoryConfig['storage_dir'] ?? ''),
@@ -70,14 +74,20 @@ function aiAgentBuildMemoryUserKey(string $role, int $userId): string
     return $role . '-' . max(0, $userId);
 }
 
-function aiAgentBuildMemoryConversationKey(string $role, int $userId, string $conversationId): string
+function aiAgentNormalizeMemoryConversationId(string $conversationId, string $fallback = 'default'): string
 {
     $conversationId = preg_replace('/[^a-z0-9._:-]+/i', '-', strtolower(trim($conversationId)));
     $conversationId = trim((string) $conversationId, '-');
     if ($conversationId === '') {
-        $conversationId = 'default';
+        $conversationId = $fallback;
     }
 
+    return $conversationId;
+}
+
+function aiAgentBuildMemoryConversationKey(string $role, int $userId, string $conversationId): string
+{
+    $conversationId = aiAgentNormalizeMemoryConversationId($conversationId, 'default');
     return aiAgentBuildMemoryUserKey($role, $userId) . '-' . $conversationId;
 }
 
@@ -169,6 +179,10 @@ function aiAgentBuildEmptyLessonsMemoryState(string $role, int $userId): array
 
 function aiAgentLoadConversationMemoryFromFile(array $memoryConfig, string $role, int $userId, string $conversationId): array
 {
+    if (!aiAgentMemoryLegacyFileReadIsAllowed($memoryConfig)) {
+        return aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId);
+    }
+
     $path = aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId);
     $state = aiAgentReadJsonFile($path, aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId));
     return array_merge(aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId), $state);
@@ -176,6 +190,10 @@ function aiAgentLoadConversationMemoryFromFile(array $memoryConfig, string $role
 
 function aiAgentLoadUserProfileMemoryFromFile(array $memoryConfig, string $role, int $userId): array
 {
+    if (!aiAgentMemoryLegacyFileReadIsAllowed($memoryConfig)) {
+        return aiAgentBuildEmptyProfileMemoryState($role, $userId);
+    }
+
     $path = aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId);
     $state = aiAgentReadJsonFile($path, aiAgentBuildEmptyProfileMemoryState($role, $userId));
     return array_merge(aiAgentBuildEmptyProfileMemoryState($role, $userId), $state);
@@ -183,14 +201,135 @@ function aiAgentLoadUserProfileMemoryFromFile(array $memoryConfig, string $role,
 
 function aiAgentLoadUserLessonsMemoryFromFile(array $memoryConfig, string $role, int $userId): array
 {
+    if (!aiAgentMemoryLegacyFileReadIsAllowed($memoryConfig)) {
+        return aiAgentBuildEmptyLessonsMemoryState($role, $userId);
+    }
+
     $path = aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId);
     $state = aiAgentReadJsonFile($path, aiAgentBuildEmptyLessonsMemoryState($role, $userId));
     return array_merge(aiAgentBuildEmptyLessonsMemoryState($role, $userId), $state);
 }
 
+function aiAgentGetUserActiveConversationId(array $memoryConfig, string $role, int $userId): string
+{
+    if (empty($memoryConfig['enabled']) || $userId <= 0) {
+        return '';
+    }
+
+    $profile = aiAgentLoadUserProfileMemory($memoryConfig, $role, $userId);
+    $behavioralData = isset($profile['behavioral_data']) && is_array($profile['behavioral_data'])
+        ? $profile['behavioral_data']
+        : [];
+
+    return aiAgentNormalizeMemoryConversationId((string) ($behavioralData['active_conversation_id'] ?? ''), '');
+}
+
+function aiAgentSetUserActiveConversationId(array $memoryConfig, string $role, int $userId, string $conversationId): bool
+{
+    if (empty($memoryConfig['enabled']) || $userId <= 0) {
+        return false;
+    }
+
+    $normalizedConversationId = aiAgentNormalizeMemoryConversationId($conversationId, '');
+    $profile = aiAgentLoadUserProfileMemory($memoryConfig, $role, $userId);
+    $behavioralData = isset($profile['behavioral_data']) && is_array($profile['behavioral_data'])
+        ? $profile['behavioral_data']
+        : [];
+
+    if ($normalizedConversationId === '') {
+        unset($behavioralData['active_conversation_id']);
+    } else {
+        $behavioralData['active_conversation_id'] = $normalizedConversationId;
+    }
+
+    $profile['role'] = $role;
+    $profile['user_id'] = $userId;
+    $profile['behavioral_data'] = $behavioralData;
+    $profile['updated_at'] = time();
+
+    return aiAgentPersistUserProfileMemoryState($memoryConfig, $role, $userId, $profile);
+}
+
 function aiAgentMemoryDatabaseIsEnabled(array $memoryConfig): bool
 {
     return !empty($memoryConfig['enabled']) && !empty($memoryConfig['database_enabled']);
+}
+
+function aiAgentMemoryFileFallbackIsAllowed(array $memoryConfig): bool
+{
+    if (empty($memoryConfig['enabled'])) {
+        return false;
+    }
+
+    if (empty($memoryConfig['database_enabled'])) {
+        return true;
+    }
+
+    return !empty($memoryConfig['database_fallback_to_files']);
+}
+
+function aiAgentMemoryLegacyFileReadIsAllowed(array $memoryConfig): bool
+{
+    if (empty($memoryConfig['enabled'])) {
+        return false;
+    }
+
+    return aiAgentMemoryFileFallbackIsAllowed($memoryConfig) || !empty($memoryConfig['database_enabled']);
+}
+
+function aiAgentMemoryShouldPruneLegacyFiles(array $memoryConfig): bool
+{
+    return !empty($memoryConfig['enabled']) && !empty($memoryConfig['database_enabled']);
+}
+
+function aiAgentDeleteMemoryFile(string $path): void
+{
+    $path = trim($path);
+    if ($path === '' || !is_file($path)) {
+        return;
+    }
+
+    @unlink($path);
+}
+
+function aiAgentDeleteLegacyConversationMemoryFile(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId
+): void {
+    if (!aiAgentMemoryShouldPruneLegacyFiles($memoryConfig)) {
+        return;
+    }
+
+    aiAgentDeleteMemoryFile(aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId));
+}
+
+function aiAgentDeleteLegacyProfileMemoryFile(array $memoryConfig, string $role, int $userId): void
+{
+    if (!aiAgentMemoryShouldPruneLegacyFiles($memoryConfig)) {
+        return;
+    }
+
+    aiAgentDeleteMemoryFile(aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId));
+}
+
+function aiAgentDeleteLegacyLessonsMemoryFile(array $memoryConfig, string $role, int $userId): void
+{
+    if (!aiAgentMemoryShouldPruneLegacyFiles($memoryConfig)) {
+        return;
+    }
+
+    aiAgentDeleteMemoryFile(aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId));
+}
+
+function aiAgentDeleteLegacyReflectionLogFile(array $memoryConfig): void
+{
+    if (!aiAgentMemoryShouldPruneLegacyFiles($memoryConfig)) {
+        return;
+    }
+
+    aiAgentDeleteMemoryFile(aiAgentGetReflectionLogPath($memoryConfig));
 }
 
 function aiAgentGetIntegratedMemoryConnectionForRuntime(array $memoryConfig, bool $initializeTables = true): ?mysqli
@@ -268,11 +407,16 @@ function aiAgentPersistConversationMemoryState(
         $persisted = aiAgentIntegratedSaveConversationMemory($conn, $userId, $conversationId, $state);
     }
 
-    if (!$persisted) {
-        aiAgentWriteJsonFile(aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId), $state);
+    if ($persisted) {
+        aiAgentDeleteLegacyConversationMemoryFile($memoryConfig, $role, $userId, $conversationId);
         return true;
     }
 
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+        return false;
+    }
+
+    aiAgentWriteJsonFile(aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId), $state);
     return true;
 }
 
@@ -295,11 +439,16 @@ function aiAgentPersistUserProfileMemoryState(array $memoryConfig, string $role,
         $persisted = aiAgentIntegratedSaveUserProfile($conn, $userId, $state);
     }
 
-    if (!$persisted) {
-        aiAgentWriteJsonFile(aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId), $state);
+    if ($persisted) {
+        aiAgentDeleteLegacyProfileMemoryFile($memoryConfig, $role, $userId);
         return true;
     }
 
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+        return false;
+    }
+
+    aiAgentWriteJsonFile(aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId), $state);
     return true;
 }
 
@@ -319,16 +468,22 @@ function aiAgentPersistUserLessonsMemoryState(array $memoryConfig, string $role,
         $persisted = aiAgentIntegratedSaveUserLessons($conn, $userId, $state);
     }
 
-    if (!$persisted) {
-        aiAgentWriteJsonFile(aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId), $state);
+    if ($persisted) {
+        aiAgentDeleteLegacyLessonsMemoryFile($memoryConfig, $role, $userId);
         return true;
     }
 
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+        return false;
+    }
+
+    aiAgentWriteJsonFile(aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId), $state);
     return true;
 }
 
 function aiAgentLoadConversationMemory(array $memoryConfig, string $role, int $userId, string $conversationId): array
 {
+    $conversationId = aiAgentNormalizeMemoryConversationId($conversationId, 'default');
     $fallback = aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId);
     if (empty($memoryConfig['enabled']) || $userId <= 0) {
         return $fallback;
@@ -337,6 +492,7 @@ function aiAgentLoadConversationMemory(array $memoryConfig, string $role, int $u
     if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
         $state = array_merge($fallback, aiAgentIntegratedLoadConversationMemory($conn, $userId, $conversationId));
         if (aiAgentConversationMemoryStateHasContent($state)) {
+            aiAgentDeleteLegacyConversationMemoryFile($memoryConfig, $role, $userId, $conversationId);
             return $state;
         }
 
@@ -346,6 +502,10 @@ function aiAgentLoadConversationMemory(array $memoryConfig, string $role, int $u
             return $legacyState;
         }
 
+        return $fallback;
+    }
+
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
         return $fallback;
     }
 
@@ -362,6 +522,7 @@ function aiAgentLoadUserProfileMemory(array $memoryConfig, string $role, int $us
     if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
         $state = array_merge($fallback, aiAgentIntegratedLoadUserProfile($conn, $userId));
         if (aiAgentProfileMemoryStateHasContent($state)) {
+            aiAgentDeleteLegacyProfileMemoryFile($memoryConfig, $role, $userId);
             return $state;
         }
 
@@ -371,6 +532,10 @@ function aiAgentLoadUserProfileMemory(array $memoryConfig, string $role, int $us
             return $legacyState;
         }
 
+        return $fallback;
+    }
+
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
         return $fallback;
     }
 
@@ -387,6 +552,7 @@ function aiAgentLoadUserLessonsMemory(array $memoryConfig, string $role, int $us
     if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
         $state = array_merge($fallback, aiAgentIntegratedLoadUserLessons($conn, $userId));
         if (aiAgentLessonsMemoryStateHasContent($state)) {
+            aiAgentDeleteLegacyLessonsMemoryFile($memoryConfig, $role, $userId);
             return $state;
         }
 
@@ -396,6 +562,10 @@ function aiAgentLoadUserLessonsMemory(array $memoryConfig, string $role, int $us
             return $legacyState;
         }
 
+        return $fallback;
+    }
+
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
         return $fallback;
     }
 
@@ -466,6 +636,10 @@ function aiAgentTokenizeMemorySearchText(string $text): array
 
 function aiAgentListUserConversationMemoryPaths(array $memoryConfig, string $role, int $userId, string $conversationId = ''): array
 {
+    if (!aiAgentMemoryLegacyFileReadIsAllowed($memoryConfig)) {
+        return [];
+    }
+
     $conversationKeyPrefix = aiAgentBuildMemoryUserKey($role, $userId) . '-';
     $pattern = rtrim((string) ($memoryConfig['conversations_dir'] ?? ''), DIRECTORY_SEPARATOR)
         . DIRECTORY_SEPARATOR
@@ -533,13 +707,18 @@ function aiAgentListUserConversationMemoryStates(
     array $memoryConfig,
     string $role,
     int $userId,
-    string $conversationId = ''
+    string $conversationId = '',
+    ?int $limitOverride = null
 ): array {
-    $limit = max(1, (int) ($memoryConfig['max_search_conversations'] ?? 10));
+    $limit = $limitOverride === null
+        ? max(1, (int) ($memoryConfig['max_search_conversations'] ?? 10))
+        : max(1, $limitOverride);
     $states = [];
     $seenConversationIds = [];
+    $databaseActive = false;
 
     if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $databaseActive = true;
         foreach (aiAgentIntegratedListConversationMemories($conn, $userId, $conversationId, $limit) as $state) {
             $normalizedConversationId = trim((string) ($state['conversation_id'] ?? ''));
             if ($normalizedConversationId === '') {
@@ -555,8 +734,13 @@ function aiAgentListUserConversationMemoryStates(
                     'user_id' => $userId,
                 ]
             );
+            aiAgentDeleteLegacyConversationMemoryFile($memoryConfig, $role, $userId, $normalizedConversationId);
             $seenConversationIds[$normalizedConversationId] = true;
         }
+    }
+
+    if (!$databaseActive && !aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+        return [];
     }
 
     foreach (aiAgentLoadConversationMemoryStatesFromFile($memoryConfig, $role, $userId, $conversationId) as $state) {
@@ -565,10 +749,15 @@ function aiAgentListUserConversationMemoryStates(
             continue;
         }
 
-        if (!isset($seenConversationIds[$normalizedConversationId])) {
+        if ($databaseActive && !isset($seenConversationIds[$normalizedConversationId])) {
             aiAgentPersistConversationMemoryState($memoryConfig, $role, $userId, $normalizedConversationId, $state);
             $states[] = $state;
             $seenConversationIds[$normalizedConversationId] = true;
+            continue;
+        }
+
+        if (!$databaseActive && aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+            $states[] = $state;
         }
     }
 
@@ -759,6 +948,96 @@ function aiAgentNormalizeMemoryMessages(array $messages, int $limit = 12): array
     return array_slice($normalized, -max(1, $limit));
 }
 
+function aiAgentBuildConversationArchiveTitle(array $messages): string
+{
+    foreach ($messages as $message) {
+        if (($message['role'] ?? '') !== 'user') {
+            continue;
+        }
+
+        $content = trim((string) ($message['content'] ?? ''));
+        if ($content === '') {
+            continue;
+        }
+
+        if (aiAgentStringLength($content) > 42) {
+            return rtrim(aiAgentStringSubstring($content, 0, 41)) . '...';
+        }
+
+        return $content;
+    }
+
+    $lastMessage = end($messages);
+    $timestamp = (int) ($lastMessage['timestamp'] ?? time());
+    return 'Percakapan ' . date('d M Y H:i', $timestamp);
+}
+
+function aiAgentBuildConversationArchivePreview(array $messages): string
+{
+    foreach ($messages as $message) {
+        if (($message['role'] ?? '') !== 'user') {
+            continue;
+        }
+
+        $content = trim((string) ($message['content'] ?? ''));
+        if ($content === '') {
+            continue;
+        }
+
+        if (aiAgentStringLength($content) > 120) {
+            return rtrim(aiAgentStringSubstring($content, 0, 119)) . '...';
+        }
+
+        return $content;
+    }
+
+    foreach ($messages as $message) {
+        $content = trim((string) ($message['content'] ?? ''));
+        if ($content === '') {
+            continue;
+        }
+
+        if (aiAgentStringLength($content) > 120) {
+            return rtrim(aiAgentStringSubstring($content, 0, 119)) . '...';
+        }
+
+        return $content;
+    }
+
+    return 'Percakapan tanpa isi.';
+}
+
+function aiAgentBuildConversationArchiveRecord(array $state, int $messageLimit = 60): array
+{
+    $conversationId = aiAgentNormalizeMemoryConversationId((string) ($state['conversation_id'] ?? ''), 'default');
+    $messages = aiAgentNormalizeMemoryMessages(
+        isset($state['messages']) && is_array($state['messages']) ? $state['messages'] : [],
+        max(1, $messageLimit)
+    );
+
+    $updatedAt = (int) ($state['updated_at'] ?? 0);
+    if ($updatedAt <= 0 && !empty($messages)) {
+        $updatedAt = (int) ($messages[count($messages) - 1]['timestamp'] ?? 0);
+    }
+
+    $createdAt = (int) ($state['created_at'] ?? 0);
+    if ($createdAt <= 0 && !empty($messages)) {
+        $createdAt = (int) ($messages[0]['timestamp'] ?? 0);
+    }
+
+    return [
+        'id' => $conversationId,
+        'conversation_id' => $conversationId,
+        'server_conversation_id' => $conversationId,
+        'title' => aiAgentBuildConversationArchiveTitle($messages),
+        'preview' => aiAgentBuildConversationArchivePreview($messages),
+        'created_at' => $createdAt,
+        'updated_at' => $updatedAt,
+        'count' => count($messages),
+        'messages' => $messages,
+    ];
+}
+
 function aiAgentMergeConversationHistory(array $clientHistory, array $serverMessages, int $limit = 12): array
 {
     $merged = array_merge(
@@ -822,6 +1101,41 @@ function aiAgentAppendConversationMemory(
         'updated_at' => time(),
         'messages' => $messages,
     ]);
+}
+
+function aiAgentDeleteConversationMemory(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId
+): bool {
+    if (empty($memoryConfig['enabled']) || $userId <= 0) {
+        return false;
+    }
+
+    $conversationId = aiAgentNormalizeMemoryConversationId($conversationId, '');
+    if ($conversationId === '') {
+        return false;
+    }
+
+    $handled = false;
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        if (function_exists('aiAgentIntegratedDeleteConversationMemory')) {
+            $handled = aiAgentIntegratedDeleteConversationMemory($conn, $userId, $conversationId);
+        }
+        aiAgentDeleteLegacyConversationMemoryFile($memoryConfig, $role, $userId, $conversationId);
+        return $handled;
+    }
+
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
+        return false;
+    }
+
+    $path = aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId);
+    $exists = is_file($path);
+    aiAgentDeleteMemoryFile($path);
+
+    return $exists && !is_file($path);
 }
 
 function aiAgentExtractUserMemoryNotes(string $message): array
@@ -1003,6 +1317,22 @@ function aiAgentBuildMemoryContext(array $memoryConfig, string $role, int $userI
 function aiAgentAppendReflectionLog(array $memoryConfig, array $payload): void
 {
     if (empty($memoryConfig['enabled'])) {
+        return;
+    }
+
+    $persisted = false;
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        if (function_exists('aiAgentIntegratedSaveReflectionLog')) {
+            $persisted = aiAgentIntegratedSaveReflectionLog($conn, $payload);
+        }
+    }
+
+    if ($persisted) {
+        aiAgentDeleteLegacyReflectionLogFile($memoryConfig);
+        return;
+    }
+
+    if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
         return;
     }
 
@@ -1208,7 +1538,7 @@ function aiAgentGetMemoryBackendStatus(array $memoryConfig): array
         return $status;
     }
 
-    $status['backend'] = 'file_fallback';
+    $status['backend'] = aiAgentMemoryFileFallbackIsAllowed($memoryConfig) ? 'file_fallback' : 'database_only';
 
     if (!$status['database_enabled']) {
         return $status;
@@ -1216,7 +1546,10 @@ function aiAgentGetMemoryBackendStatus(array $memoryConfig): array
 
     $conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig, false);
     if (!$conn instanceof mysqli || !@$conn->ping()) {
-        $status['fallback_active'] = true;
+        $status['backend'] = aiAgentMemoryFileFallbackIsAllowed($memoryConfig)
+            ? 'file_fallback'
+            : 'database_only_unavailable';
+        $status['fallback_active'] = aiAgentMemoryFileFallbackIsAllowed($memoryConfig);
         return $status;
     }
 
@@ -1237,7 +1570,10 @@ function aiAgentGetMemoryBackendStatus(array $memoryConfig): array
         return $status;
     }
 
-    $status['fallback_active'] = true;
+    $status['backend'] = aiAgentMemoryFileFallbackIsAllowed($memoryConfig)
+        ? 'file_fallback'
+        : 'database_only_unavailable';
+    $status['fallback_active'] = aiAgentMemoryFileFallbackIsAllowed($memoryConfig);
     return $status;
 }
 

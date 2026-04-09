@@ -198,7 +198,7 @@ function aiAgentGetDefaultConfig(): array
         'memory_max_search_conversations' => (int) (getenv('AI_AGENT_MEMORY_MAX_SEARCH_CONVERSATIONS') ?: 10),
         'memory_database_enabled' => getenv('AI_AGENT_MEMORY_DATABASE_ENABLED') !== false
             ? filter_var(getenv('AI_AGENT_MEMORY_DATABASE_ENABLED'), FILTER_VALIDATE_BOOLEAN)
-            : false,
+            : true,
         'memory_db_host' => getenv('AI_AGENT_DB_HOST') ?: 'localhost',
         'memory_db_port' => (int) (getenv('AI_AGENT_DB_PORT') ?: 3306),
         'memory_db_name' => getenv('AI_AGENT_DB_NAME') ?: 'information_schema',
@@ -209,7 +209,7 @@ function aiAgentGetDefaultConfig(): array
             : true,
         'memory_db_fallback_to_files' => getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES') !== false
             ? filter_var(getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES'), FILTER_VALIDATE_BOOLEAN)
-            : true,
+            : false,
         'skills_enabled' => getenv('AI_AGENT_SKILLS_ENABLED') !== false
             ? filter_var(getenv('AI_AGENT_SKILLS_ENABLED'), FILTER_VALIDATE_BOOLEAN)
             : true,

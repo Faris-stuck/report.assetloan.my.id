@@ -148,7 +148,7 @@ function aiAgentGetDatabaseMemoryConfig(array $config = []): array
             : true,
         'fallback_to_files' => getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES') !== false
             ? filter_var(getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES'), FILTER_VALIDATE_BOOLEAN)
-            : true,
+            : false,
         'max_connections' => max(1, (int) (getenv('AI_AGENT_MEMORY_DB_MAX_CONNECTIONS') ?: 10)),
         'connection_timeout' => max(1, (int) (getenv('AI_AGENT_MEMORY_DB_CONNECTION_TIMEOUT') ?: 5)),
     ];

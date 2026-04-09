@@ -320,7 +320,58 @@ function aiAgentParseMemoryMarkdown(string $markdown): array
 }
 
 /**
- * Flush MEMORY.md to disk for a user (with automatic behavioral profiling)
+ * Normalize structured memory sections for DB-backed storage.
+ */
+function aiAgentNormalizeStructuredMemorySections(array $parsedMemory): array
+{
+    $normalized = [
+        'profile' => '',
+        'preferences' => '',
+        'goals' => '',
+        'lessons' => '',
+        'recent_insights' => '',
+    ];
+
+    foreach ($normalized as $key => $value) {
+        $candidate = $parsedMemory[$key] ?? '';
+        if (is_string($candidate)) {
+            $normalized[$key] = trim($candidate);
+        }
+    }
+
+    return $normalized;
+}
+
+function aiAgentGetMemoryMarkdownPath(array $memoryConfig, string $role, int $userId): string
+{
+    $profDir = (string) ($memoryConfig['profiles_dir'] ?? '');
+    if ($profDir === '') {
+        return '';
+    }
+
+    $userKey = aiAgentBuildMemoryUserKey($role, $userId);
+    return $profDir . DIRECTORY_SEPARATOR . $userKey . '-MEMORY.md';
+}
+
+function aiAgentDeleteLegacyMemoryMarkdown(array $memoryConfig, string $role, int $userId): void
+{
+    $memoryFile = aiAgentGetMemoryMarkdownPath($memoryConfig, $role, $userId);
+    if ($memoryFile === '') {
+        return;
+    }
+
+    if (function_exists('aiAgentDeleteMemoryFile')) {
+        aiAgentDeleteMemoryFile($memoryFile);
+        return;
+    }
+
+    if (is_file($memoryFile)) {
+        @unlink($memoryFile);
+    }
+}
+
+/**
+ * Persist structured memory snapshot for a user without creating new files.
  */
 function aiAgentFlushMemoryMarkdown(
     array $memoryConfig,
@@ -329,46 +380,106 @@ function aiAgentFlushMemoryMarkdown(
     array $conversationMessages,
     array $previousMemory = []
 ): bool {
-    $profDir = $memoryConfig['profiles_dir'] ?? '';
-    if (!$profDir || !is_dir($profDir)) {
-        return false;
+    $normalizedMemory = aiAgentNormalizeStructuredMemorySections($previousMemory);
+
+    if (function_exists('aiAgentEnhanceMemoryWithBehavioralProfile')) {
+        $normalizedMemory = aiAgentNormalizeStructuredMemorySections(
+            aiAgentEnhanceMemoryWithBehavioralProfile($normalizedMemory, $conversationMessages)
+        );
     }
 
-    // Auto-enhance memory with behavioral profile before writing
-    if (function_exists('aiAgentEnhanceMemoryWithBehavioralProfile')) {
-        $previousMemory = aiAgentEnhanceMemoryWithBehavioralProfile($previousMemory, $conversationMessages);
+    if (!empty($memoryConfig['database_enabled']) && function_exists('aiAgentLoadUserProfileMemory')) {
+        $profileState = aiAgentLoadUserProfileMemory($memoryConfig, $role, $userId);
+        $behavioralData = isset($profileState['behavioral_data']) && is_array($profileState['behavioral_data'])
+            ? $profileState['behavioral_data']
+            : [];
+        $behavioralData['curated_memory'] = $normalizedMemory;
+        $behavioralData['curated_memory_updated_at'] = time();
+
+        $profileState['role'] = $role;
+        $profileState['user_id'] = $userId;
+        $profileState['behavioral_data'] = $behavioralData;
+        $profileState['updated_at'] = time();
+
+        $persisted = aiAgentPersistUserProfileMemoryState($memoryConfig, $role, $userId, $profileState);
+        if ($persisted) {
+            aiAgentDeleteLegacyMemoryMarkdown($memoryConfig, $role, $userId);
+            return true;
+        }
+
+        if (empty($memoryConfig['database_fallback_to_files'])) {
+            return false;
+        }
     }
 
     $userKey = aiAgentBuildMemoryUserKey($role, $userId);
-    $memoryFile = $profDir . DIRECTORY_SEPARATOR . $userKey . '-MEMORY.md';
+    $memoryFile = aiAgentGetMemoryMarkdownPath($memoryConfig, $role, $userId);
+    if ($memoryFile === '') {
+        return false;
+    }
 
-    $markdown = aiAgentBuildMemoryMarkdown($userKey, $conversationMessages, $previousMemory);
+    $memoryDirectory = dirname($memoryFile);
+    if (!is_dir($memoryDirectory)) {
+        @mkdir($memoryDirectory, 0775, true);
+    }
+
+    $markdown = aiAgentBuildMemoryMarkdown($userKey, $conversationMessages, $normalizedMemory);
 
     return file_put_contents($memoryFile, $markdown, LOCK_EX) !== false;
 }
 
 /**
- * Load MEMORY.md from disk
+ * Load structured memory snapshot from DB first, then legacy MEMORY.md if needed.
  */
 function aiAgentLoadMemoryMarkdown(
     array $memoryConfig,
     string $role,
     int $userId
 ): array {
-    $profDir = $memoryConfig['profiles_dir'] ?? '';
-    if (!$profDir) {
-        return [];
+    if (function_exists('aiAgentLoadUserProfileMemory')) {
+        $profileState = aiAgentLoadUserProfileMemory($memoryConfig, $role, $userId);
+        $behavioralData = isset($profileState['behavioral_data']) && is_array($profileState['behavioral_data'])
+            ? $profileState['behavioral_data']
+            : [];
+        if (isset($behavioralData['curated_memory']) && is_array($behavioralData['curated_memory'])) {
+            $normalizedMemory = aiAgentNormalizeStructuredMemorySections($behavioralData['curated_memory']);
+            if (implode('', $normalizedMemory) !== '') {
+                aiAgentDeleteLegacyMemoryMarkdown($memoryConfig, $role, $userId);
+                return $normalizedMemory;
+            }
+        }
     }
 
-    $userKey = aiAgentBuildMemoryUserKey($role, $userId);
-    $memoryFile = $profDir . DIRECTORY_SEPARATOR . $userKey . '-MEMORY.md';
-
-    if (!file_exists($memoryFile)) {
+    $memoryFile = aiAgentGetMemoryMarkdownPath($memoryConfig, $role, $userId);
+    if ($memoryFile === '' || !file_exists($memoryFile)) {
         return [];
     }
 
     $markdown = file_get_contents($memoryFile);
-    return $markdown ? aiAgentParseMemoryMarkdown($markdown) : [];
+    $parsedMemory = $markdown ? aiAgentNormalizeStructuredMemorySections(aiAgentParseMemoryMarkdown($markdown)) : [];
+    if (implode('', $parsedMemory) === '') {
+        return [];
+    }
+
+    if (!empty($memoryConfig['database_enabled']) && function_exists('aiAgentLoadUserProfileMemory')) {
+        $profileState = aiAgentLoadUserProfileMemory($memoryConfig, $role, $userId);
+        $behavioralData = isset($profileState['behavioral_data']) && is_array($profileState['behavioral_data'])
+            ? $profileState['behavioral_data']
+            : [];
+        $behavioralData['curated_memory'] = $parsedMemory;
+        $behavioralData['curated_memory_updated_at'] = time();
+
+        $profileState['role'] = $role;
+        $profileState['user_id'] = $userId;
+        $profileState['behavioral_data'] = $behavioralData;
+        $profileState['updated_at'] = time();
+
+        if (aiAgentPersistUserProfileMemoryState($memoryConfig, $role, $userId, $profileState)) {
+            aiAgentDeleteLegacyMemoryMarkdown($memoryConfig, $role, $userId);
+        }
+    }
+
+    return $parsedMemory;
 }
 
 /**

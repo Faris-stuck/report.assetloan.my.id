@@ -1,10 +1,10 @@
 {
-    "generated_at": 1775645838,
+    "generated_at": 1775720722,
     "summary": {
-        "total_features": 239,
+        "total_features": 231,
         "total_modules": 40,
         "total_scopes": 7,
-        "schema_tables": 16
+        "schema_tables": 17
     },
     "modules": {
         "DASHBOARD_BASIS_PERHITUNGAN.html": {
@@ -152,7 +152,7 @@
             ]
         },
         "hermes": {
-            "total_features": 54,
+            "total_features": 46,
             "examples": [
                 "AGENTS",
                 "README",
@@ -330,7 +330,7 @@
     },
     "scopes": {
         "borrowing": {
-            "total_features": 130,
+            "total_features": 125,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "README",
@@ -343,7 +343,7 @@
             ]
         },
         "extensions": {
-            "total_features": 43,
+            "total_features": 42,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Borrowing Details",
@@ -356,7 +356,7 @@
             ]
         },
         "inventory": {
-            "total_features": 171,
+            "total_features": 168,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -369,7 +369,7 @@
             ]
         },
         "reports": {
-            "total_features": 56,
+            "total_features": 54,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -382,7 +382,7 @@
             ]
         },
         "returns": {
-            "total_features": 146,
+            "total_features": 144,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -395,7 +395,7 @@
             ]
         },
         "users_admin": {
-            "total_features": 125,
+            "total_features": 122,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Item Data",
@@ -408,7 +408,7 @@
             ]
         },
         "vendors": {
-            "total_features": 73,
+            "total_features": 72,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Item Data",
@@ -3287,6 +3287,7 @@
                 "reports"
             ],
             "linked_paths": [
+                "assets/js/hermes/history.php",
                 "assets/js/hermes/lock.php",
                 "assets/js/hermes/chat.php",
                 "assets/js/api/user/get-current-user.php"
@@ -3306,7 +3307,7 @@
                 "getSavedUser",
                 "getStoragePrefix"
             ],
-            "mtime": 1775615418
+            "mtime": 1775720501
         },
         {
             "path": "assets/js/auth/auth-manager.js",
@@ -4289,7 +4290,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645746
+            "mtime": 1775719557
         },
         {
             "path": "hermes/config/README.md",
@@ -4329,7 +4330,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645746
+            "mtime": 1775717294
         },
         {
             "path": "hermes/config/hermes-keywords.php",
@@ -4472,170 +4473,6 @@
             "mtime": 1775633226
         },
         {
-            "path": "hermes/data/memory/conversations/admin-1-conv-1-1775615461713-xwt0hd.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Admin 1 Conv 1 1775615461713 Xwt0hd",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "users_admin",
-                "reports"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775618791
-        },
-        {
-            "path": "hermes/data/memory/conversations/admin-1-conv-1-1775620275010-9b1eez.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Admin 1 Conv 1 1775620275010 9b1eez",
-            "scopes": [
-                "inventory",
-                "borrowing"
-            ],
-            "linked_paths": [
-                "hermes/data/memory/conversations/PROJECT/hermes/indexer.hybrid.js",
-                "hermes/data/memory/conversations/PROJECT/hermes/guard.runtime.js"
-            ],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775620633
-        },
-        {
-            "path": "hermes/data/memory/conversations/admin-1-conv-1-1775628421163-w4zepa.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Admin 1 Conv 1 1775628421163 W4zepa",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "users_admin",
-                "reports",
-                "vendors"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775633595
-        },
-        {
-            "path": "hermes/data/memory/conversations/admin-1-conv-1-1775633848842-5w1ibd.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Admin 1 Conv 1 1775633848842 5w1ibd",
-            "scopes": [],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775634138
-        },
-        {
-            "path": "hermes/data/memory/conversations/user-1025-conv-1025-1775619751047-ki6q23.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "User 1025 Conv 1025 1775619751047 Ki6q23",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "users_admin"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775619815
-        },
-        {
-            "path": "hermes/data/memory/conversations/user-1025-conv-1025-1775620218188-8h95if.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "User 1025 Conv 1025 1775620218188 8h95if",
-            "scopes": [
-                "borrowing",
-                "returns",
-                "extensions"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775620238
-        },
-        {
-            "path": "hermes/data/memory/lessons/admin-1.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Admin 1",
-            "scopes": [],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630252
-        },
-        {
-            "path": "hermes/data/memory/profiles/admin-1-MEMORY.md",
-            "type": "doc",
-            "module": "hermes",
-            "display_name": "Admin 1 MEMORY",
-            "scopes": [
-                "reports"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775645788
-        },
-        {
-            "path": "hermes/data/memory/profiles/admin-1.json",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Admin 1",
-            "scopes": [],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630252
-        },
-        {
             "path": "hermes/data/project-index/feature-manifest.json",
             "type": "helper",
             "module": "hermes",
@@ -4648,7 +4485,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645802
+            "mtime": 1775720517
         },
         {
             "path": "hermes/data/project-index/project-index-meta.json",
@@ -4665,7 +4502,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645802
+            "mtime": 1775720517
         },
         {
             "path": "hermes/data/project-index/project-index.json",
@@ -4680,7 +4517,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645802
+            "mtime": 1775720517
         },
         {
             "path": "hermes/database/README.md",
@@ -4720,11 +4557,11 @@
                 "aiAgentIntegratedSaveConversationMemory",
                 "aiAgentIntegratedLoadConversationMemory",
                 "aiAgentIntegratedListConversationMemories",
+                "aiAgentIntegratedDeleteConversationMemory",
                 "aiAgentIntegratedSaveUserProfile",
-                "aiAgentIntegratedLoadUserProfile",
-                "aiAgentIntegratedSaveUserLessons"
+                "aiAgentIntegratedLoadUserProfile"
             ],
-            "mtime": 1775637527
+            "mtime": 1775719492
         },
         {
             "path": "hermes/database/maintenance/check-database-data.php",
@@ -4769,7 +4606,7 @@
                 "aiAgentReadProfileFromDatabase",
                 "aiAgentWriteLessonsToDatabase"
             ],
-            "mtime": 1775635689
+            "mtime": 1775717586
         },
         {
             "path": "hermes/database/maintenance/migrate-memory-to-database.php",
@@ -4785,8 +4622,10 @@
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
-            "functions": [],
-            "mtime": 1775645746
+            "functions": [
+                "aiAgentFinalizeMigratedSourceFile"
+            ],
+            "mtime": 1775717907
         },
         {
             "path": "hermes/database/tests/test-integrated-memory.php",
@@ -4826,7 +4665,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645746
+            "mtime": 1775717683
         },
         {
             "path": "hermes/docs/DYNAMIC-CONFIG-GUIDE.md",
@@ -5114,7 +4953,7 @@
                 "aiAgentBuildMemoryMarkdown",
                 "aiAgentParseMemoryMarkdown"
             ],
-            "mtime": 1775631770
+            "mtime": 1775717603
         },
         {
             "path": "hermes/engine/tool-helper.php",
@@ -5147,6 +4986,27 @@
                 "aiAgentResolveRequestedBusinessScopes"
             ],
             "mtime": 1775632391
+        },
+        {
+            "path": "hermes/history.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "History",
+            "scopes": [
+                "inventory",
+                "returns"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentReadHistoryRequest",
+                "aiAgentBuildHistorySyncPayload"
+            ],
+            "mtime": 1775720453
         },
         {
             "path": "hermes/home/SOUL.md",
@@ -5246,12 +5106,12 @@
                 "aiAgentResolveHermesStoragePath",
                 "aiAgentEnsureMemoryDirectories",
                 "aiAgentBuildMemoryUserKey",
+                "aiAgentNormalizeMemoryConversationId",
                 "aiAgentBuildMemoryConversationKey",
                 "aiAgentGetConversationMemoryPath",
-                "aiAgentGetProfileMemoryPath",
-                "aiAgentGetLessonsMemoryPath"
+                "aiAgentGetProfileMemoryPath"
             ],
-            "mtime": 1775644075
+            "mtime": 1775719539
         },
         {
             "path": "hermes/model/README.md",
@@ -5304,7 +5164,7 @@
                 "aiAgentConfigValueIsUsable",
                 "aiAgentGetExtendedProviderConfig"
             ],
-            "mtime": 1775645256
+            "mtime": 1775717294
         },
         {
             "path": "hermes/patches/candidate-skills/berikan-saya-data-lengkap-mengenai-bagaimana-system-anda-berjalan-jangan-pakai-tabel-preferensi-user-jangan-pakai-tabel-51084e4339ef.md",
@@ -5749,16 +5609,20 @@
                 "returns",
                 "extensions",
                 "users_admin",
+                "reports",
                 "vendors"
             ],
-            "linked_paths": [],
+            "linked_paths": [
+                "PROJECT/hermes/indexer.hybrid.js",
+                "PROJECT/hermes/guard.runtime.js"
+            ],
             "title": "",
             "headings": [],
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775090577
+            "mtime": 1775696217
         },
         {
             "path": "phpmailer/src/Exception.php",
