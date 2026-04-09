@@ -3,12 +3,12 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../api/session-helper.php';
 require_once __DIR__ . '/../api/koneksi.php';
-require_once __DIR__ . '/context-helper.php';
-require_once __DIR__ . '/codebase-helper.php';
-require_once __DIR__ . '/index-helper.php';
-require_once __DIR__ . '/tool-helper.php';
-require_once __DIR__ . '/config-helper.php';
-require_once __DIR__ . '/runtime-helper.php';
+require_once __DIR__ . '/engine/context-helper.php';
+require_once __DIR__ . '/engine/codebase-helper.php';
+require_once __DIR__ . '/engine/index-helper.php';
+require_once __DIR__ . '/engine/tool-helper.php';
+require_once __DIR__ . '/model/config-helper.php';
+require_once __DIR__ . '/engine/runtime-helper.php';
 
 if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'POST'], true)) {
     http_response_code(405);
@@ -20,7 +20,7 @@ if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'POST'], true)) {
 }
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../config/ai_agent.php',
+    __DIR__ . '/config/ai_agent.php',
 ]);
 aiAgentBootstrapRuntimeConfig($config);
 $requestData = aiAgentReadProjectIndexControlRequest();

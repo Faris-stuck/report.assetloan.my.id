@@ -502,7 +502,7 @@ function aiAgentBuildCandidatePathHints(string $pagePath, array $focusScopes, ar
         'dashboard' => ['admin', 'manager', 'user', 'pic-barang', 'api/admin', 'api/approver', 'api/user'],
         'laporan' => ['admin/laporan', 'manager/laporan', 'api'],
         'auth' => ['api/auth', 'api/user', 'assets/js/auth'],
-        'ai' => ['hermes', 'assets/js/ai-agent-widget.js', 'assets/css/ai-agent-widget.css', 'config/ai_agent.php'],
+        'ai' => ['hermes', 'assets/js/ai-agent-widget.js', 'assets/css/ai-agent-widget.css', 'hermes/config/ai_agent.php'],
     ];
 
     foreach ($focusScopes as $scope) {

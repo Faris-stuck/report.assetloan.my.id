@@ -15,23 +15,23 @@
  */
 require_once __DIR__ . '/../koneksi.php';
 require_once __DIR__ . '/../session-helper.php';
+require_once __DIR__ . '/../response-helper.php';
 
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['status' => false, 'message' => 'Method not allowed']);
-    exit;
+    apiBusinessError('Method not allowed', 405);
 }
 
-$session = new SessionValidator();
-if (!$session->isLoggedIn()) {
-    http_response_code(403);
-    echo json_encode(['status' => false, 'message' => 'Unauthorized']);
-    exit;
+if (!SessionValidator::isLoggedIn()) {
+    apiBusinessError('Unauthorized', 401);
 }
 
-$user_id = $session->getUserId();
+if (SessionValidator::getRole() !== 'user') {
+    apiBusinessError('Access denied', 403);
+}
+
+$user_id = (int) (SessionValidator::getUserId() ?? 0);
 $peminjaman_id = isset($_POST['peminjaman_id']) ? (int)$_POST['peminjaman_id'] : 0;
 $tanggal_perpanjang = trim($_POST['tanggal_perpanjang'] ?? '');
 $alasan = trim($_POST['alasan'] ?? '');
@@ -71,9 +71,7 @@ if ($is_per_unit) {
 
 // Validate that at least one item/unit is selected
 if (count($items) === 0) {
-    http_response_code(400);
-    echo json_encode(['status' => false, 'message' => 'Select at least 1 item/unit to extend']);
-    exit;
+    apiBusinessError('Select at least 1 item/unit to extend', 400);
 }
 
 try {
@@ -155,23 +153,25 @@ try {
         }
     }
 
-    // Original status validation - allow active statuses
-    $currentStatus = $peminjaman['status'];
-    $isActive = in_array($currentStatus, ['Borrowed', 'Approved', 'Partially Returned', 'Overdue'])
-                || strpos($currentStatus, 'Due') === 0
-                || $currentStatus === 'Return in Process';  // Allow if there are items remaining
-    
-    if (!$isActive) {
-        echo json_encode(['status' => false, 'message' => 'Borrowing with status "' . $currentStatus . '" cannot be extended']);
+    $latestExtendStatus = getLatestBorrowingExtendStatus($conn, $peminjaman_id);
+    if ($latestExtendStatus === 'Pending') {
+        echo json_encode(['status' => false, 'message' => 'There is already a pending extension request awaiting approval']);
         exit;
     }
 
-    // Check if there's already a pending extend request for this peminjaman
-    $stmt = $conn->prepare("SELECT id FROM extend_peminjaman WHERE peminjaman_id = ? AND status = 'Pending'");
-    $stmt->bind_param("i", $peminjaman_id);
-    $stmt->execute();
-    if ($stmt->get_result()->num_rows > 0) {
-        echo json_encode(['status' => false, 'message' => 'There is already a pending extension request awaiting approval']);
+    $nearestReturn = getNearestExpectedReturn($conn, $peminjaman_id);
+    $extendState = getBorrowingExtendState(
+        $conn,
+        $peminjaman_id,
+        (string) $peminjaman['status'],
+        $peminjaman['rencana_kembali'],
+        $latestExtendStatus,
+        $nearestReturn
+    );
+    $currentStatus = $extendState['status'];
+
+    if (!$extendState['can_extend']) {
+        echo json_encode(['status' => false, 'message' => 'Borrowing with status "' . $currentStatus . '" cannot be extended']);
         exit;
     }
 
@@ -346,11 +346,11 @@ try {
         
         echo json_encode(['status' => true, 'message' => 'Extension request submitted successfully']);
 
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         $conn->rollback();
-        echo json_encode(['status' => false, 'message' => 'Failed to save: ' . $e->getMessage()]);
+        apiServerError($e, 'api/extend/request.php', 'Failed to save extension request');
     }
 
-} catch (Exception $e) {
-    echo json_encode(['status' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+} catch (Throwable $e) {
+    apiServerError($e, 'api/extend/request.php');
 }

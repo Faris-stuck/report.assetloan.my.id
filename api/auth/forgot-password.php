@@ -1,18 +1,11 @@
 <?php
 header('Content-Type: application/json');
 require_once __DIR__ . "/../koneksi.php";
+require_once __DIR__ . "/../response-helper.php";
 
 function jsonResponse(int $code, bool $status, string $message): void
 {
-    http_response_code($code);
-    echo json_encode(["status" => $status, "message" => $message]);
-    exit;
-}
-
-function ensureResetColumns(mysqli $conn): void
-{
-    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(10) DEFAULT NULL");
-    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires DATETIME DEFAULT NULL");
+    apiJsonResponse($code, ["status" => $status, "message" => $message]);
 }
 
 function generateFreshResetToken(?string $previousToken = null): string
@@ -36,8 +29,6 @@ function generateFreshResetToken(?string $previousToken = null): string
 
 function sendResetToken(mysqli $conn, string $email, bool $isResend = false): void
 {
-    ensureResetColumns($conn);
-
     $stmt = $conn->prepare("SELECT id, nama, nrp, email, reset_token FROM users WHERE email = ?");
     if (!$stmt) {
         jsonResponse(500, false, "Internal server error");
@@ -134,8 +125,6 @@ try {
         if (strlen($new_password) < 6) {
             jsonResponse(400, false, "Password must be at least 6 characters");
         }
-
-        ensureResetColumns($conn);
 
         $stmt = $conn->prepare("SELECT id FROM users WHERE email = ? AND reset_token = ? AND reset_token_expires > NOW()");
         if (!$stmt) {

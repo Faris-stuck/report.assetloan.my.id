@@ -638,7 +638,7 @@
 
         // Load data peminjaman dari database untuk user yang login
         function loadDataPeminjaman(dateStart, dateEnd) {
-            var url = BASE_URL + "/api/peminjaman/get_all.php?user_id=" + USER_ID;
+            var url = BASE_URL + "/api/peminjaman/get_all.php";
 
             // Add date range parameters if provided
             if (dateStart && dateEnd) {
@@ -1106,7 +1106,6 @@
             const form = e.target;
             // Proses submit sebenarnya
             let fd = new FormData(form);
-            fd.append("user_id", USER_ID);
 
             fetch(BASE_URL + "/api/user/request-peminjaman.php", {
                 method: "POST",

@@ -30,19 +30,11 @@ function aiAgentLoadConfig(array $candidates = []): array
 function aiAgentGetDefaultConfig(): array
 {
     return [
-        'agent_name' => getenv('AI_AGENT_NAME') ?: 'Hermes Agent',
-        'base_url' => getenv('AI_AGENT_BASE_URL') ?: 'https://ai.sumopod.com/v1',
-        'api_key' => getenv('AI_AGENT_API_KEY') ?: 'sk-jyoOBJSlENl4HMAEHH_5Rw',
-        'model' => getenv('AI_AGENT_MODEL') ?: 'seed-2-0-pro-free',
-        'temperature' => (float) (getenv('AI_AGENT_TEMPERATURE') ?: 0.12),
-        'max_tokens' => (int) (getenv('AI_AGENT_MAX_TOKENS') ?: 900),
-        'timeout' => (int) (getenv('AI_AGENT_TIMEOUT') ?: 45),
         'sensitive_access_password' => getenv('AI_AGENT_SENSITIVE_PASSWORD') ?: 'kacamatafaris',
         'sensitive_access_duration_minutes' => (int) (getenv('AI_AGENT_SENSITIVE_DURATION_MINUTES') ?: 30),
         'sensitive_access_unlimited' => getenv('AI_AGENT_SENSITIVE_UNLIMITED') !== false
             ? filter_var(getenv('AI_AGENT_SENSITIVE_UNLIMITED'), FILTER_VALIDATE_BOOLEAN)
             : false,
-        'system_prompt' => getenv('AI_AGENT_SYSTEM_PROMPT') ?: 'Anda adalah Hermes Agent, asisten AI internal untuk Sistem Informasi Peminjaman Barang. Gunakan hanya fakta dari system messages, konteks aplikasi, riwayat chat, dan pertanyaan user. Jangan mengarang. Dalam mode normal, prioritaskan jawaban berbasis menu, submenu, card, halaman, tombol, langkah penggunaan, dan status bisnis. Jangan ungkap nama file, folder, path, endpoint, database, tabel, kolom, query, atau detail backend internal kecuali sistem secara eksplisit mengaktifkan mode sensitif. Jika konteks belum cukup, katakan dengan jujur apa yang masih kurang.',
         'tool_layer_enabled' => true,
         'tool_baseline' => [
             'role_guard',
@@ -204,6 +196,20 @@ function aiAgentGetDefaultConfig(): array
         'memory_max_notes_per_user' => (int) (getenv('AI_AGENT_MEMORY_MAX_NOTES_PER_USER') ?: 30),
         'memory_max_search_results' => (int) (getenv('AI_AGENT_MEMORY_MAX_SEARCH_RESULTS') ?: 5),
         'memory_max_search_conversations' => (int) (getenv('AI_AGENT_MEMORY_MAX_SEARCH_CONVERSATIONS') ?: 10),
+        'memory_database_enabled' => getenv('AI_AGENT_MEMORY_DATABASE_ENABLED') !== false
+            ? filter_var(getenv('AI_AGENT_MEMORY_DATABASE_ENABLED'), FILTER_VALIDATE_BOOLEAN)
+            : false,
+        'memory_db_host' => getenv('AI_AGENT_DB_HOST') ?: 'localhost',
+        'memory_db_port' => (int) (getenv('AI_AGENT_DB_PORT') ?: 3306),
+        'memory_db_name' => getenv('AI_AGENT_DB_NAME') ?: 'information_schema',
+        'memory_db_username' => getenv('AI_AGENT_DB_USER') ?: 'root',
+        'memory_db_password' => getenv('AI_AGENT_DB_PASSWORD') ?: '',
+        'memory_db_auto_init' => getenv('AI_AGENT_MEMORY_DB_AUTO_INIT') !== false
+            ? filter_var(getenv('AI_AGENT_MEMORY_DB_AUTO_INIT'), FILTER_VALIDATE_BOOLEAN)
+            : true,
+        'memory_db_fallback_to_files' => getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES') !== false
+            ? filter_var(getenv('AI_AGENT_MEMORY_DB_FALLBACK_TO_FILES'), FILTER_VALIDATE_BOOLEAN)
+            : true,
         'skills_enabled' => getenv('AI_AGENT_SKILLS_ENABLED') !== false
             ? filter_var(getenv('AI_AGENT_SKILLS_ENABLED'), FILTER_VALIDATE_BOOLEAN)
             : true,
@@ -226,19 +232,85 @@ function aiAgentGetDefaultConfig(): array
         'summarization_min_lines' => (int) (getenv('AI_AGENT_SUMMARIZATION_MIN_LINES') ?: 3),
         'summarization_max_lines' => (int) (getenv('AI_AGENT_SUMMARIZATION_MAX_LINES') ?: 15),
         'summarization_target_tokens' => (int) (getenv('AI_AGENT_SUMMARIZATION_TARGET_TOKENS') ?: 2000),
-        // Priority 4: Extended provider fallback config
-        'extended_provider_enabled' => getenv('AI_AGENT_EXTENDED_PROVIDER_ENABLED') !== false
-            ? filter_var(getenv('AI_AGENT_EXTENDED_PROVIDER_ENABLED'), FILTER_VALIDATE_BOOLEAN)
-            : false,
-        'extended_provider_type' => getenv('AI_AGENT_EXTENDED_PROVIDER_TYPE') ?: 'openai',
-        'extended_provider_base_url' => getenv('AI_AGENT_EXTENDED_PROVIDER_BASE_URL') ?: '',
-        'extended_provider_api_key' => getenv('AI_AGENT_EXTENDED_PROVIDER_API_KEY') ?: '',
-        'extended_provider_model' => getenv('AI_AGENT_EXTENDED_PROVIDER_MODEL') ?: 'gpt-4o-mini',
-        'extended_provider_fallback_on_error' => getenv('AI_AGENT_EXTENDED_PROVIDER_FALLBACK_ON_ERROR') !== false
-            ? filter_var(getenv('AI_AGENT_EXTENDED_PROVIDER_FALLBACK_ON_ERROR'), FILTER_VALIDATE_BOOLEAN)
-            : true,
-        'extended_provider_timeout' => max(5, (int) (getenv('AI_AGENT_EXTENDED_PROVIDER_TIMEOUT') ?: 30)),
     ];
+}
+
+function aiAgentGetPrimaryAiRuntimeConfigKeys(): array
+{
+    return [
+        'agent_name',
+        'base_url',
+        'api_key',
+        'model',
+        'temperature',
+        'max_tokens',
+        'timeout',
+        'system_prompt',
+    ];
+}
+
+function aiAgentGetMissingPrimaryAiRuntimeConfigKeys(array $config = []): array
+{
+    $missing = [];
+
+    foreach (aiAgentGetPrimaryAiRuntimeConfigKeys() as $key) {
+        if (!array_key_exists($key, $config)) {
+            $missing[] = $key;
+            continue;
+        }
+
+        $value = $config[$key];
+        if (is_string($value) && trim($value) === '') {
+            $missing[] = $key;
+            continue;
+        }
+
+        if (in_array($key, ['temperature', 'max_tokens', 'timeout'], true) && (!is_numeric($value) || (float) $value <= 0)) {
+            $missing[] = $key;
+        }
+    }
+
+    return $missing;
+}
+
+function aiAgentHasCompletePrimaryAiRuntimeConfig(array $config = []): bool
+{
+    return empty(aiAgentGetMissingPrimaryAiRuntimeConfigKeys($config));
+}
+
+function aiAgentGetMissingExtendedProviderConfigKeys(array $config = []): array
+{
+    if (empty($config['extended_provider_enabled'])) {
+        return [];
+    }
+
+    $requiredKeys = [
+        'extended_provider_type',
+        'extended_provider_base_url',
+        'extended_provider_api_key',
+        'extended_provider_model',
+        'extended_provider_timeout',
+    ];
+
+    $missing = [];
+    foreach ($requiredKeys as $key) {
+        if (!array_key_exists($key, $config)) {
+            $missing[] = $key;
+            continue;
+        }
+
+        $value = $config[$key];
+        if (is_string($value) && trim($value) === '') {
+            $missing[] = $key;
+            continue;
+        }
+
+        if ($key === 'extended_provider_timeout' && (!is_numeric($value) || (int) $value <= 0)) {
+            $missing[] = $key;
+        }
+    }
+
+    return $missing;
 }
 
 function aiAgentConfigValueIsUsable(string $key, $value): bool
@@ -284,14 +356,14 @@ function aiAgentGetExtendedProviderConfig(array $config = []): array
         'enabled' => !isset($config['extended_provider_enabled'])
             ? false
             : (bool) $config['extended_provider_enabled'],
-        'type' => strtolower(trim((string) ($config['extended_provider_type'] ?? 'openai'))),
+        'type' => strtolower(trim((string) ($config['extended_provider_type'] ?? ''))),
         'base_url' => trim((string) ($config['extended_provider_base_url'] ?? '')),
         'api_key' => trim((string) ($config['extended_provider_api_key'] ?? '')),
-        'model' => trim((string) ($config['extended_provider_model'] ?? 'gpt-4o-mini')),
+        'model' => trim((string) ($config['extended_provider_model'] ?? '')),
         'fallback_on_error' => !isset($config['extended_provider_fallback_on_error'])
-            ? true
+            ? false
             : (bool) $config['extended_provider_fallback_on_error'],
-        'timeout' => max(5, (int) ($config['extended_provider_timeout'] ?? 30)),
+        'timeout' => (int) ($config['extended_provider_timeout'] ?? 0),
     ];
 }
 

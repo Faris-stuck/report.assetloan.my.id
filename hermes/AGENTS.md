@@ -9,6 +9,12 @@ Folder ini adalah rumah engine AI internal PROJECT yang meniru pola kerja Hermes
 - Perubahan mandiri engine diprioritaskan ke dalam folder ini lebih dulu.
 
 ## Preferred Write Paths
+- `docs/` untuk panduan teknis, catatan arsitektur, dan referensi implementasi
+- `model/` untuk loader, validator, dan helper konfigurasi AI
+- `config/` untuk schema, role, keyword, limit, dan string config Hermes
+- `engine/` untuk helper runtime aktif yang menopang chat, grounding, indexing, dan tools
+- `memory/` untuk layer conversation memory dan memory context
+- `database/` untuk helper database, maintenance script, dan test terkait database
 - `skills/` untuk skill baru atau skill yang diperbarui
 - `tools/` untuk tool wrapper, helper, dan integrasi MCP
 - `patches/` untuk hasil refleksi, patch, atau usulan perubahan
@@ -20,7 +26,9 @@ Folder ini adalah rumah engine AI internal PROJECT yang meniru pola kerja Hermes
 ## Project Notes
 - Endpoint web PHP utama berada di file `chat.php`, `status.php`, `lock.php`, dan `reindex.php`.
 - Widget frontend memanggil endpoint `/hermes/chat.php`.
-- File `context-helper.php`, `codebase-helper.php`, `index-helper.php`, `tool-helper.php`, `memory-helper.php`, `skills-helper.php`, dan `self-improve-helper.php` adalah bagian runtime aktif engine ini.
+- Runtime aktif sekarang dibagi tematik: `engine/` untuk helper utama, `memory/` untuk memory layer, `database/` untuk helper DB, `config/` untuk config statis, dan `model/` untuk loader/validator konfigurasi AI.
+- Sumber tunggal konfigurasi model/provider Hermes ada di `PROJECT/hermes/config/ai_agent.php`.
+- Root `PROJECT/hermes` sebaiknya dijaga fokus untuk entrypoint web, bukan tempat menumpuk helper tematik.
 - Jika menjawab pertanyaan penggunaan aplikasi, prioritaskan istilah menu, halaman, tombol, card, status, dan alur pengguna.
 - Jika user meminta detail teknis, Anda boleh menyebut file, path, endpoint, atau struktur implementasi secara eksplisit.
 

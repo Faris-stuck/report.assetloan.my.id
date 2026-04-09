@@ -2,22 +2,23 @@
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../api/session-helper.php';
-require_once __DIR__ . '/hermes-schema.php';
-require_once __DIR__ . '/hermes-roles.php';
-require_once __DIR__ . '/hermes-keywords.php';
-require_once __DIR__ . '/hermes-limits.php';
-require_once __DIR__ . '/hermes-strings.php';
-require_once __DIR__ . '/context-helper.php';
-require_once __DIR__ . '/codebase-helper.php';
-require_once __DIR__ . '/index-helper.php';
-require_once __DIR__ . '/tool-helper.php';
-require_once __DIR__ . '/config-helper.php';
-require_once __DIR__ . '/runtime-helper.php';
-require_once __DIR__ . '/conversation-helper.php';
-require_once __DIR__ . '/memory-helper.php';
-require_once __DIR__ . '/skills-helper.php';
-require_once __DIR__ . '/self-improve-helper.php';
-require_once __DIR__ . '/summarization-helper.php';
+require_once __DIR__ . '/config/hermes-schema.php';
+require_once __DIR__ . '/config/hermes-roles.php';
+require_once __DIR__ . '/config/hermes-keywords.php';
+require_once __DIR__ . '/config/hermes-limits.php';
+require_once __DIR__ . '/config/hermes-strings.php';
+require_once __DIR__ . '/engine/context-helper.php';
+require_once __DIR__ . '/engine/codebase-helper.php';
+require_once __DIR__ . '/engine/index-helper.php';
+require_once __DIR__ . '/engine/tool-helper.php';
+require_once __DIR__ . '/model/config-helper.php';
+require_once __DIR__ . '/engine/runtime-helper.php';
+require_once __DIR__ . '/memory/conversation-helper.php';
+require_once __DIR__ . '/memory/memory-helper.php';
+require_once __DIR__ . '/database/integrated-memory-helper.php';
+require_once __DIR__ . '/engine/skills-helper.php';
+require_once __DIR__ . '/engine/self-improve-helper.php';
+require_once __DIR__ . '/engine/summarization-helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -31,24 +32,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 SessionValidator::requireRole(['user', 'manager', 'admin', 'pic_barang']);
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../config/ai_agent.php',
+    __DIR__ . '/config/ai_agent.php',
 ]);
 aiAgentBootstrapRuntimeConfig($config);
-$agentName = trim((string) ($config['agent_name'] ?? 'Hermes Agent'));
-$agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
-$agentApiKey = trim((string) ($config['api_key'] ?? ''));
-$agentModel = trim((string) ($config['model'] ?? 'seed-2-0-pro-free'));
-$agentTemperature = (float) ($config['temperature'] ?? 0.15);
-$agentMaxTokens = (int) ($config['max_tokens'] ?? 900);
-$agentTimeout = (int) ($config['timeout'] ?? 45);
-$systemPrompt = trim((string) ($config['system_prompt'] ?? ''));
-$sensitiveAccessPassword = (string) ($config['sensitive_access_password'] ?? '');
-$sensitiveAccessDurationMinutes = max(1, (int) ($config['sensitive_access_duration_minutes'] ?? 30));
-$sensitiveAccessUnlimited = !isset($config['sensitive_access_unlimited'])
-    ? true
-    : (bool) $config['sensitive_access_unlimited'];
+$memoryEnabled = !isset($config['memory_enabled']) ? true : (bool) $config['memory_enabled'];
+$memoryDatabaseEnabled = !isset($config['memory_database_enabled']) ? false : (bool) $config['memory_database_enabled'];
 
-if ($agentBaseUrl === '' || $agentApiKey === '' || $agentModel === '') {
+// Use existing peminjaman database connection for memory storage
+require_once __DIR__ . '/../config/database.php';
+if ($memoryEnabled && $memoryDatabaseEnabled && isset($conn) && $conn instanceof mysqli && $conn->ping()) {
+    aiAgentInitializeIntegratedMemoryTables($conn);
+}
+
+$missingPrimaryAiConfig = aiAgentGetMissingPrimaryAiRuntimeConfigKeys($config);
+if (!empty($missingPrimaryAiConfig)) {
     http_response_code(500);
     echo json_encode([
         'status' => 'error',
@@ -56,6 +53,20 @@ if ($agentBaseUrl === '' || $agentApiKey === '' || $agentModel === '') {
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
+
+$agentName = trim((string) ($config['agent_name'] ?? ''));
+$agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
+$agentApiKey = trim((string) ($config['api_key'] ?? ''));
+$agentModel = trim((string) ($config['model'] ?? ''));
+$agentTemperature = (float) ($config['temperature'] ?? 0);
+$agentMaxTokens = (int) ($config['max_tokens'] ?? 0);
+$agentTimeout = (int) ($config['timeout'] ?? 0);
+$systemPrompt = trim((string) ($config['system_prompt'] ?? ''));
+$sensitiveAccessPassword = (string) ($config['sensitive_access_password'] ?? '');
+$sensitiveAccessDurationMinutes = max(1, (int) ($config['sensitive_access_duration_minutes'] ?? 30));
+$sensitiveAccessUnlimited = !isset($config['sensitive_access_unlimited'])
+    ? true
+    : (bool) $config['sensitive_access_unlimited'];
 
 $payload = json_decode((string) file_get_contents('php://input'), true);
 if (!is_array($payload)) {
@@ -128,6 +139,18 @@ $businessOverrideExpiresAt = $canUnlockBusinessOverride ? aiAgentGetBusinessOver
 $hasBusinessOverrideAccess = $canUnlockBusinessOverride && $businessOverrideExpiresAt > time();
 $sensitiveAccessExpiresAt = $canUnlockTechnicalAccess ? aiAgentGetSensitiveAccessExpiresAt() : 0;
 $hasSensitiveAccess = $canUnlockTechnicalAccess && $sensitiveAccessExpiresAt > time();
+
+// Calculate remaining duration for display
+$sensitiveAccessRemainingMinutes = 0;
+if ($hasSensitiveAccess && $sensitiveAccessExpiresAt > 0 && $sensitiveAccessExpiresAt !== PHP_INT_MAX) {
+    $sensitiveAccessRemainingMinutes = max(0, ceil(($sensitiveAccessExpiresAt - time()) / 60));
+}
+
+$businessOverrideRemainingMinutes = 0;
+if ($hasBusinessOverrideAccess && $businessOverrideExpiresAt > 0 && $businessOverrideExpiresAt !== PHP_INT_MAX) {
+    $businessOverrideRemainingMinutes = max(0, ceil(($businessOverrideExpiresAt - time()) / 60));
+}
+
 $effectiveMessage = aiAgentStripSensitivePassword($message, $sensitiveAccessPassword);
 if ($effectiveMessage === '') {
     $effectiveMessage = $passwordWasSubmitted ? '' : $message;
@@ -151,8 +174,10 @@ if ($passwordWasSubmitted && $effectiveMessage === '') {
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'sensitive_access_remaining_minutes' => $sensitiveAccessRemainingMinutes,
         'business_override_active' => $hasBusinessOverrideAccess,
         'business_override_expires_at' => $businessOverrideExpiresAt,
+        'business_override_remaining_minutes' => $businessOverrideRemainingMinutes,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -224,9 +249,7 @@ $modePrompt = aiAgentBuildModePrompt([
 $messages = [
     [
         'role' => 'system',
-        'content' => $systemPrompt !== ''
-            ? $systemPrompt
-            : 'Anda adalah ' . $agentName . ', engine AI internal untuk PROJECT. Jangan mengarang, pakai konteks aplikasi dan data live yang tersedia.',
+        'content' => $systemPrompt,
     ],
     [
         'role' => 'system',
@@ -271,6 +294,15 @@ $providerPayload = [
     'temperature' => max(0, min(2, $agentTemperature)),
 ];
 
+$fallbackConversationMessages = [];
+foreach (aiAgentSanitizeHistoryMessages($history, $sensitiveAccessPassword, $useSensitiveGrounding) as $historyMessage) {
+    $fallbackConversationMessages[] = $historyMessage;
+}
+$fallbackConversationMessages[] = [
+    'role' => 'user',
+    'content' => $effectiveMessage,
+];
+
 session_write_close();
 
 $startedAt = microtime(true);
@@ -293,7 +325,7 @@ $usedFallbackProvider = false;
 if (($httpCode <= 0 && $result === '') || $httpCode >= 400) {
     $extProviderConfig = aiAgentGetExtendedProviderConfig($config);
     if (!empty($extProviderConfig['enabled']) && !empty($extProviderConfig['fallback_on_error'])) {
-        $fallbackResult = aiAgentCallExtendedProvider($extProviderConfig, $systemPrompt, $conversationMessages);
+        $fallbackResult = aiAgentCallExtendedProvider($extProviderConfig, $systemPrompt, $fallbackConversationMessages);
         if ($fallbackResult['ok']) {
             $reply = $fallbackResult['reply'];
             $usedFallbackProvider = true;
@@ -407,14 +439,7 @@ $selfImprovePipeline = aiAgentProcessSelfImprovementPipeline($selfImproveConfig,
 ], $storedNotes);
 
 // Prepare conversation state for summarization & memory flush
-$conversationMessages = [];
-foreach (aiAgentSanitizeHistoryMessages($history, $sensitiveAccessPassword, $useSensitiveGrounding) as $histMsg) {
-    $conversationMessages[] = $histMsg;
-}
-$conversationMessages[] = [
-    'role' => 'user',
-    'content' => $effectiveMessage,
-];
+$conversationMessages = $fallbackConversationMessages;
 $conversationMessages[] = [
     'role' => 'assistant',
     'content' => $reply,

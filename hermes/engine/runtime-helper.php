@@ -395,7 +395,14 @@ function aiAgentDecodeChunkedBody(string $body): string
  */
 function aiAgentCallExtendedProvider(array $extConfig, string $systemPrompt, array $messages = []): array
 {
-    if (empty($extConfig['enabled']) || empty($extConfig['base_url']) || empty($extConfig['api_key'])) {
+    if (
+        empty($extConfig['enabled'])
+        || empty($extConfig['type'])
+        || empty($extConfig['base_url'])
+        || empty($extConfig['api_key'])
+        || empty($extConfig['model'])
+        || (int) ($extConfig['timeout'] ?? 0) <= 0
+    ) {
         return [
             'ok' => false,
             'error' => 'Extended provider not configured',
@@ -403,7 +410,7 @@ function aiAgentCallExtendedProvider(array $extConfig, string $systemPrompt, arr
         ];
     }
 
-    $type = strtolower(trim($extConfig['type'] ?? 'openai'));
+    $type = strtolower(trim((string) ($extConfig['type'] ?? '')));
 
     if ($type === 'openai') {
         return aiAgentCallOpenAIProvider($extConfig, $systemPrompt, $messages);
@@ -426,7 +433,7 @@ function aiAgentCallExtendedProvider(array $extConfig, string $systemPrompt, arr
 function aiAgentCallOpenAIProvider(array $extConfig, string $systemPrompt, array $messages): array
 {
     $payload = [
-        'model' => $extConfig['model'] ?? 'gpt-4o-mini',
+        'model' => $extConfig['model'],
         'messages' => array_merge(
             [['role' => 'system', 'content' => $systemPrompt]],
             array_map(function ($msg) {
@@ -446,7 +453,7 @@ function aiAgentCallOpenAIProvider(array $extConfig, string $systemPrompt, array
             'Content-Type: application/json',
         ],
         'body' => json_encode($payload),
-        'timeout' => max(5, (int) ($extConfig['timeout'] ?? 30)),
+        'timeout' => max(5, (int) $extConfig['timeout']),
     ]);
 
     if (!$result['ok']) {
@@ -491,7 +498,7 @@ function aiAgentCallOpenAIProvider(array $extConfig, string $systemPrompt, array
     return [
         'ok' => true,
         'provider' => 'openai',
-        'model' => $extConfig['model'] ?? 'gpt-4o-mini',
+        'model' => $extConfig['model'],
         'reply' => $reply,
         'usage' => $decoded['usage'] ?? null,
     ];
@@ -517,7 +524,7 @@ function aiAgentCallAnthropicProvider(array $extConfig, string $systemPrompt, ar
 function aiAgentCallLocalOllamaProvider(array $extConfig, string $systemPrompt, array $messages): array
 {
     $payload = [
-        'model' => $extConfig['model'] ?? 'mistral',
+        'model' => $extConfig['model'],
         'messages' => array_merge(
             [['role' => 'system', 'content' => $systemPrompt]],
             array_map(function ($msg) {
@@ -536,7 +543,7 @@ function aiAgentCallLocalOllamaProvider(array $extConfig, string $systemPrompt, 
             'Content-Type: application/json',
         ],
         'body' => json_encode($payload),
-        'timeout' => max(5, (int) ($extConfig['timeout'] ?? 30)),
+        'timeout' => max(5, (int) $extConfig['timeout']),
     ]);
 
     if (!$result['ok']) {
@@ -569,7 +576,7 @@ function aiAgentCallLocalOllamaProvider(array $extConfig, string $systemPrompt, 
     return [
         'ok' => true,
         'provider' => 'local',
-        'model' => $extConfig['model'] ?? 'mistral',
+        'model' => $extConfig['model'],
         'reply' => $reply,
     ];
 }

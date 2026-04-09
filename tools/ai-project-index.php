@@ -8,12 +8,12 @@ if (PHP_SAPI !== 'cli') {
 $projectRoot = dirname(__DIR__);
 
 require_once $projectRoot . '/api/koneksi.php';
-require_once $projectRoot . '/hermes/context-helper.php';
-require_once $projectRoot . '/hermes/codebase-helper.php';
-require_once $projectRoot . '/hermes/index-helper.php';
-require_once $projectRoot . '/hermes/tool-helper.php';
-require_once $projectRoot . '/hermes/config-helper.php';
-require_once $projectRoot . '/hermes/runtime-helper.php';
+require_once $projectRoot . '/hermes/engine/context-helper.php';
+require_once $projectRoot . '/hermes/engine/codebase-helper.php';
+require_once $projectRoot . '/hermes/engine/index-helper.php';
+require_once $projectRoot . '/hermes/engine/tool-helper.php';
+require_once $projectRoot . '/hermes/model/config-helper.php';
+require_once $projectRoot . '/hermes/engine/runtime-helper.php';
 
 $command = strtolower(trim((string) ($_SERVER['argv'][1] ?? 'status')));
 $options = aiAgentParseProjectIndexCliOptions(array_slice($_SERVER['argv'] ?? [], 2));
@@ -27,8 +27,7 @@ if ($command === 'help' || !in_array($command, ['status', 'signal', 'rebuild'], 
 }
 
 $config = aiAgentLoadConfig([
-    $projectRoot . '/config/ai_agent.example.php',
-    $projectRoot . '/config/ai_agent.php',
+    $projectRoot . '/hermes/config/ai_agent.php',
 ]);
 
 $result = [

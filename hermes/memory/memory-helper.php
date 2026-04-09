@@ -16,6 +16,10 @@ function aiAgentGetMemoryConfig(array $config = []): array
         'conversations_dir' => $storageDir . DIRECTORY_SEPARATOR . 'conversations',
         'lessons_dir' => $storageDir . DIRECTORY_SEPARATOR . 'lessons',
         'reflections_dir' => $storageDir . DIRECTORY_SEPARATOR . 'reflections',
+        'database_enabled' => !isset($config['memory_database_enabled']) ? false : (bool) $config['memory_database_enabled'],
+        'database_fallback_to_files' => !isset($config['memory_db_fallback_to_files'])
+            ? true
+            : (bool) $config['memory_db_fallback_to_files'],
         'max_messages_per_conversation' => max(8, (int) ($config['memory_max_messages_per_conversation'] ?? 40)),
         'max_notes_per_user' => max(5, (int) ($config['memory_max_notes_per_user'] ?? 30)),
         'max_search_results' => max(2, (int) ($config['memory_max_search_results'] ?? 5)),
@@ -34,7 +38,7 @@ function aiAgentResolveHermesStoragePath(string $path): string
         return $path;
     }
 
-    $projectRoot = function_exists('aiAgentGetProjectRootPath') ? aiAgentGetProjectRootPath() : dirname(__DIR__);
+    $projectRoot = function_exists('aiAgentGetProjectRootPath') ? aiAgentGetProjectRootPath() : dirname(__DIR__, 2);
     return $projectRoot . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR);
 }
 
@@ -128,38 +132,274 @@ function aiAgentWriteJsonFile(string $path, array $data): void
     @file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 }
 
-function aiAgentLoadConversationMemory(array $memoryConfig, string $role, int $userId, string $conversationId): array
+function aiAgentBuildEmptyConversationMemoryState(string $role, int $userId, string $conversationId): array
 {
-    $path = aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId);
-    return aiAgentReadJsonFile($path, [
+    return [
         'conversation_id' => $conversationId,
         'role' => $role,
         'user_id' => $userId,
         'messages' => [],
         'updated_at' => 0,
-    ]);
+        'created_at' => 0,
+    ];
 }
 
-function aiAgentLoadUserProfileMemory(array $memoryConfig, string $role, int $userId): array
+function aiAgentBuildEmptyProfileMemoryState(string $role, int $userId): array
 {
-    $path = aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId);
-    return aiAgentReadJsonFile($path, [
+    return [
         'role' => $role,
         'user_id' => $userId,
         'notes' => [],
+        'behavioral_data' => [],
         'updated_at' => 0,
-    ]);
+        'created_at' => 0,
+    ];
 }
 
-function aiAgentLoadUserLessonsMemory(array $memoryConfig, string $role, int $userId): array
+function aiAgentBuildEmptyLessonsMemoryState(string $role, int $userId): array
 {
-    $path = aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId);
-    return aiAgentReadJsonFile($path, [
+    return [
         'role' => $role,
         'user_id' => $userId,
         'lessons' => [],
         'updated_at' => 0,
-    ]);
+        'created_at' => 0,
+    ];
+}
+
+function aiAgentLoadConversationMemoryFromFile(array $memoryConfig, string $role, int $userId, string $conversationId): array
+{
+    $path = aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId);
+    $state = aiAgentReadJsonFile($path, aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId));
+    return array_merge(aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId), $state);
+}
+
+function aiAgentLoadUserProfileMemoryFromFile(array $memoryConfig, string $role, int $userId): array
+{
+    $path = aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId);
+    $state = aiAgentReadJsonFile($path, aiAgentBuildEmptyProfileMemoryState($role, $userId));
+    return array_merge(aiAgentBuildEmptyProfileMemoryState($role, $userId), $state);
+}
+
+function aiAgentLoadUserLessonsMemoryFromFile(array $memoryConfig, string $role, int $userId): array
+{
+    $path = aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId);
+    $state = aiAgentReadJsonFile($path, aiAgentBuildEmptyLessonsMemoryState($role, $userId));
+    return array_merge(aiAgentBuildEmptyLessonsMemoryState($role, $userId), $state);
+}
+
+function aiAgentMemoryDatabaseIsEnabled(array $memoryConfig): bool
+{
+    return !empty($memoryConfig['enabled']) && !empty($memoryConfig['database_enabled']);
+}
+
+function aiAgentGetIntegratedMemoryConnectionForRuntime(array $memoryConfig, bool $initializeTables = true): ?mysqli
+{
+    static $initialized = false;
+
+    if (!aiAgentMemoryDatabaseIsEnabled($memoryConfig)) {
+        return null;
+    }
+
+    if (!function_exists('aiAgentGetIntegratedMemoryConnection')) {
+        return null;
+    }
+
+    $conn = aiAgentGetIntegratedMemoryConnection();
+    if (!$conn instanceof mysqli || !@$conn->ping()) {
+        return null;
+    }
+
+    if ($initializeTables && !$initialized && function_exists('aiAgentInitializeIntegratedMemoryTables')) {
+        aiAgentInitializeIntegratedMemoryTables($conn);
+        $initialized = true;
+    }
+
+    return $conn;
+}
+
+function aiAgentConversationMemoryStateHasContent(array $state): bool
+{
+    return !empty($state['messages'])
+        || (int) ($state['updated_at'] ?? 0) > 0
+        || (int) ($state['created_at'] ?? 0) > 0;
+}
+
+function aiAgentProfileMemoryStateHasContent(array $state): bool
+{
+    return !empty($state['notes'])
+        || !empty($state['behavioral_data'])
+        || (int) ($state['updated_at'] ?? 0) > 0
+        || (int) ($state['created_at'] ?? 0) > 0;
+}
+
+function aiAgentLessonsMemoryStateHasContent(array $state): bool
+{
+    return !empty($state['lessons'])
+        || (int) ($state['updated_at'] ?? 0) > 0
+        || (int) ($state['created_at'] ?? 0) > 0;
+}
+
+function aiAgentPersistConversationMemoryState(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId,
+    array $conversationData
+): bool {
+    $state = array_merge(
+        aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId),
+        $conversationData
+    );
+    $state['conversation_id'] = $conversationId;
+    $state['role'] = $role;
+    $state['user_id'] = $userId;
+    $state['messages'] = aiAgentNormalizeMemoryMessages(
+        isset($state['messages']) && is_array($state['messages']) ? $state['messages'] : [],
+        (int) ($memoryConfig['max_messages_per_conversation'] ?? 40)
+    );
+    $state['updated_at'] = (int) ($state['updated_at'] ?? time());
+    if ((int) ($state['created_at'] ?? 0) <= 0) {
+        $state['created_at'] = $state['updated_at'];
+    }
+
+    $persisted = false;
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $persisted = aiAgentIntegratedSaveConversationMemory($conn, $userId, $conversationId, $state);
+    }
+
+    if (!$persisted) {
+        aiAgentWriteJsonFile(aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId), $state);
+        return true;
+    }
+
+    return true;
+}
+
+function aiAgentPersistUserProfileMemoryState(array $memoryConfig, string $role, int $userId, array $profileData): bool
+{
+    $state = array_merge(aiAgentBuildEmptyProfileMemoryState($role, $userId), $profileData);
+    $state['role'] = $role;
+    $state['user_id'] = $userId;
+    $state['notes'] = isset($state['notes']) && is_array($state['notes']) ? array_values($state['notes']) : [];
+    $state['behavioral_data'] = isset($state['behavioral_data']) && is_array($state['behavioral_data'])
+        ? $state['behavioral_data']
+        : [];
+    $state['updated_at'] = (int) ($state['updated_at'] ?? time());
+    if ((int) ($state['created_at'] ?? 0) <= 0) {
+        $state['created_at'] = $state['updated_at'];
+    }
+
+    $persisted = false;
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $persisted = aiAgentIntegratedSaveUserProfile($conn, $userId, $state);
+    }
+
+    if (!$persisted) {
+        aiAgentWriteJsonFile(aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId), $state);
+        return true;
+    }
+
+    return true;
+}
+
+function aiAgentPersistUserLessonsMemoryState(array $memoryConfig, string $role, int $userId, array $lessonsData): bool
+{
+    $state = array_merge(aiAgentBuildEmptyLessonsMemoryState($role, $userId), $lessonsData);
+    $state['role'] = $role;
+    $state['user_id'] = $userId;
+    $state['lessons'] = isset($state['lessons']) && is_array($state['lessons']) ? array_values($state['lessons']) : [];
+    $state['updated_at'] = (int) ($state['updated_at'] ?? time());
+    if ((int) ($state['created_at'] ?? 0) <= 0) {
+        $state['created_at'] = $state['updated_at'];
+    }
+
+    $persisted = false;
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $persisted = aiAgentIntegratedSaveUserLessons($conn, $userId, $state);
+    }
+
+    if (!$persisted) {
+        aiAgentWriteJsonFile(aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId), $state);
+        return true;
+    }
+
+    return true;
+}
+
+function aiAgentLoadConversationMemory(array $memoryConfig, string $role, int $userId, string $conversationId): array
+{
+    $fallback = aiAgentBuildEmptyConversationMemoryState($role, $userId, $conversationId);
+    if (empty($memoryConfig['enabled']) || $userId <= 0) {
+        return $fallback;
+    }
+
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $state = array_merge($fallback, aiAgentIntegratedLoadConversationMemory($conn, $userId, $conversationId));
+        if (aiAgentConversationMemoryStateHasContent($state)) {
+            return $state;
+        }
+
+        $legacyState = aiAgentLoadConversationMemoryFromFile($memoryConfig, $role, $userId, $conversationId);
+        if (aiAgentConversationMemoryStateHasContent($legacyState)) {
+            aiAgentPersistConversationMemoryState($memoryConfig, $role, $userId, $conversationId, $legacyState);
+            return $legacyState;
+        }
+
+        return $fallback;
+    }
+
+    return aiAgentLoadConversationMemoryFromFile($memoryConfig, $role, $userId, $conversationId);
+}
+
+function aiAgentLoadUserProfileMemory(array $memoryConfig, string $role, int $userId): array
+{
+    $fallback = aiAgentBuildEmptyProfileMemoryState($role, $userId);
+    if (empty($memoryConfig['enabled']) || $userId <= 0) {
+        return $fallback;
+    }
+
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $state = array_merge($fallback, aiAgentIntegratedLoadUserProfile($conn, $userId));
+        if (aiAgentProfileMemoryStateHasContent($state)) {
+            return $state;
+        }
+
+        $legacyState = aiAgentLoadUserProfileMemoryFromFile($memoryConfig, $role, $userId);
+        if (aiAgentProfileMemoryStateHasContent($legacyState)) {
+            aiAgentPersistUserProfileMemoryState($memoryConfig, $role, $userId, $legacyState);
+            return $legacyState;
+        }
+
+        return $fallback;
+    }
+
+    return aiAgentLoadUserProfileMemoryFromFile($memoryConfig, $role, $userId);
+}
+
+function aiAgentLoadUserLessonsMemory(array $memoryConfig, string $role, int $userId): array
+{
+    $fallback = aiAgentBuildEmptyLessonsMemoryState($role, $userId);
+    if (empty($memoryConfig['enabled']) || $userId <= 0) {
+        return $fallback;
+    }
+
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        $state = array_merge($fallback, aiAgentIntegratedLoadUserLessons($conn, $userId));
+        if (aiAgentLessonsMemoryStateHasContent($state)) {
+            return $state;
+        }
+
+        $legacyState = aiAgentLoadUserLessonsMemoryFromFile($memoryConfig, $role, $userId);
+        if (aiAgentLessonsMemoryStateHasContent($legacyState)) {
+            aiAgentPersistUserLessonsMemoryState($memoryConfig, $role, $userId, $legacyState);
+            return $legacyState;
+        }
+
+        return $fallback;
+    }
+
+    return aiAgentLoadUserLessonsMemoryFromFile($memoryConfig, $role, $userId);
 }
 
 function aiAgentTokenizeMemorySearchText(string $text): array
@@ -259,6 +499,91 @@ function aiAgentListUserConversationMemoryPaths(array $memoryConfig, string $rol
     return $filtered;
 }
 
+function aiAgentLoadConversationMemoryStatesFromFile(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId = ''
+): array {
+    $states = [];
+    foreach (aiAgentListUserConversationMemoryPaths($memoryConfig, $role, $userId, $conversationId) as $path) {
+        $state = aiAgentReadJsonFile($path, []);
+        $derivedConversationId = (string) ($state['conversation_id'] ?? '');
+        if ($derivedConversationId === '') {
+            $derivedConversationId = basename($path, '.json');
+        }
+
+        $states[] = array_merge(
+            aiAgentBuildEmptyConversationMemoryState($role, $userId, $derivedConversationId),
+            $state,
+            [
+                'conversation_id' => $derivedConversationId,
+                'role' => $role,
+                'user_id' => $userId,
+                'updated_at' => (int) ($state['updated_at'] ?? (int) @filemtime($path)),
+                'created_at' => (int) ($state['created_at'] ?? (int) @filectime($path)),
+            ]
+        );
+    }
+
+    return $states;
+}
+
+function aiAgentListUserConversationMemoryStates(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId = ''
+): array {
+    $limit = max(1, (int) ($memoryConfig['max_search_conversations'] ?? 10));
+    $states = [];
+    $seenConversationIds = [];
+
+    if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
+        foreach (aiAgentIntegratedListConversationMemories($conn, $userId, $conversationId, $limit) as $state) {
+            $normalizedConversationId = trim((string) ($state['conversation_id'] ?? ''));
+            if ($normalizedConversationId === '') {
+                continue;
+            }
+
+            $states[] = array_merge(
+                aiAgentBuildEmptyConversationMemoryState($role, $userId, $normalizedConversationId),
+                $state,
+                [
+                    'conversation_id' => $normalizedConversationId,
+                    'role' => $role,
+                    'user_id' => $userId,
+                ]
+            );
+            $seenConversationIds[$normalizedConversationId] = true;
+        }
+    }
+
+    foreach (aiAgentLoadConversationMemoryStatesFromFile($memoryConfig, $role, $userId, $conversationId) as $state) {
+        $normalizedConversationId = trim((string) ($state['conversation_id'] ?? ''));
+        if ($normalizedConversationId === '') {
+            continue;
+        }
+
+        if (!isset($seenConversationIds[$normalizedConversationId])) {
+            aiAgentPersistConversationMemoryState($memoryConfig, $role, $userId, $normalizedConversationId, $state);
+            $states[] = $state;
+            $seenConversationIds[$normalizedConversationId] = true;
+        }
+    }
+
+    usort($states, static function (array $left, array $right): int {
+        $updatedDiff = ((int) ($right['updated_at'] ?? 0)) <=> ((int) ($left['updated_at'] ?? 0));
+        if ($updatedDiff !== 0) {
+            return $updatedDiff;
+        }
+
+        return ((int) ($right['created_at'] ?? 0)) <=> ((int) ($left['created_at'] ?? 0));
+    });
+
+    return array_slice($states, 0, $limit);
+}
+
 function aiAgentBuildMemorySearchEntries(array $memoryConfig, string $role, int $userId, string $conversationId): array
 {
     $entries = [];
@@ -302,13 +627,7 @@ function aiAgentBuildMemorySearchEntries(array $memoryConfig, string $role, int 
         ];
     }
 
-    $conversationPaths = array_slice(
-        aiAgentListUserConversationMemoryPaths($memoryConfig, $role, $userId, $conversationId),
-        0,
-        max(1, (int) ($memoryConfig['max_search_conversations'] ?? 10))
-    );
-    foreach ($conversationPaths as $path) {
-        $state = aiAgentReadJsonFile($path, []);
+    foreach (aiAgentListUserConversationMemoryStates($memoryConfig, $role, $userId, $conversationId) as $state) {
         foreach (aiAgentNormalizeMemoryMessages($state['messages'] ?? [], 12) as $message) {
             $content = trim((string) ($message['content'] ?? ''));
             if ($content === '') {
@@ -317,7 +636,7 @@ function aiAgentBuildMemorySearchEntries(array $memoryConfig, string $role, int 
             $entries[] = [
                 'source' => 'past_conversation',
                 'content' => $content,
-                'timestamp' => (int) ($message['timestamp'] ?? (int) @filemtime($path)),
+                'timestamp' => (int) ($message['timestamp'] ?? (int) ($state['updated_at'] ?? 0)),
             ];
         }
     }
@@ -495,11 +814,11 @@ function aiAgentAppendConversationMemory(
         'page_path' => (string) ($pageContext['path'] ?? ''),
     ];
     $messages = aiAgentNormalizeMemoryMessages($messages, (int) ($memoryConfig['max_messages_per_conversation'] ?? 40));
-
-    aiAgentWriteJsonFile(aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId), [
+    aiAgentPersistConversationMemoryState($memoryConfig, $role, $userId, $conversationId, [
         'conversation_id' => $conversationId,
         'role' => $role,
         'user_id' => $userId,
+        'created_at' => (int) ($existing['created_at'] ?? time()),
         'updated_at' => time(),
         'messages' => $messages,
     ]);
@@ -561,8 +880,7 @@ function aiAgentStoreUserMemoryNotes(array $memoryConfig, string $role, int $use
     $existingNotes = array_values(array_unique(array_slice($existingNotes, -max(1, (int) ($memoryConfig['max_notes_per_user'] ?? 30)))));
     $profile['notes'] = $existingNotes;
     $profile['updated_at'] = time();
-
-    aiAgentWriteJsonFile(aiAgentGetProfileMemoryPath($memoryConfig, $role, $userId), $profile);
+    aiAgentPersistUserProfileMemoryState($memoryConfig, $role, $userId, $profile);
 }
 
 function aiAgentStoreLessonMemory(array $memoryConfig, string $role, int $userId, string $message, string $reply): array
@@ -588,8 +906,7 @@ function aiAgentStoreLessonMemory(array $memoryConfig, string $role, int $userId
     $lessons = array_slice($lessons, -max(1, (int) ($memoryConfig['max_notes_per_user'] ?? 30)));
     $lessonsState['lessons'] = $lessons;
     $lessonsState['updated_at'] = time();
-
-    aiAgentWriteJsonFile(aiAgentGetLessonsMemoryPath($memoryConfig, $role, $userId), $lessonsState);
+    aiAgentPersistUserLessonsMemoryState($memoryConfig, $role, $userId, $lessonsState);
     aiAgentStoreUserMemoryNotes($memoryConfig, $role, $userId, $notes);
 
     return $notes;
@@ -855,4 +1172,117 @@ function aiAgentEnhanceMemoryWithBehavioralProfile(array $parsedMemory, array $r
     }
 
     return $parsedMemory;
+}
+
+function aiAgentCountLegacyMemoryFiles(array $memoryConfig, string $key): int
+{
+    $directory = (string) ($memoryConfig[$key] ?? '');
+    if ($directory === '' || !is_dir($directory)) {
+        return 0;
+    }
+
+    $files = glob(rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '*.json');
+    return is_array($files) ? count($files) : 0;
+}
+
+function aiAgentGetMemoryBackendStatus(array $memoryConfig): array
+{
+    $status = [
+        'backend' => 'disabled',
+        'database_enabled' => !empty($memoryConfig['database_enabled']),
+        'db_connection_ok' => false,
+        'db_tables' => [],
+        'fallback_active' => false,
+        'backfill_enabled' => !empty($memoryConfig['database_enabled']),
+        'legacy_files_present' => false,
+        'legacy_file_counts' => [
+            'conversations' => aiAgentCountLegacyMemoryFiles($memoryConfig, 'conversations_dir'),
+            'profiles' => aiAgentCountLegacyMemoryFiles($memoryConfig, 'profiles_dir'),
+            'lessons' => aiAgentCountLegacyMemoryFiles($memoryConfig, 'lessons_dir'),
+        ],
+    ];
+
+    $status['legacy_files_present'] = array_sum($status['legacy_file_counts']) > 0;
+
+    if (empty($memoryConfig['enabled'])) {
+        return $status;
+    }
+
+    $status['backend'] = 'file_fallback';
+
+    if (!$status['database_enabled']) {
+        return $status;
+    }
+
+    $conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig, false);
+    if (!$conn instanceof mysqli || !@$conn->ping()) {
+        $status['fallback_active'] = true;
+        return $status;
+    }
+
+    $status['db_connection_ok'] = true;
+    $status['db_tables'] = aiAgentIntegratedGetMemoryTablesStatus($conn);
+
+    $allTablesReady = !empty($status['db_tables']);
+    foreach ($status['db_tables'] as $tableStatus) {
+        if (empty($tableStatus['exists'])) {
+            $allTablesReady = false;
+            break;
+        }
+    }
+
+    if ($allTablesReady) {
+        $status['backend'] = 'integrated_db';
+        $status['fallback_active'] = false;
+        return $status;
+    }
+
+    $status['fallback_active'] = true;
+    return $status;
+}
+
+/**
+ * Backward-compatible wrappers for older helper names.
+ */
+function aiAgentLoadConversationMemoryWithDb(array $memoryConfig, string $role, int $userId, string $conversationId): array
+{
+    return aiAgentLoadConversationMemory($memoryConfig, $role, $userId, $conversationId);
+}
+
+function aiAgentSaveConversationMemoryWithDb(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId,
+    array $conversationData
+): bool {
+    return aiAgentPersistConversationMemoryState($memoryConfig, $role, $userId, $conversationId, $conversationData);
+}
+
+function aiAgentLoadUserProfileMemoryWithDb(array $memoryConfig, string $role, int $userId): array
+{
+    return aiAgentLoadUserProfileMemory($memoryConfig, $role, $userId);
+}
+
+function aiAgentSaveUserProfileMemoryWithDb(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    array $profileData
+): bool {
+    return aiAgentPersistUserProfileMemoryState($memoryConfig, $role, $userId, $profileData);
+}
+
+function aiAgentLoadUserLessonsMemoryWithDb(array $memoryConfig, string $role, int $userId): array
+{
+    return aiAgentLoadUserLessonsMemory($memoryConfig, $role, $userId);
+}
+
+function aiAgentSaveUserLessonsMemoryWithDb(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    array $lessonsData
+): bool {
+    return aiAgentPersistUserLessonsMemoryState($memoryConfig, $role, $userId, $lessonsData);
 }

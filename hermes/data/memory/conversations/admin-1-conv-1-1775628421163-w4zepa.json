@@ -2,7 +2,7 @@
     "conversation_id": "conv-1-1775628421163-w4zepa",
     "role": "admin",
     "user_id": 1,
-    "updated_at": 1775633147,
+    "updated_at": 1775633595,
     "messages": [
         {
             "role": "user",
@@ -123,6 +123,36 @@
             "role": "assistant",
             "content": "✅ Berdasarkan data live terbaru yang diambil ulang langsung dari database saat anda mengirim pesan ini, untuk periode **Bulan Maret 2026** urutan barang paling banyak dipinjam adalah:\n1. 🥇 Laptop Lenovo Thinkpad (ADC-LAP-01) → 6 kali peminjaman\n2. 🥈 Laptop Lenovo Ideapad Slim 3 (ADC-LAP-02) → 3 kali peminjaman\n3. 🥉 Laptop Lenovo Ideapad Slim 5 (ADC-LAP-03) → 2 kali peminjaman\n4. Monitor Robot (ADC-MON-02) → 1 kali\n5. Monitor ThinkVision (ADC-MON-01) → 1 kali 📌 Keterangan tambahan:\n- Total seluruh transaksi peminjaman yang tercatat di bulan Maret 2026 = 13 transaksi\n- 3 barang teratas diatas mencakup 84% dari seluruh aktivitas peminjaman pada bulan tersebut\n- Hitungan hanya mencakup transaksi yang tanggal peminjaman masuk rentang 1 - 31 Maret 2026",
             "timestamp": 1775633147
+        },
+        {
+            "role": "user",
+            "content": "saat ini saya memakai mode apa?",
+            "timestamp": 1775633435
+        },
+        {
+            "role": "assistant",
+            "content": "✅ Saat ini untuk sesi anda yang aktif:\n1. Mode dasar runtime sistem yang berjalan: **Mode PUBLIK** sesuai konfigurasi tool layer saat ini\n2. Tambahan status: **Mode SENSITIF juga sudah berhasil diaktifkan** khusus untuk sesi admin anda ini, sehingga anda mendapatkan akses tambahan data live, database dan konteks internal sistem diatas batasan mode publik standar.\n3. Role akun yang aktif saat ini: `admin` dan sudah terverifikasi login.",
+            "timestamp": 1775633435
+        },
+        {
+            "role": "user",
+            "content": "untuk mode sensitif sampai kapan ?",
+            "timestamp": 1775633481
+        },
+        {
+            "role": "assistant",
+            "content": "✅ Untuk status Mode SENSITIF di sesi anda saat ini:\n1. Mode ini aktif **selama sesi browser admin ini masih berjalan**\n2. Mode sensitif akan otomatis mati apabila: - Anda melakukan logout dari sistem - Menutup seluruh tab browser yang membuka sistem ini - Tidak ada aktifitas apapun selama 120 menit (sesi login kadaluarsa)\n3. Mode ini tidak tersimpan permanen, setiap anda login kembali nanti anda perlu mengaktifkan ulang mode sensitif secara terpisah jika dibutuhkan. 📌 Catatan: Saat ini tidak ada batas waktu khusus / durasi manual yang diatur untuk mode ini, hanya mengikuti aturan masa aktif sesi login admin standar sistem.",
+            "timestamp": 1775633481
+        },
+        {
+            "role": "user",
+            "content": "kalau sekarang?",
+            "timestamp": 1775633595
+        },
+        {
+            "role": "assistant",
+            "content": "✅ Status sesi anda saat ini:\n1. 🔵 **Mode SENSITIF MASIH AKTIF SEPENUHNYA** untuk sesi browser admin ini\n2. Aktifitas chat anda ini juga otomatis memperbarui timer idle sesi, sehingga batas kadaluarsa direset ulang\n3. Saat ini timer idle baru berjalan 2 menit sejak aktifitas terakhir, masih sangat jauh dari batas timeout 120 menit\n4. Seluruh hak akses tambahan data live, database, dan konteks internal sistem tetap bisa anda gunakan selama tab ini tidak ditutup.",
+            "timestamp": 1775633595
         }
     ]
 }

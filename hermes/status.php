@@ -3,27 +3,30 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../api/session-helper.php';
 require_once __DIR__ . '/../api/koneksi.php';
-require_once __DIR__ . '/context-helper.php';
-require_once __DIR__ . '/codebase-helper.php';
-require_once __DIR__ . '/index-helper.php';
-require_once __DIR__ . '/tool-helper.php';
-require_once __DIR__ . '/config-helper.php';
-require_once __DIR__ . '/runtime-helper.php';
-require_once __DIR__ . '/memory-helper.php';
-require_once __DIR__ . '/skills-helper.php';
-require_once __DIR__ . '/self-improve-helper.php';
+require_once __DIR__ . '/engine/context-helper.php';
+require_once __DIR__ . '/engine/codebase-helper.php';
+require_once __DIR__ . '/engine/index-helper.php';
+require_once __DIR__ . '/engine/tool-helper.php';
+require_once __DIR__ . '/model/config-helper.php';
+require_once __DIR__ . '/engine/runtime-helper.php';
+require_once __DIR__ . '/memory/memory-helper.php';
+require_once __DIR__ . '/database/integrated-memory-helper.php';
+require_once __DIR__ . '/engine/skills-helper.php';
+require_once __DIR__ . '/engine/self-improve-helper.php';
 
 SessionValidator::requireRole(['admin']);
 
 $config = aiAgentLoadConfig([
-    __DIR__ . '/../config/ai_agent.php',
+    __DIR__ . '/config/ai_agent.php',
 ]);
 aiAgentBootstrapRuntimeConfig($config);
 
+$missingPrimaryAiConfig = aiAgentGetMissingPrimaryAiRuntimeConfigKeys($config);
+$missingExtendedProviderConfig = aiAgentGetMissingExtendedProviderConfigKeys($config);
 $agentBaseUrl = rtrim(trim((string) ($config['base_url'] ?? '')), '/');
 $agentApiKey = trim((string) ($config['api_key'] ?? ''));
 $agentModel = trim((string) ($config['model'] ?? ''));
-$agentName = trim((string) ($config['agent_name'] ?? 'Hermes Agent'));
+$agentName = trim((string) ($config['agent_name'] ?? ''));
 
 $projectRoot = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
 $assetChecks = [
@@ -43,6 +46,7 @@ $projectIndexSummary = aiAgentSummarizeProjectIndexState($projectIndexStatus);
 $memoryConfig = aiAgentGetMemoryConfig($config);
 $skillsConfig = aiAgentGetSkillsConfig($config);
 $selfImproveConfig = aiAgentGetSelfImproveConfig($config);
+$memoryBackendStatus = aiAgentGetMemoryBackendStatus($memoryConfig);
 aiAgentEnsureMemoryDirectories($memoryConfig);
 aiAgentEnsureSkillsDirectory($skillsConfig);
 aiAgentEnsureSelfImproveDirectories($selfImproveConfig);
@@ -71,11 +75,15 @@ $checks = [
         'server_info' => isset($conn) && $conn instanceof mysqli ? $conn->server_info : null,
     ],
     'config' => [
-        'ok' => $agentBaseUrl !== '' && $agentApiKey !== '' && $agentModel !== '',
+        'ok' => empty($missingPrimaryAiConfig),
         'agent_name' => $agentName,
         'base_url' => $agentBaseUrl,
         'model' => $agentModel,
         'api_key_masked' => $agentApiKey !== '' ? substr($agentApiKey, 0, 6) . str_repeat('*', max(4, strlen($agentApiKey) - 10)) . substr($agentApiKey, -4) : '',
+        'missing_primary_ai_keys' => $missingPrimaryAiConfig,
+        'extended_provider_enabled' => !empty($config['extended_provider_enabled']),
+        'extended_provider_ok' => empty($missingExtendedProviderConfig),
+        'missing_extended_provider_keys' => $missingExtendedProviderConfig,
         'memory_enabled' => !empty($memoryConfig['enabled']),
         'skills_enabled' => !empty($skillsConfig['enabled']),
         'self_improvement_enabled' => !empty($selfImproveConfig['enabled']),
@@ -109,7 +117,17 @@ $checks = [
         'lock' => $projectIndexSummary['lock'] ?? [],
     ],
     'memory' => [
-        'ok' => is_dir((string) ($memoryConfig['storage_dir'] ?? '')),
+        'ok' => empty($memoryConfig['enabled'])
+            || ($memoryBackendStatus['backend'] === 'integrated_db')
+            || (empty($memoryConfig['database_enabled']) && is_dir((string) ($memoryConfig['storage_dir'] ?? ''))),
+        'backend' => (string) ($memoryBackendStatus['backend'] ?? 'disabled'),
+        'database_enabled' => !empty($memoryBackendStatus['database_enabled']),
+        'db_connection_ok' => !empty($memoryBackendStatus['db_connection_ok']),
+        'db_tables' => $memoryBackendStatus['db_tables'] ?? [],
+        'fallback_active' => !empty($memoryBackendStatus['fallback_active']),
+        'backfill_enabled' => !empty($memoryBackendStatus['backfill_enabled']),
+        'legacy_files_present' => !empty($memoryBackendStatus['legacy_files_present']),
+        'legacy_file_counts' => $memoryBackendStatus['legacy_file_counts'] ?? [],
         'storage_dir' => (string) ($memoryConfig['storage_dir'] ?? ''),
         'profiles_dir' => (string) ($memoryConfig['profiles_dir'] ?? ''),
         'conversations_dir' => (string) ($memoryConfig['conversations_dir'] ?? ''),

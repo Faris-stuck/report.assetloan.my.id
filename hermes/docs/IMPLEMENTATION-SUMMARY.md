@@ -7,30 +7,30 @@ Hermes Agent sekarang **100% dynamic, zero hardcode**. Implemented:
 ### **1. Five Core Config Files (New)**
 
 ```
-✅ hermes-schema.php (295 lines)
+✅ config/hermes-schema.php (295 lines)
    - Table definitions, columns, relationships
    - Replaces ~30+ hardcoded table/column references
    - Functions: aiAgentGetTablesForScope(), aiAgentGetTableSchema(), etc.
 
-✅ hermes-roles.php (210 lines)
+✅ config/hermes-roles.php (210 lines)
    - Role definitions, permissions, access control
    - Replaces ~20+ hardcoded role comparisons
    - Handles role normalization (pic barang → pic_barang)
    - Functions: aiAgentGetRoleDef(), aiAgentRoleHasPermission(), etc.
 
-✅ hermes-keywords.php (160 lines)
+✅ config/hermes-keywords.php (160 lines)
    - Detection patterns, keywords, contexts
    - Replaces ~50+ hardcoded keyword strings
    - Month mapping (jan, feb, january, februar, etc.)
    - Functions: aiAgentDetectContext(), aiAgentGetKeywordsByScope(), etc.
 
-✅ hermes-limits.php (125 lines)
+✅ config/hermes-limits.php (125 lines)
    - Magic numbers, timeouts, cache settings
    - Replaces ~15+ hardcoded limit values
    - Centralized configuration access
    - Functions: aiAgentGetMaxBorrowedItemsDisplay(), aiAgentGetLimit(), etc.
 
-✅ hermes-strings.php (320 lines)
+✅ config/hermes-strings.php (320 lines)
    - UI strings with i18n support
    - Replaces ~40+ hardcoded display strings
    - Languages: Indonesian (id), English (en), expandable
@@ -50,7 +50,7 @@ Hermes Agent sekarang **100% dynamic, zero hardcode**. Implemented:
 ### **3. Documentation**
 
 ```
-✅ DYNAMIC-CONFIG-GUIDE.md (350 lines)
+✅ docs/DYNAMIC-CONFIG-GUIDE.md (350 lines)
    - Complete usage guide with examples
    - Migration guide (Before/After comparisons)
    - How to add new roles, tables, keywords, limits, strings
@@ -69,13 +69,13 @@ Hermes Agent sekarang **100% dynamic, zero hardcode**. Implemented:
 
 | Category | Count | Status | Config File |
 |----------|-------|--------|-------------|
-| Table Names | 6 | ✅ Centralized | hermes-schema.php |
-| Column Names | 8+ | ✅ Centralized | hermes-schema.php |
-| Role Names | 5 | ✅ Centralized | hermes-roles.php |
-| Role Logic | 20+ | ✅ Function-based | hermes-roles.php |
-| Keywords/Patterns | 50+ | ✅ Centralized | hermes-keywords.php |
-| Magic Numbers | 14 | ✅ Centralized | hermes-limits.php |
-| Display Strings | 40+ | ✅ i18n-ready | hermes-strings.php |
+| Table Names | 6 | ✅ Centralized | config/hermes-schema.php |
+| Column Names | 8+ | ✅ Centralized | config/hermes-schema.php |
+| Role Names | 5 | ✅ Centralized | config/hermes-roles.php |
+| Role Logic | 20+ | ✅ Function-based | config/hermes-roles.php |
+| Keywords/Patterns | 50+ | ✅ Centralized | config/hermes-keywords.php |
+| Magic Numbers | 14 | ✅ Centralized | config/hermes-limits.php |
+| Display Strings | 40+ | ✅ i18n-ready | config/hermes-strings.php |
 | **TOTAL** | **150+** | **✅ ZERO HARDCODE** | **All Config Files** |
 
 ---
@@ -129,11 +129,11 @@ aiAgentGetStringEn($key, ...$args)      // English
 ## ✅ VALIDATION RESULTS
 
 ```
-hermes-schema.php     → No syntax errors ✅
-hermes-roles.php      → No syntax errors ✅
-hermes-keywords.php   → No syntax errors ✅
-hermes-limits.php     → No syntax errors ✅
-hermes-strings.php    → No syntax errors ✅
+config/hermes-schema.php     → No syntax errors ✅
+config/hermes-roles.php      → No syntax errors ✅
+config/hermes-keywords.php   → No syntax errors ✅
+config/hermes-limits.php     → No syntax errors ✅
+config/hermes-strings.php    → No syntax errors ✅
 chat.php              → No syntax errors ✅
 
 ALL CONFIG FUNCTIONS → Ready for production ✅
@@ -155,7 +155,7 @@ Schedule: Can be done gradually without breaking anything
    - Replace keyword checks with hermes-keywords functions
    - Replace hardcoded limits with hermes-limits functions
 
-2. context-helper.php
+2. engine/context-helper.php
    - Replace role comparisons with role config functions
    - Update hardcoded strings with hermes-strings functions
    
@@ -196,7 +196,7 @@ Schedule: Can be done gradually without breaking anything
 - No other files need immediate changes
 
 **Documentation:**
-- DYNAMIC-CONFIG-GUIDE.md with usage examples
+- docs/DYNAMIC-CONFIG-GUIDE.md with usage examples
 - MIGRATION-TEMPLATES.php with concrete refactoring examples
 
 ---
@@ -231,11 +231,11 @@ The deliverables include:
 
 1. **Include in your file:**
    ```php
-   require_once __DIR__ . '/hermes-schema.php';
-   require_once __DIR__ . '/hermes-roles.php';
-   require_once __DIR__ . '/hermes-keywords.php';
-   require_once __DIR__ . '/hermes-limits.php';
-   require_once __DIR__ . '/hermes-strings.php';
+   require_once __DIR__ . '/config/hermes-schema.php';
+   require_once __DIR__ . '/config/hermes-roles.php';
+   require_once __DIR__ . '/config/hermes-keywords.php';
+   require_once __DIR__ . '/config/hermes-limits.php';
+   require_once __DIR__ . '/config/hermes-strings.php';
    ```
    (Already done in chat.php)
 

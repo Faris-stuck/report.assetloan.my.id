@@ -6,11 +6,11 @@ Sistem Hermes Agent sekarang **fully dynamis tanpa hardcode**. Semua configurati
 
 ### **5 Core Config Files**
 
-1. **hermes-schema.php** - Table definitions & columns
-2. **hermes-roles.php** - Role definitions & permissions
-3. **hermes-keywords.php** - Detection patterns & keywords
-4. **hermes-limits.php** - Magic numbers & timeouts
-5. **hermes-strings.php** - UI strings (i18n-ready)
+1. **config/hermes-schema.php** - Table definitions & columns
+2. **config/hermes-roles.php** - Role definitions & permissions
+3. **config/hermes-keywords.php** - Detection patterns & keywords
+4. **config/hermes-limits.php** - Magic numbers & timeouts
+5. **config/hermes-strings.php** - UI strings (i18n-ready)
 
 ---
 
@@ -167,7 +167,7 @@ $max = aiAgentGetMaxTablesInContext();         // 6
 
 ### **Add New Role**
 
-Edit `hermes-roles.php`:
+Edit `config/hermes-roles.php`:
 ```php
 'supervisor' => [
     'label' => 'Supervisor',
@@ -186,7 +186,7 @@ Edit `hermes-roles.php`:
 
 ### **Add New Table**
 
-Edit `hermes-schema.php`:
+Edit `config/hermes-schema.php`:
 ```php
 'maintenance' => [
     'label' => 'Maintenance',
@@ -199,7 +199,7 @@ Edit `hermes-schema.php`:
 
 ### **Add New Keywords**
 
-Edit `hermes-keywords.php`:
+Edit `config/hermes-keywords.php`:
 ```php
 'maintenance_query' => [
     'keywords' => ['maintenance', 'perbaikan', 'rusak', 'maintenance report'],
@@ -210,7 +210,7 @@ Edit `hermes-keywords.php`:
 
 ### **Add New Limit**
 
-Edit `hermes-limits.php`:
+Edit `config/hermes-limits.php`:
 ```php
 'max_maintenance_reports' => 10,
 'maintenance_alert_threshold' => 3,
@@ -218,7 +218,7 @@ Edit `hermes-limits.php`:
 
 ### **Add New String (Multilingual)**
 
-Edit `hermes-strings.php`:
+Edit `config/hermes-strings.php`:
 ```php
 'id' => [
     'maintenance_header' => 'Status Maintenance Barang',
@@ -239,19 +239,19 @@ User Chat Request
     ↓
 chat.php loaded
     ↓
-Loads: hermes-schema.php
-        hermes-roles.php
-        hermes-keywords.php
-        hermes-limits.php
-        hermes-strings.php
+Loads: config/hermes-schema.php
+        config/hermes-roles.php
+        config/hermes-keywords.php
+        config/hermes-limits.php
+        config/hermes-strings.php
     ↓
 All hardcoded values replaced with config function calls
     ↓
-ai AgentDetectContext() → uses hermes-keywords.php
-aiAgentNormalizeRoleName() → uses hermes-roles.php
-aiAgentGetTablesForScope() → uses hermes-schema.php
-aiAgentGetMaxBorrowedItemsDisplay() → uses hermes-limits.php
-aiAgentGetStringId() → uses hermes-strings.php
+ai AgentDetectContext() → uses config/hermes-keywords.php
+aiAgentNormalizeRoleName() → uses config/hermes-roles.php
+aiAgentGetTablesForScope() → uses config/hermes-schema.php
+aiAgentGetMaxBorrowedItemsDisplay() → uses config/hermes-limits.php
+aiAgentGetStringId() → uses config/hermes-strings.php
     ↓
 Response with dynamic values
 ```

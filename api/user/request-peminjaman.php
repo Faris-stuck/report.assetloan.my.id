@@ -1,203 +1,200 @@
 <?php
 require_once "../koneksi.php";
-header('Content-Type: application/json');
 require_once "../session-helper.php";
+require_once "../response-helper.php";
 
-// Validate user role - ONLY from server session
-try {
-    SessionValidator::requireRole(['user']);
-} catch (Exception $e) {
-    http_response_code(401);
-    echo json_encode([
-        "status" => false,
-        "message" => "Unauthorized: " . $e->getMessage()
-    ]);
-    exit;
+header('Content-Type: application/json');
+
+if (!SessionValidator::isLoggedIn()) {
+    apiBusinessError('Unauthorized', 401);
 }
 
-$user_id = SessionValidator::getUserId();
-$nama_peminjam = $_POST['nama_peminjam'] ?? null;
-$nrp = $_POST['nrp'] ?? null;
-$lokasi_umum = $_POST['lokasi_umum'] ?? '';
-$rencana_pinjam = $_POST['rencana_pinjam'] ?? null;
-$rencana_kembali = $_POST['rencana_kembali'] ?? null;
-$catatan = $_POST['catatan'] ?? '';
+if (SessionValidator::getRole() !== 'user') {
+    apiBusinessError('Access denied', 403);
+}
 
-// Cast user_id ke integer
-$user_id = intval($user_id);
+$userId = (int) (SessionValidator::getUserId() ?? 0);
+$lokasiUmum = trim((string) ($_POST['lokasi_umum'] ?? ''));
+$rencanaPinjam = trim((string) ($_POST['rencana_pinjam'] ?? ''));
+$rencanaKembali = trim((string) ($_POST['rencana_kembali'] ?? ''));
+$catatan = trim((string) ($_POST['catatan'] ?? ''));
+$kode = "PMJ-" . time();
 
-// Ensure string values
-$nama_peminjam = strval($nama_peminjam);
-$nrp = strval($nrp);
-$rencana_pinjam = strval($rencana_pinjam);
-$rencana_kembali = strval($rencana_kembali);
-
-// Parse array inputs dengan benar
 $barang = [];
 $lokasi = [];
 
-// Generate values yang akan digunakan
-$kode = "PMJ-" . time();
-
 if (isset($_POST['barang']) && is_array($_POST['barang'])) {
     foreach ($_POST['barang'] as $id => $val) {
-        $barang[intval($id)] = intval($val);
+        $barang[(int) $id] = (int) $val;
     }
 }
 
 if (isset($_POST['lokasi']) && is_array($_POST['lokasi'])) {
     foreach ($_POST['lokasi'] as $id => $val) {
-        $lokasi[intval($id)] = $val;
+        $lokasi[(int) $id] = (string) $val;
     }
 }
 
 foreach ($_POST as $key => $value) {
-    if (!is_string($key)) continue;
-    if (preg_match('/^barang\\[(\\d+)\\]$/', $key, $m)) {
-        $id = intval($m[1]);
-        if (!isset($barang[$id])) $barang[$id] = intval($value);
-    } elseif (preg_match('/^lokasi\\[(\\d+)\\]$/', $key, $m)) {
-        $id = intval($m[1]);
-        if (!isset($lokasi[$id])) $lokasi[$id] = $value;
+    if (!is_string($key)) {
+        continue;
+    }
+
+    if (preg_match('/^barang\[(\d+)\]$/', $key, $matches)) {
+        $barangId = (int) $matches[1];
+        if (!isset($barang[$barangId])) {
+            $barang[$barangId] = (int) $value;
+        }
+    } elseif (preg_match('/^lokasi\[(\d+)\]$/', $key, $matches)) {
+        $barangId = (int) $matches[1];
+        if (!isset($lokasi[$barangId])) {
+            $lokasi[$barangId] = (string) $value;
+        }
     }
 }
 
-// Validasi data required
-if (empty($user_id) || empty($nama_peminjam) || empty($nrp) || empty($rencana_pinjam) || empty($rencana_kembali) || empty($lokasi_umum)) {
-    echo json_encode([
-        "status" => false,
-        "message" => "Required data is incomplete. Please ensure all fields are filled."
-    ]);
-    exit;
+if ($userId <= 0 || $rencanaPinjam === '' || $rencanaKembali === '' || $lokasiUmum === '') {
+    apiBusinessError('Required data is incomplete. Please ensure all fields are filled.');
 }
 
-// Validasi: tanggal peminjaman tidak boleh kurang dari hari ini
 $today = date('Y-m-d');
-if (strtotime($rencana_pinjam) < strtotime($today)) {
-    echo json_encode([
-        "status" => false,
-        "message" => "Borrowing date cannot be earlier than today ($today)"
-    ]);
-    exit;
+if (strtotime($rencanaPinjam) < strtotime($today)) {
+    apiBusinessError("Borrowing date cannot be earlier than today ({$today})");
 }
 
-// Validasi: tanggal pengembalian tidak boleh kurang dari tanggal peminjaman
-if (strtotime($rencana_kembali) < strtotime($rencana_pinjam)) {
-    echo json_encode([
-        "status" => false,
-        "message" => "Return date cannot be earlier than the borrowing date"
-    ]);
-    exit;
+if (strtotime($rencanaKembali) < strtotime($rencanaPinjam)) {
+    apiBusinessError('Return date cannot be earlier than the borrowing date');
 }
 
-// Validasi ada minimal 1 barang
-if (empty($barang) || array_sum($barang) == 0) {
-    echo json_encode([
-        "status" => false,
-        "message" => "Please select at least 1 item to borrow."
-    ]);
-    exit;
+if (empty($barang) || array_sum($barang) === 0) {
+    apiBusinessError('Please select at least 1 item to borrow.');
 }
-
-$conn->begin_transaction();
 
 try {
-    $stmt = $conn->prepare("
-        INSERT INTO peminjaman
-        (kode_peminjaman, user_id, nama_peminjam, nrp, lokasi_umum, tanggal_pinjam, rencana_kembali, status, catatan)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-
-    if (!$stmt) {
-        throw new Exception("Prepare failed: " . $conn->error);
+    $userStmt = $conn->prepare("SELECT nama, nrp FROM users WHERE id = ? LIMIT 1");
+    if (!$userStmt) {
+        throw new RuntimeException('Failed to prepare user lookup');
     }
 
-    $status = "Waiting for Approval";
-    $stmt->bind_param("sisssssss", $kode, $user_id, $nama_peminjam, $nrp, $lokasi_umum, $rencana_pinjam, $rencana_kembali, $status, $catatan);
-    
-    if (!$stmt->execute()) {
-        throw new Exception("Execute failed: " . $stmt->error);
+    $userStmt->bind_param("i", $userId);
+    $userStmt->execute();
+    $user = $userStmt->get_result()->fetch_assoc();
+
+    if (!$user) {
+        apiBusinessError('User account not found', 404);
     }
 
-    $peminjaman_id = $conn->insert_id;
+    $namaPeminjam = trim((string) ($user['nama'] ?? ''));
+    $nrp = trim((string) ($user['nrp'] ?? ''));
 
-    foreach ($barang as $barang_id => $jumlah) {
-        $lokasi_item = $lokasi[$barang_id] ?? '';
+    if ($namaPeminjam === '' || $nrp === '') {
+        apiBusinessError('User profile is incomplete. Please contact administrator.');
+    }
 
-        if ($jumlah > 0) {
-            // Validasi stok tersedia dan safety stock sebelum mengurangi
-            $stmt_cek = $conn->prepare("SELECT nama_barang, stok_tersedia, safety_stock FROM barang WHERE id = ?");
-            $stmt_cek->bind_param("i", $barang_id);
-            $stmt_cek->execute();
-            $result_cek = $stmt_cek->get_result();
-            $barang_data = $result_cek->fetch_assoc();
+    $conn->begin_transaction();
 
-            if (!$barang_data) {
-                throw new Exception("Item with ID $barang_id not found");
+    try {
+        $stmt = $conn->prepare("
+            INSERT INTO peminjaman
+            (kode_peminjaman, user_id, nama_peminjam, nrp, lokasi_umum, tanggal_pinjam, rencana_kembali, status, catatan)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+
+        if (!$stmt) {
+            throw new RuntimeException('Failed to prepare borrowing insert');
+        }
+
+        $status = "Waiting for Approval";
+        $stmt->bind_param("sisssssss", $kode, $userId, $namaPeminjam, $nrp, $lokasiUmum, $rencanaPinjam, $rencanaKembali, $status, $catatan);
+
+        if (!$stmt->execute()) {
+            throw new RuntimeException('Failed to create borrowing request');
+        }
+
+        $peminjamanId = $conn->insert_id;
+
+        foreach ($barang as $barangId => $jumlah) {
+            $lokasiItem = $lokasi[$barangId] ?? '';
+
+            if ($jumlah <= 0) {
+                continue;
             }
 
-            $stok_tersedia = intval($barang_data['stok_tersedia']);
-            $safety_stock = intval($barang_data['safety_stock']);
-            $nama_brg = $barang_data['nama_barang'];
-
-            // Cek apakah jumlah yang diminta melebihi stok tersedia
-            if ($jumlah > $stok_tersedia) {
-                throw new Exception("Borrow quantity ($jumlah) for '$nama_brg' exceeds available stock ($stok_tersedia)");
+            $stmtCheck = $conn->prepare("SELECT nama_barang, stok_tersedia FROM barang WHERE id = ?");
+            if (!$stmtCheck) {
+                throw new RuntimeException('Failed to prepare stock lookup');
             }
 
-            // Cek apakah stok setelah dipinjam akan di bawah 0
-            $stok_setelah = $stok_tersedia - $jumlah;
-            if ($stok_setelah < 0) {
-                throw new Exception("Stock for '$nama_brg' is insufficient. Available stock: $stok_tersedia, requested: $jumlah");
+            $stmtCheck->bind_param("i", $barangId);
+            $stmtCheck->execute();
+            $barangData = $stmtCheck->get_result()->fetch_assoc();
+
+            if (!$barangData) {
+                throw new DomainException("Item with ID {$barangId} not found");
             }
 
-            $stmt_detail = $conn->prepare("
+            $stokTersedia = (int) $barangData['stok_tersedia'];
+            $namaBarang = $barangData['nama_barang'];
+
+            if ($jumlah > $stokTersedia) {
+                throw new DomainException("Borrow quantity ({$jumlah}) for '{$namaBarang}' exceeds available stock ({$stokTersedia})");
+            }
+
+            if (($stokTersedia - $jumlah) < 0) {
+                throw new DomainException("Stock for '{$namaBarang}' is insufficient. Available stock: {$stokTersedia}, requested: {$jumlah}");
+            }
+
+            $stmtDetail = $conn->prepare("
                 INSERT INTO detail_peminjaman
                 (peminjaman_id, barang_id, lokasi, jumlah, kondisi_pinjam)
                 VALUES (?, ?, ?, ?, ?)
             ");
-            $kondisi_pinjam = 'Good';
-            $stmt_detail->bind_param("iisis", $peminjaman_id, $barang_id, $lokasi_item, $jumlah, $kondisi_pinjam);
-            if (!$stmt_detail->execute()) {
-                throw new Exception("Insert detail failed: " . $stmt_detail->error);
+            if (!$stmtDetail) {
+                throw new RuntimeException('Failed to prepare borrowing detail insert');
             }
 
-            // Kurangi stok dengan prepared statement (aman dari SQL injection)
-            $stmt_update = $conn->prepare("
+            $kondisiPinjam = 'Good';
+            $stmtDetail->bind_param("iisis", $peminjamanId, $barangId, $lokasiItem, $jumlah, $kondisiPinjam);
+            if (!$stmtDetail->execute()) {
+                throw new RuntimeException('Failed to save borrowing detail');
+            }
+
+            $stmtUpdate = $conn->prepare("
                 UPDATE barang
                 SET stok_tersedia = stok_tersedia - ?
                 WHERE id = ? AND stok_tersedia >= ?
             ");
-            $stmt_update->bind_param("iii", $jumlah, $barang_id, $jumlah);
-            if (!$stmt_update->execute()) {
-                throw new Exception("Update stok failed: " . $stmt_update->error);
+            if (!$stmtUpdate) {
+                throw new RuntimeException('Failed to prepare stock update');
             }
-            if ($stmt_update->affected_rows === 0) {
-                throw new Exception("Failed to reduce stock for '$nama_brg'. Stock may have changed.");
+
+            $stmtUpdate->bind_param("iii", $jumlah, $barangId, $jumlah);
+            if (!$stmtUpdate->execute()) {
+                throw new RuntimeException('Failed to update stock');
+            }
+
+            if ($stmtUpdate->affected_rows === 0) {
+                throw new DomainException("Failed to reduce stock for '{$namaBarang}'. Stock may have changed.");
             }
         }
-    }
 
-    $conn->commit();
-    
-    // ============================================================
-    // Send email notification after borrowing request is successfully created
-    // ============================================================
-    try {
-        require_once __DIR__ . '/../email/send-pinjam-request.php';
-        sendPinjamRequestEmail($conn, $peminjaman_id);
-    } catch (Exception $emailEx) {
-        error_log("[EMAIL ERROR] request-peminjaman: " . $emailEx->getMessage());
-        // Email error tidak perlu menggagalkan response, hanya log saja
+        $conn->commit();
+
+        try {
+            require_once __DIR__ . '/../email/send-pinjam-request.php';
+            sendPinjamRequestEmail($conn, $peminjamanId);
+        } catch (Throwable $emailEx) {
+            error_log("[EMAIL ERROR] request-peminjaman: " . $emailEx->getMessage());
+        }
+
+        apiJsonResponse(200, ['status' => true]);
+    } catch (DomainException $e) {
+        $conn->rollback();
+        apiBusinessError($e->getMessage(), 400);
+    } catch (Throwable $e) {
+        $conn->rollback();
+        apiServerError($e, 'api/user/request-peminjaman.php', 'Failed to submit borrowing request');
     }
-    
-    echo json_encode(["status" => true]);
-} catch (Exception $e) {
-    error_log("ERROR in request-peminjaman.php: " . $e->getMessage());
-    $conn->rollback();
-    echo json_encode([
-        "status" => false,
-        "message" => $e->getMessage()
-    ]);
+} catch (Throwable $e) {
+    apiServerError($e, 'api/user/request-peminjaman.php', 'Failed to submit borrowing request');
 }
-?>

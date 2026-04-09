@@ -325,7 +325,7 @@
         (function () {
             const table = document.getElementById('riwayatTable');
             if (!table) return;
-            const api = `${BASE_URL}/api/user/get-my-requests.php?user_id=${encodeURIComponent(USER_ID)}`;
+            const api = `${BASE_URL}/api/user/get-my-requests.php`;
             fetch(api, { credentials: 'same-origin' })
                 .then(r => {
                     if (r.status === 401 || r.status === 403) {

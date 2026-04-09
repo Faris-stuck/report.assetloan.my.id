@@ -1,10 +1,10 @@
 {
-    "generated_at": 1775633136,
+    "generated_at": 1775645838,
     "summary": {
-        "total_features": 224,
-        "total_modules": 39,
+        "total_features": 239,
+        "total_modules": 40,
         "total_scopes": 7,
-        "schema_tables": 13
+        "schema_tables": 16
     },
     "modules": {
         "DASHBOARD_BASIS_PERHITUNGAN.html": {
@@ -93,10 +93,9 @@
             ]
         },
         "config": {
-            "total_features": 5,
+            "total_features": 4,
             "examples": [
                 "Api",
-                "Ai Agent",
                 "Base Url",
                 "Database",
                 "Email"
@@ -153,14 +152,14 @@
             ]
         },
         "hermes": {
-            "total_features": 39,
+            "total_features": 54,
             "examples": [
                 "AGENTS",
-                "IMPLEMENTATION",
-                "MEMORY TEMPLATE",
                 "README",
                 "Chat",
-                "Codebase Helper"
+                "README",
+                "Ai Agent",
+                "Hermes Keywords"
             ]
         },
         "index.html": {
@@ -272,6 +271,12 @@
                 "Komatsu Group Indonesia | Register"
             ]
         },
+        "response-helper.php": {
+            "total_features": 1,
+            "examples": [
+                "Response Helper"
+            ]
+        },
         "riwayat.html": {
             "total_features": 1,
             "examples": [
@@ -325,7 +330,7 @@
     },
     "scopes": {
         "borrowing": {
-            "total_features": 124,
+            "total_features": 130,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "README",
@@ -338,7 +343,7 @@
             ]
         },
         "extensions": {
-            "total_features": 40,
+            "total_features": 43,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Borrowing Details",
@@ -351,7 +356,7 @@
             ]
         },
         "inventory": {
-            "total_features": 168,
+            "total_features": 171,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -364,7 +369,7 @@
             ]
         },
         "reports": {
-            "total_features": 53,
+            "total_features": 56,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -377,7 +382,7 @@
             ]
         },
         "returns": {
-            "total_features": 143,
+            "total_features": 146,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -403,7 +408,7 @@
             ]
         },
         "vendors": {
-            "total_features": 74,
+            "total_features": 73,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Item Data",
@@ -1814,11 +1819,10 @@
             "form_actions": [],
             "functions": [
                 "jsonResponse",
-                "ensureResetColumns",
                 "generateFreshResetToken",
                 "sendResetToken"
             ],
-            "mtime": 1775009430
+            "mtime": 1775641028
         },
         {
             "path": "api/auth/login.php",
@@ -2464,7 +2468,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1773305281
+            "mtime": 1775641333
         },
         {
             "path": "api/extend/status.php",
@@ -2484,7 +2488,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1774430519
+            "mtime": 1775640978
         },
         {
             "path": "api/koneksi.php",
@@ -2493,7 +2497,8 @@
             "display_name": "Koneksi",
             "scopes": [
                 "borrowing",
-                "returns"
+                "returns",
+                "extensions"
             ],
             "linked_paths": [],
             "title": "",
@@ -2503,11 +2508,15 @@
             "form_actions": [],
             "functions": [
                 "computeDueStatus",
+                "getEffectiveBorrowingStatus",
+                "isBorrowingStatusExtendable",
+                "getLatestBorrowingExtendStatus",
+                "getBorrowingExtendState",
+                "canBorrowingUnitBeExtended",
                 "getNearestExpectedReturn",
-                "computeStatusFromUnits",
-                "autoUpdateDueStatus"
+                "computeStatusFromUnits"
             ],
-            "mtime": 1773305281
+            "mtime": 1775640535
         },
         {
             "path": "api/peminjaman/get.php",
@@ -2545,7 +2554,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1773305281
+            "mtime": 1775640860
         },
         {
             "path": "api/peminjaman/get_by_status.php",
@@ -2617,8 +2626,7 @@
                 "inventory",
                 "borrowing",
                 "returns",
-                "extensions",
-                "reports"
+                "extensions"
             ],
             "linked_paths": [],
             "title": "",
@@ -2627,7 +2635,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1773305281
+            "mtime": 1775640978
         },
         {
             "path": "api/peminjaman/return.php",
@@ -2897,6 +2905,25 @@
             "mtime": 1772761017
         },
         {
+            "path": "api/response-helper.php",
+            "type": "api",
+            "module": "response-helper.php",
+            "display_name": "Response Helper",
+            "scopes": [],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "apiJsonResponse",
+                "apiBusinessError",
+                "apiServerError"
+            ],
+            "mtime": 1775640535
+        },
+        {
             "path": "api/session-helper.php",
             "type": "api",
             "module": "session-helper.php",
@@ -3037,7 +3064,6 @@
                 "inventory",
                 "borrowing",
                 "returns",
-                "extensions",
                 "users_admin"
             ],
             "linked_paths": [],
@@ -3047,7 +3073,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1773305281
+            "mtime": 1775640913
         },
         {
             "path": "api/user/get-my-requests.php",
@@ -3102,7 +3128,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1773305281
+            "mtime": 1775640913
         },
         {
             "path": "api/user/request-peminjaman.php",
@@ -3122,7 +3148,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1774430519
+            "mtime": 1775641016
         },
         {
             "path": "api/user/update.php",
@@ -3172,7 +3198,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1771900814
+            "mtime": 1775640913
         },
         {
             "path": "assets/css/ai-agent-widget.css",
@@ -3316,12 +3342,15 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [
+                "bindLogoutElement",
                 "setupLogoutListeners",
                 "handleLogoutClick",
+                "startObserver",
+                "initializeLogout",
                 "performLogout",
                 "performLocalCleanup"
             ],
-            "mtime": 1772761017
+            "mtime": 1775641103
         },
         {
             "path": "assets/js/auth/page-guard.js",
@@ -4113,29 +4142,6 @@
             "mtime": 1774495523
         },
         {
-            "path": "config/ai_agent.php",
-            "type": "config",
-            "module": "config",
-            "display_name": "Ai Agent",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "extensions",
-                "users_admin",
-                "reports",
-                "vendors"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630491
-        },
-        {
             "path": "config/base_url.php",
             "type": "config",
             "module": "config",
@@ -4232,13 +4238,7 @@
                 "hermes/lock.php",
                 "hermes/reindex.php",
                 "hermes/hermes/chat.php",
-                "hermes/context-helper.php",
-                "hermes/codebase-helper.php",
-                "hermes/index-helper.php",
-                "hermes/tool-helper.php",
-                "hermes/memory-helper.php",
-                "hermes/skills-helper.php",
-                "hermes/self-improve-helper.php"
+                "hermes/PROJECT/hermes/config/ai_agent.php"
             ],
             "title": "",
             "headings": [],
@@ -4246,52 +4246,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775617659
-        },
-        {
-            "path": "hermes/IMPLEMENTATION.md",
-            "type": "doc",
-            "module": "hermes",
-            "display_name": "IMPLEMENTATION",
-            "scopes": [
-                "reports"
-            ],
-            "linked_paths": [
-                "hermes/hermes/summarization-helper.php",
-                "hermes/chat.php",
-                "hermes/memory-helper.php",
-                "config/ai_agent.php"
-            ],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630491
-        },
-        {
-            "path": "hermes/MEMORY_TEMPLATE.md",
-            "type": "doc",
-            "module": "hermes",
-            "display_name": "MEMORY TEMPLATE",
-            "scopes": [
-                "users_admin",
-                "reports"
-            ],
-            "linked_paths": [
-                "hermes/chat.php",
-                "hermes/memory-helper.php",
-                "config/ai_agent.php",
-                "hermes/summarization-helper.php"
-            ],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630491
+            "mtime": 1775645746
         },
         {
             "path": "hermes/README.md",
@@ -4303,7 +4258,9 @@
                 "hermes/assets/js/ai-agent-widget.js",
                 "hermes/hermes/chat.php",
                 "hermes/hermes/status.php",
-                "hermes/hermes/reindex.php"
+                "hermes/hermes/reindex.php",
+                "hermes/ai_agent.php",
+                "hermes/PROJECT/hermes/config/ai_agent.php"
             ],
             "title": "",
             "headings": [],
@@ -4311,7 +4268,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775617659
+            "mtime": 1775645746
         },
         {
             "path": "hermes/chat.php",
@@ -4320,6 +4277,7 @@
             "display_name": "Chat",
             "scopes": [
                 "inventory",
+                "borrowing",
                 "returns",
                 "extensions",
                 "reports"
@@ -4331,44 +4289,30 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775633104
+            "mtime": 1775645746
         },
         {
-            "path": "hermes/codebase-helper.php",
-            "type": "helper",
+            "path": "hermes/config/README.md",
+            "type": "doc",
             "module": "hermes",
-            "display_name": "Codebase Helper",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "extensions",
-                "reports",
-                "vendors"
+            "display_name": "README",
+            "scopes": [],
+            "linked_paths": [
+                "hermes/config/ai_agent.php"
             ],
-            "linked_paths": [],
             "title": "",
             "headings": [],
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
-            "functions": [
-                "aiAgentBuildDynamicContextBundle",
-                "aiAgentNormalizePageSnapshot",
-                "aiAgentBuildPageSnapshotLines",
-                "aiAgentCollectRelevantCodeMatches",
-                "aiAgentCollectDirectlyLinkedFiles",
-                "aiAgentSelectBalancedMatches",
-                "aiAgentBuildCodeSearchKeywords",
-                "aiAgentCollectCandidateFiles"
-            ],
-            "mtime": 1775623165
+            "functions": [],
+            "mtime": 1775645746
         },
         {
-            "path": "hermes/config-helper.php",
+            "path": "hermes/config/ai_agent.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Config Helper",
+            "display_name": "Ai Agent",
             "scopes": [
                 "inventory",
                 "borrowing",
@@ -4384,28 +4328,19 @@
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
-            "functions": [
-                "aiAgentLoadConfig",
-                "aiAgentGetDefaultConfig",
-                "aiAgentConfigValueIsUsable",
-                "aiAgentGetExtendedProviderConfig",
-                "aiAgentBootstrapRuntimeConfig"
-            ],
-            "mtime": 1775631770
+            "functions": [],
+            "mtime": 1775645746
         },
         {
-            "path": "hermes/context-helper.php",
+            "path": "hermes/config/hermes-keywords.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Context Helper",
+            "display_name": "Hermes Keywords",
             "scopes": [
                 "inventory",
                 "borrowing",
                 "returns",
-                "extensions",
-                "users_admin",
-                "reports",
-                "vendors"
+                "extensions"
             ],
             "linked_paths": [],
             "title": "",
@@ -4414,25 +4349,83 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [
-                "aiAgentBuildGroundingContext",
-                "aiAgentBuildDatabaseContext",
-                "aiAgentBuildOutboundMessage",
-                "aiAgentGetProjectOverviewLines",
-                "aiAgentGetRelevantFileLines",
-                "aiAgentGetWorkflowLines",
-                "aiAgentGetSchemaLines",
-                "aiAgentGetDatabaseRelationLines"
+                "aiAgentGetKeywordDefinitions",
+                "aiAgentGetMonthMapping",
+                "aiAgentGetKeywordsByContext",
+                "aiAgentGetKeywordsByScope",
+                "aiAgentDetectContext"
             ],
-            "mtime": 1775623165
+            "mtime": 1775633226
         },
         {
-            "path": "hermes/conversation-helper.php",
+            "path": "hermes/config/hermes-limits.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Conversation Helper",
+            "display_name": "Hermes Limits",
             "scopes": [
                 "inventory",
+                "borrowing",
+                "returns"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentGetLimitsConfig",
+                "aiAgentGetLimit",
+                "aiAgentGetMaxTablesInContext",
+                "aiAgentGetMaxLinkedFiles",
+                "aiAgentGetMaxStatusValues",
+                "aiAgentGetMaxBorrowedItemsDisplay",
+                "aiAgentGetMaxBorrowingDetailRows",
+                "aiAgentGetMaxRecentTransactionRows"
+            ],
+            "mtime": 1775633226
+        },
+        {
+            "path": "hermes/config/hermes-roles.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Hermes Roles",
+            "scopes": [
+                "inventory",
+                "borrowing",
                 "returns",
+                "extensions",
+                "users_admin",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentGetRoleDefinitions",
+                "aiAgentGetRoleDef",
+                "aiAgentGetAllRoles",
+                "aiAgentNormalizeRoleName",
+                "aiAgentGetRoleDisplayName",
+                "aiAgentGetRoleForAgent",
+                "aiAgentRoleHasPermission",
+                "aiAgentGetAccessibleScopes"
+            ],
+            "mtime": 1775633226
+        },
+        {
+            "path": "hermes/config/hermes-schema.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Hermes Schema",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "extensions",
                 "users_admin"
             ],
             "linked_paths": [],
@@ -4442,16 +4435,41 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [
-                "aiAgentBuildModePrompt",
-                "aiAgentGetSensitiveAccessExpiresAt",
-                "aiAgentGetBusinessOverrideExpiresAt",
-                "aiAgentGrantSensitiveAccess",
-                "aiAgentGrantBusinessOverrideAccess",
-                "aiAgentRevokeSensitiveAccess",
-                "aiAgentRevokeBusinessOverrideAccess",
-                "aiAgentMessageContainsPassword"
+                "aiAgentGetSchemaDefinitions",
+                "aiAgentGetTableSchema",
+                "aiAgentGetTableColumns",
+                "aiAgentGetStatusColumn",
+                "aiAgentGetUserColumn",
+                "aiAgentGetTablesForScope",
+                "aiAgentGetAllTableNames"
             ],
-            "mtime": 1775620343
+            "mtime": 1775633226
+        },
+        {
+            "path": "hermes/config/hermes-strings.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Hermes Strings",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "extensions",
+                "users_admin"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentGetStringsConfig",
+                "aiAgentGetString",
+                "aiAgentGetStringId",
+                "aiAgentGetStringEn"
+            ],
+            "mtime": 1775633226
         },
         {
             "path": "hermes/data/memory/conversations/admin-1-conv-1-1775615461713-xwt0hd.json",
@@ -4515,7 +4533,22 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775631699
+            "mtime": 1775633595
+        },
+        {
+            "path": "hermes/data/memory/conversations/admin-1-conv-1-1775633848842-5w1ibd.json",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Admin 1 Conv 1 1775633848842 5w1ibd",
+            "scopes": [],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775634138
         },
         {
             "path": "hermes/data/memory/conversations/user-1025-conv-1025-1775619751047-ki6q23.json",
@@ -4576,9 +4609,6 @@
             "module": "hermes",
             "display_name": "Admin 1 MEMORY",
             "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
                 "reports"
             ],
             "linked_paths": [],
@@ -4588,7 +4618,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775631699
+            "mtime": 1775645788
         },
         {
             "path": "hermes/data/memory/profiles/admin-1.json",
@@ -4610,48 +4640,15 @@
             "type": "helper",
             "module": "hermes",
             "display_name": "Feature Manifest",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "extensions",
-                "users_admin",
-                "reports",
-                "vendors"
-            ],
-            "linked_paths": [
-                "hermes/data/project-index/DASHBOARD_BASIS_PERHITUNGAN.html",
-                "hermes/data/project-index/ai-agent-widget.js",
-                "hermes/data/project-index/base-url.js",
-                "hermes/data/project-index/dashboard.html",
-                "hermes/data/project-index/date-format.js",
-                "hermes/data/project-index/forgot-password.html",
-                "hermes/data/project-index/index.html",
-                "hermes/data/project-index/koneksi.php",
-                "hermes/data/project-index/peminjaman.sql",
-                "hermes/data/project-index/pengaturan.html",
-                "hermes/data/project-index/profil.html",
-                "hermes/data/project-index/profile-header.js",
-                "hermes/data/project-index/register.html",
-                "hermes/data/project-index/riwayat.html",
-                "hermes/data/project-index/session-helper.php",
-                "hermes/data/project-index/hermes/chat.php",
-                "hermes/data/project-index/hermes/status.php",
-                "hermes/data/project-index/hermes/reindex.php",
-                "hermes/data/project-index/tools/ai-project-index.php",
-                "api/auth/login.php",
-                "api/auth/logout.php",
-                "api/auth/register.php",
-                "api/auth/forgot-password.php",
-                "api/auth/verify-session.php"
-            ],
+            "scopes": [],
+            "linked_paths": [],
             "title": "",
             "headings": [],
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775632599
+            "mtime": 1775645802
         },
         {
             "path": "hermes/data/project-index/project-index-meta.json",
@@ -4668,7 +4665,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775632599
+            "mtime": 1775645802
         },
         {
             "path": "hermes/data/project-index/project-index.json",
@@ -4683,41 +4680,31 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775632599
+            "mtime": 1775645802
         },
         {
-            "path": "hermes/hermes-keywords.php",
-            "type": "helper",
+            "path": "hermes/database/README.md",
+            "type": "doc",
             "module": "hermes",
-            "display_name": "Hermes Keywords",
-            "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "extensions"
+            "display_name": "README",
+            "scopes": [],
+            "linked_paths": [
+                "hermes/database/integrated-memory-helper.php"
             ],
-            "linked_paths": [],
             "title": "",
             "headings": [],
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
-            "functions": [
-                "aiAgentGetKeywordDefinitions",
-                "aiAgentGetMonthMapping",
-                "aiAgentGetKeywordsByContext",
-                "aiAgentGetKeywordsByScope",
-                "aiAgentDetectContext"
-            ],
-            "mtime": 1775633041
+            "functions": [],
+            "mtime": 1775644075
         },
         {
-            "path": "hermes/hermes-limits.php",
+            "path": "hermes/database/integrated-memory-helper.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Hermes Limits",
+            "display_name": "Integrated Memory Helper",
             "scopes": [
-                "inventory",
                 "borrowing",
                 "returns"
             ],
@@ -4728,28 +4715,24 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [
-                "aiAgentGetLimitsConfig",
-                "aiAgentGetLimit",
-                "aiAgentGetMaxTablesInContext",
-                "aiAgentGetMaxLinkedFiles",
-                "aiAgentGetMaxStatusValues",
-                "aiAgentGetMaxBorrowedItemsDisplay",
-                "aiAgentGetMaxBorrowingDetailRows",
-                "aiAgentGetMaxRecentTransactionRows"
+                "aiAgentInitializeIntegratedMemoryTables",
+                "aiAgentGetIntegratedMemoryConnection",
+                "aiAgentIntegratedSaveConversationMemory",
+                "aiAgentIntegratedLoadConversationMemory",
+                "aiAgentIntegratedListConversationMemories",
+                "aiAgentIntegratedSaveUserProfile",
+                "aiAgentIntegratedLoadUserProfile",
+                "aiAgentIntegratedSaveUserLessons"
             ],
-            "mtime": 1775633053
+            "mtime": 1775637527
         },
         {
-            "path": "hermes/hermes-roles.php",
+            "path": "hermes/database/maintenance/check-database-data.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Hermes Roles",
+            "display_name": "Check Database Data",
             "scopes": [
-                "inventory",
                 "borrowing",
-                "returns",
-                "extensions",
-                "users_admin",
                 "reports"
             ],
             "linked_paths": [],
@@ -4758,29 +4741,17 @@
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
-            "functions": [
-                "aiAgentGetRoleDefinitions",
-                "aiAgentGetRoleDef",
-                "aiAgentGetAllRoles",
-                "aiAgentNormalizeRoleName",
-                "aiAgentGetRoleDisplayName",
-                "aiAgentGetRoleForAgent",
-                "aiAgentRoleHasPermission",
-                "aiAgentGetAccessibleScopes"
-            ],
-            "mtime": 1775633020
+            "functions": [],
+            "mtime": 1775644075
         },
         {
-            "path": "hermes/hermes-schema.php",
+            "path": "hermes/database/maintenance/database-schema-helper.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Hermes Schema",
+            "display_name": "Database Schema Helper",
             "scopes": [
                 "inventory",
-                "borrowing",
-                "returns",
-                "extensions",
-                "users_admin"
+                "returns"
             ],
             "linked_paths": [],
             "title": "",
@@ -4789,27 +4760,24 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [
-                "aiAgentGetSchemaDefinitions",
-                "aiAgentGetTableSchema",
-                "aiAgentGetTableColumns",
-                "aiAgentGetStatusColumn",
-                "aiAgentGetUserColumn",
-                "aiAgentGetTablesForScope",
-                "aiAgentGetAllTableNames"
+                "aiAgentInitializeMemoryDatabase",
+                "aiAgentGetDatabaseConnection",
+                "aiAgentGetDatabaseMemoryConfig",
+                "aiAgentWriteConversationToDatabase",
+                "aiAgentReadConversationFromDatabase",
+                "aiAgentWriteProfileToDatabase",
+                "aiAgentReadProfileFromDatabase",
+                "aiAgentWriteLessonsToDatabase"
             ],
-            "mtime": 1775633007
+            "mtime": 1775635689
         },
         {
-            "path": "hermes/hermes-strings.php",
+            "path": "hermes/database/maintenance/migrate-memory-to-database.php",
             "type": "helper",
             "module": "hermes",
-            "display_name": "Hermes Strings",
+            "display_name": "Migrate Memory To Database",
             "scopes": [
-                "inventory",
-                "borrowing",
-                "returns",
-                "extensions",
-                "users_admin"
+                "reports"
             ],
             "linked_paths": [],
             "title": "",
@@ -4817,19 +4785,130 @@
             "buttons": [],
             "table_headers": [],
             "form_actions": [],
-            "functions": [
-                "aiAgentGetStringsConfig",
-                "aiAgentGetString",
-                "aiAgentGetStringId",
-                "aiAgentGetStringEn"
-            ],
-            "mtime": 1775633089
+            "functions": [],
+            "mtime": 1775645746
         },
         {
-            "path": "hermes/home/SOUL.md",
+            "path": "hermes/database/tests/test-integrated-memory.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Test Integrated Memory",
+            "scopes": [
+                "borrowing",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775644075
+        },
+        {
+            "path": "hermes/docs/DATABASE-MEMORY-GUIDE.md",
             "type": "doc",
             "module": "hermes",
-            "display_name": "SOUL",
+            "display_name": "DATABASE MEMORY GUIDE",
+            "scopes": [
+                "inventory",
+                "returns",
+                "users_admin",
+                "reports"
+            ],
+            "linked_paths": [
+                "hermes/docs/PROJECT/hermes/config/ai_agent.php"
+            ],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775645746
+        },
+        {
+            "path": "hermes/docs/DYNAMIC-CONFIG-GUIDE.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "DYNAMIC CONFIG GUIDE",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "extensions",
+                "reports"
+            ],
+            "linked_paths": [
+                "config/hermes-roles.php",
+                "config/hermes-schema.php",
+                "config/hermes-keywords.php",
+                "config/hermes-limits.php",
+                "config/hermes-strings.php"
+            ],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775644174
+        },
+        {
+            "path": "hermes/docs/IMPLEMENTATION-SUMMARY.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "IMPLEMENTATION SUMMARY",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "extensions",
+                "reports"
+            ],
+            "linked_paths": [
+                "hermes/docs/config/hermes-schema.php",
+                "hermes/docs/config/hermes-roles.php",
+                "hermes/docs/config/hermes-keywords.php",
+                "hermes/docs/config/hermes-limits.php",
+                "hermes/docs/config/hermes-strings.php"
+            ],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775644174
+        },
+        {
+            "path": "hermes/docs/INTEGRATED-MEMORY-GUIDE.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "INTEGRATED MEMORY GUIDE",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "users_admin",
+                "reports"
+            ],
+            "linked_paths": [
+                "config/database.php"
+            ],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775644174
+        },
+        {
+            "path": "hermes/engine/README.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "README",
             "scopes": [],
             "linked_paths": [],
             "title": "",
@@ -4838,10 +4917,73 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775617659
+            "mtime": 1775644174
         },
         {
-            "path": "hermes/index-helper.php",
+            "path": "hermes/engine/codebase-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Codebase Helper",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "extensions",
+                "reports",
+                "vendors"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentBuildDynamicContextBundle",
+                "aiAgentNormalizePageSnapshot",
+                "aiAgentBuildPageSnapshotLines",
+                "aiAgentCollectRelevantCodeMatches",
+                "aiAgentCollectDirectlyLinkedFiles",
+                "aiAgentSelectBalancedMatches",
+                "aiAgentBuildCodeSearchKeywords",
+                "aiAgentCollectCandidateFiles"
+            ],
+            "mtime": 1775645746
+        },
+        {
+            "path": "hermes/engine/context-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Context Helper",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "extensions",
+                "users_admin",
+                "reports",
+                "vendors"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentBuildGroundingContext",
+                "aiAgentBuildDatabaseContext",
+                "aiAgentBuildOutboundMessage",
+                "aiAgentGetProjectOverviewLines",
+                "aiAgentGetRelevantFileLines",
+                "aiAgentGetWorkflowLines",
+                "aiAgentGetSchemaLines",
+                "aiAgentGetDatabaseRelationLines"
+            ],
+            "mtime": 1775645746
+        },
+        {
+            "path": "hermes/engine/index-helper.php",
             "type": "helper",
             "module": "hermes",
             "display_name": "Index Helper",
@@ -4869,103 +5011,7 @@
             "mtime": 1775614379
         },
         {
-            "path": "hermes/lock.php",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Lock",
-            "scopes": [
-                "inventory"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775620343
-        },
-        {
-            "path": "hermes/memory-helper.php",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Memory Helper",
-            "scopes": [
-                "returns",
-                "reports"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [
-                "aiAgentGetMemoryConfig",
-                "aiAgentResolveHermesStoragePath",
-                "aiAgentEnsureMemoryDirectories",
-                "aiAgentBuildMemoryUserKey",
-                "aiAgentBuildMemoryConversationKey",
-                "aiAgentGetConversationMemoryPath",
-                "aiAgentGetProfileMemoryPath",
-                "aiAgentGetLessonsMemoryPath"
-            ],
-            "mtime": 1775631770
-        },
-        {
-            "path": "hermes/patches/candidate-skills/berikan-saya-data-lengkap-mengenai-bagaimana-system-anda-berjalan-jangan-pakai-tabel-preferensi-user-jangan-pakai-tabel-51084e4339ef.md",
-            "type": "doc",
-            "module": "hermes",
-            "display_name": "Berikan Saya Data Lengkap Mengenai Bagaimana System Anda Berjalan Jangan Pakai Tabel Preferensi User Jangan Pakai Tabel 51084e4339ef",
-            "scopes": [],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630253
-        },
-        {
-            "path": "hermes/patches/learning-candidates.md",
-            "type": "doc",
-            "module": "hermes",
-            "display_name": "Learning Candidates",
-            "scopes": [],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775630252
-        },
-        {
-            "path": "hermes/reindex.php",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Reindex",
-            "scopes": [
-                "returns",
-                "reports"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [
-                "aiAgentReadProjectIndexControlRequest",
-                "aiAgentAuthorizeProjectIndexControl",
-                "aiAgentNormalizeProjectIndexControlReason"
-            ],
-            "mtime": 1775623165
-        },
-        {
-            "path": "hermes/runtime-helper.php",
+            "path": "hermes/engine/runtime-helper.php",
             "type": "helper",
             "module": "hermes",
             "display_name": "Runtime Helper",
@@ -4989,10 +5035,10 @@
                 "aiAgentHttpRequestWithStreams",
                 "aiAgentHttpRequestWithSocket"
             ],
-            "mtime": 1775631770
+            "mtime": 1775645299
         },
         {
-            "path": "hermes/self-improve-helper.php",
+            "path": "hermes/engine/self-improve-helper.php",
             "type": "helper",
             "module": "hermes",
             "display_name": "Self Improve Helper",
@@ -5018,7 +5064,7 @@
             "mtime": 1775622303
         },
         {
-            "path": "hermes/skills-helper.php",
+            "path": "hermes/engine/skills-helper.php",
             "type": "helper",
             "module": "hermes",
             "display_name": "Skills Helper",
@@ -5044,42 +5090,7 @@
             "mtime": 1775622303
         },
         {
-            "path": "hermes/skills/default-project-skill.md",
-            "type": "doc",
-            "module": "hermes",
-            "display_name": "Default Project Skill",
-            "scopes": [],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [],
-            "mtime": 1775617715
-        },
-        {
-            "path": "hermes/status.php",
-            "type": "helper",
-            "module": "hermes",
-            "display_name": "Status",
-            "scopes": [
-                "returns",
-                "reports"
-            ],
-            "linked_paths": [],
-            "title": "",
-            "headings": [],
-            "buttons": [],
-            "table_headers": [],
-            "form_actions": [],
-            "functions": [
-                "aiAgentProbeProviderReachability"
-            ],
-            "mtime": 1775623165
-        },
-        {
-            "path": "hermes/summarization-helper.php",
+            "path": "hermes/engine/summarization-helper.php",
             "type": "helper",
             "module": "hermes",
             "display_name": "Summarization Helper",
@@ -5106,7 +5117,7 @@
             "mtime": 1775631770
         },
         {
-            "path": "hermes/tool-helper.php",
+            "path": "hermes/engine/tool-helper.php",
             "type": "helper",
             "module": "hermes",
             "display_name": "Tool Helper",
@@ -5136,6 +5147,269 @@
                 "aiAgentResolveRequestedBusinessScopes"
             ],
             "mtime": 1775632391
+        },
+        {
+            "path": "hermes/home/SOUL.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "SOUL",
+            "scopes": [],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775617659
+        },
+        {
+            "path": "hermes/lock.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Lock",
+            "scopes": [
+                "inventory"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775620343
+        },
+        {
+            "path": "hermes/memory/README.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "README",
+            "scopes": [],
+            "linked_paths": [
+                "hermes/memory/conversation-helper.php",
+                "hermes/memory/memory-helper.php"
+            ],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775644174
+        },
+        {
+            "path": "hermes/memory/conversation-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Conversation Helper",
+            "scopes": [
+                "inventory",
+                "returns",
+                "users_admin"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentBuildModePrompt",
+                "aiAgentGetSensitiveAccessExpiresAt",
+                "aiAgentGetBusinessOverrideExpiresAt",
+                "aiAgentGrantSensitiveAccess",
+                "aiAgentGrantBusinessOverrideAccess",
+                "aiAgentRevokeSensitiveAccess",
+                "aiAgentRevokeBusinessOverrideAccess",
+                "aiAgentMessageContainsPassword"
+            ],
+            "mtime": 1775620343
+        },
+        {
+            "path": "hermes/memory/memory-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Memory Helper",
+            "scopes": [
+                "returns",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentGetMemoryConfig",
+                "aiAgentResolveHermesStoragePath",
+                "aiAgentEnsureMemoryDirectories",
+                "aiAgentBuildMemoryUserKey",
+                "aiAgentBuildMemoryConversationKey",
+                "aiAgentGetConversationMemoryPath",
+                "aiAgentGetProfileMemoryPath",
+                "aiAgentGetLessonsMemoryPath"
+            ],
+            "mtime": 1775644075
+        },
+        {
+            "path": "hermes/model/README.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "README",
+            "scopes": [
+                "extensions"
+            ],
+            "linked_paths": [
+                "hermes/config/ai_agent.php",
+                "hermes/model/config-helper.php",
+                "hermes/model/PROJECT/hermes/config/ai_agent.php"
+            ],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775645746
+        },
+        {
+            "path": "hermes/model/config-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Config Helper",
+            "scopes": [
+                "inventory",
+                "borrowing",
+                "returns",
+                "extensions",
+                "users_admin",
+                "reports",
+                "vendors"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentLoadConfig",
+                "aiAgentGetDefaultConfig",
+                "aiAgentGetPrimaryAiRuntimeConfigKeys",
+                "aiAgentGetMissingPrimaryAiRuntimeConfigKeys",
+                "aiAgentHasCompletePrimaryAiRuntimeConfig",
+                "aiAgentGetMissingExtendedProviderConfigKeys",
+                "aiAgentConfigValueIsUsable",
+                "aiAgentGetExtendedProviderConfig"
+            ],
+            "mtime": 1775645256
+        },
+        {
+            "path": "hermes/patches/candidate-skills/berikan-saya-data-lengkap-mengenai-bagaimana-system-anda-berjalan-jangan-pakai-tabel-preferensi-user-jangan-pakai-tabel-51084e4339ef.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "Berikan Saya Data Lengkap Mengenai Bagaimana System Anda Berjalan Jangan Pakai Tabel Preferensi User Jangan Pakai Tabel 51084e4339ef",
+            "scopes": [],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775630253
+        },
+        {
+            "path": "hermes/patches/candidate-skills/kamu-ingat-percakapan-kita-tidak-catatan-user-percakapan-kita-tidak-0c2cfd46948e.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "Kamu Ingat Percakapan Kita Tidak Catatan User Percakapan Kita Tidak 0c2cfd46948e",
+            "scopes": [
+                "borrowing"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775645692
+        },
+        {
+            "path": "hermes/patches/learning-candidates.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "Learning Candidates",
+            "scopes": [],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775645692
+        },
+        {
+            "path": "hermes/reindex.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Reindex",
+            "scopes": [
+                "returns",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentReadProjectIndexControlRequest",
+                "aiAgentAuthorizeProjectIndexControl",
+                "aiAgentNormalizeProjectIndexControlReason"
+            ],
+            "mtime": 1775645746
+        },
+        {
+            "path": "hermes/skills/default-project-skill.md",
+            "type": "doc",
+            "module": "hermes",
+            "display_name": "Default Project Skill",
+            "scopes": [],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [],
+            "mtime": 1775617715
+        },
+        {
+            "path": "hermes/status.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Status",
+            "scopes": [
+                "returns",
+                "extensions",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentProbeProviderReachability"
+            ],
+            "mtime": 1775645746
         },
         {
             "path": "index.html",
@@ -5971,7 +6245,7 @@
                 "aiAgentParseProjectIndexCliOptions",
                 "aiAgentNormalizeProjectIndexCliReason"
             ],
-            "mtime": 1775617372
+            "mtime": 1775645746
         },
         {
             "path": "user/dashboard.html",
@@ -6081,7 +6355,7 @@
                 "renderTable",
                 "renderTableRows"
             ],
-            "mtime": 1775531690
+            "mtime": 1775641141
         },
         {
             "path": "user/peminjaman/detail.html",
@@ -6186,7 +6460,7 @@
                 "doAjukanPengembalian",
                 "lihatDetail"
             ],
-            "mtime": 1775531684
+            "mtime": 1775641141
         },
         {
             "path": "user/pengembalian/ajukan-pengembalian.html",
@@ -6283,9 +6557,9 @@
             "form_actions": [],
             "functions": [
                 "updateHeader",
-                "avatarUrl"
+                "clearStoredAvatar"
             ],
-            "mtime": 1775009430
+            "mtime": 1775641225
         },
         {
             "path": "user/riwayat.html",
@@ -6327,7 +6601,7 @@
                 "status",
                 "status_en"
             ],
-            "mtime": 1775009430
+            "mtime": 1775641141
         }
     ]
 }

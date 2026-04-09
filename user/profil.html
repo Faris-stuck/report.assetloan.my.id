@@ -264,9 +264,10 @@
                                     <p class="text-muted mb-1" id="profileNrp">-</p>
                                     <div class="mt-3">
                                         <input type="file" id="inputAvatar" accept="image/*"
-                                            class="form-control form-control-sm mb-2">
-                                        <button id="btnUploadAvatar" class="btn btn-primary btn-sm">Upload
+                                            class="form-control form-control-sm mb-2" disabled>
+                                        <button id="btnUploadAvatar" class="btn btn-primary btn-sm" disabled>Upload
                                             Photo</button>
+                                        <small class="d-block text-muted mt-2">Profile photo upload is temporarily disabled.</small>
                                     </div>
                                 </div>
                             </div>
@@ -305,23 +306,38 @@
                             }
                         })();
 
+                        const DEFAULT_AVATAR = "../assets/images/avatar/1.png";
+
+                        function clearStoredAvatar() {
+                            try {
+                                const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+                                if (storedUser && typeof storedUser === 'object') {
+                                    delete storedUser.avatar;
+                                    localStorage.setItem('user', JSON.stringify(storedUser));
+                                }
+                            } catch (e) {
+                                console.warn('Failed to clear stored avatar', e);
+                            }
+                        }
+
+                        document.getElementById('profileAvatar').src = DEFAULT_AVATAR;
+                        clearStoredAvatar();
+                        if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
+
                         // Ambil data profil terbaru dari server
-                        fetch(BASE_URL + "/api/user/profile.php?id=" + USER_ID)
+                        fetch(BASE_URL + "/api/user/profile.php", { credentials: 'same-origin' })
                             .then(res => res.json())
                             .then(u => {
+                                if (u && u.status === false) {
+                                    throw new Error(u.message || 'Failed to load profile');
+                                }
                                 const finalName = u.nama || userData.nama || '';
                                 const finalNrp = u.nrp || userData.nrp || '';
                                 const finalEmail = u.email || userData.email || '';
                                 document.getElementById('profileName').innerText = finalName;
                                 document.getElementById('profileNrp').innerText = finalNrp ? ('NRP: ' + finalNrp) : '';
                                 document.getElementById('profileEmail').innerText = finalEmail;
-                                if (u.avatar) {
-                                    const avatarUrl = (u.avatar.indexOf('http') === 0) ? u.avatar : (BASE_URL + '/' + u.avatar);
-                                    document.getElementById('profileAvatar').src = avatarUrl;
-                                    // persist to localStorage user object
-                                    try { const lu = JSON.parse(localStorage.getItem('user') || '{}'); lu.avatar = u.avatar; localStorage.setItem('user', JSON.stringify(lu)); } catch (e) { }
-                                    if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
-                                }
+                                document.getElementById('profileAvatar').src = DEFAULT_AVATAR;
                             })
                             .catch(err => {
                                 console.error("Error loading profile:", err);
@@ -329,34 +345,8 @@
                                 document.getElementById('profileName').innerText = userData.nama || '';
                                 document.getElementById('profileNrp').innerText = userData.nrp ? ('NRP: ' + userData.nrp) : '';
                                 document.getElementById('profileEmail').innerText = userData.email || '';
-                                if (userData.avatar) {
-                                    const avatarUrl = (userData.avatar.indexOf('http') === 0) ? userData.avatar : (BASE_URL + '/' + userData.avatar);
-                                    document.getElementById('profileAvatar').src = avatarUrl;
-                                    if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
-                                }
+                                document.getElementById('profileAvatar').src = DEFAULT_AVATAR;
                             });
-
-                        // Upload avatar
-                        document.getElementById('btnUploadAvatar').addEventListener('click', function () {
-                            const f = document.getElementById('inputAvatar').files[0];
-                            if (!f) return alert('Select an image first');
-                            const fd = new FormData(); fd.append('avatar', f);
-                            fetch(BASE_URL + '/api/user/upload-avatar.php', { method: 'POST', body: fd, credentials: 'same-origin' })
-                                .then(r => r.json())
-                                .then(res => {
-                                    if (res.status && res.avatar) {
-                                        const avatarUrl = BASE_URL + '/' + res.avatar;
-                                        document.getElementById('profileAvatar').src = avatarUrl;
-                                        try { const lu = JSON.parse(localStorage.getItem('user') || '{}'); lu.avatar = res.avatar; localStorage.setItem('user', JSON.stringify(lu)); } catch (e) { }
-                                        if (window.RoleValidator && RoleValidator.applyAvatar) RoleValidator.applyAvatar();
-                                        alert('Avatar updated');
-                                    } else {
-                                        alert(res.message || 'Upload failed');
-                                    }
-                                })
-                                .catch(() => alert('Upload error'));
-                        });
-
                     </script>
 
 

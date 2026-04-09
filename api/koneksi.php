@@ -75,6 +75,106 @@ function computeDueStatus($dbStatus, $rencanaKembali) {
 }
 
 /**
+ * Get the effective borrowing status shown across user-facing APIs.
+ *
+ * Final statuses are preserved. Active statuses are derived from per-unit data
+ * and due-date proximity so status and extendability stay aligned.
+ */
+function getEffectiveBorrowingStatus(&$conn, $peminjaman_id, $dbStatus, $fallbackReturnDate = null, $nearestExpectedReturn = null) {
+    $finalStatuses = [
+        'Waiting for Approval',
+        'Rejected',
+        'Returned',
+        'Completed',
+        'Cancelled',
+        'Closed',
+        'Fully Damaged',
+        'Partially Damaged'
+    ];
+
+    if (in_array($dbStatus, $finalStatuses, true)) {
+        return $dbStatus;
+    }
+
+    $statusFromUnits = computeStatusFromUnits($conn, $peminjaman_id, $dbStatus);
+
+    if ($statusFromUnits === 'Borrowed' && in_array($dbStatus, ['Approved', 'Partial Approved', 'Return in Process'], true)) {
+        $statusFromUnits = $dbStatus;
+    }
+
+    $effectiveDate = $nearestExpectedReturn ?? getNearestExpectedReturn($conn, $peminjaman_id) ?? $fallbackReturnDate;
+    return computeDueStatus($statusFromUnits, $effectiveDate);
+}
+
+/**
+ * Determine whether a borrowing status is extendable based on the shared rule set.
+ */
+function isBorrowingStatusExtendable($status) {
+    if (strpos($status, 'Due In ') === 0) {
+        return true;
+    }
+
+    return in_array($status, [
+        'Borrowed',
+        'Approved',
+        'Partial Approved',
+        'Partially Returned',
+        'Return in Process',
+        'Overdue',
+        'Due Today'
+    ], true);
+}
+
+/**
+ * Get latest extend request status for a borrowing.
+ */
+function getLatestBorrowingExtendStatus(&$conn, $peminjaman_id) {
+    $stmt = $conn->prepare("
+        SELECT status
+        FROM extend_peminjaman
+        WHERE peminjaman_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+    ");
+
+    if (!$stmt) {
+        return null;
+    }
+
+    $stmt->bind_param("i", $peminjaman_id);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    return $row['status'] ?? null;
+}
+
+/**
+ * Shared extendability evaluation for borrowing-level endpoints.
+ */
+function getBorrowingExtendState(&$conn, $peminjaman_id, $dbStatus, $fallbackReturnDate = null, $latestExtendStatus = null, $nearestExpectedReturn = null) {
+    $effectiveStatus = getEffectiveBorrowingStatus($conn, $peminjaman_id, $dbStatus, $fallbackReturnDate, $nearestExpectedReturn);
+    $latestExtendStatus = $latestExtendStatus ?? getLatestBorrowingExtendStatus($conn, $peminjaman_id);
+    $canExtend = isBorrowingStatusExtendable($effectiveStatus) && $latestExtendStatus !== 'Pending';
+
+    return [
+        'status' => $effectiveStatus,
+        'latest_extend_status' => $latestExtendStatus,
+        'can_extend' => $canExtend
+    ];
+}
+
+/**
+ * Shared extendability evaluation for per-unit extend actions.
+ */
+function canBorrowingUnitBeExtended(&$conn, $peminjaman_id, $dbStatus, $unitReturnStatus, $fallbackReturnDate = null, $latestExtendStatus = null, $nearestExpectedReturn = null) {
+    if (in_array($unitReturnStatus, ['Returned', 'Damaged'], true)) {
+        return false;
+    }
+
+    $extendState = getBorrowingExtendState($conn, $peminjaman_id, $dbStatus, $fallbackReturnDate, $latestExtendStatus, $nearestExpectedReturn);
+    return $extendState['can_extend'];
+}
+
+/**
  * Get the nearest expected_return for a peminjaman.
  *
  * Uses peminjaman_units table (per-unit, database-only) as the single source of truth.
