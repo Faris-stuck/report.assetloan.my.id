@@ -332,6 +332,47 @@ function aiAgentDeleteLegacyReflectionLogFile(array $memoryConfig): void
     aiAgentDeleteMemoryFile(aiAgentGetReflectionLogPath($memoryConfig));
 }
 
+function aiAgentDeleteLegacyReflectionLogEntries(
+    array $memoryConfig,
+    int $userId,
+    string $conversationId
+): int {
+    $path = aiAgentGetReflectionLogPath($memoryConfig);
+    if ($path === '' || !is_file($path) || !is_readable($path)) {
+        return 0;
+    }
+
+    $lines = @file($path, FILE_IGNORE_NEW_LINES);
+    if (!is_array($lines)) {
+        return 0;
+    }
+
+    $keptLines = [];
+    $removedCount = 0;
+    foreach ($lines as $line) {
+        $decoded = json_decode((string) $line, true);
+        if (
+            is_array($decoded)
+            && (int) ($decoded['user_id'] ?? 0) === $userId
+            && aiAgentNormalizeMemoryConversationId((string) ($decoded['conversation_id'] ?? ''), '') === $conversationId
+        ) {
+            $removedCount += 1;
+            continue;
+        }
+
+        $keptLines[] = (string) $line;
+    }
+
+    if ($removedCount <= 0) {
+        return 0;
+    }
+
+    $payload = empty($keptLines) ? '' : implode(PHP_EOL, $keptLines) . PHP_EOL;
+    @file_put_contents($path, $payload, LOCK_EX);
+
+    return $removedCount;
+}
+
 function aiAgentGetIntegratedMemoryConnectionForRuntime(array $memoryConfig, bool $initializeTables = true): ?mysqli
 {
     static $initialized = false;
@@ -1109,33 +1150,89 @@ function aiAgentDeleteConversationMemory(
     int $userId,
     string $conversationId
 ): bool {
+    $result = aiAgentDeleteConversationArtifacts($memoryConfig, $role, $userId, $conversationId);
+    return !empty($result['success']);
+}
+
+function aiAgentDeleteConversationArtifacts(
+    array $memoryConfig,
+    string $role,
+    int $userId,
+    string $conversationId
+): array {
+    $summary = [
+        'success' => false,
+        'storage' => 'disabled',
+        'conversation_found' => false,
+        'conversation_deleted' => false,
+        'conversation_rows_deleted' => 0,
+        'reflection_rows_deleted' => 0,
+        'legacy_conversation_deleted' => false,
+        'legacy_reflection_entries_deleted' => 0,
+    ];
+
     if (empty($memoryConfig['enabled']) || $userId <= 0) {
-        return false;
+        return $summary;
     }
 
     $conversationId = aiAgentNormalizeMemoryConversationId($conversationId, '');
     if ($conversationId === '') {
-        return false;
+        return $summary;
     }
 
-    $handled = false;
     if ($conn = aiAgentGetIntegratedMemoryConnectionForRuntime($memoryConfig)) {
-        if (function_exists('aiAgentIntegratedDeleteConversationMemory')) {
-            $handled = aiAgentIntegratedDeleteConversationMemory($conn, $userId, $conversationId);
+        $summary['storage'] = 'integrated_db';
+
+        if (function_exists('aiAgentIntegratedDeleteConversationArtifacts')) {
+            $summary = array_merge($summary, aiAgentIntegratedDeleteConversationArtifacts($conn, $userId, $conversationId));
+        } elseif (function_exists('aiAgentIntegratedDeleteConversationMemory')) {
+            $summary['conversation_found'] = aiAgentConversationMemoryStateHasContent(
+                aiAgentIntegratedLoadConversationMemory($conn, $userId, $conversationId)
+            );
+            $summary['success'] = aiAgentIntegratedDeleteConversationMemory($conn, $userId, $conversationId);
+            $summary['conversation_deleted'] = $summary['success'];
+            $summary['conversation_rows_deleted'] = $summary['success'] ? 1 : 0;
         }
+
+        $legacyPath = aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId);
+        $legacyConversationExists = is_file($legacyPath);
         aiAgentDeleteLegacyConversationMemoryFile($memoryConfig, $role, $userId, $conversationId);
-        return $handled;
+        $summary['legacy_conversation_deleted'] = $legacyConversationExists && !is_file($legacyPath);
+        $summary['legacy_reflection_entries_deleted'] = aiAgentDeleteLegacyReflectionLogEntries($memoryConfig, $userId, $conversationId);
+
+        if (empty($summary['conversation_found']) && $legacyConversationExists) {
+            $summary['conversation_found'] = true;
+        }
+
+        if (empty($summary['success']) && !empty($summary['legacy_conversation_deleted'])) {
+            $summary['success'] = true;
+            $summary['conversation_deleted'] = true;
+            if ((string) ($summary['storage'] ?? '') === 'integrated_db') {
+                $summary['storage'] = 'integrated_db_legacy_cleanup';
+            }
+        }
+
+        return $summary;
     }
 
     if (!aiAgentMemoryFileFallbackIsAllowed($memoryConfig)) {
-        return false;
+        return $summary;
     }
 
+    $summary['storage'] = 'file_fallback';
     $path = aiAgentGetConversationMemoryPath($memoryConfig, $role, $userId, $conversationId);
     $exists = is_file($path);
+    $summary['conversation_found'] = $exists;
     aiAgentDeleteMemoryFile($path);
+    $deleted = $exists && !is_file($path);
 
-    return $exists && !is_file($path);
+    $summary['conversation_deleted'] = $deleted;
+    $summary['conversation_rows_deleted'] = $deleted ? 1 : 0;
+    $summary['legacy_conversation_deleted'] = $deleted;
+    $summary['legacy_reflection_entries_deleted'] = aiAgentDeleteLegacyReflectionLogEntries($memoryConfig, $userId, $conversationId);
+    $summary['success'] = $deleted;
+
+    return $summary;
 }
 
 function aiAgentExtractUserMemoryNotes(string $message): array

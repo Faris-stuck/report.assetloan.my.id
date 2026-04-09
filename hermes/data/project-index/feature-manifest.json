@@ -1,7 +1,7 @@
 {
-    "generated_at": 1775727148,
+    "generated_at": 1775775140,
     "summary": {
-        "total_features": 231,
+        "total_features": 233,
         "total_modules": 40,
         "total_scopes": 7,
         "schema_tables": 17
@@ -152,7 +152,7 @@
             ]
         },
         "hermes": {
-            "total_features": 46,
+            "total_features": 48,
             "examples": [
                 "AGENTS",
                 "README",
@@ -343,7 +343,7 @@
             ]
         },
         "extensions": {
-            "total_features": 42,
+            "total_features": 43,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Borrowing Details",
@@ -356,7 +356,7 @@
             ]
         },
         "inventory": {
-            "total_features": 169,
+            "total_features": 170,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -369,7 +369,7 @@
             ]
         },
         "reports": {
-            "total_features": 54,
+            "total_features": 56,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -382,7 +382,7 @@
             ]
         },
         "returns": {
-            "total_features": 146,
+            "total_features": 148,
             "examples": [
                 "KI || Dashboard Basis Perhitungan",
                 "STRUKTUR PROJECT DAN DATABASE",
@@ -395,7 +395,7 @@
             ]
         },
         "users_admin": {
-            "total_features": 122,
+            "total_features": 123,
             "examples": [
                 "STRUKTUR PROJECT DAN DATABASE",
                 "KI || Item Data",
@@ -1288,7 +1288,7 @@
                 "loadUsers",
                 "renderUsersTable"
             ],
-            "mtime": 1775727120
+            "mtime": 1775727180
         },
         {
             "path": "admin/pengembalian/barang-rusak.html",
@@ -3729,7 +3729,7 @@
                 "getPerPage",
                 "getFilterValue"
             ],
-            "mtime": 1775725313
+            "mtime": 1775727166
         },
         {
             "path": "assets/scss/bootstrap/dist/bootstrap-grid.css",
@@ -4290,7 +4290,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645746
+            "mtime": 1775773520
         },
         {
             "path": "hermes/chat.php",
@@ -4311,7 +4311,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775719557
+            "mtime": 1775773440
         },
         {
             "path": "hermes/config/README.md",
@@ -4351,7 +4351,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775717294
+            "mtime": 1775773305
         },
         {
             "path": "hermes/config/hermes-keywords.php",
@@ -4377,7 +4377,7 @@
                 "aiAgentGetKeywordsByScope",
                 "aiAgentDetectContext"
             ],
-            "mtime": 1775633226
+            "mtime": 1775732571
         },
         {
             "path": "hermes/config/hermes-limits.php",
@@ -4506,7 +4506,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775720722
+            "mtime": 1775775086
         },
         {
             "path": "hermes/data/project-index/project-index-meta.json",
@@ -4523,7 +4523,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775720722
+            "mtime": 1775775086
         },
         {
             "path": "hermes/data/project-index/project-index.json",
@@ -4538,7 +4538,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775720722
+            "mtime": 1775775086
         },
         {
             "path": "hermes/database/README.md",
@@ -4564,7 +4564,8 @@
             "display_name": "Integrated Memory Helper",
             "scopes": [
                 "borrowing",
-                "returns"
+                "returns",
+                "reports"
             ],
             "linked_paths": [],
             "title": "",
@@ -4579,10 +4580,10 @@
                 "aiAgentIntegratedLoadConversationMemory",
                 "aiAgentIntegratedListConversationMemories",
                 "aiAgentIntegratedDeleteConversationMemory",
-                "aiAgentIntegratedSaveUserProfile",
-                "aiAgentIntegratedLoadUserProfile"
+                "aiAgentIntegratedDeleteConversationArtifacts",
+                "aiAgentIntegratedSaveUserProfile"
             ],
-            "mtime": 1775719492
+            "mtime": 1775731824
         },
         {
             "path": "hermes/database/maintenance/check-database-data.php",
@@ -4898,6 +4899,36 @@
             "mtime": 1775645299
         },
         {
+            "path": "hermes/engine/self-edit-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Self Edit Helper",
+            "scopes": [
+                "inventory",
+                "returns",
+                "extensions",
+                "users_admin",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentGetHermesSelfEditConfig",
+                "aiAgentEnsureHermesSelfEditDirectories",
+                "aiAgentAppendHermesSelfEditLog",
+                "aiAgentReadHermesSelfEditLogEntries",
+                "aiAgentMessageRequestsHermesSelfEdit",
+                "aiAgentExtractHermesFileMentions",
+                "aiAgentRankHermesProjectIndexPaths",
+                "aiAgentCollectHermesEditCandidates"
+            ],
+            "mtime": 1775774171
+        },
+        {
             "path": "hermes/engine/self-improve-helper.php",
             "type": "helper",
             "module": "hermes",
@@ -5027,7 +5058,7 @@
                 "aiAgentReadHistoryRequest",
                 "aiAgentBuildHistorySyncPayload"
             ],
-            "mtime": 1775720734
+            "mtime": 1775731824
         },
         {
             "path": "hermes/home/SOUL.md",
@@ -5059,7 +5090,31 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775620343
+            "mtime": 1775729405
+        },
+        {
+            "path": "hermes/logger/audit-log.php",
+            "type": "helper",
+            "module": "hermes",
+            "display_name": "Audit Log",
+            "scopes": [
+                "returns"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentResolveAuditLogPathValue",
+                "aiAgentGetAuditLogPath",
+                "aiAgentEnsureAuditLogDirectory",
+                "aiAgentAppendAuditLog",
+                "aiAgentLogSensitiveModeEvent",
+                "aiAgentReadAuditLogEntries"
+            ],
+            "mtime": 1775731096
         },
         {
             "path": "hermes/memory/README.md",
@@ -5097,15 +5152,15 @@
             "form_actions": [],
             "functions": [
                 "aiAgentBuildModePrompt",
+                "aiAgentBuildTimedAccessState",
+                "aiAgentGetSensitiveAccessState",
+                "aiAgentGetBusinessOverrideState",
+                "aiAgentEnforceSensitiveUnlimitedPolicy",
                 "aiAgentGetSensitiveAccessExpiresAt",
                 "aiAgentGetBusinessOverrideExpiresAt",
-                "aiAgentGrantSensitiveAccess",
-                "aiAgentGrantBusinessOverrideAccess",
-                "aiAgentRevokeSensitiveAccess",
-                "aiAgentRevokeBusinessOverrideAccess",
-                "aiAgentMessageContainsPassword"
+                "aiAgentRefreshTimedAccessByActivity"
             ],
-            "mtime": 1775620343
+            "mtime": 1775731096
         },
         {
             "path": "hermes/memory/memory-helper.php",
@@ -5132,7 +5187,7 @@
                 "aiAgentGetConversationMemoryPath",
                 "aiAgentGetProfileMemoryPath"
             ],
-            "mtime": 1775719539
+            "mtime": 1775731917
         },
         {
             "path": "hermes/model/README.md",
@@ -5176,16 +5231,16 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [
+                "aiAgentNormalizeBoolean",
+                "aiAgentGetEnvBoolean",
                 "aiAgentLoadConfig",
                 "aiAgentGetDefaultConfig",
                 "aiAgentGetPrimaryAiRuntimeConfigKeys",
                 "aiAgentGetMissingPrimaryAiRuntimeConfigKeys",
                 "aiAgentHasCompletePrimaryAiRuntimeConfig",
-                "aiAgentGetMissingExtendedProviderConfigKeys",
-                "aiAgentConfigValueIsUsable",
-                "aiAgentGetExtendedProviderConfig"
+                "aiAgentGetMissingExtendedProviderConfigKeys"
             ],
-            "mtime": 1775717294
+            "mtime": 1775773323
         },
         {
             "path": "hermes/patches/candidate-skills/berikan-saya-data-lengkap-mengenai-bagaimana-system-anda-berjalan-jangan-pakai-tabel-preferensi-user-jangan-pakai-tabel-51084e4339ef.md",
@@ -5232,7 +5287,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775645692
+            "mtime": 1775774535
         },
         {
             "path": "hermes/reindex.php",
@@ -5269,7 +5324,7 @@
             "table_headers": [],
             "form_actions": [],
             "functions": [],
-            "mtime": 1775617715
+            "mtime": 1775773515
         },
         {
             "path": "hermes/status.php",
@@ -5290,7 +5345,7 @@
             "functions": [
                 "aiAgentProbeProviderReachability"
             ],
-            "mtime": 1775645746
+            "mtime": 1775773471
         },
         {
             "path": "index.html",

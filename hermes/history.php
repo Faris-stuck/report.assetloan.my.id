@@ -4,6 +4,8 @@ header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../api/session-helper.php';
 require_once __DIR__ . '/model/config-helper.php';
 require_once __DIR__ . '/engine/runtime-helper.php';
+require_once __DIR__ . '/logger/audit-log.php';
+require_once __DIR__ . '/memory/conversation-helper.php';
 require_once __DIR__ . '/memory/memory-helper.php';
 require_once __DIR__ . '/database/integrated-memory-helper.php';
 
@@ -23,6 +25,8 @@ $config = aiAgentLoadConfig([
 ]);
 aiAgentBootstrapRuntimeConfig($config);
 $memoryConfig = aiAgentGetMemoryConfig($config);
+$sensitiveAccessDurationMinutes = max(1, (int) ($config['sensitive_access_duration_minutes'] ?? 30));
+$sensitiveAccessUnlimited = aiAgentNormalizeBoolean($config['sensitive_access_unlimited'] ?? false, false);
 
 require_once __DIR__ . '/../config/database.php';
 if (
@@ -43,11 +47,29 @@ if ($action === '') {
 
 $sessionRole = (string) SessionValidator::getRole();
 $sessionUserId = (int) SessionValidator::getUserId();
+$sessionUserName = (string) SessionValidator::getUserName();
 $limit = max(1, min(25, (int) ($request['limit'] ?? 15)));
 $requestedConversationId = aiAgentNormalizeMemoryConversationId(
     (string) ($request['conversation_id'] ?? $request['current_conversation_id'] ?? ''),
     ''
 );
+
+aiAgentEnforceSensitiveUnlimitedPolicy($sensitiveAccessUnlimited);
+
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && $action !== 'sync') {
+    $activityContext = [
+        'role' => $sessionRole,
+        'user_id' => $sessionUserId,
+        'user_name' => $sessionUserName,
+        'conversation_id' => $requestedConversationId,
+        'metadata' => [
+            'history_action' => $action,
+        ],
+    ];
+
+    aiAgentRefreshBusinessOverrideActivity($sensitiveAccessDurationMinutes, 'history_action_activity', $activityContext);
+    aiAgentRefreshSensitiveAccessActivity($sensitiveAccessDurationMinutes, 'history_action_activity', $activityContext);
+}
 
 switch ($action) {
     case 'sync':
@@ -148,11 +170,51 @@ switch ($action) {
         }
 
         $activeConversationId = aiAgentGetUserActiveConversationId($memoryConfig, $sessionRole, $sessionUserId);
-        aiAgentDeleteConversationMemory($memoryConfig, $sessionRole, $sessionUserId, $requestedConversationId);
+        $deleteResult = aiAgentDeleteConversationArtifacts($memoryConfig, $sessionRole, $sessionUserId, $requestedConversationId);
+
+        if (empty($deleteResult['conversation_found'])) {
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'Conversation not found or already deleted.',
+                'conversation_id' => $requestedConversationId,
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        if (empty($deleteResult['success'])) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'Failed to delete conversation from Hermes storage.',
+                'conversation_id' => $requestedConversationId,
+                'delete_result' => $deleteResult,
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
         if ($activeConversationId === $requestedConversationId) {
             aiAgentSetUserActiveConversationId($memoryConfig, $sessionRole, $sessionUserId, '');
         }
+
+        aiAgentAppendAuditLog([
+            'category' => 'conversation_history',
+            'event' => 'deleted',
+            'role' => $sessionRole,
+            'user_id' => $sessionUserId,
+            'user_name' => $sessionUserName,
+            'conversation_id' => $requestedConversationId,
+            'request_uri' => trim((string) ($_SERVER['REQUEST_URI'] ?? '')),
+            'remote_addr' => trim((string) ($_SERVER['REMOTE_ADDR'] ?? '')),
+            'timestamp' => time(),
+            'metadata' => [
+                'storage' => (string) ($deleteResult['storage'] ?? ''),
+                'conversation_rows_deleted' => (int) ($deleteResult['conversation_rows_deleted'] ?? 0),
+                'reflection_rows_deleted' => (int) ($deleteResult['reflection_rows_deleted'] ?? 0),
+                'legacy_conversation_deleted' => !empty($deleteResult['legacy_conversation_deleted']),
+                'legacy_reflection_entries_deleted' => (int) ($deleteResult['legacy_reflection_entries_deleted'] ?? 0),
+            ],
+        ]);
 
         $payload = aiAgentBuildHistorySyncPayload(
             $memoryConfig,
@@ -176,6 +238,7 @@ switch ($action) {
             'action' => 'delete',
             'timestamp' => time(),
             'deleted_conversation_id' => $requestedConversationId,
+            'delete_result' => $deleteResult,
             'current_conversation_id' => $payload['current_conversation_id'],
             'current_conversation' => $payload['current_conversation'],
             'conversations' => $payload['conversations'],

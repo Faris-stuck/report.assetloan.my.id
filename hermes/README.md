@@ -36,6 +36,7 @@ Folder ini berisi engine AI internal berbasis PHP untuk PROJECT. Arsitekturnya m
 - `hermes/chat.php` membangun konteks dari session, role, page context, project index, memory, dan skill relevan.
 - PHP memanggil provider AI langsung lewat endpoint `chat/completions`.
 - Hasil percakapan disimpan sebagai memory lokal dan observasi perbaikan terbatas.
+- Untuk admin dengan akses sensitif aktif, Hermes juga bisa menerapkan perubahan terkontrol ke file di dalam folder `PROJECT/hermes` dengan backup dan log otomatis.
 
 ## Catatan
 - Tidak ada dependensi WSL, gateway, atau CLI untuk alur chat normal.

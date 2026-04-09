@@ -268,29 +268,106 @@ function aiAgentIntegratedDeleteConversationMemory(
     int $userId,
     string $conversationId
 ): bool {
+    $result = aiAgentIntegratedDeleteConversationArtifacts($conn, $userId, $conversationId);
+    return !empty($result['success']);
+}
+
+function aiAgentIntegratedDeleteConversationArtifacts(
+    $conn,
+    int $userId,
+    string $conversationId
+): array {
+    $summary = [
+        'success' => false,
+        'storage' => 'integrated_db',
+        'conversation_found' => false,
+        'conversation_deleted' => false,
+        'conversation_rows_deleted' => 0,
+        'reflection_rows_deleted' => 0,
+    ];
+
     if (!$conn instanceof mysqli) {
-        return false;
+        return $summary;
     }
 
     try {
-        $stmt = $conn->prepare(
+        $checkStmt = $conn->prepare(
+            "SELECT id FROM ai_memory_conversations
+            WHERE user_id = ? AND conversation_id = ?
+            LIMIT 1"
+        );
+
+        if (!$checkStmt) {
+            error_log('Prepare failed checking integrated conversation memory before delete: ' . $conn->error);
+            return $summary;
+        }
+
+        $checkStmt->bind_param('is', $userId, $conversationId);
+        $checkStmt->execute();
+        $checkResult = $checkStmt->get_result();
+        $summary['conversation_found'] = $checkResult instanceof mysqli_result && $checkResult->fetch_assoc() !== null;
+        $checkStmt->close();
+
+        if (empty($summary['conversation_found'])) {
+            return $summary;
+        }
+
+        $conn->begin_transaction();
+
+        $reflectionStmt = $conn->prepare(
+            "DELETE FROM ai_memory_reflections
+            WHERE user_id = ? AND conversation_id = ?"
+        );
+
+        if (!$reflectionStmt) {
+            throw new RuntimeException('Prepare failed deleting integrated conversation reflections: ' . $conn->error);
+        }
+
+        $reflectionStmt->bind_param('is', $userId, $conversationId);
+        $reflectionStmt->execute();
+        $summary['reflection_rows_deleted'] = max(0, (int) $reflectionStmt->affected_rows);
+        $reflectionStmt->close();
+
+        $conversationStmt = $conn->prepare(
             "DELETE FROM ai_memory_conversations
             WHERE user_id = ? AND conversation_id = ?"
         );
 
-        if (!$stmt) {
-            error_log('Prepare failed deleting integrated conversation memory: ' . $conn->error);
-            return false;
+        if (!$conversationStmt) {
+            throw new RuntimeException('Prepare failed deleting integrated conversation memory: ' . $conn->error);
         }
 
-        $stmt->bind_param('is', $userId, $conversationId);
-        $result = $stmt->execute();
-        $stmt->close();
+        $conversationStmt->bind_param('is', $userId, $conversationId);
+        $conversationStmt->execute();
+        $summary['conversation_rows_deleted'] = max(0, (int) $conversationStmt->affected_rows);
+        $conversationStmt->close();
 
-        return (bool) $result;
+        if ($summary['conversation_rows_deleted'] <= 0) {
+            $conn->rollback();
+            return $summary;
+        }
+
+        $conn->commit();
+        $summary['conversation_deleted'] = true;
+        $summary['success'] = true;
+
+        return $summary;
     } catch (Throwable $e) {
-        error_log('Failed to delete integrated conversation memory: ' . $e->getMessage());
-        return false;
+        if ($conn instanceof mysqli && $conn->errno === 0) {
+            try {
+                $conn->rollback();
+            } catch (Throwable $rollbackError) {
+                error_log('Failed to rollback integrated conversation delete: ' . $rollbackError->getMessage());
+            }
+        } else {
+            try {
+                $conn->rollback();
+            } catch (Throwable $rollbackError) {
+                error_log('Failed to rollback integrated conversation delete: ' . $rollbackError->getMessage());
+            }
+        }
+        error_log('Failed to delete integrated conversation artifacts: ' . $e->getMessage());
+        return $summary;
     }
 }
 

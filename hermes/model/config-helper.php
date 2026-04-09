@@ -1,5 +1,36 @@
 <?php
 
+function aiAgentNormalizeBoolean($value, bool $default = false): bool
+{
+    if (is_bool($value)) {
+        return $value;
+    }
+
+    if ($value === null) {
+        return $default;
+    }
+
+    if (is_string($value)) {
+        $value = trim($value);
+        if ($value === '') {
+            return $default;
+        }
+    }
+
+    $normalized = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    return $normalized === null ? $default : $normalized;
+}
+
+function aiAgentGetEnvBoolean(string $name, bool $default = false): bool
+{
+    $value = getenv($name);
+    if ($value === false) {
+        return $default;
+    }
+
+    return aiAgentNormalizeBoolean($value, $default);
+}
+
 function aiAgentLoadConfig(array $candidates = []): array
 {
     $config = aiAgentGetDefaultConfig();
@@ -32,9 +63,7 @@ function aiAgentGetDefaultConfig(): array
     return [
         'sensitive_access_password' => getenv('AI_AGENT_SENSITIVE_PASSWORD') ?: 'kacamatafaris',
         'sensitive_access_duration_minutes' => (int) (getenv('AI_AGENT_SENSITIVE_DURATION_MINUTES') ?: 30),
-        'sensitive_access_unlimited' => getenv('AI_AGENT_SENSITIVE_UNLIMITED') !== false
-            ? filter_var(getenv('AI_AGENT_SENSITIVE_UNLIMITED'), FILTER_VALIDATE_BOOLEAN)
-            : false,
+        'sensitive_access_unlimited' => aiAgentGetEnvBoolean('AI_AGENT_SENSITIVE_UNLIMITED', false),
         'tool_layer_enabled' => true,
         'tool_baseline' => [
             'role_guard',
@@ -224,6 +253,27 @@ function aiAgentGetDefaultConfig(): array
             : true,
         'self_improvement_patches_dir' => getenv('AI_AGENT_SELF_IMPROVEMENT_PATCHES_DIR') ?: 'hermes/patches',
         'self_improvement_logs_dir' => getenv('AI_AGENT_SELF_IMPROVEMENT_LOGS_DIR') ?: 'hermes/logs',
+        'hermes_self_edit_enabled' => getenv('AI_AGENT_HERMES_SELF_EDIT_ENABLED') !== false
+            ? filter_var(getenv('AI_AGENT_HERMES_SELF_EDIT_ENABLED'), FILTER_VALIDATE_BOOLEAN)
+            : true,
+        'hermes_self_edit_allowed_role' => getenv('AI_AGENT_HERMES_SELF_EDIT_ALLOWED_ROLE') ?: 'admin',
+        'hermes_self_edit_requires_sensitive_access' => getenv('AI_AGENT_HERMES_SELF_EDIT_REQUIRES_SENSITIVE') !== false
+            ? filter_var(getenv('AI_AGENT_HERMES_SELF_EDIT_REQUIRES_SENSITIVE'), FILTER_VALIDATE_BOOLEAN)
+            : true,
+        'hermes_self_edit_root' => getenv('AI_AGENT_HERMES_SELF_EDIT_ROOT') ?: 'hermes',
+        'hermes_self_edit_allowed_extensions' => getenv('AI_AGENT_HERMES_SELF_EDIT_ALLOWED_EXTENSIONS') ?: 'php,js,css,md,json,txt,sql,html,yml,yaml,ini',
+        'hermes_self_edit_max_files' => (int) (getenv('AI_AGENT_HERMES_SELF_EDIT_MAX_FILES') ?: 3),
+        'hermes_self_edit_max_context_files' => (int) (getenv('AI_AGENT_HERMES_SELF_EDIT_MAX_CONTEXT_FILES') ?: 4),
+        'hermes_self_edit_max_prompt_file_chars' => (int) (getenv('AI_AGENT_HERMES_SELF_EDIT_MAX_PROMPT_FILE_CHARS') ?: 16000),
+        'hermes_self_edit_max_total_prompt_chars' => (int) (getenv('AI_AGENT_HERMES_SELF_EDIT_MAX_TOTAL_PROMPT_CHARS') ?: 28000),
+        'hermes_self_edit_max_total_write_bytes' => (int) (getenv('AI_AGENT_HERMES_SELF_EDIT_MAX_TOTAL_WRITE_BYTES') ?: 240000),
+        'hermes_self_edit_max_tokens' => (int) (getenv('AI_AGENT_HERMES_SELF_EDIT_MAX_TOKENS') ?: 2200),
+        'hermes_self_edit_temperature' => (float) (getenv('AI_AGENT_HERMES_SELF_EDIT_TEMPERATURE') ?: 0.05),
+        'hermes_self_edit_log_file' => getenv('AI_AGENT_HERMES_SELF_EDIT_LOG_FILE') ?: 'hermes/logs/code-edit-log.jsonl',
+        'hermes_self_edit_backup_dir' => getenv('AI_AGENT_HERMES_SELF_EDIT_BACKUP_DIR') ?: 'hermes/patches/applied-backups',
+        'hermes_self_edit_auto_signal_reindex' => getenv('AI_AGENT_HERMES_SELF_EDIT_AUTO_SIGNAL_REINDEX') !== false
+            ? filter_var(getenv('AI_AGENT_HERMES_SELF_EDIT_AUTO_SIGNAL_REINDEX'), FILTER_VALIDATE_BOOLEAN)
+            : true,
         'summarization_enabled' => getenv('AI_AGENT_SUMMARIZATION_ENABLED') !== false
             ? filter_var(getenv('AI_AGENT_SUMMARIZATION_ENABLED'), FILTER_VALIDATE_BOOLEAN)
             : true,

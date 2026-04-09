@@ -1,7 +1,7 @@
 {
-    "generated_at": 1775727147,
+    "generated_at": 1775775139,
     "summary": {
-        "total_files": 231,
+        "total_files": 233,
         "pages": 41,
         "apis": 86,
         "scripts": 17,
@@ -9,7 +9,7 @@
         "styles": 4,
         "sql": 1,
         "docs": 18,
-        "helpers": 61
+        "helpers": 63
     },
     "files": {
         "DASHBOARD_BASIS_PERHITUNGAN.html": {
@@ -908,8 +908,8 @@
             "path": "admin/pengaturan.html",
             "type": "page",
             "module": "pengaturan.html",
-            "size": 50447,
-            "mtime": 1775727120,
+            "size": 50465,
+            "mtime": 1775727180,
             "display_name": "KI || Role List",
             "scopes": [
                 "inventory",
@@ -3643,8 +3643,8 @@
             "path": "assets/js/utils/helper.js",
             "type": "script",
             "module": "utils",
-            "size": 10482,
-            "mtime": 1775725313,
+            "size": 10503,
+            "mtime": 1775727166,
             "display_name": "Helper",
             "scopes": [
                 "inventory",
@@ -4274,8 +4274,8 @@
             "path": "hermes/README.md",
             "type": "doc",
             "module": "hermes",
-            "size": 2220,
-            "mtime": 1775645746,
+            "size": 2385,
+            "mtime": 1775773520,
             "display_name": "README",
             "scopes": [],
             "linked_paths": [
@@ -4298,8 +4298,8 @@
             "path": "hermes/chat.php",
             "type": "helper",
             "module": "hermes",
-            "size": 19277,
-            "mtime": 1775719557,
+            "size": 27663,
+            "mtime": 1775773440,
             "display_name": "Chat",
             "scopes": [
                 "inventory",
@@ -4340,8 +4340,8 @@
             "path": "hermes/config/ai_agent.php",
             "type": "helper",
             "module": "hermes",
-            "size": 10577,
-            "mtime": 1775717294,
+            "size": 12769,
+            "mtime": 1775773305,
             "display_name": "Ai Agent",
             "scopes": [
                 "inventory",
@@ -4366,7 +4366,7 @@
             "type": "helper",
             "module": "hermes",
             "size": 4072,
-            "mtime": 1775633226,
+            "mtime": 1775732571,
             "display_name": "Hermes Keywords",
             "scopes": [
                 "inventory",
@@ -4515,8 +4515,8 @@
             "path": "hermes/data/project-index/feature-manifest.json",
             "type": "helper",
             "module": "hermes",
-            "size": 200366,
-            "mtime": 1775720722,
+            "size": 203090,
+            "mtime": 1775775086,
             "display_name": "Feature Manifest",
             "scopes": [],
             "linked_paths": [],
@@ -4533,7 +4533,7 @@
             "type": "helper",
             "module": "hermes",
             "size": 682,
-            "mtime": 1775720722,
+            "mtime": 1775775086,
             "display_name": "Project Index Meta",
             "scopes": [
                 "borrowing"
@@ -4551,8 +4551,8 @@
             "path": "hermes/data/project-index/project-index.json",
             "type": "helper",
             "module": "hermes",
-            "size": 213691,
-            "mtime": 1775720722,
+            "size": 216686,
+            "mtime": 1775775086,
             "display_name": "Project Index",
             "scopes": [],
             "linked_paths": [],
@@ -4587,12 +4587,13 @@
             "path": "hermes/database/integrated-memory-helper.php",
             "type": "helper",
             "module": "hermes",
-            "size": 18417,
-            "mtime": 1775719492,
+            "size": 21182,
+            "mtime": 1775731824,
             "display_name": "Integrated Memory Helper",
             "scopes": [
                 "borrowing",
-                "returns"
+                "returns",
+                "reports"
             ],
             "linked_paths": [],
             "title": "",
@@ -4608,8 +4609,8 @@
                 "aiAgentIntegratedLoadConversationMemory",
                 "aiAgentIntegratedListConversationMemories",
                 "aiAgentIntegratedDeleteConversationMemory",
-                "aiAgentIntegratedSaveUserProfile",
-                "aiAgentIntegratedLoadUserProfile"
+                "aiAgentIntegratedDeleteConversationArtifacts",
+                "aiAgentIntegratedSaveUserProfile"
             ]
         },
         "hermes/database/maintenance/check-database-data.php": {
@@ -4951,6 +4952,38 @@
                 "aiAgentHttpRequestWithSocket"
             ]
         },
+        "hermes/engine/self-edit-helper.php": {
+            "path": "hermes/engine/self-edit-helper.php",
+            "type": "helper",
+            "module": "hermes",
+            "size": 43347,
+            "mtime": 1775774171,
+            "display_name": "Self Edit Helper",
+            "scopes": [
+                "inventory",
+                "returns",
+                "extensions",
+                "users_admin",
+                "reports"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "labels": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentGetHermesSelfEditConfig",
+                "aiAgentEnsureHermesSelfEditDirectories",
+                "aiAgentAppendHermesSelfEditLog",
+                "aiAgentReadHermesSelfEditLogEntries",
+                "aiAgentMessageRequestsHermesSelfEdit",
+                "aiAgentExtractHermesFileMentions",
+                "aiAgentRankHermesProjectIndexPaths",
+                "aiAgentCollectHermesEditCandidates"
+            ]
+        },
         "hermes/engine/self-improve-helper.php": {
             "path": "hermes/engine/self-improve-helper.php",
             "type": "helper",
@@ -5074,8 +5107,8 @@
             "path": "hermes/history.php",
             "type": "helper",
             "module": "hermes",
-            "size": 9667,
-            "mtime": 1775720734,
+            "size": 12599,
+            "mtime": 1775731824,
             "display_name": "History",
             "scopes": [
                 "inventory",
@@ -5114,8 +5147,8 @@
             "path": "hermes/lock.php",
             "type": "helper",
             "module": "hermes",
-            "size": 1198,
-            "mtime": 1775620343,
+            "size": 2087,
+            "mtime": 1775729405,
             "display_name": "Lock",
             "scopes": [
                 "inventory"
@@ -5128,6 +5161,32 @@
             "labels": [],
             "form_actions": [],
             "functions": []
+        },
+        "hermes/logger/audit-log.php": {
+            "path": "hermes/logger/audit-log.php",
+            "type": "helper",
+            "module": "hermes",
+            "size": 3566,
+            "mtime": 1775731096,
+            "display_name": "Audit Log",
+            "scopes": [
+                "returns"
+            ],
+            "linked_paths": [],
+            "title": "",
+            "headings": [],
+            "buttons": [],
+            "table_headers": [],
+            "labels": [],
+            "form_actions": [],
+            "functions": [
+                "aiAgentResolveAuditLogPathValue",
+                "aiAgentGetAuditLogPath",
+                "aiAgentEnsureAuditLogDirectory",
+                "aiAgentAppendAuditLog",
+                "aiAgentLogSensitiveModeEvent",
+                "aiAgentReadAuditLogEntries"
+            ]
         },
         "hermes/memory/README.md": {
             "path": "hermes/memory/README.md",
@@ -5153,8 +5212,8 @@
             "path": "hermes/memory/conversation-helper.php",
             "type": "helper",
             "module": "hermes",
-            "size": 8061,
-            "mtime": 1775620343,
+            "size": 18275,
+            "mtime": 1775731096,
             "display_name": "Conversation Helper",
             "scopes": [
                 "inventory",
@@ -5170,21 +5229,21 @@
             "form_actions": [],
             "functions": [
                 "aiAgentBuildModePrompt",
+                "aiAgentBuildTimedAccessState",
+                "aiAgentGetSensitiveAccessState",
+                "aiAgentGetBusinessOverrideState",
+                "aiAgentEnforceSensitiveUnlimitedPolicy",
                 "aiAgentGetSensitiveAccessExpiresAt",
                 "aiAgentGetBusinessOverrideExpiresAt",
-                "aiAgentGrantSensitiveAccess",
-                "aiAgentGrantBusinessOverrideAccess",
-                "aiAgentRevokeSensitiveAccess",
-                "aiAgentRevokeBusinessOverrideAccess",
-                "aiAgentMessageContainsPassword"
+                "aiAgentRefreshTimedAccessByActivity"
             ]
         },
         "hermes/memory/memory-helper.php": {
             "path": "hermes/memory/memory-helper.php",
             "type": "helper",
             "module": "hermes",
-            "size": 54280,
-            "mtime": 1775719539,
+            "size": 57935,
+            "mtime": 1775731917,
             "display_name": "Memory Helper",
             "scopes": [
                 "returns",
@@ -5235,8 +5294,8 @@
             "path": "hermes/model/config-helper.php",
             "type": "helper",
             "module": "hermes",
-            "size": 15142,
-            "mtime": 1775717294,
+            "size": 17843,
+            "mtime": 1775773323,
             "display_name": "Config Helper",
             "scopes": [
                 "inventory",
@@ -5255,14 +5314,14 @@
             "labels": [],
             "form_actions": [],
             "functions": [
+                "aiAgentNormalizeBoolean",
+                "aiAgentGetEnvBoolean",
                 "aiAgentLoadConfig",
                 "aiAgentGetDefaultConfig",
                 "aiAgentGetPrimaryAiRuntimeConfigKeys",
                 "aiAgentGetMissingPrimaryAiRuntimeConfigKeys",
                 "aiAgentHasCompletePrimaryAiRuntimeConfig",
-                "aiAgentGetMissingExtendedProviderConfigKeys",
-                "aiAgentConfigValueIsUsable",
-                "aiAgentGetExtendedProviderConfig"
+                "aiAgentGetMissingExtendedProviderConfigKeys"
             ]
         },
         "hermes/patches/candidate-skills/berikan-saya-data-lengkap-mengenai-bagaimana-system-anda-berjalan-jangan-pakai-tabel-preferensi-user-jangan-pakai-tabel-51084e4339ef.md": {
@@ -5305,8 +5364,8 @@
             "path": "hermes/patches/learning-candidates.md",
             "type": "doc",
             "module": "hermes",
-            "size": 157,
-            "mtime": 1775645692,
+            "size": 155,
+            "mtime": 1775774535,
             "display_name": "Learning Candidates",
             "scopes": [],
             "linked_paths": [],
@@ -5346,8 +5405,8 @@
             "path": "hermes/skills/default-project-skill.md",
             "type": "doc",
             "module": "hermes",
-            "size": 1107,
-            "mtime": 1775617715,
+            "size": 1258,
+            "mtime": 1775773515,
             "display_name": "Default Project Skill",
             "scopes": [],
             "linked_paths": [],
@@ -5363,8 +5422,8 @@
             "path": "hermes/status.php",
             "type": "helper",
             "module": "hermes",
-            "size": 8753,
-            "mtime": 1775645746,
+            "size": 11826,
+            "mtime": 1775773471,
             "display_name": "Status",
             "scopes": [
                 "returns",

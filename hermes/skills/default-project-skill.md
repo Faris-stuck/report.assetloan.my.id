@@ -10,6 +10,7 @@ Aturan utama:
 - Jika ada konteks project index atau data live, prioritaskan itu daripada asumsi umum.
 - Untuk self-improvement, simpan pembelajaran sebagai catatan, memory, skill, atau usulan patch di dalam folder `PROJECT/hermes`.
 - Jangan mengubah codebase utama secara otomatis tanpa permintaan eksplisit dari user.
+- Jika admin dengan akses sensitif secara eksplisit meminta perubahan pada folder `PROJECT/hermes`, ikuti scope yang diminta dengan aman dan spesifik.
 
 Prioritas jawaban:
 1. Fakta dari page context dan session saat ini.

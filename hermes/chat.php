@@ -13,11 +13,13 @@ require_once __DIR__ . '/engine/index-helper.php';
 require_once __DIR__ . '/engine/tool-helper.php';
 require_once __DIR__ . '/model/config-helper.php';
 require_once __DIR__ . '/engine/runtime-helper.php';
+require_once __DIR__ . '/logger/audit-log.php';
 require_once __DIR__ . '/memory/conversation-helper.php';
 require_once __DIR__ . '/memory/memory-helper.php';
 require_once __DIR__ . '/database/integrated-memory-helper.php';
 require_once __DIR__ . '/engine/skills-helper.php';
 require_once __DIR__ . '/engine/self-improve-helper.php';
+require_once __DIR__ . '/engine/self-edit-helper.php';
 require_once __DIR__ . '/engine/summarization-helper.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -64,9 +66,7 @@ $agentTimeout = (int) ($config['timeout'] ?? 0);
 $systemPrompt = trim((string) ($config['system_prompt'] ?? ''));
 $sensitiveAccessPassword = (string) ($config['sensitive_access_password'] ?? '');
 $sensitiveAccessDurationMinutes = max(1, (int) ($config['sensitive_access_duration_minutes'] ?? 30));
-$sensitiveAccessUnlimited = !isset($config['sensitive_access_unlimited'])
-    ? true
-    : (bool) $config['sensitive_access_unlimited'];
+$sensitiveAccessUnlimited = aiAgentNormalizeBoolean($config['sensitive_access_unlimited'] ?? false, false);
 
 $payload = json_decode((string) file_get_contents('php://input'), true);
 if (!is_array($payload)) {
@@ -114,9 +114,55 @@ $canUnlockTechnicalAccess = $sessionRole === 'admin';
 $canUnlockBusinessOverride = $sessionRole === 'admin';
 $userMessageDisplay = $message;
 $passwordWasSubmitted = false;
+$buildAccessSnapshot = static function (bool $allowTechnicalAccess, bool $allowBusinessOverride): array {
+    $businessOverrideState = $allowBusinessOverride
+        ? aiAgentGetBusinessOverrideState()
+        : [
+            'active' => false,
+            'unlimited' => false,
+            'expires_at' => 0,
+            'granted_at' => 0,
+            'last_activity_at' => 0,
+            'remaining_seconds' => 0,
+            'remaining_minutes' => 0,
+        ];
+    $sensitiveAccessState = $allowTechnicalAccess
+        ? aiAgentGetSensitiveAccessState()
+        : [
+            'active' => false,
+            'unlimited' => false,
+            'expires_at' => 0,
+            'granted_at' => 0,
+            'last_activity_at' => 0,
+            'remaining_seconds' => 0,
+            'remaining_minutes' => 0,
+        ];
+
+    return [
+        'business_override_state' => $businessOverrideState,
+        'has_business_override_access' => !empty($businessOverrideState['active']),
+        'business_override_expires_at' => (int) ($businessOverrideState['expires_at'] ?? 0),
+        'business_override_remaining_seconds' => $businessOverrideState['remaining_seconds'] ?? 0,
+        'business_override_remaining_minutes' => $businessOverrideState['remaining_minutes'] ?? 0,
+        'business_override_unlimited_active' => !empty($businessOverrideState['unlimited']),
+        'business_override_last_activity_at' => (int) ($businessOverrideState['last_activity_at'] ?? 0),
+        'sensitive_access_state' => $sensitiveAccessState,
+        'has_sensitive_access' => !empty($sensitiveAccessState['active']),
+        'sensitive_access_expires_at' => (int) ($sensitiveAccessState['expires_at'] ?? 0),
+        'sensitive_access_remaining_seconds' => $sensitiveAccessState['remaining_seconds'] ?? 0,
+        'sensitive_access_remaining_minutes' => $sensitiveAccessState['remaining_minutes'] ?? 0,
+        'sensitive_access_unlimited_active' => !empty($sensitiveAccessState['unlimited']),
+        'sensitive_access_last_activity_at' => (int) ($sensitiveAccessState['last_activity_at'] ?? 0),
+    ];
+};
+
+$clearedUnexpectedUnlimitedAccess = aiAgentEnforceSensitiveUnlimitedPolicy($sensitiveAccessUnlimited);
 
 if (!$canUnlockTechnicalAccess) {
     aiAgentRevokeSensitiveAccess();
+}
+if (!$canUnlockBusinessOverride) {
+    aiAgentRevokeBusinessOverrideAccess();
 }
 
 if ($sensitiveAccessPassword !== '' && aiAgentMessageContainsPassword($message, $sensitiveAccessPassword)) {
@@ -135,25 +181,61 @@ if ($sensitiveAccessPassword !== '' && aiAgentMessageContainsPassword($message, 
     }
 }
 
-$businessOverrideExpiresAt = $canUnlockBusinessOverride ? aiAgentGetBusinessOverrideExpiresAt() : 0;
-$hasBusinessOverrideAccess = $canUnlockBusinessOverride && $businessOverrideExpiresAt > time();
-$sensitiveAccessExpiresAt = $canUnlockTechnicalAccess ? aiAgentGetSensitiveAccessExpiresAt() : 0;
-$hasSensitiveAccess = $canUnlockTechnicalAccess && $sensitiveAccessExpiresAt > time();
-
-// Calculate remaining duration for display
-$sensitiveAccessRemainingMinutes = 0;
-if ($hasSensitiveAccess && $sensitiveAccessExpiresAt > 0 && $sensitiveAccessExpiresAt !== PHP_INT_MAX) {
-    $sensitiveAccessRemainingMinutes = max(0, ceil(($sensitiveAccessExpiresAt - time()) / 60));
-}
-
-$businessOverrideRemainingMinutes = 0;
-if ($hasBusinessOverrideAccess && $businessOverrideExpiresAt > 0 && $businessOverrideExpiresAt !== PHP_INT_MAX) {
-    $businessOverrideRemainingMinutes = max(0, ceil(($businessOverrideExpiresAt - time()) / 60));
-}
+$accessSnapshot = $buildAccessSnapshot($canUnlockTechnicalAccess, $canUnlockBusinessOverride);
+$businessOverrideState = $accessSnapshot['business_override_state'];
+$hasBusinessOverrideAccess = $accessSnapshot['has_business_override_access'];
+$businessOverrideExpiresAt = $accessSnapshot['business_override_expires_at'];
+$businessOverrideRemainingSeconds = $accessSnapshot['business_override_remaining_seconds'];
+$businessOverrideRemainingMinutes = $accessSnapshot['business_override_remaining_minutes'];
+$businessOverrideUnlimitedActive = $accessSnapshot['business_override_unlimited_active'];
+$businessOverrideLastActivityAt = $accessSnapshot['business_override_last_activity_at'];
+$sensitiveAccessState = $accessSnapshot['sensitive_access_state'];
+$hasSensitiveAccess = $accessSnapshot['has_sensitive_access'];
+$sensitiveAccessExpiresAt = $accessSnapshot['sensitive_access_expires_at'];
+$sensitiveAccessRemainingSeconds = $accessSnapshot['sensitive_access_remaining_seconds'];
+$sensitiveAccessRemainingMinutes = $accessSnapshot['sensitive_access_remaining_minutes'];
+$sensitiveAccessUnlimitedActive = $accessSnapshot['sensitive_access_unlimited_active'];
+$sensitiveAccessLastActivityAt = $accessSnapshot['sensitive_access_last_activity_at'];
 
 $effectiveMessage = aiAgentStripSensitivePassword($message, $sensitiveAccessPassword);
 if ($effectiveMessage === '') {
     $effectiveMessage = $passwordWasSubmitted ? '' : $message;
+}
+
+if (!$passwordWasSubmitted && $effectiveMessage !== '') {
+    $activityContext = [
+        'role' => $sessionRole,
+        'user_id' => $sessionUserId,
+        'user_name' => $sessionUserName,
+        'conversation_id' => $conversationId,
+        'metadata' => [
+            'page_path' => (string) ($pageContext['path'] ?? ''),
+            'message_length' => aiAgentStringLength($effectiveMessage),
+        ],
+    ];
+
+    if ($hasBusinessOverrideAccess) {
+        aiAgentRefreshBusinessOverrideActivity($sensitiveAccessDurationMinutes, 'chat_message_activity', $activityContext);
+    }
+    if ($hasSensitiveAccess) {
+        aiAgentRefreshSensitiveAccessActivity($sensitiveAccessDurationMinutes, 'chat_message_activity', $activityContext);
+    }
+
+    $accessSnapshot = $buildAccessSnapshot($canUnlockTechnicalAccess, $canUnlockBusinessOverride);
+    $businessOverrideState = $accessSnapshot['business_override_state'];
+    $hasBusinessOverrideAccess = $accessSnapshot['has_business_override_access'];
+    $businessOverrideExpiresAt = $accessSnapshot['business_override_expires_at'];
+    $businessOverrideRemainingSeconds = $accessSnapshot['business_override_remaining_seconds'];
+    $businessOverrideRemainingMinutes = $accessSnapshot['business_override_remaining_minutes'];
+    $businessOverrideUnlimitedActive = $accessSnapshot['business_override_unlimited_active'];
+    $businessOverrideLastActivityAt = $accessSnapshot['business_override_last_activity_at'];
+    $sensitiveAccessState = $accessSnapshot['sensitive_access_state'];
+    $hasSensitiveAccess = $accessSnapshot['has_sensitive_access'];
+    $sensitiveAccessExpiresAt = $accessSnapshot['sensitive_access_expires_at'];
+    $sensitiveAccessRemainingSeconds = $accessSnapshot['sensitive_access_remaining_seconds'];
+    $sensitiveAccessRemainingMinutes = $accessSnapshot['sensitive_access_remaining_minutes'];
+    $sensitiveAccessUnlimitedActive = $accessSnapshot['sensitive_access_unlimited_active'];
+    $sensitiveAccessLastActivityAt = $accessSnapshot['sensitive_access_last_activity_at'];
 }
 
 if ($passwordWasSubmitted && $effectiveMessage === '') {
@@ -173,11 +255,18 @@ if ($passwordWasSubmitted && $effectiveMessage === '') {
         'conversation_id' => $conversationId,
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
+        'sensitive_access_unlimited' => $sensitiveAccessUnlimitedActive,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'sensitive_access_last_activity_at' => $sensitiveAccessLastActivityAt,
+        'sensitive_access_remaining_seconds' => $sensitiveAccessRemainingSeconds,
         'sensitive_access_remaining_minutes' => $sensitiveAccessRemainingMinutes,
         'business_override_active' => $hasBusinessOverrideAccess,
+        'business_override_unlimited' => $businessOverrideUnlimitedActive,
         'business_override_expires_at' => $businessOverrideExpiresAt,
+        'business_override_last_activity_at' => $businessOverrideLastActivityAt,
+        'business_override_remaining_seconds' => $businessOverrideRemainingSeconds,
         'business_override_remaining_minutes' => $businessOverrideRemainingMinutes,
+        'policy_cleanup' => $clearedUnexpectedUnlimitedAccess,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
@@ -190,6 +279,7 @@ if ($effectiveMessage === '') {
 $memoryConfig = aiAgentGetMemoryConfig($config);
 $skillsConfig = aiAgentGetSkillsConfig($config);
 $selfImproveConfig = aiAgentGetSelfImproveConfig($config);
+$selfEditConfig = aiAgentGetHermesSelfEditConfig($config);
 
 $serverConversation = aiAgentLoadConversationMemory($memoryConfig, $sessionRole, $sessionUserId, $conversationId);
 $serverMessages = isset($serverConversation['messages']) && is_array($serverConversation['messages'])
@@ -224,6 +314,12 @@ $toolRuntimeContext = aiAgentBuildToolRuntimeContext($conn, [
     'use_sensitive_grounding' => $useSensitiveGrounding,
     'access_decision' => $accessDecision,
 ]);
+$sharedState = isset($toolRuntimeContext['shared_state']) && is_array($toolRuntimeContext['shared_state'])
+    ? $toolRuntimeContext['shared_state']
+    : [];
+$sections = isset($toolRuntimeContext['sections']) && is_array($toolRuntimeContext['sections'])
+    ? $toolRuntimeContext['sections']
+    : [];
 $groundingContext = trim((string) ($toolRuntimeContext['grounding'] ?? ''));
 if ($groundingContext === '') {
     $groundingContext = aiAgentBuildGroundingContext($conn, [
@@ -306,37 +402,63 @@ $fallbackConversationMessages[] = [
 session_write_close();
 
 $startedAt = microtime(true);
-$providerResponse = aiAgentHttpRequest('POST', $agentBaseUrl . '/chat/completions', [
-    'headers' => [
-        'Authorization: Bearer ' . $agentApiKey,
-        'Content-Type: application/json',
-    ],
-    'body' => json_encode($providerPayload, JSON_UNESCAPED_UNICODE),
-    'timeout' => max(5, $agentTimeout),
-    'connect_timeout' => 10,
+$selfEditExecution = aiAgentRunHermesSelfEdit([
+    'config' => $config,
+    'self_edit_config' => $selfEditConfig,
+    'message' => $effectiveMessage,
+    'role' => $sessionRole,
+    'user_id' => $sessionUserId,
+    'user_name' => $sessionUserName,
+    'conversation_id' => $conversationId,
+    'page_context' => $pageContext,
+    'shared_state' => $sharedState,
+    'has_sensitive_access' => $hasSensitiveAccess,
+    'mode_prompt' => $modePrompt,
+    'skills_context' => $skillsContext,
+    'memory_context' => $memoryContext,
 ]);
 
-$result = (string) ($providerResponse['body'] ?? '');
-$transportError = trim((string) ($providerResponse['error'] ?? ''));
-$httpCode = (int) ($providerResponse['http_code'] ?? 0);
+$reply = '';
+$result = '';
+$transportError = '';
+$httpCode = 200;
 $usedFallbackProvider = false;
 
-// Try fallback provider if primary failed
-if (($httpCode <= 0 && $result === '') || $httpCode >= 400) {
-    $extProviderConfig = aiAgentGetExtendedProviderConfig($config);
-    if (!empty($extProviderConfig['enabled']) && !empty($extProviderConfig['fallback_on_error'])) {
-        $fallbackResult = aiAgentCallExtendedProvider($extProviderConfig, $systemPrompt, $fallbackConversationMessages);
-        if ($fallbackResult['ok']) {
-            $reply = $fallbackResult['reply'];
-            $usedFallbackProvider = true;
-            $httpCode = 200; // Mark as success
-            $result = json_encode(['fallback' => true, 'reply' => $reply]);
-            // Skip to processing stage
+if (empty($selfEditExecution['handled'])) {
+    $providerResponse = aiAgentHttpRequest('POST', $agentBaseUrl . '/chat/completions', [
+        'headers' => [
+            'Authorization: Bearer ' . $agentApiKey,
+            'Content-Type: application/json',
+        ],
+        'body' => json_encode($providerPayload, JSON_UNESCAPED_UNICODE),
+        'timeout' => max(5, $agentTimeout),
+        'connect_timeout' => 10,
+    ]);
+
+    $result = (string) ($providerResponse['body'] ?? '');
+    $transportError = trim((string) ($providerResponse['error'] ?? ''));
+    $httpCode = (int) ($providerResponse['http_code'] ?? 0);
+
+    // Try fallback provider if primary failed
+    if (($httpCode <= 0 && $result === '') || $httpCode >= 400) {
+        $extProviderConfig = aiAgentGetExtendedProviderConfig($config);
+        if (!empty($extProviderConfig['enabled']) && !empty($extProviderConfig['fallback_on_error'])) {
+            $fallbackResult = aiAgentCallExtendedProvider($extProviderConfig, $systemPrompt, $fallbackConversationMessages);
+            if ($fallbackResult['ok']) {
+                $reply = $fallbackResult['reply'];
+                $usedFallbackProvider = true;
+                $httpCode = 200; // Mark as success
+                $result = json_encode(['fallback' => true, 'reply' => $reply]);
+                // Skip to processing stage
+            }
         }
     }
+} else {
+    $reply = trim((string) ($selfEditExecution['reply'] ?? ''));
+    $usedFallbackProvider = (string) ($selfEditExecution['provider'] ?? '') === 'fallback';
 }
 
-if ($httpCode <= 0 && $result === '') {
+if (empty($selfEditExecution['handled']) && $httpCode <= 0 && $result === '') {
     http_response_code(502);
     echo json_encode([
         'status' => 'error',
@@ -345,44 +467,53 @@ if ($httpCode <= 0 && $result === '') {
         'conversation_id' => $conversationId,
         'user_message_display' => $userMessageDisplay,
         'sensitive_access_active' => $hasSensitiveAccess,
+        'sensitive_access_unlimited' => $sensitiveAccessUnlimitedActive,
         'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+        'sensitive_access_last_activity_at' => $sensitiveAccessLastActivityAt,
         'business_override_active' => $hasBusinessOverrideAccess,
+        'business_override_unlimited' => $businessOverrideUnlimitedActive,
         'business_override_expires_at' => $businessOverrideExpiresAt,
+        'business_override_last_activity_at' => $businessOverrideLastActivityAt,
+        'policy_cleanup' => $clearedUnexpectedUnlimitedAccess,
         'reply_contains_sensitive' => false,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-if (!$usedFallbackProvider) {
-    $decoded = json_decode($result, true);
-    if (!is_array($decoded)) {
-        http_response_code(502);
-        echo json_encode([
-            'status' => 'error',
-            'error' => 'Invalid response from AI provider.',
-            'conversation_id' => $conversationId,
-            'user_message_display' => $userMessageDisplay,
-            'reply_contains_sensitive' => false,
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+if (empty($selfEditExecution['handled'])) {
+    if (!$usedFallbackProvider) {
+        $decoded = json_decode($result, true);
+        if (!is_array($decoded)) {
+            http_response_code(502);
+            echo json_encode([
+                'status' => 'error',
+                'error' => 'Invalid response from AI provider.',
+                'conversation_id' => $conversationId,
+                'user_message_display' => $userMessageDisplay,
+                'reply_contains_sensitive' => false,
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
-    if ($httpCode >= 400) {
-        $providerError = aiAgentExtractProviderError($decoded);
-        http_response_code(502);
-        echo json_encode([
-            'status' => 'error',
-            'error' => $providerError !== '' ? $providerError : 'AI provider returned an error.',
-            'conversation_id' => $conversationId,
-            'user_message_display' => $userMessageDisplay,
-            'reply_contains_sensitive' => false,
-        ], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+        if ($httpCode >= 400) {
+            $providerError = aiAgentExtractProviderError($decoded);
+            http_response_code(502);
+            echo json_encode([
+                'status' => 'error',
+                'error' => $providerError !== '' ? $providerError : 'AI provider returned an error.',
+                'conversation_id' => $conversationId,
+                'user_message_display' => $userMessageDisplay,
+                'reply_contains_sensitive' => false,
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
-    $reply = aiAgentExtractProviderReply($decoded);
+        $reply = aiAgentExtractProviderReply($decoded);
+    } else {
+        $decoded = json_decode($result, true);
+    }
 } else {
-    $decoded = json_decode($result, true);
+    $decoded = [];
 }
 
 if ($reply === '') {
@@ -473,13 +604,29 @@ echo json_encode([
     'conversation_id' => $conversationId,
     'user_message_display' => $userMessageDisplay,
     'sensitive_access_active' => $hasSensitiveAccess,
+    'sensitive_access_unlimited' => $sensitiveAccessUnlimitedActive,
     'sensitive_access_expires_at' => $sensitiveAccessExpiresAt,
+    'sensitive_access_last_activity_at' => $sensitiveAccessLastActivityAt,
+    'sensitive_access_remaining_seconds' => $sensitiveAccessRemainingSeconds,
+    'sensitive_access_remaining_minutes' => $sensitiveAccessRemainingMinutes,
     'business_override_active' => $hasBusinessOverrideAccess,
+    'business_override_unlimited' => $businessOverrideUnlimitedActive,
     'business_override_expires_at' => $businessOverrideExpiresAt,
+    'business_override_last_activity_at' => $businessOverrideLastActivityAt,
+    'business_override_remaining_seconds' => $businessOverrideRemainingSeconds,
+    'business_override_remaining_minutes' => $businessOverrideRemainingMinutes,
+    'policy_cleanup' => $clearedUnexpectedUnlimitedAccess,
     'reply_contains_sensitive' => $useSensitiveGrounding,
     'memory_notes_stored' => count($storedNotes),
     'candidate_skill_created' => !empty($selfImprovePipeline['candidate_skill_path']),
     'auto_skills_activated' => count($selfImprovePipeline['activated_skills'] ?? []),
+    'hermes_self_edit_attempted' => !empty($selfEditExecution['handled']),
+    'hermes_self_edit_applied' => !empty($selfEditExecution['applied']),
+    'hermes_self_edit_files' => array_map(static function (array $file): string {
+        return (string) ($file['path'] ?? '');
+    }, isset($selfEditExecution['files']) && is_array($selfEditExecution['files']) ? $selfEditExecution['files'] : []),
+    'hermes_self_edit_backup_dir' => (string) ($selfEditExecution['backup_dir'] ?? ''),
+    'hermes_self_edit_reindex_signaled' => !empty($selfEditExecution['reindex_signal']),
     // Priority 3: RAG verification
     'rag_sources_used' => $ragVerification['active_sources'] ?? [],
     'rag_coverage_percentage' => $ragVerification['coverage_percentage'] ?? 0,

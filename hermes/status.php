@@ -9,10 +9,13 @@ require_once __DIR__ . '/engine/index-helper.php';
 require_once __DIR__ . '/engine/tool-helper.php';
 require_once __DIR__ . '/model/config-helper.php';
 require_once __DIR__ . '/engine/runtime-helper.php';
+require_once __DIR__ . '/logger/audit-log.php';
+require_once __DIR__ . '/memory/conversation-helper.php';
 require_once __DIR__ . '/memory/memory-helper.php';
 require_once __DIR__ . '/database/integrated-memory-helper.php';
 require_once __DIR__ . '/engine/skills-helper.php';
 require_once __DIR__ . '/engine/self-improve-helper.php';
+require_once __DIR__ . '/engine/self-edit-helper.php';
 
 SessionValidator::requireRole(['admin']);
 
@@ -46,10 +49,21 @@ $projectIndexSummary = aiAgentSummarizeProjectIndexState($projectIndexStatus);
 $memoryConfig = aiAgentGetMemoryConfig($config);
 $skillsConfig = aiAgentGetSkillsConfig($config);
 $selfImproveConfig = aiAgentGetSelfImproveConfig($config);
+$selfEditConfig = aiAgentGetHermesSelfEditConfig($config);
 $memoryBackendStatus = aiAgentGetMemoryBackendStatus($memoryConfig);
+$sensitiveAccessUnlimited = aiAgentNormalizeBoolean($config['sensitive_access_unlimited'] ?? false, false);
+$policyCleanup = aiAgentEnforceSensitiveUnlimitedPolicy($sensitiveAccessUnlimited);
+$sensitiveModeState = aiAgentGetSensitiveAccessState();
+$businessOverrideState = aiAgentGetBusinessOverrideState();
+$sensitiveModeRecentEvents = aiAgentReadAuditLogEntries(12, [
+    'category' => 'sensitive_mode',
+    'user_id' => (int) SessionValidator::getUserId(),
+]);
 aiAgentEnsureMemoryDirectories($memoryConfig);
 aiAgentEnsureSkillsDirectory($skillsConfig);
 aiAgentEnsureSelfImproveDirectories($selfImproveConfig);
+aiAgentEnsureHermesSelfEditDirectories($selfEditConfig);
+$selfEditRecentEvents = aiAgentReadHermesSelfEditLogEntries(8, $selfEditConfig);
 
 if (isset($conn) && $conn instanceof mysqli && !$conn->connect_errno) {
     $dbResult = $conn->query('SELECT DATABASE() AS db_name');
@@ -87,6 +101,7 @@ $checks = [
         'memory_enabled' => !empty($memoryConfig['enabled']),
         'skills_enabled' => !empty($skillsConfig['enabled']),
         'self_improvement_enabled' => !empty($selfImproveConfig['enabled']),
+        'hermes_self_edit_enabled' => !empty($selfEditConfig['enabled']),
     ],
     'php' => [
         'ok' => extension_loaded('json') && aiAgentHasHttpTransport(),
@@ -106,6 +121,24 @@ $checks = [
         'files' => $assetChecks,
     ],
     'provider' => $providerProbe,
+    'sensitive_mode' => [
+        'ok' => empty($policyCleanup['sensitive_access']) && empty($policyCleanup['business_override']),
+        'active' => !empty($sensitiveModeState['active']),
+        'unlimited_active' => !empty($sensitiveModeState['unlimited']),
+        'expires_at' => (int) ($sensitiveModeState['expires_at'] ?? 0),
+        'granted_at' => (int) ($sensitiveModeState['granted_at'] ?? 0),
+        'last_activity_at' => (int) ($sensitiveModeState['last_activity_at'] ?? 0),
+        'remaining_seconds' => $sensitiveModeState['remaining_seconds'] ?? 0,
+        'remaining_minutes' => $sensitiveModeState['remaining_minutes'] ?? 0,
+        'business_override_active' => !empty($businessOverrideState['active']),
+        'business_override_unlimited_active' => !empty($businessOverrideState['unlimited']),
+        'business_override_expires_at' => (int) ($businessOverrideState['expires_at'] ?? 0),
+        'business_override_granted_at' => (int) ($businessOverrideState['granted_at'] ?? 0),
+        'business_override_last_activity_at' => (int) ($businessOverrideState['last_activity_at'] ?? 0),
+        'policy_unlimited_allowed' => $sensitiveAccessUnlimited,
+        'policy_cleanup' => $policyCleanup,
+        'recent_events' => $sensitiveModeRecentEvents,
+    ],
     'project_index' => [
         'ok' => !empty($projectIndexSummary['enabled']) && !empty($projectIndexSummary['available']),
         'rebuild_required' => !empty($projectIndexSummary['rebuild_required']),
@@ -148,6 +181,19 @@ $checks = [
         'logs_dir' => (string) ($selfImproveConfig['logs_dir'] ?? ''),
         'suggestions_file' => (string) ($selfImproveConfig['suggestions_file'] ?? ''),
         'log_file' => (string) ($selfImproveConfig['log_file'] ?? ''),
+    ],
+    'self_edit' => [
+        'ok' => !empty($selfEditConfig['enabled']) && is_dir((string) ($selfEditConfig['allowed_root_absolute'] ?? '')),
+        'enabled' => !empty($selfEditConfig['enabled']),
+        'allowed_role' => (string) ($selfEditConfig['allowed_role'] ?? ''),
+        'requires_sensitive_access' => !empty($selfEditConfig['requires_sensitive_access']),
+        'allowed_root' => (string) ($selfEditConfig['allowed_root'] ?? ''),
+        'allowed_root_absolute' => (string) ($selfEditConfig['allowed_root_absolute'] ?? ''),
+        'allowed_extensions' => $selfEditConfig['allowed_extensions'] ?? [],
+        'max_files_per_edit' => (int) ($selfEditConfig['max_files_per_edit'] ?? 0),
+        'log_file' => (string) ($selfEditConfig['log_file'] ?? ''),
+        'backup_dir' => (string) ($selfEditConfig['backup_dir'] ?? ''),
+        'recent_events' => $selfEditRecentEvents,
     ],
 ];
 
