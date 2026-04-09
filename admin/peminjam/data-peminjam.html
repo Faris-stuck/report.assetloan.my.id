@@ -293,24 +293,60 @@
                             <div class="card-header">
                                 <h6 class="mb-0">Borrower List</h6>
                             </div>
-                            <div class="card-body table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Name</th>
-                                            <th>NRP</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
-                                            <th>Total Borrowings</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tablePeminjam">
-                                        <tr>
-                                            <td colspan="6" class="text-center text-muted">Loading...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="card-body p-0">
+                                <div class="px-3 pt-3">
+                                    <p class="text-muted fs-12 mb-2" id="borrowerShowingInfo">Showing 0 entries</p>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered align-middle mb-0">
+                                        <thead>
+                                            <tr style="background: #3b5998; color: #fff !important;">
+                                                <th style="color: #fff !important;">No</th>
+                                                <th style="color: #fff !important;">Name</th>
+                                                <th style="color: #fff !important;">NRP</th>
+                                                <th style="color: #fff !important;">Email</th>
+                                                <th style="color: #fff !important;">Role</th>
+                                                <th style="color: #fff !important;">Total Borrowings</th>
+                                            </tr>
+                                            <tr style="background: #4a69bd;">
+                                                <td></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterBorrowerName" placeholder="Filter name..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterBorrowerNrp" placeholder="Filter NRP..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterBorrowerEmail" placeholder="Filter email..."></td>
+                                                <td>
+                                                    <select class="form-select form-select-sm border-0" id="filterBorrowerRole">
+                                                        <option value="">All</option>
+                                                    </select>
+                                                </td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterBorrowerTotal" placeholder="Filter total..."></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tablePeminjam">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fs-12">Show</span>
+                                    <select class="form-select form-select-sm" style="width:75px;" id="borrowerPerPage">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span class="fs-12">entries</span>
+                                </div>
+                                <nav>
+                                    <ul class="pagination pagination-sm mb-0" id="borrowerPagination"></ul>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -348,38 +384,53 @@
     <!--! END: Apps Init !-->
     <!--! API CONFIG !-->
     <script src="../../assets/js/config/api.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
     <!--! END API CONFIG !-->
     <script>
+        const borrowerTableManager = TableCardHelper.createClientTableManager({
+            tbodyId: 'tablePeminjam',
+            showingInfoId: 'borrowerShowingInfo',
+            perPageId: 'borrowerPerPage',
+            paginationId: 'borrowerPagination',
+            colspan: 6,
+            noDataMessage: 'No borrower data',
+            filters: [
+                { id: 'filterBorrowerName', getValue: user => user.nama || '-' },
+                { id: 'filterBorrowerNrp', getValue: user => user.nrp || '-' },
+                { id: 'filterBorrowerEmail', getValue: user => user.email || '-' },
+                { id: 'filterBorrowerRole', type: 'select', getValue: user => user.role || '-', defaultLabel: 'All' },
+                { id: 'filterBorrowerTotal', getValue: user => String(user.total_peminjaman || 0) }
+            ],
+            renderRow: function (user, meta) {
+                return `
+                    <tr>
+                        <td>${meta.rowNumber}</td>
+                        <td><strong>${TableCardHelper.escapeHtml(user.nama || '-')}</strong></td>
+                        <td>${TableCardHelper.escapeHtml(user.nrp || '-')}</td>
+                        <td>${TableCardHelper.escapeHtml(user.email || '-')}</td>
+                        <td><span class="badge bg-info">${TableCardHelper.escapeHtml(user.role || '-')}</span></td>
+                        <td>${TableCardHelper.escapeHtml(user.total_peminjaman || 0)}</td>
+                    </tr>
+                `;
+            }
+        });
+
         // Load data peminjam dari database
         function loadDataPeminjam() {
+            borrowerTableManager.setLoading('Loading...');
+
             fetch(API_BASE_URL + '/user/get_all.php', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
-                    const tbody = document.getElementById('tablePeminjam');
-                    tbody.innerHTML = '';
-
                     if (!res.status || !res.data || res.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No borrower data</td></tr>';
+                        borrowerTableManager.setMessage('No borrower data', 'text-muted');
                         return;
                     }
-
-                    res.data.forEach((user, index) => {
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td><strong>${user.nama}</strong></td>
-                                <td>${user.nrp}</td>
-                                <td>${user.email}</td>
-                                <td><span class="badge bg-info">${user.role}</span></td>
-                                <td>${user.total_peminjaman || 0}</td>
-                            </tr>
-                        `;
-                    });
+                    borrowerTableManager.setData(res.data);
                 })
                 .catch(err => {
                     console.error('Error loading peminjam:', err);
-                    const tbody = document.getElementById('tablePeminjam');
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data. Check database connection.</td></tr>';
+                    borrowerTableManager.setError('Error loading data. Check database connection.');
                 });
         }
 

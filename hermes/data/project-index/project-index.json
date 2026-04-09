@@ -1,5 +1,5 @@
 {
-    "generated_at": 1775720721,
+    "generated_at": 1775727147,
     "summary": {
         "total_files": 231,
         "pages": 41,
@@ -131,7 +131,7 @@
             "type": "page",
             "module": "barang",
             "size": 34040,
-            "mtime": 1775465412,
+            "mtime": 1775724218,
             "display_name": "KI || Item Data",
             "scopes": [
                 "inventory",
@@ -199,8 +199,8 @@
             "path": "admin/barang/detail-barang.html",
             "type": "page",
             "module": "barang",
-            "size": 34227,
-            "mtime": 1775009430,
+            "size": 37847,
+            "mtime": 1775726861,
             "display_name": "KI || Item Detail",
             "scopes": [
                 "inventory",
@@ -223,6 +223,7 @@
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
                 "assets/js/config/api.js",
+                "assets/js/utils/helper.js",
                 "assets/js/barang/detail-barang.js"
             ],
             "title": "KI || Item Detail",
@@ -320,8 +321,8 @@
             "path": "admin/laporan/laporan-peminjaman.html",
             "type": "page",
             "module": "laporan",
-            "size": 21038,
-            "mtime": 1775009430,
+            "size": 25965,
+            "mtime": 1775725375,
             "display_name": "KI || Borrowing Report",
             "scopes": [
                 "inventory",
@@ -346,7 +347,8 @@
                 "assets/vendors/js/circle-progress.min.js",
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
-                "assets/js/config/api.js"
+                "assets/js/config/api.js",
+                "assets/js/utils/helper.js"
             ],
             "title": "KI || Borrowing Report",
             "headings": [],
@@ -374,7 +376,7 @@
             "type": "page",
             "module": "laporan",
             "size": 20172,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Return Report",
             "scopes": [
                 "inventory",
@@ -427,7 +429,7 @@
             "type": "page",
             "module": "laporan",
             "size": 20565,
-            "mtime": 1775465454,
+            "mtime": 1775724375,
             "display_name": "KI || Stock Report",
             "scopes": [
                 "inventory",
@@ -480,8 +482,8 @@
             "path": "admin/peminjam/data-peminjam.html",
             "type": "page",
             "module": "peminjam",
-            "size": 19332,
-            "mtime": 1775009430,
+            "size": 23283,
+            "mtime": 1775727046,
             "display_name": "KI || Borrower Data",
             "scopes": [
                 "inventory",
@@ -504,7 +506,8 @@
                 "assets/vendors/js/circle-progress.min.js",
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
-                "assets/js/config/api.js"
+                "assets/js/config/api.js",
+                "assets/js/utils/helper.js"
             ],
             "title": "KI || Borrower Data",
             "headings": [],
@@ -530,7 +533,7 @@
             "type": "page",
             "module": "peminjam",
             "size": 20882,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Borrowing History",
             "scopes": [
                 "inventory",
@@ -581,7 +584,7 @@
             "type": "page",
             "module": "peminjaman",
             "size": 39056,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Pending Loan Approvals",
             "scopes": [
                 "inventory",
@@ -642,8 +645,8 @@
             "path": "admin/peminjaman/data-peminjaman.html",
             "type": "page",
             "module": "peminjaman",
-            "size": 66750,
-            "mtime": 1775465454,
+            "size": 71786,
+            "mtime": 1775725294,
             "display_name": "KI || Request Loan",
             "scopes": [
                 "inventory",
@@ -668,6 +671,7 @@
                 "assets/vendors/js/circle-progress.min.js",
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
+                "assets/js/utils/helper.js",
                 "api/peminjaman/get_detail_units.php"
             ],
             "title": "KI || Request Loan",
@@ -719,7 +723,7 @@
             "type": "page",
             "module": "peminjaman",
             "size": 24958,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Borrowing Details",
             "scopes": [
                 "inventory",
@@ -781,7 +785,7 @@
             "type": "page",
             "module": "peminjaman",
             "size": 38790,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Pending Approval",
             "scopes": [
                 "inventory",
@@ -846,7 +850,7 @@
             "type": "page",
             "module": "peminjaman",
             "size": 30833,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || List Loan",
             "scopes": [
                 "inventory",
@@ -904,8 +908,8 @@
             "path": "admin/pengaturan.html",
             "type": "page",
             "module": "pengaturan.html",
-            "size": 43272,
-            "mtime": 1775009430,
+            "size": 50447,
+            "mtime": 1775727120,
             "display_name": "KI || Role List",
             "scopes": [
                 "inventory",
@@ -927,7 +931,8 @@
                 "assets/vendors/js/apexcharts.min.js",
                 "assets/vendors/js/circle-progress.min.js",
                 "assets/js/common-init.min.js",
-                "assets/js/dashboard-init.min.js"
+                "assets/js/dashboard-init.min.js",
+                "assets/js/utils/helper.js"
             ],
             "title": "KI || Role List",
             "headings": [],
@@ -976,7 +981,7 @@
             "type": "page",
             "module": "pengembalian",
             "size": 20614,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Damaged Items",
             "scopes": [
                 "inventory",
@@ -1027,7 +1032,7 @@
             "type": "page",
             "module": "pengembalian",
             "size": 48006,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Item Return",
             "scopes": [
                 "inventory",
@@ -1112,7 +1117,7 @@
             "type": "page",
             "module": "user",
             "size": 33235,
-            "mtime": 1775009430,
+            "mtime": 1775724218,
             "display_name": "KI || User List",
             "scopes": [
                 "inventory",
@@ -1174,12 +1179,13 @@
             "path": "admin/user/buat-user.php",
             "type": "page",
             "module": "user",
-            "size": 8053,
-            "mtime": 1775089072,
-            "display_name": "KI || Create & Manage Users",
+            "size": 33414,
+            "mtime": 1775726347,
+            "display_name": "KI || User List",
             "scopes": [
                 "inventory",
                 "borrowing",
+                "returns",
                 "users_admin",
                 "vendors"
             ],
@@ -1191,37 +1197,43 @@
                 "assets/vendors/js/daterangepicker.min.js",
                 "assets/vendors/js/apexcharts.min.js",
                 "assets/vendors/js/circle-progress.min.js",
+                "assets/js/auth/logout.js",
+                "assets/js/profile-header.js",
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
                 "assets/js/config/api.js",
-                "assets/js/user/user.js",
-                "assets/js/profile-header.js",
-                "assets/js/auth/logout.js"
+                "assets/js/user/user.js"
             ],
-            "title": "KI || Create & Manage Users",
+            "title": "KI || User List",
             "headings": [],
             "buttons": [
-                "Reset",
-                "Save User",
-                "Cancel",
-                "Save Changes",
-                "Close"
+                "Download",
+                "Add User",
+                "Change Password",
+                "Close",
+                "Add",
+                "Save",
+                "Cancel"
             ],
             "table_headers": [
-                "#",
-                "Name / NRP",
+                "Name",
+                "NRP",
                 "Email",
                 "Role",
+                "Created",
                 "Action"
             ],
             "labels": [
-                "Full Name",
-                "NRP",
+                "Navigation",
+                "Role Group*",
+                "Name",
+                "Role",
                 "Email",
                 "Password",
-                "Confirm Password",
-                "Role / Position",
-                "Select New Role"
+                "NRP",
+                "Select User",
+                "New Password",
+                "Confirm New Password"
             ],
             "form_actions": [],
             "functions": []
@@ -3395,8 +3407,8 @@
             "path": "assets/js/barang/detail-barang.js",
             "type": "script",
             "module": "barang",
-            "size": 28965,
-            "mtime": 1775102099,
+            "size": 30076,
+            "mtime": 1775727026,
             "display_name": "Detail Barang",
             "scopes": [
                 "inventory",
@@ -3431,12 +3443,12 @@
             "functions": [
                 "formatDollar",
                 "getStockStatusBadgeClass",
+                "getBorrowerStatusBadgeClass",
+                "ensureBorrowerTableManager",
                 "setMinDateForPurchase",
                 "validatePurchaseDate",
                 "initDateValidation",
-                "loadRiwayatPembelian",
-                "loadDaftarPeminjam",
-                "getCurrentIdBarang"
+                "loadRiwayatPembelian"
             ]
         },
         "assets/js/base-url.js": {
@@ -3631,10 +3643,13 @@
             "path": "assets/js/utils/helper.js",
             "type": "script",
             "module": "utils",
-            "size": 0,
-            "mtime": 1771900814,
+            "size": 10482,
+            "mtime": 1775725313,
             "display_name": "Helper",
-            "scopes": [],
+            "scopes": [
+                "inventory",
+                "returns"
+            ],
             "linked_paths": [],
             "title": "",
             "headings": [],
@@ -3642,7 +3657,16 @@
             "table_headers": [],
             "labels": [],
             "form_actions": [],
-            "functions": []
+            "functions": [
+                "escapeHtml",
+                "normalizeValue",
+                "createMessageRow",
+                "createPaginationItem",
+                "createClientTableManager",
+                "getElement",
+                "getPerPage",
+                "getFilterValue"
+            ]
         },
         "assets/scss/bootstrap/dist/bootstrap-grid.css": {
             "path": "assets/scss/bootstrap/dist/bootstrap-grid.css",
@@ -4492,7 +4516,7 @@
             "type": "helper",
             "module": "hermes",
             "size": 200366,
-            "mtime": 1775720517,
+            "mtime": 1775720722,
             "display_name": "Feature Manifest",
             "scopes": [],
             "linked_paths": [],
@@ -4509,7 +4533,7 @@
             "type": "helper",
             "module": "hermes",
             "size": 682,
-            "mtime": 1775720517,
+            "mtime": 1775720722,
             "display_name": "Project Index Meta",
             "scopes": [
                 "borrowing"
@@ -4528,7 +4552,7 @@
             "type": "helper",
             "module": "hermes",
             "size": 213691,
-            "mtime": 1775720517,
+            "mtime": 1775720722,
             "display_name": "Project Index",
             "scopes": [],
             "linked_paths": [],
@@ -5050,8 +5074,8 @@
             "path": "hermes/history.php",
             "type": "helper",
             "module": "hermes",
-            "size": 9470,
-            "mtime": 1775720453,
+            "size": 9667,
+            "mtime": 1775720734,
             "display_name": "History",
             "scopes": [
                 "inventory",
@@ -5449,8 +5473,8 @@
             "path": "manager/laporan/laporan-peminjaman.html",
             "type": "page",
             "module": "laporan",
-            "size": 18048,
-            "mtime": 1775009430,
+            "size": 22514,
+            "mtime": 1775725417,
             "display_name": "KI || Borrowing Report",
             "scopes": [
                 "inventory",
@@ -5474,7 +5498,8 @@
                 "assets/vendors/js/circle-progress.min.js",
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
-                "assets/js/config/api.js"
+                "assets/js/config/api.js",
+                "assets/js/utils/helper.js"
             ],
             "title": "KI || Borrowing Report",
             "headings": [],
@@ -5503,7 +5528,7 @@
             "type": "page",
             "module": "laporan",
             "size": 14488,
-            "mtime": 1775465454,
+            "mtime": 1775724375,
             "display_name": "KI || Stock Report",
             "scopes": [
                 "inventory",
@@ -5556,7 +5581,7 @@
             "type": "page",
             "module": "persetujuan",
             "size": 17266,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Approved",
             "scopes": [
                 "inventory",
@@ -5607,7 +5632,7 @@
             "type": "page",
             "module": "persetujuan",
             "size": 17237,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Rejected",
             "scopes": [
                 "inventory",
@@ -5658,7 +5683,7 @@
             "type": "page",
             "module": "persetujuan",
             "size": 37652,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Pending Approval",
             "scopes": [
                 "inventory",
@@ -5886,8 +5911,8 @@
             "path": "pic-barang/pengembalian/pengembalian-barang.html",
             "type": "page",
             "module": "pengembalian",
-            "size": 45273,
-            "mtime": 1774493385,
+            "size": 47590,
+            "mtime": 1775725966,
             "display_name": "PIC Item || Return",
             "scopes": [
                 "inventory",
@@ -5906,7 +5931,8 @@
                 "assets/js/auth/logout.js",
                 "assets/js/profile-header.js",
                 "assets/vendors/js/vendors.min.js",
-                "assets/js/common-init.min.js"
+                "assets/js/common-init.min.js",
+                "assets/js/utils/helper.js"
             ],
             "title": "PIC Item || Return",
             "headings": [],
@@ -5933,14 +5959,14 @@
             ],
             "form_actions": [],
             "functions": [
+                "getReturnStatusBadge",
+                "getExtendStatusBadge",
+                "initPicTableManagers",
                 "formatRupiah",
                 "recalcTotal",
                 "removeRowFromTable",
                 "loadPengembalian",
-                "openInspeksi",
-                "submitInspeksi",
-                "doSubmitInspeksi",
-                "removeExtendRow"
+                "openInspeksi"
             ]
         },
         "pic-barang/profil.html": {
@@ -5984,8 +6010,8 @@
             "path": "pic-barang/update-barang/detail-barang.php",
             "type": "page",
             "module": "update-barang",
-            "size": 28176,
-            "mtime": 1774493385,
+            "size": 31796,
+            "mtime": 1775726959,
             "display_name": "PIC Item || Item Detail",
             "scopes": [
                 "inventory",
@@ -6008,6 +6034,7 @@
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
                 "assets/js/config/api.js",
+                "assets/js/utils/helper.js",
                 "assets/js/barang/detail-barang.js"
             ],
             "title": "PIC Item || Item Detail",
@@ -6051,7 +6078,7 @@
             "type": "page",
             "module": "update-barang",
             "size": 27935,
-            "mtime": 1775465439,
+            "mtime": 1775724218,
             "display_name": "PIC Item || Update Item",
             "scopes": [
                 "inventory",
@@ -6353,8 +6380,8 @@
             "path": "user/peminjaman/ajukan-peminjaman.html",
             "type": "page",
             "module": "peminjaman",
-            "size": 71026,
-            "mtime": 1775641141,
+            "size": 88708,
+            "mtime": 1775725783,
             "display_name": "KI || Request Borrowing",
             "scopes": [
                 "inventory",
@@ -6378,6 +6405,7 @@
                 "assets/vendors/js/daterangepicker.min.js",
                 "assets/js/common-init.min.js",
                 "assets/js/dashboard-init.min.js",
+                "assets/js/utils/helper.js",
                 "api/peminjaman/get_detail_units.php"
             ],
             "title": "KI || Request Borrowing",
@@ -6413,14 +6441,14 @@
             ],
             "form_actions": [],
             "functions": [
+                "createBorrowingTabManager",
+                "ensureBorrowingTabManagers",
+                "setBorrowingTabsMessage",
+                "setBorrowingTabsLoading",
                 "handleDateRangeChange",
                 "loadDataPeminjaman",
                 "loadItemsForModal",
-                "initDateValidation",
-                "initializeRequiredFieldIndicators",
-                "handleRequiredFieldChange",
-                "renderTable",
-                "renderTableRows"
+                "initDateValidation"
             ]
         },
         "user/peminjaman/detail.html": {
@@ -6471,7 +6499,7 @@
             "type": "page",
             "module": "peminjaman",
             "size": 44620,
-            "mtime": 1775641141,
+            "mtime": 1775724375,
             "display_name": "KI || Borrowing Status",
             "scopes": [
                 "inventory",
@@ -6540,7 +6568,7 @@
             "type": "page",
             "module": "pengembalian",
             "size": 60865,
-            "mtime": 1775009430,
+            "mtime": 1775724375,
             "display_name": "KI || Request Return",
             "scopes": [
                 "inventory",
@@ -6653,7 +6681,7 @@
             "type": "page",
             "module": "riwayat.html",
             "size": 19603,
-            "mtime": 1775641141,
+            "mtime": 1775724375,
             "display_name": "KI || Borrowing History",
             "scopes": [
                 "inventory",

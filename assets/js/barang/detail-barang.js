@@ -34,6 +34,64 @@ function getStockStatusBadgeClass(status) {
 
 // Global variable to store purchase data for modal editing
 let currentBarangPurchases = [];
+let borrowerTableManager = null;
+
+function getBorrowerStatusBadgeClass(status) {
+    const normalized = String(status || '').trim();
+
+    if (normalized === "Overdue" || normalized === "Due Today") return "bg-danger";
+    if (normalized.startsWith("Due")) return "bg-warning text-dark";
+    if (normalized === "Waiting for Approval") return "bg-warning";
+    if (normalized === "Approved") return "bg-info";
+    if (normalized === "Borrowed") return "bg-primary";
+    if (normalized === "Partially Returned") return "bg-warning text-dark";
+    if (normalized === "Return in Process") return "bg-info text-dark";
+    if (normalized === "Returned") return "bg-success";
+    if (normalized === "Rejected" || normalized === "Cancelled") return "bg-danger";
+
+    return "bg-secondary";
+}
+
+function ensureBorrowerTableManager() {
+    if (borrowerTableManager || typeof TableCardHelper === 'undefined') return borrowerTableManager;
+    if (!document.getElementById("tabelPeminjam")) return null;
+
+    borrowerTableManager = TableCardHelper.createClientTableManager({
+        tbodyId: "tabelPeminjam",
+        showingInfoId: "borrowerCardShowingInfo",
+        perPageId: "borrowerCardPerPage",
+        paginationId: "borrowerCardPagination",
+        colspan: 8,
+        noDataMessage: "No one has borrowed this item yet",
+        filters: [
+            { id: "filterBorrowCardName", getValue: item => item.nama_peminjam || "-" },
+            { id: "filterBorrowCardNrp", getValue: item => item.nrp || "-" },
+            { id: "filterBorrowCardQty", getValue: item => String(item.jumlah || 0) },
+            { id: "filterBorrowCardDate", getValue: item => item.tanggal_pinjam || "-" },
+            { id: "filterBorrowCardDueDate", getValue: item => item.expected_return_nearest || item.rencana_kembali || "-" },
+            { id: "filterBorrowCardStatus", type: "select", getValue: item => item.status || "-", defaultLabel: "All" },
+            { id: "filterBorrowCardCondition", getValue: item => item.kondisi_pinjam || "-" }
+        ],
+        renderRow: function (item, meta) {
+            const badgeClass = getBorrowerStatusBadgeClass(item.status);
+
+            return `
+                <tr>
+                    <td>${meta.rowNumber}</td>
+                    <td>${TableCardHelper.escapeHtml(item.nama_peminjam || "-")}</td>
+                    <td>${TableCardHelper.escapeHtml(item.nrp || "-")}</td>
+                    <td>${TableCardHelper.escapeHtml(item.jumlah || 0)}</td>
+                    <td>${TableCardHelper.escapeHtml(item.tanggal_pinjam || "-")}</td>
+                    <td>${TableCardHelper.escapeHtml(item.expected_return_nearest || item.rencana_kembali || "-")}</td>
+                    <td><span class="badge ${badgeClass}">${TableCardHelper.escapeHtml(item.status || "-")}</span></td>
+                    <td>${TableCardHelper.escapeHtml(item.kondisi_pinjam || "-")}</td>
+                </tr>
+            `;
+        }
+    });
+
+    return borrowerTableManager;
+}
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -345,69 +403,37 @@ document.addEventListener("DOMContentLoaded", function () {
           LOAD DAFTAR PEMINJAM
        ===================== */
     function loadDaftarPeminjam(id_barang) {
+        const manager = ensureBorrowerTableManager();
+        if (manager) manager.setLoading("Loading borrower data...");
+
         fetch(`${API_BASE_URL}/barang/peminjam.php?id_barang=${id_barang}`)
             .then(res => res.json())
             .then(res => {
-                const tbody = document.getElementById("tabelPeminjam");
                 const stokDipinjamEl = document.getElementById("stokDipinjam");
+                const data = Array.isArray(res.data) ? res.data : [];
+                const totalDipinjam = data.reduce((sum, item) => sum + (parseInt(item.jumlah) || 0), 0);
 
-                tbody.innerHTML = "";
-                let totalDipinjam = 0;
-
-                if (!res.status || res.data.length === 0) {
-                    tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="text-center text-muted">
-                            No one has borrowed this item yet
-                        </td>
-                    </tr>`;
+                if (!res.status || data.length === 0) {
+                    if (manager) {
+                        manager.setMessage("No one has borrowed this item yet", "text-muted");
+                    }
                     if (stokDipinjamEl) stokDipinjamEl.innerText = "0";
                     return;
                 }
 
-                res.data.forEach((p, index) => {
-                    // All rows from API are already approved & actively borrowed units.
-                    // Sum all jumlah values for the Borrowed card.
-                    totalDipinjam += parseInt(p.jumlah) || 0;
-
-                    let statusBadge = "bg-secondary";
-                    if (p.status === "Overdue" || p.status === "Due Today") statusBadge = "bg-danger";
-                    else if (p.status.startsWith("Due")) statusBadge = "bg-warning text-dark";
-                    else if (p.status === "Waiting for Approval") statusBadge = "bg-warning";
-                    else if (p.status === "Approved") statusBadge = "bg-info";
-                    else if (p.status === "Borrowed") statusBadge = "bg-primary";
-                    else if (p.status === "Partially Returned") statusBadge = "bg-warning text-dark";
-                    else if (p.status === "Return in Process") statusBadge = "bg-info text-dark";
-                    else if (p.status === "Returned") statusBadge = "bg-success";
-                    else if (p.status === "Rejected") statusBadge = "bg-danger";
-                    else if (p.status === "Cancelled") statusBadge = "bg-danger";
-
-                    tbody.innerHTML += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${p.nama_peminjam}</td>
-                        <td>${p.nrp}</td>
-                        <td>${p.jumlah}</td>
-                        <td>${p.tanggal_pinjam}</td>
-                        <td>${p.expected_return_nearest || p.rencana_kembali}</td>
-                        <td><span class="badge ${statusBadge}">${p.status}</span></td>
-                        <td>${p.kondisi_pinjam}</td>
-                    </tr>
-                `;
-                });
+                if (manager) {
+                    manager.setData(data);
+                }
 
                 // Update jumlah yang sedang dipinjam
                 if (stokDipinjamEl) stokDipinjamEl.innerText = totalDipinjam;
             })
             .catch(err => {
                 console.error("Error loading borrowers:", err);
-                const tbody = document.getElementById("tabelPeminjam");
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="text-center text-danger">
-                        Failed to load borrower data
-                    </td>
-                </tr>`;
+                const manager = ensureBorrowerTableManager();
+                if (manager) {
+                    manager.setError("Failed to load borrower data");
+                }
             });
     }
 

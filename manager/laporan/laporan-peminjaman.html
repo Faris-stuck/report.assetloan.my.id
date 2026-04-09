@@ -223,25 +223,63 @@
                             <div class="card-header">
                                 <h6 class="mb-0">Borrowing Data</h6>
                             </div>
-                            <div class="card-body table-responsive">
-                                <table class="table table-hover align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Loan Code</th>
-                                            <th>Borrower Name</th>
-                                            <th>NRP</th>
-                                            <th>Loan Date</th>
-                                            <th>Expected Return</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tablePeminjaman">
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted">Loading...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="card-body p-0">
+                                <div class="px-3 pt-3">
+                                    <p class="text-muted fs-12 mb-2" id="managerBorrowingShowingInfo">Showing 0 entries</p>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered align-middle mb-0">
+                                        <thead>
+                                            <tr style="background: #3b5998; color: #fff !important;">
+                                                <th style="color: #fff !important;">No</th>
+                                                <th style="color: #fff !important;">Loan Code</th>
+                                                <th style="color: #fff !important;">Borrower Name</th>
+                                                <th style="color: #fff !important;">NRP</th>
+                                                <th style="color: #fff !important;">Loan Date</th>
+                                                <th style="color: #fff !important;">Expected Return</th>
+                                                <th style="color: #fff !important;">Status</th>
+                                            </tr>
+                                            <tr style="background: #4a69bd;">
+                                                <td></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterManagerLoanCode" placeholder="Filter loan code..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterManagerBorrower" placeholder="Filter borrower..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterManagerNrp" placeholder="Filter NRP..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterManagerLoanDate" placeholder="Filter date..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterManagerExpectedReturn" placeholder="Filter date..."></td>
+                                                <td>
+                                                    <select class="form-select form-select-sm border-0" id="filterManagerStatus">
+                                                        <option value="">All</option>
+                                                    </select>
+                                                </td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tablePeminjaman">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fs-12">Show</span>
+                                    <select class="form-select form-select-sm" style="width:75px;" id="managerBorrowingPerPage">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span class="fs-12">entries</span>
+                                </div>
+                                <nav>
+                                    <ul class="pagination pagination-sm mb-0" id="managerBorrowingPagination"></ul>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -279,8 +317,46 @@
     <!--! END: Apps Init !-->
     <!--! API CONFIG !-->
     <script src="../../assets/js/config/api.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
     <!--! END API CONFIG !-->
     <script>
+        const managerBorrowingTableManager = TableCardHelper.createClientTableManager({
+            tbodyId: 'tablePeminjaman',
+            showingInfoId: 'managerBorrowingShowingInfo',
+            perPageId: 'managerBorrowingPerPage',
+            paginationId: 'managerBorrowingPagination',
+            colspan: 7,
+            noDataMessage: 'No borrowing data',
+            filters: [
+                { id: 'filterManagerLoanCode', getValue: p => p.kode || p.kode_peminjaman || '-' },
+                { id: 'filterManagerBorrower', getValue: p => p.nama || p.nama_peminjam || '-' },
+                { id: 'filterManagerNrp', getValue: p => p.nrp || '-' },
+                { id: 'filterManagerLoanDate', getValue: p => formatTanggal(p.tanggal || p.tanggal_pinjam) || '-' },
+                { id: 'filterManagerExpectedReturn', getValue: p => p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-' },
+                { id: 'filterManagerStatus', type: 'select', getValue: p => p.status_en || p.status || '-', defaultLabel: 'All' }
+            ],
+            renderRow: function (p, meta) {
+                const loanCode = p.kode || p.kode_peminjaman || '-';
+                const borrowerName = p.nama || p.nama_peminjam || '-';
+                const status = p.status_en || p.status || '-';
+                const statusBadge = getStatusBadgeClass(status);
+                const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam) || '-';
+                const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';
+
+                return `
+                    <tr>
+                        <td>${meta.rowNumber}</td>
+                        <td><strong>${managerBorrowingTableManager.escapeHtml(loanCode)}</strong></td>
+                        <td>${managerBorrowingTableManager.escapeHtml(borrowerName)}</td>
+                        <td>${managerBorrowingTableManager.escapeHtml(p.nrp || '-')}</td>
+                        <td>${managerBorrowingTableManager.escapeHtml(tanggalPinjam)}</td>
+                        <td>${managerBorrowingTableManager.escapeHtml(rencanaKembali)}</td>
+                        <td><span class="badge ${statusBadge}">${managerBorrowingTableManager.escapeHtml(status)}</span></td>
+                    </tr>
+                `;
+            }
+        });
+
         function getStatusBadgeClass(status) {
             if (status === 'Waiting for Approval' || status === 'Pending Approval') return 'bg-warning text-dark';
             if (status === 'Approved' || status === 'Partial Approved') return 'bg-info';
@@ -303,43 +379,20 @@
 
         // Load laporan peminjaman dari database (untuk Manager/Approver)
         function loadLaporanPeminjaman() {
-            const tbody = document.getElementById('tablePeminjaman');
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>';
+            managerBorrowingTableManager.setLoading('Loading...');
 
             fetch(API_BASE_URL + '/peminjaman/get_all.php', { credentials: 'same-origin' })
                 .then(res => res.json())
                 .then(res => {
-                    tbody.innerHTML = '';
-
                     if (!res.status || !res.data || res.data.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No borrowing data</td></tr>';
+                        managerBorrowingTableManager.setMessage('No borrowing data', 'text-muted');
                         return;
                     }
-
-                    res.data.forEach((p, index) => {
-                        const loanCode = p.kode || p.kode_peminjaman || '-';
-                        const borrowerName = p.nama || p.nama_peminjam || '-';
-                        const status = p.status_en || p.status || '-';
-                        const statusBadge = getStatusBadgeClass(status);
-                        const tanggalPinjam = formatTanggal(p.tanggal || p.tanggal_pinjam);
-                        const rencanaKembali = p.expected_return_nearest || formatTanggal(p.rencana_kembali) || '-';
-
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${index + 1}</td>
-                                <td><strong>${escapeHtml(loanCode)}</strong></td>
-                                <td>${escapeHtml(borrowerName)}</td>
-                                <td>${escapeHtml(p.nrp)}</td>
-                                <td>${escapeHtml(tanggalPinjam)}</td>
-                                <td>${escapeHtml(rencanaKembali)}</td>
-                                <td><span class="badge ${statusBadge}">${escapeHtml(status)}</span></td>
-                            </tr>
-                        `;
-                    });
+                    managerBorrowingTableManager.setData(res.data);
                 })
                 .catch(err => {
                     console.error('Error loading laporan:', err);
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Check database connection.</td></tr>';
+                    managerBorrowingTableManager.setError('Error loading data. Check database connection.');
                 });
         }
 

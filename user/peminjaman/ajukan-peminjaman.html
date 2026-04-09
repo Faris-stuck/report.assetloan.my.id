@@ -322,93 +322,268 @@
                             <div class="tab-content mt-3" id="statusTabContent">
                                 <div class="tab-pane fade show active" id="semua" role="tabpanel"
                                     aria-labelledby="semua-tab">
+                                    <p class="text-muted fs-12 mb-2" id="userSemuaShowingInfo">Showing 0 entries</p>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered align-middle">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Loan Code</th>
-                                                    <th>Borrower Name</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                    <th>Action</th>
+                                        <table class="table table-hover table-bordered align-middle mb-0">
+                                            <thead>
+                                                <tr style="background: #3b5998; color: #fff !important;">
+                                                    <th style="color: #fff !important;">No</th>
+                                                    <th style="color: #fff !important;">Loan Code</th>
+                                                    <th style="color: #fff !important;">Borrower Name</th>
+                                                    <th style="color: #fff !important;">Date</th>
+                                                    <th style="color: #fff !important;">Status</th>
+                                                    <th style="color: #fff !important;">Action</th>
+                                                </tr>
+                                                <tr style="background: #4a69bd;">
+                                                    <td></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterSemuaLoanCode" placeholder="Filter loan code..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterSemuaBorrower" placeholder="Filter borrower..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterSemuaDate" placeholder="Filter date..."></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm border-0" id="filterSemuaStatus">
+                                                            <option value="">All</option>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
                                                 </tr>
                                             </thead>
-                                            <tbody id="tableSemua"></tbody>
+                                            <tbody id="tableSemua">
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">Loading...</td>
+                                                </tr>
+                                            </tbody>
                                         </table>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fs-12">Show</span>
+                                            <select class="form-select form-select-sm" style="width:75px;" id="userSemuaPerPage">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                            <span class="fs-12">entries</span>
+                                        </div>
+                                        <nav>
+                                            <ul class="pagination pagination-sm mb-0" id="userSemuaPagination"></ul>
+                                        </nav>
                                     </div>
                                 </div>
 
                                 <div class="tab-pane fade" id="menunggu" role="tabpanel" aria-labelledby="menunggu-tab">
+                                    <p class="text-muted fs-12 mb-2" id="userMenungguShowingInfo">Showing 0 entries</p>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered align-middle">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Loan Code</th>
-                                                    <th>Borrower Name</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                    <th>Action</th>
+                                        <table class="table table-hover table-bordered align-middle mb-0">
+                                            <thead>
+                                                <tr style="background: #3b5998; color: #fff !important;">
+                                                    <th style="color: #fff !important;">No</th>
+                                                    <th style="color: #fff !important;">Loan Code</th>
+                                                    <th style="color: #fff !important;">Borrower Name</th>
+                                                    <th style="color: #fff !important;">Date</th>
+                                                    <th style="color: #fff !important;">Status</th>
+                                                    <th style="color: #fff !important;">Action</th>
+                                                </tr>
+                                                <tr style="background: #4a69bd;">
+                                                    <td></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterMenungguLoanCode" placeholder="Filter loan code..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterMenungguBorrower" placeholder="Filter borrower..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterMenungguDate" placeholder="Filter date..."></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm border-0" id="filterMenungguStatus">
+                                                            <option value="">All</option>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
                                                 </tr>
                                             </thead>
-                                            <tbody id="tableMenunggu"></tbody>
+                                            <tbody id="tableMenunggu">
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">Loading...</td>
+                                                </tr>
+                                            </tbody>
                                         </table>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fs-12">Show</span>
+                                            <select class="form-select form-select-sm" style="width:75px;" id="userMenungguPerPage">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                            <span class="fs-12">entries</span>
+                                        </div>
+                                        <nav>
+                                            <ul class="pagination pagination-sm mb-0" id="userMenungguPagination"></ul>
+                                        </nav>
                                     </div>
                                 </div>
 
                                 <div class="tab-pane fade" id="dipinjam" role="tabpanel" aria-labelledby="dipinjam-tab">
+                                    <p class="text-muted fs-12 mb-2" id="userDipinjamShowingInfo">Showing 0 entries</p>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered align-middle">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Loan Code</th>
-                                                    <th>Borrower Name</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                    <th>Action</th>
+                                        <table class="table table-hover table-bordered align-middle mb-0">
+                                            <thead>
+                                                <tr style="background: #3b5998; color: #fff !important;">
+                                                    <th style="color: #fff !important;">No</th>
+                                                    <th style="color: #fff !important;">Loan Code</th>
+                                                    <th style="color: #fff !important;">Borrower Name</th>
+                                                    <th style="color: #fff !important;">Date</th>
+                                                    <th style="color: #fff !important;">Status</th>
+                                                    <th style="color: #fff !important;">Action</th>
+                                                </tr>
+                                                <tr style="background: #4a69bd;">
+                                                    <td></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDipinjamLoanCode" placeholder="Filter loan code..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDipinjamBorrower" placeholder="Filter borrower..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDipinjamDate" placeholder="Filter date..."></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm border-0" id="filterDipinjamStatus">
+                                                            <option value="">All</option>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
                                                 </tr>
                                             </thead>
-                                            <tbody id="tableDipinjam"></tbody>
+                                            <tbody id="tableDipinjam">
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">Loading...</td>
+                                                </tr>
+                                            </tbody>
                                         </table>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fs-12">Show</span>
+                                            <select class="form-select form-select-sm" style="width:75px;" id="userDipinjamPerPage">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                            <span class="fs-12">entries</span>
+                                        </div>
+                                        <nav>
+                                            <ul class="pagination pagination-sm mb-0" id="userDipinjamPagination"></ul>
+                                        </nav>
                                     </div>
                                 </div>
 
                                 <div class="tab-pane fade" id="dikembalikan" role="tabpanel"
                                     aria-labelledby="dikembalikan-tab">
+                                    <p class="text-muted fs-12 mb-2" id="userDikembalikanShowingInfo">Showing 0 entries</p>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered align-middle">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Loan Code</th>
-                                                    <th>Borrower Name</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                    <th>Action</th>
+                                        <table class="table table-hover table-bordered align-middle mb-0">
+                                            <thead>
+                                                <tr style="background: #3b5998; color: #fff !important;">
+                                                    <th style="color: #fff !important;">No</th>
+                                                    <th style="color: #fff !important;">Loan Code</th>
+                                                    <th style="color: #fff !important;">Borrower Name</th>
+                                                    <th style="color: #fff !important;">Date</th>
+                                                    <th style="color: #fff !important;">Status</th>
+                                                    <th style="color: #fff !important;">Action</th>
+                                                </tr>
+                                                <tr style="background: #4a69bd;">
+                                                    <td></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDikembalikanLoanCode" placeholder="Filter loan code..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDikembalikanBorrower" placeholder="Filter borrower..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDikembalikanDate" placeholder="Filter date..."></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm border-0" id="filterDikembalikanStatus">
+                                                            <option value="">All</option>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
                                                 </tr>
                                             </thead>
-                                            <tbody id="tableDikembalikan"></tbody>
+                                            <tbody id="tableDikembalikan">
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">Loading...</td>
+                                                </tr>
+                                            </tbody>
                                         </table>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fs-12">Show</span>
+                                            <select class="form-select form-select-sm" style="width:75px;" id="userDikembalikanPerPage">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                            <span class="fs-12">entries</span>
+                                        </div>
+                                        <nav>
+                                            <ul class="pagination pagination-sm mb-0" id="userDikembalikanPagination"></ul>
+                                        </nav>
                                     </div>
                                 </div>
 
                                 <div class="tab-pane fade" id="ditolak" role="tabpanel" aria-labelledby="ditolak-tab">
+                                    <p class="text-muted fs-12 mb-2" id="userDitolakShowingInfo">Showing 0 entries</p>
                                     <div class="table-responsive">
-                                        <table class="table table-bordered align-middle">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Loan Code</th>
-                                                    <th>Borrower Name</th>
-                                                    <th>Date</th>
-                                                    <th>Status</th>
-                                                    <th>Action</th>
+                                        <table class="table table-hover table-bordered align-middle mb-0">
+                                            <thead>
+                                                <tr style="background: #3b5998; color: #fff !important;">
+                                                    <th style="color: #fff !important;">No</th>
+                                                    <th style="color: #fff !important;">Loan Code</th>
+                                                    <th style="color: #fff !important;">Borrower Name</th>
+                                                    <th style="color: #fff !important;">Date</th>
+                                                    <th style="color: #fff !important;">Status</th>
+                                                    <th style="color: #fff !important;">Action</th>
+                                                </tr>
+                                                <tr style="background: #4a69bd;">
+                                                    <td></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDitolakLoanCode" placeholder="Filter loan code..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDitolakBorrower" placeholder="Filter borrower..."></td>
+                                                    <td><input type="text" class="form-control form-control-sm border-0"
+                                                            id="filterDitolakDate" placeholder="Filter date..."></td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm border-0" id="filterDitolakStatus">
+                                                            <option value="">All</option>
+                                                        </select>
+                                                    </td>
+                                                    <td></td>
                                                 </tr>
                                             </thead>
-                                            <tbody id="tableDitolak"></tbody>
+                                            <tbody id="tableDitolak">
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-4 text-muted">Loading...</td>
+                                                </tr>
+                                            </tbody>
                                         </table>
+                                    </div>
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fs-12">Show</span>
+                                            <select class="form-select form-select-sm" style="width:75px;" id="userDitolakPerPage">
+                                                <option value="10">10</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                            <span class="fs-12">entries</span>
+                                        </div>
+                                        <nav>
+                                            <ul class="pagination pagination-sm mb-0" id="userDitolakPagination"></ul>
+                                        </nav>
                                     </div>
                                 </div>
                             </div>
@@ -549,6 +724,7 @@
     <!--! BEGIN: Apps Init  !-->
     <script src="../../assets/js/common-init.min.js"></script>
     <script src="../../assets/js/dashboard-init.min.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
     <!--! END: Apps Init !-->
 
 
@@ -557,6 +733,66 @@
 
 
         // ========== MAIN SCRIPT ==========
+
+        const borrowingTabManagers = {};
+
+        function createBorrowingTabManager(prefix, tbodyId, showingInfoId, perPageId, paginationId) {
+            return TableCardHelper.createClientTableManager({
+                tbodyId: tbodyId,
+                showingInfoId: showingInfoId,
+                perPageId: perPageId,
+                paginationId: paginationId,
+                colspan: 6,
+                noDataMessage: 'No data',
+                filters: [
+                    { id: `filter${prefix}LoanCode`, getValue: item => item.kode || '-' },
+                    { id: `filter${prefix}Borrower`, getValue: item => item.nama_peminjam || item.nama || '-' },
+                    { id: `filter${prefix}Date`, getValue: item => item.tanggal || '-' },
+                    { id: `filter${prefix}Status`, type: 'select', getValue: item => item.status_en || getDisplayStatus(item.status, item.status_en) || item.status || '-', defaultLabel: 'All' }
+                ],
+                renderRow: function (item, meta) {
+                    const badgeClass = getStatusBadge(item.status, item.status_en).replace('badge ', '');
+                    const displayStatus = item.status_en || getDisplayStatus(item.status, item.status_en) || item.status || '-';
+                    const borrowerName = item.nama_peminjam || item.nama || '-';
+                    const safeId = TableCardHelper.escapeHtml(item.id || '');
+
+                    return `
+                        <tr>
+                            <td>${meta.rowNumber}</td>
+                            <td>${TableCardHelper.escapeHtml(item.kode || '-')}</td>
+                            <td>${TableCardHelper.escapeHtml(borrowerName)}</td>
+                            <td>${TableCardHelper.escapeHtml(item.tanggal || '-')}</td>
+                            <td><span class="badge ${badgeClass}">${TableCardHelper.escapeHtml(displayStatus)}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${safeId}')">
+                                   Detail
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        function ensureBorrowingTabManagers() {
+            if (Object.keys(borrowingTabManagers).length) return;
+
+            borrowingTabManagers.semua = createBorrowingTabManager('Semua', 'tableSemua', 'userSemuaShowingInfo', 'userSemuaPerPage', 'userSemuaPagination');
+            borrowingTabManagers.menunggu = createBorrowingTabManager('Menunggu', 'tableMenunggu', 'userMenungguShowingInfo', 'userMenungguPerPage', 'userMenungguPagination');
+            borrowingTabManagers.dipinjam = createBorrowingTabManager('Dipinjam', 'tableDipinjam', 'userDipinjamShowingInfo', 'userDipinjamPerPage', 'userDipinjamPagination');
+            borrowingTabManagers.dikembalikan = createBorrowingTabManager('Dikembalikan', 'tableDikembalikan', 'userDikembalikanShowingInfo', 'userDikembalikanPerPage', 'userDikembalikanPagination');
+            borrowingTabManagers.ditolak = createBorrowingTabManager('Ditolak', 'tableDitolak', 'userDitolakShowingInfo', 'userDitolakPerPage', 'userDitolakPagination');
+        }
+
+        function setBorrowingTabsMessage(message, className) {
+            ensureBorrowingTabManagers();
+            Object.values(borrowingTabManagers).forEach(manager => manager.setMessage(message, className));
+        }
+
+        function setBorrowingTabsLoading(message) {
+            ensureBorrowingTabManagers();
+            Object.values(borrowingTabManagers).forEach(manager => manager.setLoading(message));
+        }
 
         // Ambil user ID dari localStorage (hasil login)
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
@@ -638,17 +874,19 @@
 
         // Load data peminjaman dari database untuk user yang login
         function loadDataPeminjaman(dateStart, dateEnd) {
+            ensureBorrowingTabManagers();
             var url = BASE_URL + "/api/peminjaman/get_all.php";
 
             // Add date range parameters if provided
             if (dateStart && dateEnd) {
-                url += "&start_date=" + encodeURIComponent(dateStart) + "&end_date=" + encodeURIComponent(dateEnd);
+                url += "?start_date=" + encodeURIComponent(dateStart) + "&end_date=" + encodeURIComponent(dateEnd);
                 console.log('Loading data with date range:', dateStart, 'to', dateEnd);
             } else {
                 console.log('Loading data without date range');
             }
 
             console.log('Fetching from:', url);
+            setBorrowingTabsLoading('Loading borrowing data...');
 
             fetch(url)
                 .then(res => res.json())
@@ -658,22 +896,12 @@
                         renderTable(res.data);
                     } else {
                         console.error("Error loading data:", res.message);
-                        const emptyMsg = '<tr><td colspan="6" class="text-center text-muted">No borrowing data</td></tr>';
-                        document.getElementById("tableSemua").innerHTML = emptyMsg;
-                        document.getElementById("tableMenunggu").innerHTML = emptyMsg;
-                        document.getElementById("tableDipinjam").innerHTML = emptyMsg;
-                        document.getElementById("tableDikembalikan").innerHTML = emptyMsg;
-                        document.getElementById("tableDitolak").innerHTML = emptyMsg;
+                        setBorrowingTabsMessage('No borrowing data', 'text-muted');
                     }
                 })
                 .catch(error => {
                     console.error("Network error:", error);
-                    const errorMsg = '<tr><td colspan="6" class="text-center text-danger">Failed to load data</td></tr>';
-                    document.getElementById("tableSemua").innerHTML = errorMsg;
-                    document.getElementById("tableMenunggu").innerHTML = errorMsg;
-                    document.getElementById("tableDipinjam").innerHTML = errorMsg;
-                    document.getElementById("tableDikembalikan").innerHTML = errorMsg;
-                    document.getElementById("tableDitolak").innerHTML = errorMsg;
+                    setBorrowingTabsMessage('Failed to load data', 'text-danger');
                 });
         }
 
@@ -1139,6 +1367,8 @@
 
         // Render tabel dengan data dari database - filter berdasarkan status
         function renderTable(data) {
+            ensureBorrowingTabManagers();
+
             // Sort data by ID descending (newest first)
             const sortedData = [...data].sort((a, b) => parseInt(b.id) - parseInt(a.id));
 
@@ -1170,40 +1400,11 @@
                 return s === 'rejected' || se === 'rejected';
             });
 
-            // Render semua tab
-            document.getElementById("tableSemua").innerHTML = renderTableRows(semua);
-            document.getElementById("tableMenunggu").innerHTML = renderTableRows(menunggu);
-            document.getElementById("tableDipinjam").innerHTML = renderTableRows(dipinjam);
-            document.getElementById("tableDikembalikan").innerHTML = renderTableRows(dikembalikan);
-            document.getElementById("tableDitolak").innerHTML = renderTableRows(ditolak);
-        }
-
-        // Helper function to render table rows - status from API (database-driven)
-        function renderTableRows(data) {
-            if (data.length === 0) {
-                return '<tr><td colspan="6" class="text-center">No data</td></tr>';
-            }
-
-            return data.map((item, index) => {
-                // Badge class from API status (no hardcode)
-                const badgeClass = getStatusBadge(item.status, item.status_en).replace('badge ', '');
-                const displayStatus = item.status_en || getDisplayStatus(item.status) || item.status;
-                const borrowerName = item.nama_peminjam || item.nama || '-';
-                return `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.kode}</td>
-            <td>${borrowerName}</td>
-            <td>${item.tanggal}</td>
-            <td><span class="badge ${badgeClass}">${displayStatus}</span></td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${item.id}')">
-                   Detail
-                </button>
-            </td>
-        </tr>
-    `;
-            }).join('');
+            borrowingTabManagers.semua.setData(semua);
+            borrowingTabManagers.menunggu.setData(menunggu);
+            borrowingTabManagers.dipinjam.setData(dipinjam);
+            borrowingTabManagers.dikembalikan.setData(dikembalikan);
+            borrowingTabManagers.ditolak.setData(ditolak);
         }
 
         // Load data saat halaman dimuat

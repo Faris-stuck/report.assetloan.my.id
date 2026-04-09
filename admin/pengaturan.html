@@ -297,24 +297,55 @@
                                     <i class="feather-plus me-1"></i> Create New Role
                                 </button>
                             </div>
-                            <div class="card-body table-responsive">
-                                <table class="table table-bordered table-hover align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="5%">No</th>
-                                            <th width="15%">Role</th>
-                                            <th>Description</th>
-                                            <th width="12%">User Count</th>
-                                            <th width="10%">View</th>
-                                            <th width="10%">Delete</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tabelRoles">
-                                        <tr>
-                                            <td colspan="5" class="text-center text-muted">Loading...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="card-body p-0">
+                                <div class="px-3 pt-3">
+                                    <p class="text-muted fs-12 mb-2" id="roleShowingInfo">Showing 0 entries</p>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr style="background: #3b5998; color: #fff !important;">
+                                                <th width="5%" style="color: #fff !important;">No</th>
+                                                <th width="15%" style="color: #fff !important;">Role</th>
+                                                <th style="color: #fff !important;">Description</th>
+                                                <th width="12%" style="color: #fff !important;">User Count</th>
+                                                <th width="10%" style="color: #fff !important;">View</th>
+                                                <th width="10%" style="color: #fff !important;">Delete</th>
+                                            </tr>
+                                            <tr style="background: #4a69bd;">
+                                                <td></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterRoleName" placeholder="Filter role..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterRoleDescription" placeholder="Filter description..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterRoleUserCount" placeholder="Filter total..."></td>
+                                                <td></td>
+                                                <td></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabelRoles">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fs-12">Show</span>
+                                    <select class="form-select form-select-sm" style="width:75px;" id="rolePerPage">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span class="fs-12">entries</span>
+                                </div>
+                                <nav>
+                                    <ul class="pagination pagination-sm mb-0" id="rolePagination"></ul>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -335,25 +366,58 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="card-body table-responsive">
-                                <table class="table table-bordered table-hover align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="5%">No</th>
-                                            <th>Name</th>
-                                            <th>NRP</th>
-                                            <th>Email</th>
-                                            <th width="14%">Role</th>
-                                            <th width="14%">Registered</th>
-                                            <th width="10%">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="tabelUsers">
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted">Loading...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="card-body p-0">
+                                <div class="px-3 pt-3">
+                                    <p class="text-muted fs-12 mb-2" id="roleUserShowingInfo">Showing 0 entries</p>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle mb-0">
+                                        <thead>
+                                            <tr style="background: #3b5998; color: #fff !important;">
+                                                <th width="5%" style="color: #fff !important;">No</th>
+                                                <th style="color: #fff !important;">Name</th>
+                                                <th style="color: #fff !important;">NRP</th>
+                                                <th style="color: #fff !important;">Email</th>
+                                                <th width="14%" style="color: #fff !important;">Role</th>
+                                                <th width="14%" style="color: #fff !important;">Registered</th>
+                                                <th width="10%" style="color: #fff !important;">Action</th>
+                                            </tr>
+                                            <tr style="background: #4a69bd;">
+                                                <td></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterUserName" placeholder="Filter name..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterUserNrp" placeholder="Filter NRP..."></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterUserEmail" placeholder="Filter email..."></td>
+                                                <td></td>
+                                                <td><input type="text" class="form-control form-control-sm border-0"
+                                                        id="filterUserRegistered" placeholder="Filter date..."></td>
+                                                <td></td>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tabelUsers">
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted">Loading...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="fs-12">Show</span>
+                                    <select class="form-select form-select-sm" style="width:75px;" id="roleUserPerPage">
+                                        <option value="10">10</option>
+                                        <option value="25">25</option>
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                    </select>
+                                    <span class="fs-12">entries</span>
+                                </div>
+                                <nav>
+                                    <ul class="pagination pagination-sm mb-0" id="roleUserPagination"></ul>
+                                </nav>
                             </div>
                         </div>
                     </div>
@@ -501,6 +565,7 @@
     <!--! BEGIN: Apps Init  !-->
     <script src="../assets/js/common-init.min.js"></script>
     <script src="../assets/js/dashboard-init.min.js"></script>
+    <script src="../assets/js/utils/helper.js"></script>
     <!--! END: Apps Init !-->
 
     <script>
@@ -509,6 +574,7 @@
         let modalListUser = null;
         let modalTambahRole = null;
         let allRolesData = []; // Store loaded roles from database
+        let allRoleUsersData = [];
 
         // Store pending action data for confirmations
         let pendingChangeRoleData = null;
@@ -531,8 +597,77 @@
             return (role || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
 
+        const roleTableManager = TableCardHelper.createClientTableManager({
+            tbodyId: 'tabelRoles',
+            showingInfoId: 'roleShowingInfo',
+            perPageId: 'rolePerPage',
+            paginationId: 'rolePagination',
+            colspan: 6,
+            noDataMessage: 'No role data',
+            filters: [
+                { id: 'filterRoleName', getValue: item => getRoleLabel(item.role || '-') },
+                { id: 'filterRoleDescription', getValue: item => item.deskripsi || '-' },
+                { id: 'filterRoleUserCount', getValue: item => String(item.jumlah_user || 0) }
+            ],
+            renderRow: function (item, meta) {
+                return `
+                    <tr>
+                        <td class="text-center">${meta.rowNumber}</td>
+                        <td><span class="badge bg-${item.badge_color || 'secondary'} fs-12">${TableCardHelper.escapeHtml(getRoleLabel(item.role || '-'))}</span></td>
+                        <td class="text-muted">${TableCardHelper.escapeHtml(item.deskripsi || '-')}</td>
+                        <td class="text-center"><span class="fw-bold">${TableCardHelper.escapeHtml(item.jumlah_user || 0)}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-primary" onclick="lihatUserByRole('${escapeJs(item.role)}')">
+                                <i class="me-1"></i>View
+                            </button>
+                        </td>
+                        <td class="text-center">
+                            ${item.is_protected ? '<span class="text-muted fs-11"><i class="feather-lock me-1"></i>Default</span>' : `<button class="btn btn-sm btn-outline-danger" onclick="hapusRole('${escapeJs(item.role)}')">
+                                <i class="feather-trash-2 me-1"></i>Delete
+                            </button>`}
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+
+        const roleUserTableManager = TableCardHelper.createClientTableManager({
+            tbodyId: 'tabelUsers',
+            showingInfoId: 'roleUserShowingInfo',
+            perPageId: 'roleUserPerPage',
+            paginationId: 'roleUserPagination',
+            colspan: 7,
+            noDataMessage: 'No users found',
+            filters: [
+                { id: 'filterRole', type: 'select', noPopulate: true, getValue: item => item.role || '-', defaultLabel: 'All Roles' },
+                { id: 'filterUserName', getValue: item => item.nama || '-' },
+                { id: 'filterUserNrp', getValue: item => item.nrp || '-' },
+                { id: 'filterUserEmail', getValue: item => item.email || '-' },
+                { id: 'filterUserRegistered', getValue: item => formatDate(item.created_at) || '-' }
+            ],
+            renderRow: function (item, meta) {
+                return `
+                    <tr>
+                        <td class="text-center">${meta.rowNumber}</td>
+                        <td>${TableCardHelper.escapeHtml(item.nama || '-')}</td>
+                        <td><code>${TableCardHelper.escapeHtml(item.nrp || '-')}</code></td>
+                        <td>${TableCardHelper.escapeHtml(item.email || '-')}</td>
+                        <td><span class="badge bg-${getRoleBadge(item.role)}">${TableCardHelper.escapeHtml(getRoleLabel(item.role || '-'))}</span></td>
+                        <td>${TableCardHelper.escapeHtml(formatDate(item.created_at))}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-warning" onclick="editRole(${item.id}, '${escapeJs(item.nama)}', '${escapeJs(item.nrp)}', '${escapeJs(item.role)}')">
+                                <i class="feather-edit-2"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+
         // ─── Load Role List ────────────────────────────────
         function loadRoles() {
+            roleTableManager.setLoading('Loading...');
+
             fetch(API_ROLES + '?action=list')
                 .then(r => {
                     if (r.status === 403) { window.location.href = '../index.html'; throw new Error('Unauthorized'); }
@@ -542,32 +677,12 @@
                     if (!res.status) throw new Error(res.message || 'Failed to load data');
 
                     allRolesData = res.data;
-                    const tbody = document.getElementById('tabelRoles');
 
                     if (allRolesData.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No role data</td></tr>';
+                        roleTableManager.setMessage('No role data', 'text-muted');
                         return;
                     }
-
-                    tbody.innerHTML = allRolesData.map((item, i) => {
-                        return `
-                        <tr>
-                            <td class="text-center">${i + 1}</td>
-                            <td><span class="badge bg-${item.badge_color || 'secondary'} fs-12">${getRoleLabel(item.role)}</span></td>
-                            <td class="text-muted">${item.deskripsi || '-'}</td>
-                            <td class="text-center"><span class="fw-bold">${item.jumlah_user}</span></td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary" onclick="lihatUserByRole('${item.role}')">
-                                    <i class="me-1"></i>View
-                                </button>
-                            </td>
-                            <td class="text-center">
-                                ${item.is_protected ? '<span class="text-muted fs-11"><i class="feather-lock me-1"></i>Default</span>' : `<button class="btn btn-sm btn-outline-danger" onclick="hapusRole('${item.role}')">
-                                    <i class="feather-trash-2 me-1"></i>Delete
-                                </button>`}
-                            </td>
-                        </tr>`;
-                    }).join('');
+                    roleTableManager.setData(allRolesData);
 
                     // Update filter role dropdown dynamically
                     updateFilterRoleOptions();
@@ -576,24 +691,26 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    document.getElementById('tabelRoles').innerHTML =
-                        '<tr><td colspan="6" class="text-center text-danger">Failed to load data: ' + err.message + '</td></tr>';
+                    roleTableManager.setError('Failed to load data: ' + err.message);
                 });
         }
 
         // ─── Update filter & edit role dropdowns dynamically ──
         function updateFilterRoleOptions() {
             const sel = document.getElementById('filterRole');
+            if (!sel) return;
             const currentVal = sel.value;
             sel.innerHTML = '<option value="">All Roles</option>';
             allRolesData.forEach(r => {
                 sel.innerHTML += `<option value="${r.role}">${getRoleLabel(r.role)}</option>`;
             });
             sel.value = currentVal;
+            roleUserTableManager.render();
         }
 
         function updateEditRoleOptions() {
             const sel = document.getElementById('editRoleBaru');
+            if (!sel) return;
             sel.innerHTML = '';
             allRolesData.forEach(r => {
                 sel.innerHTML += `<option value="${r.role}">${getRoleLabel(r.role)}</option>`;
@@ -601,49 +718,31 @@
         }
 
         // ─── Load Users (optionally filtered by role) ────
-        function loadUsers(role) {
-            let url = API_ROLES + '?action=users';
-            if (role) url += '&role=' + encodeURIComponent(role);
+        function loadUsers() {
+            roleUserTableManager.setLoading('Loading...');
 
-            fetch(url)
+            fetch(API_ROLES + '?action=users')
                 .then(r => {
                     if (r.status === 403) { window.location.href = '../index.html'; throw new Error('Unauthorized'); }
                     return r.json();
                 })
                 .then(res => {
                     if (!res.status) throw new Error(res.message || 'Failed to load data');
-                    renderUsersTable(res.data);
+                    allRoleUsersData = res.data || [];
+                    renderUsersTable(allRoleUsersData);
                 })
                 .catch(err => {
                     console.error(err);
-                    document.getElementById('tabelUsers').innerHTML =
-                        '<tr><td colspan="7" class="text-center text-danger">Failed to load data: ' + err.message + '</td></tr>';
+                    roleUserTableManager.setError('Failed to load data: ' + err.message);
                 });
         }
 
         function renderUsersTable(data) {
-            const tbody = document.getElementById('tabelUsers');
-
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users found</td></tr>';
+                roleUserTableManager.setMessage('No users found', 'text-muted');
                 return;
             }
-
-            tbody.innerHTML = data.map((item, i) => `
-                <tr>
-                    <td class="text-center">${i + 1}</td>
-                    <td>${item.nama}</td>
-                    <td><code>${item.nrp}</code></td>
-                    <td>${item.email}</td>
-                    <td><span class="badge bg-${getRoleBadge(item.role)}">${getRoleLabel(item.role)}</span></td>
-                    <td>${formatDate(item.created_at)}</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-warning" onclick="editRole(${item.id}, '${escapeJs(item.nama)}', '${item.nrp}', '${item.role}')">
-                            <i class="feather-edit-2"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            roleUserTableManager.setData(data);
         }
 
         // ─── View Users by Role (modal) ──────────────────
@@ -719,11 +818,11 @@
             fetch(API_ROLES, { method: 'POST', body: fd, credentials: 'same-origin' })
                 .then(r => r.json())
                 .then(res => {
-                    alert(res.message || (res.status ? 'Success' : 'Failed'));
+                        alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
                         if (modalUbahRole) modalUbahRole.hide();
                         loadRoles();
-                        loadUsers(document.getElementById('filterRole').value);
+                        loadUsers();
                     }
                 })
                 .catch(() => alert('Connection failed'));
@@ -783,7 +882,7 @@
                     if (res.status) {
                         if (modalTambahRole) modalTambahRole.hide();
                         loadRoles();
-                        loadUsers(document.getElementById('filterRole').value);
+                        loadUsers();
                     }
                 })
                 .catch(() => alert('Connection failed'));
@@ -819,7 +918,7 @@
                     alert(res.message || (res.status ? 'Success' : 'Failed'));
                     if (res.status) {
                         loadRoles();
-                        loadUsers(document.getElementById('filterRole').value);
+                        loadUsers();
                     }
                 })
                 .catch(() => alert('Connection failed'));
@@ -845,7 +944,8 @@
             } else {
                 label.style.display = 'none';
             }
-            loadUsers(this.value);
+            roleUserTableManager.state.currentPage = 1;
+            roleUserTableManager.render();
         });
 
         // ─── Init ────────────────────────────────────────
@@ -862,7 +962,7 @@
             }
 
             loadRoles();
-            loadUsers('');
+            loadUsers();
         });
     </script>
 

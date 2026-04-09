@@ -325,23 +325,62 @@
                                 <span>Back</span>
                             </a>
                         </div>
-                        <div class="card-body table-responsive">
-                            <table class="table table-bordered align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Loan Code</th>
-                                        <th>Borrower Name</th>
-                                        <th>NRP</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabelPeminjaman">
-                                    <!-- Data akan dimuat secara dinamis dari database -->
-                                </tbody>
-                            </table>
+                        <div class="card-body p-0">
+                            <div class="px-3 pt-3">
+                                <p class="text-muted fs-12 mb-2" id="borrowingShowingInfo">Showing 0 entries</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered align-middle mb-0">
+                                    <thead>
+                                        <tr style="background: #3b5998; color: #fff !important;">
+                                            <th style="color: #fff !important;">No</th>
+                                            <th style="color: #fff !important;">Loan Code</th>
+                                            <th style="color: #fff !important;">Borrower Name</th>
+                                            <th style="color: #fff !important;">NRP</th>
+                                            <th style="color: #fff !important;">Date</th>
+                                            <th style="color: #fff !important;">Status</th>
+                                            <th style="color: #fff !important;">Action</th>
+                                        </tr>
+                                        <tr style="background: #4a69bd;">
+                                            <td></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowingLoanCode" placeholder="Filter loan code..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowingBorrower" placeholder="Filter borrower..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowingNrp" placeholder="Filter NRP..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowingDate" placeholder="Filter date..."></td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterBorrowingStatus">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabelPeminjaman">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4 text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12">Show</span>
+                                <select class="form-select form-select-sm" style="width:75px;" id="borrowingPerPage">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="fs-12">entries</span>
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="borrowingPagination"></ul>
+                            </nav>
                         </div>
                     </div>
                     <!-- [ Borrowing Data Table ] end -->
@@ -530,6 +569,7 @@
     <!--! BEGIN: Apps Init  !-->
     <script src="../../assets/js/common-init.min.js"></script>
     <script src="../../assets/js/dashboard-init.min.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
     <!--! END: Apps Init !-->
 
 
@@ -538,6 +578,7 @@
         // Global variables for date range
         let startDate = null;
         let endDate = null;
+        let borrowingTableManager = null;
 
         // Load data peminjaman dari database dengan optional date filtering
         function loadDataPeminjaman(start = null, end = null) {
@@ -552,6 +593,10 @@
             }
 
             console.log('Fetching from:', url);
+
+            if (borrowingTableManager) {
+                borrowingTableManager.setLoading('Loading borrowing data...');
+            }
 
             fetch(url)
                 .then(res => {
@@ -568,14 +613,16 @@
                         renderTable(res.data);
                     } else {
                         console.error("Error loading data:", res.message);
-                        document.getElementById("tabelPeminjaman").innerHTML =
-                            '<tr><td colspan="7" class="text-center text-warning">No data found for selected date range</td></tr>';
+                        if (borrowingTableManager) {
+                            borrowingTableManager.setMessage('No data found for selected date range', 'text-warning');
+                        }
                     }
                 })
                 .catch(error => {
                     console.error("Network error:", error);
-                    document.getElementById("tabelPeminjaman").innerHTML =
-                        '<tr><td colspan="7" class="text-center text-danger">Connection error: ' + error.message + '</td></tr>';
+                    if (borrowingTableManager) {
+                        borrowingTableManager.setError('Connection error: ' + error.message);
+                    }
                 });
         }
 
@@ -700,6 +747,61 @@
         // Initialize modal and form
         document.addEventListener('DOMContentLoaded', function () {
             console.log('Page loaded - checking libraries...');
+
+            borrowingTableManager = TableCardHelper.createClientTableManager({
+                tbodyId: 'tabelPeminjaman',
+                showingInfoId: 'borrowingShowingInfo',
+                perPageId: 'borrowingPerPage',
+                paginationId: 'borrowingPagination',
+                colspan: 7,
+                noDataMessage: 'No borrowing data for selected date range',
+                filters: [
+                    { id: 'filterBorrowingLoanCode', getValue: item => item.kode || '-' },
+                    { id: 'filterBorrowingBorrower', getValue: item => item.nama || '-' },
+                    { id: 'filterBorrowingNrp', getValue: item => item.nrp || '-' },
+                    { id: 'filterBorrowingDate', getValue: item => item.tanggal || '-' },
+                    { id: 'filterBorrowingStatus', type: 'select', getValue: item => item.status_en || item.status || '-', defaultLabel: 'All' }
+                ],
+                renderRow: function (item, meta) {
+                    let badgeClass = "bg-secondary";
+
+                    if (item.status === "Waiting for Approval") badgeClass = "bg-warning";
+                    else if (item.status === "Approved") badgeClass = "bg-info";
+                    else if (item.status === "Borrowed") badgeClass = "bg-primary";
+                    else if (item.status === "Overdue" || item.status === "Due Today") badgeClass = "bg-danger";
+                    else if (item.status && item.status.startsWith("Due")) badgeClass = "bg-warning text-dark";
+                    else if (item.status === "Returned") badgeClass = "bg-success";
+                    else if (item.status === "Rejected") badgeClass = "bg-danger";
+                    else if (item.status === "Partially Returned") badgeClass = 'bg-warning text-dark';
+                    else if (item.status === "Return in Process") badgeClass = "bg-info text-dark";
+                    else if (item.status === "Partial Approved") badgeClass = "bg-info";
+                    else if (item.status === "Cancelled") badgeClass = "bg-danger";
+
+                    const displayStatus = item.status_en || item.status || '-';
+                    const safeLoanCode = borrowingTableManager.escapeHtml(item.kode || '-');
+                    const safeBorrower = borrowingTableManager.escapeHtml(item.nama || '-');
+                    const safeNrp = borrowingTableManager.escapeHtml(item.nrp || '-');
+                    const safeDate = borrowingTableManager.escapeHtml(item.tanggal || '-');
+                    const safeStatus = borrowingTableManager.escapeHtml(displayStatus);
+                    const safeId = borrowingTableManager.escapeHtml(item.id || '');
+
+                    return `
+                        <tr>
+                            <td>${meta.rowNumber}</td>
+                            <td>${safeLoanCode}</td>
+                            <td>${safeBorrower}</td>
+                            <td>${safeNrp}</td>
+                            <td>${safeDate}</td>
+                            <td><span class="badge ${badgeClass}">${safeStatus}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${safeId}')">
+                                    Detail
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
 
             // Check if jQuery and required libraries are loaded
             if (typeof jQuery === 'undefined') {
@@ -1087,48 +1189,16 @@
         // Render tabel dengan data dari database
         function renderTable(data) {
             console.log('renderTable called with', data.length, 'rows');
-            const tbody = document.getElementById("tabelPeminjaman");
+
+            if (!borrowingTableManager) return;
 
             if (!data || data.length === 0) {
                 console.log('No data to display');
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-warning">No borrowing data for selected date range</td></tr>';
+                borrowingTableManager.setMessage('No borrowing data for selected date range', 'text-warning');
                 return;
             }
 
-            console.log('Generating HTML for', data.length, 'rows');
-            tbody.innerHTML = data.map((item, index) => {
-                let badgeClass = "bg-secondary";
-
-                // Simple status-to-badge mapping
-                if (item.status === "Waiting for Approval") badgeClass = "bg-warning";
-                else if (item.status === "Approved") badgeClass = "bg-info";
-                else if (item.status === "Borrowed") badgeClass = "bg-primary";
-                else if (item.status === "Overdue" || item.status === "Due Today") badgeClass = "bg-danger";
-                else if (item.status && item.status.startsWith("Due")) badgeClass = "bg-warning text-dark";
-                else if (item.status === "Returned") badgeClass = "bg-success";
-                else if (item.status === "Rejected") badgeClass = "bg-danger";
-                else if (item.status === "Partially Returned") badgeClass = 'bg-warning text-dark';
-                else if (item.status === "Return in Process") badgeClass = "bg-info text-dark";
-                else if (item.status === "Partial Approved") badgeClass = "bg-info";
-                else if (item.status === "Cancelled") badgeClass = "bg-danger";
-
-                const displayStatus = item.status_en || item.status;
-                return `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${item.kode}</td>
-            <td>${item.nama}</td>
-            <td>${item.nrp}</td>
-            <td>${item.tanggal}</td>
-            <td><span class="badge ${badgeClass}">${displayStatus}</span></td>
-            <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="lihatDetail('${item.id}')">
-                   Detail
-                </button>
-            </td>
-        </tr>
-    `;
-            }).join('');
+            borrowingTableManager.setData(data);
             console.log('Table rendering completed');
         }
 

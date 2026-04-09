@@ -147,18 +147,22 @@
                     <div class="card-header">
                         <h5 class="card-title">Return Requests (Waiting Inspection)</h5>
                     </div>
-                    <div class="card-body table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Return Code</th>
-                                    <th>Borrow Code</th>
-                                    <th>Borrower</th>
-                                    <th>NRP</th>
-                                    <th>Submitted At</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
+                    <div class="card-body p-0">
+                        <div class="px-3 pt-3">
+                            <p class="text-muted fs-12 mb-2" id="picReturnShowingInfo">Showing 0 entries</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead>
+                                    <tr style="background: #3b5998; color: #fff !important;">
+                                        <th style="color: #fff !important;">Return Code</th>
+                                        <th style="color: #fff !important;">Borrow Code</th>
+                                        <th style="color: #fff !important;">Borrower</th>
+                                        <th style="color: #fff !important;">NRP</th>
+                                        <th style="color: #fff !important;">Submitted At</th>
+                                        <th style="color: #fff !important;">Status</th>
+                                        <th style="color: #fff !important;">Action</th>
+                                    </tr>
                                 <tr style="background: #4a69bd;">
                                     <td><input type="text" class="form-control form-control-sm border-0" id="filterReturnCode" placeholder="Filter code..." oninput="applyReturnFilters()"></td>
                                     <td><input type="text" class="form-control form-control-sm border-0" id="filterBorrowCode" placeholder="Filter code..." oninput="applyReturnFilters()"></td>
@@ -174,7 +178,23 @@
                                     <td colspan="7" class="text-center text-muted">Loading...</td>
                                 </tr>
                             </tbody>
-                        </table>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-12">Show</span>
+                            <select class="form-select form-select-sm" style="width:75px;" id="picReturnPerPage">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span class="fs-12">entries</span>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="picReturnPagination"></ul>
+                        </nav>
                     </div>
                 </div>
 
@@ -192,19 +212,23 @@
                             </select>
                         </div>
                     </div>
-                    <div class="card-body table-responsive">
-                        <table class="table table-bordered table-hover">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Borrow Code</th>
-                                    <th>Borrower</th>
-                                    <th>NRP</th>
-                                    <th>Current Return</th>
-                                    <th>Requested Date</th>
-                                    <th>Reason</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
+                    <div class="card-body p-0">
+                        <div class="px-3 pt-3">
+                            <p class="text-muted fs-12 mb-2" id="picExtendShowingInfo">Showing 0 entries</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead>
+                                    <tr style="background: #3b5998; color: #fff !important;">
+                                        <th style="color: #fff !important;">Borrow Code</th>
+                                        <th style="color: #fff !important;">Borrower</th>
+                                        <th style="color: #fff !important;">NRP</th>
+                                        <th style="color: #fff !important;">Current Return</th>
+                                        <th style="color: #fff !important;">Requested Date</th>
+                                        <th style="color: #fff !important;">Reason</th>
+                                        <th style="color: #fff !important;">Status</th>
+                                        <th style="color: #fff !important;">Action</th>
+                                    </tr>
                                 <tr style="background: #4a69bd;">
                                     <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendBorrowCode" placeholder="Filter code..." oninput="applyExtendFilters()"></td>
                                     <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendBorrower" placeholder="Filter borrower..." oninput="applyExtendFilters()"></td>
@@ -221,7 +245,23 @@
                                     <td colspan="8" class="text-center text-muted">Loading...</td>
                                 </tr>
                             </tbody>
-                        </table>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-12">Show</span>
+                            <select class="form-select form-select-sm" style="width:75px;" id="picExtendPerPage">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span class="fs-12">entries</span>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="picExtendPagination"></ul>
+                        </nav>
                     </div>
                 </div>
             </div>
@@ -239,6 +279,7 @@
     <script>if (typeof RoleValidator !== 'undefined') RoleValidator.requirePicBarang();</script>
     <script src="../../assets/vendors/js/vendors.min.js"></script>
     <script src="../../assets/js/common-init.min.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
 
     <!-- Modal: Inspeksi Pengembalian -->
     <div class="modal fade" id="modalInspeksi" tabindex="-1" aria-hidden="true">
@@ -337,6 +378,128 @@
         let currentPengembalianId = null;
         let modalInspeksi = null;
         let pendingInspeksiData = null;
+        let returnRequestTableManager = null;
+        let extendRequestTableManager = null;
+
+        function getReturnStatusBadge(status) {
+            const statusText = status || '-';
+            const normalized = statusText.toString().toLowerCase();
+
+            if (normalized.includes('pending') || normalized === 'submitted') {
+                return `<span class="badge bg-warning text-dark">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized.includes('partially')) {
+                return `<span class="badge bg-warning text-dark">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized === 'completed') {
+                return `<span class="badge bg-success text-white">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized === 'rejected') {
+                return `<span class="badge bg-danger">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized === 'being inspected') {
+                return `<span class="badge bg-info text-dark">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+
+            return `<span class="badge bg-secondary">${TableCardHelper.escapeHtml(statusText)}</span>`;
+        }
+
+        function getExtendStatusBadge(status) {
+            if (status === 'Pending') return '<span class="badge bg-warning text-dark">Pending</span>';
+            if (status === 'Approved') return '<span class="badge bg-success">Approved</span>';
+            if (status === 'Rejected') return '<span class="badge bg-danger">Rejected</span>';
+            return `<span class="badge bg-secondary">${TableCardHelper.escapeHtml(status || '-')}</span>`;
+        }
+
+        function initPicTableManagers() {
+            if (!returnRequestTableManager) {
+                returnRequestTableManager = TableCardHelper.createClientTableManager({
+                    tbodyId: 'table-pengembalian',
+                    showingInfoId: 'picReturnShowingInfo',
+                    perPageId: 'picReturnPerPage',
+                    paginationId: 'picReturnPagination',
+                    colspan: 7,
+                    noDataMessage: 'No return request waiting inspection',
+                    filters: [
+                        { id: 'filterReturnCode', getValue: item => item.kode_pengembalian || '-' },
+                        { id: 'filterBorrowCode', getValue: item => item.kode_peminjaman || '-' },
+                        { id: 'filterBorrower', getValue: item => item.nama_peminjam || '-' },
+                        { id: 'filterReturnNrp', getValue: item => item.nrp || '-' },
+                        { id: 'filterSubmittedAt', getValue: item => item.diajukan_at_f || '-' },
+                        { id: 'filterReturnStatus', type: 'select', getValue: item => item.display_status_en || item.display_status || item.status_pengembalian || item.status_peminjaman || '-', defaultLabel: 'All' }
+                    ],
+                    renderRow: function (item) {
+                        const status = item.display_status_en || item.display_status || item.status_pengembalian || item.status_peminjaman || '-';
+
+                        return `
+                            <tr>
+                                <td><code>${TableCardHelper.escapeHtml(item.kode_pengembalian || '-')}</code></td>
+                                <td><code>${TableCardHelper.escapeHtml(item.kode_peminjaman || '-')}</code></td>
+                                <td>${TableCardHelper.escapeHtml(item.nama_peminjam || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.nrp || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.diajukan_at_f || '-')}</td>
+                                <td>${getReturnStatusBadge(status)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="openInspeksi('${TableCardHelper.escapeHtml(item.pengembalian_id || '')}')">Inspect</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+
+            if (!extendRequestTableManager) {
+                extendRequestTableManager = TableCardHelper.createClientTableManager({
+                    tbodyId: 'table-extend',
+                    showingInfoId: 'picExtendShowingInfo',
+                    perPageId: 'picExtendPerPage',
+                    paginationId: 'picExtendPagination',
+                    colspan: 8,
+                    noDataMessage: 'No extend requests',
+                    filters: [
+                        { id: 'filterExtendBorrowCode', getValue: item => item.kode_peminjaman || '-' },
+                        { id: 'filterExtendBorrower', getValue: item => item.nama_peminjam || '-' },
+                        { id: 'filterExtendNrp', getValue: item => item.nrp || '-' },
+                        { id: 'filterCurrentReturn', getValue: item => item.tanggal_kembali_sekarang || '-' },
+                        { id: 'filterRequestedDate', getValue: item => item.tanggal_perpanjang || '-' },
+                        { id: 'filterReason', getValue: item => item.alasan || '-' },
+                        { id: 'filterExtendStatus', type: 'select', getValue: item => item.extend_status || '-', defaultLabel: 'All' }
+                    ],
+                    renderRow: function (item) {
+                        let actionHtml = '';
+                        if (item.extend_status === 'Pending') {
+                            actionHtml = `
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-sm btn-success" onclick="approveExtend('${TableCardHelper.escapeHtml(item.extend_id || '')}')" title="Approve">
+                                        <i class="feather-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectExtend('${TableCardHelper.escapeHtml(item.extend_id || '')}')" title="Reject">
+                                        <i class="feather-x"></i> Reject
+                                    </button>
+                                </div>`;
+                        } else {
+                            actionHtml = `<span class="text-muted small">${TableCardHelper.escapeHtml(item.approved_by_nama ? 'By: ' + item.approved_by_nama : '-')}</span>`;
+                            if (item.approved_at) {
+                                actionHtml += `<br><span class="text-muted small">${TableCardHelper.escapeHtml(item.approved_at)}</span>`;
+                            }
+                        }
+
+                        return `
+                            <tr>
+                                <td><code>${TableCardHelper.escapeHtml(item.kode_peminjaman || '-')}</code></td>
+                                <td>${TableCardHelper.escapeHtml(item.nama_peminjam || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.nrp || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.tanggal_kembali_sekarang || '-')}</td>
+                                <td><strong>${TableCardHelper.escapeHtml(item.tanggal_perpanjang || '-')}</strong></td>
+                                <td><small>${TableCardHelper.escapeHtml(item.alasan || '-')}</small></td>
+                                <td>${getExtendStatusBadge(item.extend_status || '-')}</td>
+                                <td>${actionHtml}</td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+        }
 
         function formatRupiah(n) {
             const num = Number(n || 0);
@@ -360,21 +523,13 @@
         }
 
         function removeRowFromTable(pengembalianId) {
-            const row = document.querySelector(`tr[data-pengembalian-id="${pengembalianId}"]`);
-            if (row) {
-                row.style.opacity = '0.5';
-                row.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => {
-                    row.remove();
-                    const tbody = document.getElementById('table-pengembalian');
-                    if (tbody.querySelectorAll('tr').length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No return request waiting inspection</td></tr>';
-                    }
-                }, 300);
-            }
+            setTimeout(loadPengembalian, 300);
         }
 
         function loadPengembalian() {
+            initPicTableManagers();
+            returnRequestTableManager.setLoading('Loading...');
+
             // Fetch only completely new returns (Diajukan), not ones being examined (Dicek) or finalized (Selesai)
             fetch(API + '/list.php?status=Submitted', { credentials: 'same-origin' })
                 .then(r => {
@@ -390,42 +545,17 @@
                             window.location.href = BASE_URL + '/index.html';
                             return;
                         }
-                        document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="7" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
+                        returnRequestTableManager.setError(res.message || 'Failed');
                         return;
                     }
                     const list = res.data || [];
-                    const tbody = document.getElementById('table-pengembalian');
                     if (list.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No return request waiting inspection</td></tr>';
+                        returnRequestTableManager.setMessage('No return request waiting inspection', 'text-muted');
                         return;
                     }
-                    tbody.innerHTML = list.map(p => {
-                        const status = p.display_status_en || p.display_status || p.status_pengembalian || p.status_peminjaman || '-';
-                        const s = (status || '').toString().toLowerCase();
-                        let badge = `<span class="badge bg-secondary">${status}</span>`;
-                        if (s.includes('pending') || s === 'submitted') badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s.includes('partially')) badge = `<span class="badge bg-warning text-dark">${status}</span>`;
-                        else if (s === 'completed') badge = `<span class="badge bg-success text-white">${status}</span>`;
-                        else if (s === 'rejected') badge = `<span class="badge bg-danger">${status}</span>`;
-                        else if (s === 'being inspected') badge = `<span class="badge bg-info text-dark">${status}</span>`;
-                        return `
-                        <tr data-pengembalian-id="${p.pengembalian_id}">
-                            <td><code>${p.kode_pengembalian}</code></td>
-                            <td><code>${p.kode_peminjaman}</code></td>
-                            <td>${p.nama_peminjam}</td>
-                            <td>${p.nrp}</td>
-                            <td>${p.diajukan_at_f}</td>
-                            <td>${badge}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary btn-inspeksi" data-id="${p.pengembalian_id}">Inspect</button>
-                            </td>
-                        </tr>
-                    `}).join('');
-                    document.querySelectorAll('.btn-inspeksi').forEach(btn => {
-                        btn.addEventListener('click', () => openInspeksi(btn.getAttribute('data-id')));
-                    });
+                    returnRequestTableManager.setData(list);
                 })
-                .catch(() => document.getElementById('table-pengembalian').innerHTML = '<tr><td colspan="7" class="text-danger">Connection error</td></tr>');
+                .catch(() => returnRequestTableManager.setError('Connection error'));
         }
 
         function openInspeksi(pengembalianId) {
@@ -642,21 +772,13 @@
         const API_EXTEND = BASE_URL + '/api/extend';
 
         function removeExtendRow(extendId) {
-            const row = document.querySelector(`tr[data-extend-id="${extendId}"]`);
-            if (row) {
-                row.style.opacity = '0.5';
-                row.style.transition = 'opacity 0.3s ease';
-                setTimeout(() => {
-                    row.remove();
-                    const tbody = document.getElementById('table-extend');
-                    if (tbody.querySelectorAll('tr').length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No extend requests</td></tr>';
-                    }
-                }, 300);
-            }
+            setTimeout(loadExtendRequests, 300);
         }
 
         function loadExtendRequests() {
+            initPicTableManagers();
+            extendRequestTableManager.setLoading('Loading...');
+
             const filterStatus = document.getElementById('extendFilter').value;
             const url = API_EXTEND + '/list.php' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
 
@@ -669,53 +791,19 @@
                     return r.json();
                 })
                 .then(res => {
-                    const tbody = document.getElementById('table-extend');
                     if (!res.status) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-danger">' + (res.message || 'Failed') + '</td></tr>';
+                        extendRequestTableManager.setError(res.message || 'Failed');
                         return;
                     }
                     const list = res.data || [];
                     if (list.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No extend requests</td></tr>';
+                        extendRequestTableManager.setMessage('No extend requests', 'text-muted');
                         return;
                     }
-                    tbody.innerHTML = list.map(e => {
-                        let badge = '';
-                        if (e.extend_status === 'Pending') badge = '<span class="badge bg-warning text-dark">Pending</span>';
-                        else if (e.extend_status === 'Approved') badge = '<span class="badge bg-success">Approved</span>';
-                        else if (e.extend_status === 'Rejected') badge = '<span class="badge bg-danger">Rejected</span>';
-
-                        let actionHtml = '';
-                        if (e.extend_status === 'Pending') {
-                            actionHtml = `
-                                <div class="d-flex gap-2 justify-content-center">
-                                    <button class="btn btn-sm btn-success" onclick="approveExtend(${e.extend_id})" title="Approve">
-                                        <i class="feather-check"></i> Approve
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" onclick="rejectExtend(${e.extend_id})" title="Reject">
-                                        <i class="feather-x"></i> Reject
-                                    </button>
-                                </div>`;
-                        } else {
-                            actionHtml = `<span class="text-muted small">${e.approved_by_nama ? 'By: ' + e.approved_by_nama : '-'}</span>`;
-                            if (e.approved_at) actionHtml += `<br><span class="text-muted small">${e.approved_at}</span>`;
-                        }
-
-                        return `
-                        <tr data-extend-id="${e.extend_id}">
-                            <td><code>${e.kode_peminjaman}</code></td>
-                            <td>${e.nama_peminjam}</td>
-                            <td>${e.nrp}</td>
-                            <td>${e.tanggal_kembali_sekarang}</td>
-                            <td><strong>${e.tanggal_perpanjang}</strong></td>
-                            <td><small>${e.alasan || '-'}</small></td>
-                            <td>${badge}</td>
-                            <td>${actionHtml}</td>
-                        </tr>`;
-                    }).join('');
+                    extendRequestTableManager.setData(list);
                 })
                 .catch(err => {
-                    document.getElementById('table-extend').innerHTML = '<tr><td colspan="8" class="text-danger">Connection error</td></tr>';
+                    extendRequestTableManager.setError('Connection error');
                 });
         }
 
@@ -750,60 +838,15 @@
         }
 
         function applyReturnFilters() {
-            const filterReturnCode = document.getElementById('filterReturnCode').value.toLowerCase();
-            const filterBorrowCode = document.getElementById('filterBorrowCode').value.toLowerCase();
-            const filterBorrower = document.getElementById('filterBorrower').value.toLowerCase();
-            const filterReturnNrp = document.getElementById('filterReturnNrp').value.toLowerCase();
-            const filterSubmittedAt = document.getElementById('filterSubmittedAt').value.toLowerCase();
-
-            const tbody = document.getElementById('table-pengembalian');
-            const rows = tbody.querySelectorAll('tr');
-
-            rows.forEach(row => {
-                const returnCode = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
-                const borrowCode = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-                const borrower = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
-                const nrp = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
-                const submittedAt = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
-
-                const matches = returnCode.includes(filterReturnCode) &&
-                    borrowCode.includes(filterBorrowCode) &&
-                    borrower.includes(filterBorrower) &&
-                    nrp.includes(filterReturnNrp) &&
-                    submittedAt.includes(filterSubmittedAt);
-
-                row.style.display = matches ? '' : 'none';
-            });
+            if (!returnRequestTableManager) return;
+            returnRequestTableManager.state.currentPage = 1;
+            returnRequestTableManager.render();
         }
 
         function applyExtendFilters() {
-            const filterBorrowCode = document.getElementById('filterExtendBorrowCode').value.toLowerCase();
-            const filterBorrower = document.getElementById('filterExtendBorrower').value.toLowerCase();
-            const filterNrp = document.getElementById('filterExtendNrp').value.toLowerCase();
-            const filterCurrentReturn = document.getElementById('filterCurrentReturn').value.toLowerCase();
-            const filterRequestedDate = document.getElementById('filterRequestedDate').value.toLowerCase();
-            const filterReason = document.getElementById('filterReason').value.toLowerCase();
-
-            const tbody = document.getElementById('table-extend');
-            const rows = tbody.querySelectorAll('tr');
-
-            rows.forEach(row => {
-                const borrowCode = row.querySelector('td:nth-child(1)')?.textContent.toLowerCase() || '';
-                const borrower = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-                const nrp = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
-                const currentReturn = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
-                const requestedDate = row.querySelector('td:nth-child(5)')?.textContent.toLowerCase() || '';
-                const reason = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase() || '';
-
-                const matches = borrowCode.includes(filterBorrowCode) &&
-                    borrower.includes(filterBorrower) &&
-                    nrp.includes(filterNrp) &&
-                    currentReturn.includes(filterCurrentReturn) &&
-                    requestedDate.includes(filterRequestedDate) &&
-                    reason.includes(filterReason);
-
-                row.style.display = matches ? '' : 'none';
-            });
+            if (!extendRequestTableManager) return;
+            extendRequestTableManager.state.currentPage = 1;
+            extendRequestTableManager.render();
         }
 
         document.addEventListener('DOMContentLoaded', loadExtendRequests);

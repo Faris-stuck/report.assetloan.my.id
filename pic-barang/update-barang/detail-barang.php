@@ -275,28 +275,68 @@ if ($id <= 0) {
                             <h6 class="mb-0">Borrower List</h6>
                         </div>
 
-                        <div class="card-body table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Name</th>
-                                        <th>NRP</th>
-                                        <th>Qty Borrowed</th>
-                                        <th>Borrow Date</th>
-                                        <th>Due Date</th>
-                                        <th>Status</th>
-                                        <th>Return Condition</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabelPeminjam">
-                                    <tr>
-                                        <td colspan="8" class="text-center text-muted">
-                                            No data
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div class="card-body p-0">
+                            <div class="px-3 pt-3">
+                                <p class="text-muted fs-12 mb-2" id="borrowerCardShowingInfo">Showing 0 entries</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered align-middle mb-0">
+                                    <thead>
+                                        <tr style="background: #3b5998; color: #fff !important;">
+                                            <th style="color: #fff !important;">No</th>
+                                            <th style="color: #fff !important;">Name</th>
+                                            <th style="color: #fff !important;">NRP</th>
+                                            <th style="color: #fff !important;">Qty Borrowed</th>
+                                            <th style="color: #fff !important;">Borrow Date</th>
+                                            <th style="color: #fff !important;">Due Date</th>
+                                            <th style="color: #fff !important;">Status</th>
+                                            <th style="color: #fff !important;">Return Condition</th>
+                                        </tr>
+                                        <tr style="background: #4a69bd;">
+                                            <td></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardName" placeholder="Filter name..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardNrp" placeholder="Filter NRP..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardQty" placeholder="Filter qty..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardDate" placeholder="Filter date..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardDueDate" placeholder="Filter date..."></td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterBorrowCardStatus">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardCondition" placeholder="Filter condition..."></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabelPeminjam">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">
+                                                No data
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12">Show</span>
+                                <select class="form-select form-select-sm" style="width:75px;" id="borrowerCardPerPage">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="fs-12">entries</span>
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="borrowerCardPagination"></ul>
+                            </nav>
                         </div>
                     </div>
 
@@ -556,6 +596,7 @@ if ($id <= 0) {
     <!--! END: Apps Init -->
     <!-- KONEKSI KE API.JS -->
     <script src="../../assets/js/config/api.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
     <!-- DETAIL BARANG JS (shared with admin) -->
     <script src="../../assets/js/barang/detail-barang.js"></script>
 
