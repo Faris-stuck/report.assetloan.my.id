@@ -5,10 +5,10 @@
         "build": "vite build",
         "dev": "vite",
         "lint": "eslint resources/js vite.config.js tailwind.config.js tailwind.config.ts eslint.config.js",
-        "format": "prettier --write .",
-        "format:check": "prettier --check .",
+        "format": "prettier --write --ignore-unknown README.md AGENTS.md 'docs/**/*.md' resources/js vite.config.js tailwind.config.js tailwind.config.ts eslint.config.js prettier.config.js tsconfig.json package.json .prettierignore",
+        "format:check": "prettier --check --ignore-unknown README.md AGENTS.md 'docs/**/*.md' resources/js vite.config.js tailwind.config.js tailwind.config.ts eslint.config.js prettier.config.js tsconfig.json package.json .prettierignore",
         "test": "php artisan test",
-        "test:docker": "docker run --rm -v $PWD:/var/www/html -w /var/www/html laporin-app:20260730-083131 sh -lc 'php artisan test --no-ansi'"
+        "test:docker": "docker run --rm -v $PWD:/var/www/html -w /var/www/html ${LAPORIN_TEST_IMAGE:-laporin-app:latest} sh -lc 'php artisan test --no-ansi'"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",

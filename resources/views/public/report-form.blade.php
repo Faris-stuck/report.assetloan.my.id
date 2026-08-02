@@ -167,7 +167,7 @@
 
         {{-- No. HP wajib, email opsional --}}
         <div class="col-md-6">
-            <label class="form-label required" for="reporter_phone">No. HP <span class="text-danger">*</span></label>
+            <label class="form-label required" for="reporter_phone">No. HP</label>
             <input id="reporter_phone" name="reporter_phone" value="{{ old('reporter_phone') }}" class="form-control" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
             <div id="reporter_phone_help" class="helper-text">Nomor HP wajib diisi. Gunakan 8-15 digit.</div>
         </div>
@@ -215,14 +215,14 @@
 
         {{-- FIELD UNIVERSAL: Judul --}}
         <div class="col-md-8">
-            <label class="form-label required" for="title">Judul <span class="text-danger">*</span></label>
+            <label class="form-label required" for="title">Judul</label>
             <input id="title" name="title" value="{{ old('title') }}" class="form-control" required maxlength="200"
                 :placeholder="type==='violation' ? 'Contoh: Perundungan di Lab Komputer' : 'Contoh: Lampu kelas X Mati'">
         </div>
 
         {{-- FIELD UNIVERSAL: Urgensi --}}
         <div class="col-md-4">
-            <label class="form-label required" for="urgency">Tingkat Urgensi <span class="text-danger">*</span></label>
+            <label class="form-label required" for="urgency">Tingkat Urgensi</label>
             <select id="urgency" name="urgency" class="form-select" required>
                 @foreach(['rendah','sedang','tinggi','darurat'] as $urgency)
                     <option value="{{ $urgency }}" @selected(old('urgency','sedang') === $urgency)>
@@ -245,7 +245,7 @@
                             <input id="alleged_actor_name" name="alleged_actor_name" value="{{ old('alleged_actor_name') }}" class="form-control" maxlength="150" placeholder="Isi jika diketahui" :disabled="type!=='violation'">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label required" for="related_class_id">Kelas Pelaku <span class="text-danger">*</span></label>
+                            <label class="form-label required" for="related_class_id">Kelas Pelaku</label>
                             <select id="related_class_id" name="related_class_id" class="form-select" :required="type==='violation'" :disabled="type!=='violation'">
                                 <option value="">Pilih kelas</option>
                                 @include('public.partials.class-options', ['selectedClassId' => old('related_class_id')])
@@ -266,7 +266,7 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="description">Kronologi <span class="text-danger">*</span></label>
+                            <label class="form-label required" for="description">Kronologi</label>
                             <textarea id="description" name="description" class="form-control" rows="5" required maxlength="5000"
                                 placeholder="Jelaskan apa yang terjadi, kapan, di mana, dan siapa saja yang terlibat."
                                 :disabled="type!=='violation'">{{ old('description') }}</textarea>
@@ -285,7 +285,7 @@
                     <h3 class="h6 fw-bold mb-3">Detail Kerusakan</h3>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label required" for="item_name">Nama Barang / Fasilitas <span class="text-danger">*</span></label>
+                            <label class="form-label required" for="item_name">Nama Barang / Fasilitas</label>
                             <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" :required="type==='damage'" :disabled="type!=='damage'">
                         </div>
                         <div class="col-md-4">
@@ -314,7 +314,7 @@
                             <input id="custom_location_damage" name="custom_location" value="{{ old('custom_location') }}" class="form-control" maxlength="150" placeholder="Contoh: Koridor Lantai 2" :disabled="type!=='damage'">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label required" for="damage_condition">Kondisi Kerusakan <span class="text-danger">*</span></label>
+                            <label class="form-label required" for="damage_condition">Kondisi Kerusakan</label>
                             <textarea id="damage_condition" name="damage_condition" class="form-control" rows="4" placeholder="Jelaskan bagian yang rusak dan kondisi terakhir" maxlength="2000" :required="type==='damage'" :disabled="type!=='damage'">{{ old('damage_condition') }}</textarea>
                         </div>
                         <div class="col-md-6">
@@ -322,7 +322,7 @@
                             <textarea id="suspected_cause" name="suspected_cause" class="form-control" rows="4" placeholder="Isi jika penyebab diketahui" maxlength="1000" :disabled="type!=='damage'">{{ old('suspected_cause') }}</textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="description_damage">Deskripsi Dampak <span class="text-danger">*</span></label>
+                            <label class="form-label required" for="description_damage">Deskripsi Dampak</label>
                             <textarea id="description_damage" name="description" class="form-control" rows="4" required maxlength="5000" placeholder="Jelaskan dampak kerusakan bagi kegiatan belajar atau operasional." :disabled="type!=='damage'">{{ old('description') }}</textarea>
                         </div>
                     </div>
