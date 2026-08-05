@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\ReportNote;
 use App\Models\ReportStatusHistory;
+use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -12,6 +13,7 @@ use Illuminate\View\View;
 
 class TrackingController extends Controller
 {
+    use ReportNotificationTrait;
     private const TRACKING_SESSION_TTL_SECONDS = 1800;
 
     public function form(): View
@@ -70,16 +72,20 @@ class TrackingController extends Controller
 
         if ($report->status !== 'dibuka_kembali') {
             $old = $report->status;
+            $note = $old === 'menunggu_konfirmasi'
+                ? 'Pelapor memberi catatan bahwa laporan belum selesai dan perlu ditindaklanjuti kembali.'
+                : 'Pelapor menambahkan informasi yang diminta.';
+
             $report->update(['status' => 'dibuka_kembali']);
             ReportStatusHistory::create([
                 'report_id' => $report->id,
                 'actor_type' => 'reporter',
                 'previous_status' => $old,
                 'new_status' => 'dibuka_kembali',
-                'public_note' => $old === 'menunggu_konfirmasi'
-                    ? 'Pelapor memberi catatan bahwa laporan belum selesai dan perlu ditindaklanjuti kembali.'
-                    : 'Pelapor menambahkan informasi yang diminta.',
+                'public_note' => $note,
             ]);
+
+            $this->kirimNotifikasiStatus($report, $this->statusLabel('dibuka_kembali'), $note);
         }
 
         return back()->with('status', 'Informasi tambahan dikirim.');
@@ -99,13 +105,16 @@ class TrackingController extends Controller
 
         $old = $report->status;
         $report->update(['status' => 'selesai']);
+        $publicNote = 'Pelapor mengonfirmasi selesai.';
         ReportStatusHistory::create([
             'report_id' => $report->id,
             'actor_type' => 'reporter',
             'previous_status' => $old,
             'new_status' => 'selesai',
-            'public_note' => 'Pelapor mengonfirmasi selesai.',
+            'public_note' => $publicNote,
         ]);
+
+        $this->kirimNotifikasiStatus($report, $this->statusLabel('selesai'), $publicNote);
 
         return back()->with('status', 'Laporan dikonfirmasi selesai.');
     }

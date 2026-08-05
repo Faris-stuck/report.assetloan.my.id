@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
+use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use Illuminate\View\View;
 
 class SarprasController extends Controller
 {
+    use ReportNotificationTrait;
     private const PROCESSABLE_STATUSES = ['menunggu_verifikasi', 'memerlukan_informasi', 'dibuka_kembali', 'sedang_ditangani'];
 
     public function index(): View
@@ -86,15 +88,18 @@ class SarprasController extends Controller
                 'assigned_to_role' => 'sarpras',
             ]);
 
+            $publicNote = $done ? 'Perbaikan selesai.' : 'Perbaikan dijadwalkan.';
             ReportStatusHistory::create([
                 'report_id' => $lockedReport->id,
                 'changed_by_user_id' => $request->user()->id,
                 'actor_type' => 'sarpras',
                 'previous_status' => $old,
                 'new_status' => $new,
-                'public_note' => $done ? 'Perbaikan selesai.' : 'Perbaikan dijadwalkan.',
+                'public_note' => $publicNote,
                 'internal_note' => $data['note'] ?? null,
             ]);
+
+            $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel($new), $publicNote);
         });
 
         return back()->with('status', 'Laporan kerusakan diproses.');
@@ -126,15 +131,18 @@ class SarprasController extends Controller
                 'status' => 'ditolak',
                 'rejection_reason' => $data['reason'],
             ]);
+            $publicNote = 'Laporan kerusakan ditolak oleh Sarpras.';
             ReportStatusHistory::create([
                 'report_id' => $lockedReport->id,
                 'changed_by_user_id' => $request->user()->id,
                 'actor_type' => 'sarpras',
                 'previous_status' => $old,
                 'new_status' => 'ditolak',
-                'public_note' => 'Laporan kerusakan ditolak oleh Sarpras.',
+                'public_note' => $publicNote,
                 'internal_note' => $data['reason'],
             ]);
+
+            $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel('ditolak'), $publicNote);
         });
 
         return back()->with('status', 'Laporan kerusakan ditolak.');

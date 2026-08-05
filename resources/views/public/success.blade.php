@@ -38,6 +38,12 @@
 
                 <p id="copy-status" class="visually-hidden" role="status" aria-live="polite"></p>
 
+                @if(session('notification_message'))
+                    <div class="alert alert-info mt-4 text-start" role="alert">
+                        {{ session('notification_message') }}
+                    </div>
+                @endif
+
                 <div class="alert alert-warning mt-4 text-start" role="alert">
                     <strong>⛔ Tidak dapat mengirim laporan baru dari sesi ini.</strong><br>
                     <span class="small">Untuk membuat laporan baru, buka <a href="{{ url('/') }}" class="alert-link">halaman utama LAPORIN</a> di tab baru.</span>

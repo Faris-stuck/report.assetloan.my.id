@@ -34,9 +34,9 @@ Produksi memakai MariaDB/MySQL. Test suite memakai SQLite in-memory melalui `php
 
 ## Nomor Laporan
 
-Format: `LPRYYYYMM####`.
-Contoh: `LPR2026071234`.
-Empat digit terakhir dibuat acak dan dicek unik di transaksi.
+Format: `LAP-XXXXXX-XXXXXX`.
+Contoh: `LAP-2H7K9M-Q4Z8BJ`.
+Dua segmen 6 karakter dibuat acak dari alfabet tanpa huruf yang mudah tertukar, dan dicek unik di dalam transaksi.
 
 ## Migration Notes
 

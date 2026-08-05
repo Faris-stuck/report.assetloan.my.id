@@ -18,7 +18,7 @@ LAPORIN adalah kanal resmi untuk menerima dan memproses laporan warga sekolah. F
 
 1. Pelapor membuka form publik atau QR lokasi/kelas.
 2. Pelapor mengisi identitas, jenis laporan, detail kejadian, bukti, consent, dan CAPTCHA.
-3. Sistem membuat nomor laporan `LPRYYYYMM####` dan kode akses 6 digit.
+3. Sistem membuat nomor laporan `LAP-XXXXXX-XXXXXX` dan kode akses 6 digit.
 4. Laporan diarahkan ke `kesiswaan` atau `sarpras`.
 5. Petugas memproses, menolak, meminta informasi tambahan, atau menyelesaikan laporan.
 6. Pelapor melacak status memakai nomor laporan dan kode akses.

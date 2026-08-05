@@ -100,16 +100,24 @@ class PublicReportController extends Controller
             ]);
         }
 
-        [$report, $accessCode] = $this->createReportWithRandomNumber($request, $validated);
+        [$report, $accessCode, $notificationSent] = $this->createReportWithRandomNumber($request, $validated);
 
         // === ANTI-DUPLIKAT: kosongkan token SEBELUM redirect ===
         session()->forget(['math_captcha_answer', 'report_submit_token']);
         $request->session()->regenerateToken();
 
-        return redirect()
+        $redirect = redirect()
             ->route('public.report.success', $report->public_token)
             ->with('access_code', $accessCode)
             ->with('success_report_id', $report->id);
+
+        if ($report->reporter_email) {
+            $redirect = $redirect->with('notification_message', $notificationSent
+                ? "Notifikasi email konfirmasi laporan telah dikirim ke {$report->reporter_email}. Silakan cek kotak masuk atau folder spam jika tidak terlihat dalam beberapa menit."
+                : "Permintaan notifikasi email gagal dikirim ke {$report->reporter_email}. Laporan tetap diterima dan nomor laporan + kode akses sudah dapat digunakan untuk pelacakan.");
+        }
+
+        return $redirect;
     }
 
     public function success(Report $report): View|RedirectResponse
@@ -166,10 +174,9 @@ class PublicReportController extends Controller
 
                     $this->history($report, null, $report->status, 'Laporan diterima sistem.');
 
-                    // === KIRIM EMAIL NOTIFIKASI (log driver) ===
-                    $this->kirimNotifikasiEmail($report, $accessCode);
+                    $notificationSent = $this->kirimNotifikasiEmail($report, $accessCode);
 
-                    return [$report, $accessCode];
+                    return [$report, $accessCode, $notificationSent];
                 });
             } catch (QueryException $exception) {
                 if ($this->isReportIdentifierCollision($exception)) {
@@ -217,16 +224,15 @@ class PublicReportController extends Controller
         ];
     }
 
-    private function kirimNotifikasiEmail(Report $report, string $accessCode): void
+    private function kirimNotifikasiEmail(Report $report, string $accessCode): bool
     {
         $email = $report->reporter_email;
         if (! $email) {
-            return;
+            return false;
         }
 
         try {
-            // Menggunakan log driver: email masuk ke storage/logs/mail.log
-            Mail::mailer('log')->send(
+            Mail::send(
                 'emails.laporan-diterima',
                 [
                     'report' => $report,
@@ -241,12 +247,16 @@ class PublicReportController extends Controller
                         ->from(config('mail.from.address', 'noreply@laporin.sch.id'), config('mail.from.name', 'LAPORIN'));
                 }
             );
+
+            return true;
         } catch (\Throwable $e) {
             // Jangan fail-kan submission kalau email gagal
             Log::error('Gagal kirim email notifikasi laporan: '.$e->getMessage(), [
                 'report_id' => $report->id,
                 'email' => $email,
             ]);
+
+            return false;
         }
     }
 
@@ -258,7 +268,7 @@ class PublicReportController extends Controller
         }
 
         try {
-            Mail::mailer('log')->send(
+            Mail::send(
                 'emails.status-perubahan',
                 [
                     'report' => $report,

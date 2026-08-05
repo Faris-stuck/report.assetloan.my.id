@@ -24,7 +24,7 @@
 
 1. `GET /` membuat token submit session dan CAPTCHA.
 2. `POST /lapor` validasi payload, CAPTCHA, dan token form bila ada.
-3. Transaksi DB membuat `reports`, detail domain, lampiran, histori status, dan email log.
+3. Transaksi DB membuat `reports`, detail domain, lampiran, histori status, dan email log. Nomor laporan dibuat sebagai `LAP-XXXXXX-XXXXXX`.
 4. Arahkan ke halaman sukses dengan nomor laporan dan kode akses.
 
 ## Alur Penempatan

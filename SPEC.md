@@ -346,7 +346,7 @@ Hasil di `storage/logs/laravel.log`:
 [2026-07-30 10:15:00] local.INFO: Emailqueued {#1234
   "mailer": "log",
   "to": ["pelapor@email.com"],
-  "subject": "LAPORIN — Laporan LPR2026070001 Diterima",
+  "subject": "LAPORIN — Laporan LAP-2H7K9M-Q4Z8BJ Diterima",
   "body": "..."
 }
 ```

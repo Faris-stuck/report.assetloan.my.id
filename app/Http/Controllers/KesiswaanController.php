@@ -7,6 +7,7 @@ use App\Models\ReportStatusHistory;
 use App\Models\Student;
 use App\Models\StudentViolation;
 use App\Models\ViolationType;
+use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use Illuminate\View\View;
 
 class KesiswaanController extends Controller
 {
+    use ReportNotificationTrait;
     private const PROCESSABLE_STATUSES = ['menunggu_verifikasi', 'memerlukan_informasi', 'dibuka_kembali'];
 
     public function index(): View
@@ -83,17 +85,21 @@ class KesiswaanController extends Controller
                 'assigned_to_role' => 'kesiswaan',
             ]);
 
+            $publicNote = $existingViolation
+                ? 'Laporan pelanggaran ditindaklanjuti kembali tanpa memotong poin dua kali.'
+                : 'Laporan pelanggaran diverifikasi dan sedang ditangani.';
+
             ReportStatusHistory::create([
                 'report_id' => $lockedReport->id,
                 'changed_by_user_id' => $request->user()->id,
                 'actor_type' => 'kesiswaan',
                 'previous_status' => $old,
                 'new_status' => 'sedang_ditangani',
-                'public_note' => $existingViolation
-                    ? 'Laporan pelanggaran ditindaklanjuti kembali tanpa memotong poin dua kali.'
-                    : 'Laporan pelanggaran diverifikasi dan sedang ditangani.',
+                'public_note' => $publicNote,
                 'internal_note' => $data['note'] ?? null,
             ]);
+
+            $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel('sedang_ditangani'), $publicNote);
         });
 
         return back()->with('status', 'Pelanggaran diproses dan poin siswa dikurangi otomatis.');
@@ -121,6 +127,8 @@ class KesiswaanController extends Controller
             'internal_note' => $data['reason'],
         ]);
 
+        $this->kirimNotifikasiStatus($report, $this->statusLabel('ditolak'), 'Laporan ditolak.');
+
         return back();
     }
 
@@ -146,15 +154,18 @@ class KesiswaanController extends Controller
             }
 
             $lockedReport->update(['status' => 'menunggu_konfirmasi']);
+            $publicNote = 'Kesiswaan menyelesaikan tindak lanjut dan meminta konfirmasi pelapor.';
             ReportStatusHistory::create([
                 'report_id' => $lockedReport->id,
                 'changed_by_user_id' => $request->user()->id,
                 'actor_type' => 'kesiswaan',
                 'previous_status' => 'sedang_ditangani',
                 'new_status' => 'menunggu_konfirmasi',
-                'public_note' => 'Kesiswaan menyelesaikan tindak lanjut dan meminta konfirmasi pelapor.',
+                'public_note' => $publicNote,
                 'internal_note' => $data['note'] ?? null,
             ]);
+
+            $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel('menunggu_konfirmasi'), $publicNote);
         });
 
         return back()->with('status', 'Penanganan selesai dan laporan menunggu konfirmasi pelapor.');

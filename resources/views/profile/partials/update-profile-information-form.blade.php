@@ -54,7 +54,7 @@
                 <p
                     x-data="{ show: true }"
                     x-show="show"
-                    x-transition
+                    x-transition.opacity.duration.150
                     x-init="setTimeout(() => show = false, 2000)"
                     class="text-sm text-gray-600"
                 >Tersimpan.</p>
