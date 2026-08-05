@@ -27,7 +27,7 @@ class TrackingController extends Controller
         ]);
 
         $data = $request->validate([
-            'report_number' => ['required', 'string', 'regex:/^LPR[0-9]{10}$/'],
+            'report_number' => ['required', 'string', 'regex:/^(?:LPR[0-9]{10}|LAP-[A-Z2-9]{6}-[A-Z2-9]{6})$/'],
             'access_code' => ['required', 'digits:6'],
         ]);
 
@@ -126,7 +126,7 @@ class TrackingController extends Controller
 
     private function normalizeReportNumber(string $value): string
     {
-        return preg_replace('/[^A-Z0-9]+/', '', strtoupper(trim($value))) ?? '';
+        return preg_replace('/[^A-Z0-9-]+/', '', strtoupper(trim($value))) ?? '';
     }
 
     private function normalizeAccessCode(string $value): string

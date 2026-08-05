@@ -1,10 +1,10 @@
-# CODING_STANDARDS
+# STANDAR KODING
 
 ## PHP dan Laravel
 
 - Ikuti konvensi Laravel 12.
-- Controller boleh mengorkestrasi request, tetapi logic izin taruh di middleware atau policy.
-- Gunakan Eloquent relationship untuk query domain.
+- Controller boleh mengorkestrasi request, tetapi logika izin taruh di middleware atau policy.
+- Gunakan relasi Eloquent untuk query domain.
 - Migration harus aman untuk data produksi dan idempotent bila mengecek kolom/tabel.
 
 ## Blade dan UI
@@ -17,10 +17,10 @@
 ## JavaScript
 
 - Alpine.js hanya untuk state UI ringan.
-- Jangan simpan secret di browser.
+- Jangan simpan rahasia di browser.
 - Jangan buat request baru tanpa CSRF dan validasi server.
 
-## Formatting
+## Pemformatan
 
 - Gunakan `prettier.config.js` untuk JS/TS/JSON/Markdown/CSS.
-- Gunakan `eslint.config.js` untuk JS/TS config dan resource frontend.
+- Gunakan `eslint.config.js` untuk konfigurasi JS/TS dan resource frontend.

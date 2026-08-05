@@ -1,38 +1,38 @@
-# ADR-002: Four Internal Roles with Public Tracking Codes
+# ADR-002: Empat Role Internal dengan Kode Pelacakan Publik
 
 ## Status
 
-Accepted
+Diterima
 
-## Date
+## Tanggal
 
 2026-08-02
 
-## Context
+## Konteks
 
-The app has two identity modes: public reporters without login, and internal school users with role-based access. Legacy role names existed but should not retain active access.
+Aplikasi memiliki dua mode identitas: pelapor publik tanpa login, dan pengguna internal sekolah dengan akses berbasis role. Nama role legacy ada, tetapi tidak boleh mempertahankan akses aktif.
 
-## Decision
+## Keputusan
 
-Use four internal roles: `superadmin`, `kesiswaan`, `sarpras`, and `wali_kelas`. Public reporters use a report number and access code for tracking instead of accounts.
+Gunakan empat role internal: `superadmin`, `kesiswaan`, `sarpras`, dan `wali_kelas`. Pelapor publik menggunakan nomor laporan dan kode akses untuk pelacakan daripada akun.
 
-## Alternatives Considered
+## Alternatif yang Dipertimbangkan
 
-### Public Reporter Accounts
+### Akun Pelapor Publik
 
-- Pros: Repeat reporters can see history.
-- Cons: Higher friction, more privacy obligations, and account recovery complexity.
-- Rejected because reports should be easy to submit quickly.
+- Kelebihan: Pelapor berulang bisa melihat riwayat.
+- Kekurangan: Gesekan lebih tinggi, kewajiban privasi lebih banyak, dan kompleksitas pemulihan akun.
+- Ditolak karena laporan harus mudah diajukan dengan cepat.
 
-### Keep Legacy `guru` and `siswa` Roles Active
+### Pertahankan Role `guru` dan `siswa` Lama Aktif
 
-- Pros: Less migration work.
-- Cons: Broader attack surface and unclear permissions.
-- Rejected because access needs to be explicit and minimal.
+- Kelebihan: Pekerjaan migrasi lebih sedikit.
+- Kekurangan: Permukaan serang lebih besar dan izin tidak jelas.
+- Ditolak karena akses perlu eksplisit dan minimal.
 
-## Consequences
+## Konsekuensi
 
-- `wali_kelas` is read-only and scoped to homeroom classes.
-- `kesiswaan` and `sarpras` operate only on their report domains.
-- Legacy `guru` and `siswa` accounts are archived without deleting historical data.
-- Public tracking depends on protecting the 6 digit access code.
+- `wali_kelas` bersifat baca-saja dan dibatasi pada kelas wali.
+- `kesiswaan` dan `sarpras` hanya beroperasi pada domain laporan mereka.
+- Akun legacy `guru` dan `siswa` diarsipkan tanpa menghapus data historis.
+- Pelacakan publik bergantung pada perlindungan kode akses 6 digit.

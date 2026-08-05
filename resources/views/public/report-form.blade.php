@@ -50,7 +50,7 @@
             <div class="laporin-card bg-white h-100">
                 <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">1</span><div><strong>Tanpa login</strong><div class="small-muted">Langsung isi dan kirim.</div></div></div>
                 <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">2</span><div><strong>3 langkah</strong><div class="small-muted">Tidak perlu banyak kolom.</div></div></div>
-                <div class="d-flex gap-3 align-items-start"><span class="menu-icon">3</span><div><strong>Tracking simpel</strong><div class="small-muted">Cek status dengan nomor + kode.</div></div></div>
+                        <div class="d-flex gap-3 align-items-start"><span class="menu-icon">3</span><div><strong>Pelacakan mudah</strong><div class="small-muted">Cek status dengan nomor + kode.</div></div></div>
             </div>
         </div>
     </div>
@@ -82,7 +82,7 @@
         <div class="col-lg-4">
             <div class="d-grid gap-2">
                 <a class="btn btn-outline-laporin" href="{{ route('seo.bullying-guide') }}">Panduan Lapor</a>
-                <a class="btn btn-outline-laporin" href="{{ route('seo.faq') }}">FAQ</a>
+                <a class="btn btn-outline-laporin" href="{{ route('seo.faq') }}">Pertanyaan Umum</a>
             </div>
         </div>
     </div>
@@ -173,9 +173,9 @@
             <div id="reporter_phone_help" class="helper-text">Nomor HP wajib diisi. Gunakan 8-15 digit.</div>
         </div>
         <div class="col-md-6">
-            <label class="form-label" for="reporter_email">Email</label>
-            <input id="reporter_email" type="email" name="reporter_email" value="{{ old('reporter_email') }}" class="form-control" maxlength="150" autocomplete="email" placeholder="Contoh: nama@email.com" aria-describedby="reporter_email_help">
-            <div id="reporter_email_help" class="helper-text">Opsional. Jika diisi, email digunakan untuk notifikasi status laporan.</div>
+            <label class="form-label" for="reporter_email">Surel</label>
+            <input id="reporter_email" type="email" name="reporter_email" value="{{ old('reporter_email') }}" class="form-control" maxlength="150" autocomplete="email" placeholder="Contoh: nama@surel.com" aria-describedby="reporter_email_help">
+            <div id="reporter_email_help" class="helper-text">Opsional. Jika diisi, surel digunakan untuk notifikasi status laporan.</div>
         </div>
     </div>
 </section>
@@ -305,7 +305,7 @@
     {{-- Lampiran dipindah ke step akhir --}}
     <div class="detail-box mb-3">
         <h3 class="h6 fw-bold mb-3">Bukti Foto / Dokumen (Opsional)</h3>
-        <label class="form-label" for="attachments">Upload Bukti</label>
+        <label class="form-label" for="attachments">Unggah Bukti</label>
         <input id="attachments" type="file" name="attachments[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" @change="validateAttachments($event)">
         <div class="helper-text">Maksimal 3 file; JPG, PNG, WEBP, atau PDF; maksimal 4MB per file.</div>
     </div>

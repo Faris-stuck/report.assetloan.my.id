@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title','FAQ LAPORIN SMK Taruna Bangsa Bekasi')
-@section('meta_title','FAQ LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan')
-@section('meta_description','Pertanyaan umum tentang LAPORIN untuk lapor perundungan, pembullyan, pelanggaran siswa, kerusakan fasilitas, dan tracking laporan.')
+@section('title','Pertanyaan Umum LAPORIN SMK Taruna Bangsa Bekasi')
+@section('meta_title','Pertanyaan Umum LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan')
+@section('meta_description','Pertanyaan umum tentang LAPORIN untuk lapor perundungan, pembullyan, pelanggaran siswa, kerusakan fasilitas, dan pelacakan laporan.')
 @section('canonical'){{ route('seo.faq') }}@endsection
 @section('content')
 @php
     $updatedAt = '2026-07-30';
     $faqs = [
         ['q' => 'Apa itu LAPORIN SMK Taruna Bangsa Bekasi?', 'a' => 'LAPORIN adalah sistem pelaporan berbasis web untuk membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara lebih rapi, aman, dan terlacak.'],
-        ['q' => 'Bagaimana cara lapor pembullyan atau perundungan?', 'a' => 'Buka halaman Buat Laporan, pilih Pelanggaran Siswa, isi data pelapor, kronologi, lokasi, waktu kejadian, dan bukti bila ada, lalu kirim laporan. Setelah terkirim, simpan nomor laporan dan kode akses untuk tracking.'],
+        ['q' => 'Bagaimana cara lapor pembullyan atau perundungan?', 'a' => 'Buka halaman Buat Laporan, pilih Pelanggaran Siswa, isi data pelapor, kronologi, lokasi, waktu kejadian, dan bukti bila ada, lalu kirim laporan. Setelah terkirim, simpan nomor laporan dan kode akses untuk pelacakan.'],
         ['q' => 'Apakah laporan kerusakan fasilitas juga bisa dibuat?', 'a' => 'Bisa. Pilih jenis laporan Kerusakan Fasilitas untuk melaporkan kerusakan seperti lampu, meja, kursi, proyektor, AC, toilet, pintu, jaringan, atau instalasi listrik.'],
-        ['q' => 'Bagaimana cara mengecek status laporan?', 'a' => 'Gunakan menu Lacak Laporan. Masukkan nomor laporan dengan format LPRYYYYMM#### dan kode akses 6 digit yang didapat setelah laporan terkirim.'],
+        ['q' => 'Bagaimana cara mengecek status laporan?', 'a' => 'Gunakan menu Lacak Laporan. Masukkan nomor laporan dengan format LPRYYYYMM#### dan kode akses 6 digit yang didapat setelah laporan terkirim untuk pelacakan.'],
         ['q' => 'Siapa yang menangani laporan pelanggaran siswa?', 'a' => 'Laporan pelanggaran siswa diteruskan ke Kesiswaan. Jika perlu tindak lanjut kelas, laporan dapat diteruskan ke Wali Kelas untuk proses konfirmasi pelapor.'],
         ['q' => 'Apa yang terjadi setelah status Menunggu Konfirmasi Pelapor?', 'a' => 'Pelapor dapat mengonfirmasi selesai jika masalah sudah selesai, atau menambahkan informasi jika laporan perlu dibuka kembali.'],
         ['q' => 'Apakah pelapor publik harus login?', 'a' => 'Tidak. Pelapor publik dapat membuat laporan tanpa login. Login hanya digunakan oleh pengelola internal seperti SuperAdmin, Kesiswaan, Sarpras, Wali Kelas, Guru, dan Siswa.'],
-        ['q' => 'Apa bedanya nomor laporan dan kode akses?', 'a' => 'Nomor laporan adalah identitas laporan. Kode akses adalah kode 6 digit untuk membuka halaman tracking laporan. Keduanya harus disimpan dan tidak dibagikan sembarangan.'],
+        ['q' => 'Apa bedanya nomor laporan dan kode akses?', 'a' => 'Nomor laporan adalah identitas laporan. Kode akses adalah kode 6 digit untuk membuka halaman pelacakan laporan. Keduanya harus disimpan dan tidak dibagikan sembarangan.'],
         ['q' => 'Apa yang harus dilakukan jika kejadian bersifat darurat?', 'a' => 'Jika ada ancaman langsung, korban tidak aman, atau membutuhkan bantuan cepat, cari bantuan guru, wali kelas, Kesiswaan, satpam, atau orang dewasa terdekat terlebih dahulu. LAPORIN bisa digunakan setelah kondisi lebih aman.'],
     ];
     $jsonLd = [
@@ -58,14 +58,14 @@
 <nav aria-label="Breadcrumb" class="mb-3">
     <ol class="breadcrumb small mb-0">
         <li class="breadcrumb-item"><a href="{{ route('public.report') }}">Beranda LAPORIN</a></li>
-        <li class="breadcrumb-item active" aria-current="page">FAQ LAPORIN</li>
+        <li class="breadcrumb-item active" aria-current="page">Pertanyaan Umum LAPORIN</li>
     </ol>
 </nav>
 
 <div class="hero-card p-4 p-lg-5 mb-4">
     <div class="hero-content">
-        <span class="page-kicker">FAQ LAPORIN • diperbarui {{ $updatedAt }}</span>
-        <h1 class="page-title display-6 mt-3">FAQ Lapor Perundungan, Pembullyan, Pelanggaran, dan Kerusakan Fasilitas</h1>
+        <span class="page-kicker">Pertanyaan Umum LAPORIN • diperbarui {{ $updatedAt }}</span>
+        <h1 class="page-title display-6 mt-3">Pertanyaan Umum Lapor Perundungan, Pembullyan, Pelanggaran, dan Kerusakan Fasilitas</h1>
         <p class="page-subtitle fs-6">Jawaban singkat untuk warga SMK Taruna Bangsa Bekasi yang ingin memakai LAPORIN dengan benar.</p>
         <div class="d-flex flex-wrap gap-2 mt-4 btn-group-mobile">
             <a class="btn btn-laporin" href="{{ route('public.report') }}#form-laporan">Buat Laporan</a>

@@ -7,6 +7,7 @@ use App\Models\DamageCategory;
 use App\Models\DamageDetail;
 use App\Models\Location;
 use App\Models\QrCode;
+use App\Http\Requests\PublicReportRequest;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
@@ -33,6 +34,11 @@ class PublicReportController extends Controller
         'TITL' => 'Teknik Instalasi Tenaga Listrik',
         'TAV' => 'Teknik Elektronika Audio Video',
     ];
+
+    private const REPORT_NUMBER_PREFIX = 'LAP';
+    private const REPORT_NUMBER_SEGMENT_LENGTH = 6;
+    private const REPORT_NUMBER_RETRY_LIMIT = 10;
+    private const REPORT_NUMBER_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
     public function create(?string $qr = null): View
     {
@@ -76,10 +82,8 @@ class PublicReportController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(PublicReportRequest $request): RedirectResponse
     {
-        // Anti-duplikat untuk submit dari form browser. Direct test/API-style posts
-        // yang tidak membawa token tetap mengandalkan CSRF dan validasi payload.
         $sessionToken = session('report_submit_token');
         $submittedToken = (string) $request->input('report_submit_token', '');
         if ($submittedToken !== '' && (! $sessionToken || ! hash_equals((string) $sessionToken, $submittedToken))) {
@@ -88,79 +92,7 @@ class PublicReportController extends Controller
             ]);
         }
 
-        $validated = $request->validate([
-            'qr_code_id' => ['nullable', Rule::exists('qr_codes', 'id')->where('is_active', true)],
-            'reporter_type' => ['required', Rule::in(['siswa', 'guru', 'staff'])],
-            'reporter_name' => ['required', 'string', 'max:150'],
-            'reporter_class_id' => ['exclude_unless:reporter_type,siswa', 'required', Rule::exists('classes', 'id')->where('is_active', true)],
-            'reporter_absence_number' => ['exclude_unless:reporter_type,siswa', 'nullable', 'integer', 'min:1', 'max:60'],
-            'reporter_subject_id' => ['exclude_unless:reporter_type,guru', 'required', Rule::exists('subjects', 'id')->where('is_active', true)],
-            'reporter_staff_unit_id' => ['exclude_unless:reporter_type,staff', 'required', Rule::exists('staff_units', 'id')->where('is_active', true)],
-            'reporter_phone' => [
-                'required',
-                'string',
-                'max:30',
-                'regex:/^[0-9+() .*\-]+$/',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    $digitCount = strlen(preg_replace('/\D+/', '', (string) $value) ?? '');
-                    $containsMask = str_contains((string) $value, '*');
-                    if ((! $containsMask && $digitCount < 8) || $digitCount > 15) {
-                        $fail('Nomor HP harus berisi 8 sampai 15 digit.');
-                    }
-                },
-            ],
-            'reporter_email' => [
-                'nullable',
-                'email:rfc',
-                'max:150',
-                function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (! filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                        $fail('Format alamat email tidak valid.');
-                    }
-                },
-            ],
-            'report_type' => ['required', Rule::in(['violation', 'damage'])],
-            'title' => ['required', 'string', 'max:200'],
-            // violation step-3 ringkas: hanya 4 field
-            'related_class_id' => ['nullable', 'required_if:report_type,violation', Rule::exists('classes', 'id')->where('is_active', true)],
-            // location & incident_date optional untuk ringkasan violation
-            'location_id' => ['nullable', Rule::exists('locations', 'id')->where('is_active', true)],
-            'custom_location' => ['nullable', 'string', 'max:150'],
-            'incident_date' => ['nullable', 'date', 'before_or_equal:today'],
-            'incident_time' => ['nullable', 'date_format:H:i'],
-            'description' => ['required', 'string', 'max:5000'],
-            'urgency' => ['required', Rule::in(['rendah', 'sedang', 'tinggi', 'darurat'])],
-            // violation extra fields (bukan bagian step-3 ringkas, tetap disimpan jika ada)
-            'reporter_position' => ['exclude_unless:report_type,violation', 'nullable', 'string', 'max:80'],
-            'bullying_type' => ['exclude_unless:report_type,violation', 'nullable', 'string', 'max:80'],
-            'victim_name' => ['exclude_unless:report_type,violation', 'nullable', 'string', 'max:150'],
-            'victim_class_id' => ['exclude_unless:report_type,violation', 'nullable', Rule::exists('classes', 'id')->where('is_active', true)],
-            'alleged_actor_name' => ['exclude_unless:report_type,violation', 'nullable', 'string', 'max:150'],
-            'alleged_actor_class_id' => ['nullable', 'exclude_unless:report_type,violation', Rule::exists('classes', 'id')->where('is_active', true)],
-            'witness_name' => ['exclude_unless:report_type,violation', 'nullable', 'string', 'max:150'],
-            'impact_description' => ['exclude_unless:report_type,violation', 'nullable', 'string', 'max:2000'],
-            // damage fields
-            'item_name' => ['exclude_unless:report_type,damage', 'required', 'string', 'max:150'],
-            'item_category' => ['exclude_unless:report_type,damage', 'nullable', 'string', 'max:100'],
-            'damage_condition' => ['exclude_unless:report_type,damage', 'required', 'string', 'max:2000'],
-            'suspected_cause' => ['exclude_unless:report_type,damage', 'nullable', 'string', 'max:1000'],
-            'priority' => ['exclude_unless:report_type,damage', 'nullable', Rule::in(['rendah', 'sedang', 'tinggi', 'darurat'])],
-            // attachments dipindah ke step terakhir
-            'attachments' => ['nullable', 'array', 'max:3'],
-            'attachments.*' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'mimetypes:image/jpeg,image/png,image/webp,application/pdf', 'max:4096'],
-            'consent' => ['accepted'],
-            'captcha' => ['required', 'integer'],
-        ], [
-            'reporter_phone.required' => 'Nomor HP wajib diisi agar sekolah dapat menghubungi pelapor.',
-            'reporter_phone.regex' => 'Format nomor HP hanya boleh berisi angka, spasi, tanda +, kurung, titik, tanda hubung, atau tanda bintang untuk masking.',
-            'reporter_email.email' => 'Format alamat email tidak valid.',
-            'related_class_id.required_if' => 'Kelas kejadian wajib dipilih untuk laporan perundungan atau pelanggaran.',
-            'title.required' => 'Judul laporan wajib diisi.',
-            'description.required' => 'Kronologi wajib diisi.',
-            'alleged_actor_name.required' => 'Nama pelaku wajib diisi untuk laporan perundungan.',
-            'item_name.required' => 'Nama barang atau fasilitas wajib diisi.',
-            'damage_condition.required' => 'Kondisi kerusakan wajib diisi.',
-        ]);
+        $validated = $request->validated();
 
         if ((int) $validated['captcha'] !== (int) session('math_captcha_answer')) {
             throw ValidationException::withMessages([
@@ -196,7 +128,7 @@ class PublicReportController extends Controller
 
     private function createReportWithRandomNumber(Request $request, array $validated): array
     {
-        for ($attempt = 0; $attempt < 100; $attempt++) {
+        for ($attempt = 0; $attempt < self::REPORT_NUMBER_RETRY_LIMIT; $attempt++) {
             try {
                 return DB::transaction(function () use ($request, $validated) {
                     $accessCode = (string) random_int(100000, 999999);
@@ -204,7 +136,7 @@ class PublicReportController extends Controller
                         $request,
                         $validated,
                         $accessCode,
-                        $this->nextReportNumber()
+                        $this->generateReportNumber()
                     ));
 
                     if ($report->report_type === 'violation') {
@@ -240,14 +172,16 @@ class PublicReportController extends Controller
                     return [$report, $accessCode];
                 });
             } catch (QueryException $exception) {
-                if (! $this->isReportNumberCollision($exception)) {
-                    throw $exception;
+                if ($this->isReportIdentifierCollision($exception)) {
+                    continue;
                 }
+
+                throw $this->convertQueryExceptionToValidationException($exception);
             }
         }
 
         throw ValidationException::withMessages([
-            'report_number' => 'Nomor laporan sedang penuh/sibuk dibuat. Coba kirim ulang beberapa saat lagi.',
+            'report_number' => 'Nomor laporan belum berhasil dibuat. Silakan coba kembali.',
         ]);
     }
 
@@ -271,7 +205,7 @@ class PublicReportController extends Controller
             'related_class_id' => $validated['related_class_id'] ?? null,
             'location_id' => $validated['location_id'] ?? null,
             'custom_location' => $validated['custom_location'] ?? null,
-            'incident_date' => $validated['incident_date'] ?? null,
+            'incident_date' => $validated['incident_date'] ?? now()->toDateString(),
             'incident_time' => $validated['incident_time'] ?? null,
             'description' => $validated['description'],
             'urgency' => $validated['urgency'],
@@ -365,32 +299,104 @@ class PublicReportController extends Controller
         return $request->ip() ?? 'unknown';
     }
 
-    private function nextReportNumber(): string
+    private function generateReportNumber(): string
     {
-        $prefix = 'LPR'.now()->format('Ym');
-
-        for ($attempt = 0; $attempt < 100; $attempt++) {
-            $candidate = $prefix.str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-
-            if (! Report::where('report_number', $candidate)->lockForUpdate()->exists()) {
-                return $candidate;
-            }
-        }
-
-        throw ValidationException::withMessages([
-            'report_number' => 'Nomor laporan sedang penuh/sibuk dibuat. Coba kirim ulang beberapa saat lagi.',
+        return self::REPORT_NUMBER_PREFIX.'-'.implode('-', [
+            $this->randomReportSegment(),
+            $this->randomReportSegment(),
         ]);
     }
 
-    private function isReportNumberCollision(QueryException $exception): bool
+    private function randomReportSegment(): string
     {
+        $segment = '';
+        $alphabetLength = strlen(self::REPORT_NUMBER_ALPHABET);
+
+        for ($i = 0; $i < self::REPORT_NUMBER_SEGMENT_LENGTH; $i++) {
+            $segment .= self::REPORT_NUMBER_ALPHABET[random_int(0, $alphabetLength - 1)];
+        }
+
+        return $segment;
+    }
+
+    private function isReportIdentifierCollision(QueryException $exception): bool
+    {
+        if (! $this->isDuplicateConstraintError($exception)) {
+            return false;
+        }
+
         $message = $exception->getMessage();
 
-        return str_contains($message, 'reports_report_number_unique')
-            || str_contains($message, 'reports.report_number')
-            || str_contains($message, 'report_number')
-            || str_contains($message, 'Duplicate entry')
-            || str_contains($message, 'UNIQUE constraint failed');
+        return preg_match('/(?:reports[_\.](?:report_number|public_token)|report_number|public_token)/i', $message) > 0;
+    }
+
+    private function isDuplicateConstraintError(QueryException $exception): bool
+    {
+        $sqlState = $exception->errorInfo[0] ?? null;
+        $driverCode = $exception->errorInfo[1] ?? null;
+        $message = $exception->getMessage();
+
+        return $sqlState === '23505'
+            || $driverCode === 1062
+            || (str_contains($message, 'UNIQUE constraint failed') && str_contains($message, 'reports.'))
+            || (str_contains($message, 'duplicate key value violates unique constraint'));
+    }
+
+    private function convertQueryExceptionToValidationException(QueryException $exception): ValidationException
+    {
+        if ($this->isForeignKeyViolation($exception)) {
+            return ValidationException::withMessages([
+                'report_number' => 'Pilihan kelas, lokasi, kategori, atau unit tidak lagi tersedia. Muat ulang halaman dan pilih kembali.',
+            ]);
+        }
+
+        if ($this->isDeadlockOrTimeout($exception) || $this->isConnectionIssue($exception)) {
+            return ValidationException::withMessages([
+                'report_number' => 'Sistem sedang mengalami gangguan koneksi. Silakan coba kembali beberapa saat lagi.',
+            ]);
+        }
+
+        return ValidationException::withMessages([
+            'report_number' => 'Laporan belum dapat dikirim karena terjadi kesalahan sistem.',
+        ]);
+    }
+
+    private function isForeignKeyViolation(QueryException $exception): bool
+    {
+        $sqlState = $exception->errorInfo[0] ?? null;
+        $driverCode = $exception->errorInfo[1] ?? null;
+        $message = strtolower($exception->getMessage());
+
+        return $sqlState === '23000' && in_array($driverCode, [1452, 1451, 19], true)
+            || str_contains($message, 'foreign key constraint')
+            || str_contains($message, 'foreign key')
+            || str_contains($message, 'constraint failed');
+    }
+
+    private function isDeadlockOrTimeout(QueryException $exception): bool
+    {
+        $sqlState = $exception->errorInfo[0] ?? null;
+        $driverCode = $exception->errorInfo[1] ?? null;
+        $message = strtolower($exception->getMessage());
+
+        return in_array($driverCode, [1213, 1205, 1206], true)
+            || $sqlState === '40001'
+            || str_contains($message, 'deadlock')
+            || str_contains($message, 'lock wait timeout')
+            || str_contains($message, 'database is locked');
+    }
+
+    private function isConnectionIssue(QueryException $exception): bool
+    {
+        $sqlState = $exception->errorInfo[0] ?? null;
+        $message = strtolower($exception->getMessage());
+
+        return $sqlState === '08006'
+            || $sqlState === '08001'
+            || str_contains($message, 'could not find driver')
+            || str_contains($message, 'connection refused')
+            || str_contains($message, 'server has gone away')
+            || str_contains($message, 'no connection could be made');
     }
 
     private function safeOriginalName(string $name): string

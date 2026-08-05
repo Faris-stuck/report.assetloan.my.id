@@ -1,31 +1,31 @@
-# TESTING
+# PENGUJIAN
 
-## Test Suite
+## Rangkaian Pengujian
 
-Test Laravel berada di `tests/Feature` dan `tests/Unit`.
+Pengujian Laravel berada di `tests/Feature` dan `tests/Unit`.
 
-## Command
+## Perintah
 
 ```bash
 php artisan test
 ```
 
-Jika host PHP tidak punya SQLite driver:
+Jika host PHP tidak punya driver SQLite:
 
 ```bash
 npm run test:docker
 ```
 
-## Coverage Penting
+## Cakupan Penting
 
-- Form publik, validasi, CAPTCHA, nomor laporan, dan success page.
-- Tracking nomor laporan dan kode akses.
-- Role authorization untuk empat role internal.
-- Dashboard role-scoped dan chart bulanan.
-- Kelas per jurusan dan sort natural.
+- Form publik, validasi, CAPTCHA, nomor laporan, dan halaman sukses.
+- Pelacakan nomor laporan dan kode akses.
+- Otorisasi role untuk empat role internal.
+- Dashboard berbasis role dan grafik bulanan.
+- Kelas per jurusan dan urutan natural.
 - SEO publik, robots, sitemap, dan llms.txt.
-- Markup accessibility dasar.
+- Markup aksesibilitas dasar.
 
-## Baseline Terakhir
+## Tolok Ukur Terakhir
 
-Pada audit ini, Docker-backed test suite menghasilkan `48 passed` dengan `1303 assertions`.
+Pada audit ini, suite pengujian berbasis Docker lulus dengan `48 passed` dan `1303 assertions`.

@@ -1,20 +1,20 @@
 # CHANGELOG
 
-## Unreleased
+## Belum Dirilis
 
-### Added
+### Ditambahkan
 
-- Repository documentation set: product, design, architecture, database, API, auth, business rules, coding standards, testing, security, deployment, changelog, and ADRs.
-- Agent instructions in `AGENTS.md`.
-- Strict TypeScript config, ESLint flat config, Prettier config, and Tailwind token mirror.
+- Set dokumentasi repositori: produk, desain, arsitektur, database, API, auth, aturan bisnis, standar kode, pengujian, keamanan, penempatan, changelog, dan ADR.
+- Instruksi agen di `AGENTS.md`.
+- Konfigurasi TypeScript ketat, konfigurasi ESLint flat, konfigurasi Prettier, dan cermin token Tailwind.
 
-### Changed
+### Diubah
 
-- Public report form copy and SEO title aligned with perundungan/pembullyan keywords.
-- Email is optional for reporters, while phone remains required.
-- Docker start script now runs production migrations before Laravel cache warmup.
+- Copy form laporan publik dan judul SEO diselaraskan dengan kata kunci perundungan/pembullyan.
+- Email opsional untuk pelapor, sementara telepon tetap wajib.
+- Script start Docker sekarang menjalankan migrasi produksi sebelum cache Laravel dipanaskan.
 
-### Fixed
+### Diperbaiki
 
-- Docker-backed test suite now passes with the latest source.
-- Public form exposes grouped class selectors consistently for reporter, related class, victim class, and alleged actor class.
+- Suite pengujian berbasis Docker sekarang lulus dengan sumber terbaru.
+- Form publik menampilkan selector kelas tergrup secara konsisten untuk pelapor, kelas terkait, kelas korban, dan kelas terduga pelaku.

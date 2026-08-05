@@ -60,7 +60,7 @@
             @endif
 
             <p style="font-size:13px;color:#666;margin-top:15px;">
-                Untuk melihat detail lengkap danRiwayat status, gunakan fitur Lacak Status dengan nomor laporan dan kode akses Anda.
+                Untuk melihat detail lengkap dan riwayat status, gunakan fitur Lacak Status dengan nomor laporan dan kode akses Anda.
             </p>
         </div>
         <div class="footer">

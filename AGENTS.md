@@ -1,52 +1,52 @@
-# Agent Instructions
+# Instruksi Agen
 
-## Scope
+## Lingkup
 
-- This repository powers `report.assetloan.my.id`, the LAPORIN reporting app for SMK Taruna Bangsa Bekasi.
-- Keep credentials out of git. Use `.env.example` with `[REDACTED]` placeholders only.
-- Prefer Indonesian UI copy. Keep wording short, calm, and actionable.
+- Repositori ini menjalankan `report.assetloan.my.id`, aplikasi pelaporan LAPORIN untuk SMK Taruna Bangsa Bekasi.
+- Jaga kredensial agar tidak masuk git. Gunakan `.env.example` dengan placeholder `[REDACTED]` saja.
+- Utamakan copy UI bahasa Indonesia. Gunakan kata singkat, tenang, dan mudah ditindaklanjuti.
 
-## Stack
+## Tumpukan
 
-| Layer    | Choice                                                 |
-| -------- | ------------------------------------------------------ |
-| Backend  | Laravel 12 on PHP 8.3                                  |
-| Frontend | Blade, Bootstrap 5, Alpine.js, Vite, Tailwind tokens   |
-| Database | MariaDB/MySQL in production, SQLite in automated tests |
-| Runtime  | Docker image `laporin-app:*` on network `cf-network`   |
+| Layer    | Pilihan                                                 |
+| -------- | ------------------------------------------------------- |
+| Backend  | Laravel 12 pada PHP 8.3                                 |
+| Frontend | Blade, Bootstrap 5, Alpine.js, Vite, token Tailwind     |
+| Database | MariaDB/MySQL di produksi, SQLite untuk pengujian otomatis |
+| Runtime  | Docker image `laporin-app:*` di network `cf-network`    |
 
-## Commands
+## Perintah
 
-| Task                | Command                       |
-| ------------------- | ----------------------------- |
-| PHP tests           | `php artisan test`            |
-| Docker-backed tests | `npm run test:docker`         |
-| Frontend build      | `npm run build`               |
-| Lint JS/TS configs  | `npm run lint`                |
-| Format check        | `npm run format:check`        |
-| Run migrations      | `php artisan migrate --force` |
+| Tugas               | Perintah                     |
+| ------------------- | --------------------------- |
+| Test PHP            | `php artisan test`          |
+| Test berbasis Docker| `npm run test:docker`       |
+| Bangun frontend     | `npm run build`             |
+| Lint konfigurasi    | `npm run lint`              |
+| Cek format          | `npm run format:check`      |
+| Jalankan migrasi    | `php artisan migrate --force` |
 
-## References
+## Referensi
 
-| Need          | File                   |
+| Kebutuhan     | File                   |
 | ------------- | ---------------------- |
-| Product scope | `docs/PRODUCT.md`      |
-| UI tokens     | `docs/DESIGN.md`       |
-| Architecture  | `docs/ARCHITECTURE.md` |
+| Ruang produk  | `docs/PRODUCT.md`      |
+| Token UI      | `docs/DESIGN.md`       |
+| Arsitektur    | `docs/ARCHITECTURE.md` |
 | Database      | `docs/DATABASE.md`     |
-| Auth roles    | `docs/AUTH.md`         |
+| Peran auth    | `docs/AUTH.md`         |
 | Deploy        | `docs/DEPLOYMENT.md`   |
-| Decisions     | `docs/DECISIONS/`      |
+| Keputusan     | `docs/DECISIONS/`      |
 
-## Conventions
+## Konvensi
 
-- Do not commit `.env`, `vendor/`, `node_modules/`, `public/build/`, or storage uploads.
-- Run tests in Docker if host PHP lacks `pdo_sqlite`.
-- Public report forms must stay accessible: labels above inputs, helper text below, server errors rendered inline.
-- Role access is allow-list based: `superadmin`, `kesiswaan`, `sarpras`, `wali_kelas`.
-- Migrations must be idempotent and safe for production data.
+- Jangan commit `.env`, `vendor/`, `node_modules/`, `public/build/`, atau upload storage.
+- Jalankan test di Docker jika host PHP tidak memiliki `pdo_sqlite`.
+- Form laporan publik harus tetap dapat diakses: label di atas input, helper text di bawah, error server ditampilkan di dalam form.
+- Akses role berbasis allow-list: `superadmin`, `kesiswaan`, `sarpras`, `wali_kelas`.
+- Migrasi harus idempoten dan aman untuk data produksi.
 
-## Commit Attribution
+## Atribusi Commit
 
-AI commits must include:
+Commit AI harus menyertakan:
 `Co-Authored-By: Hermes Agent <noreply@nousresearch.com>`

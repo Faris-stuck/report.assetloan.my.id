@@ -1,7 +1,7 @@
 @extends('layouts.app')
-@section('title','QR Code')
+@section('title','Kode QR')
 @section('content')
-<div class="page-header"><div><span class="page-kicker">SuperAdmin</span><h1 class="page-title h2 mt-2">Manajemen QR Code</h1><p class="page-subtitle">Buat QR umum, kelas, atau lokasi dengan validasi relasi agar scan langsung membuka form laporan yang tepat.</p></div></div>
+<div class="page-header"><div><span class="page-kicker">SuperAdmin</span><h1 class="page-title h2 mt-2">Manajemen Kode QR</h1><p class="page-subtitle">Buat kode QR umum, kelas, atau lokasi dengan validasi relasi agar scan langsung membuka form laporan yang tepat.</p></div></div>
 <div class="laporin-card mb-4" x-data="{type: @js(old('qr_type','general'))}">
     <h2 class="h5 fw-bold mb-3">Buat QR tervalidasi</h2>
     <form method="POST" action="{{ route('admin.qrcodes.store') }}" class="row g-3 align-items-end">
@@ -16,7 +16,7 @@
 </div>
 <div class="laporin-card">
     <div class="table-responsive"><table class="table"><thead><tr><th>Nama</th><th>Tipe</th><th>URL</th><th>Scan</th><th class="text-end">Aksi</th></tr></thead><tbody>
-        @forelse($qrs as $q)<tr><td><strong>{{ $q->qr_name }}</strong></td><td>{{ $q->qr_type }}</td><td><code>{{ $q->target_url }}</code></td><td>{{ $q->scan_count }}</td><td class="text-end"><a class="btn btn-sm btn-outline-laporin" href="{{ route('admin.qrcodes.download',$q) }}">Download PNG</a><form class="d-inline" method="POST" action="{{ route('admin.qrcodes.deactivate',$q) }}" onsubmit="return confirm('Nonaktifkan QR ini?')">@csrf<button class="btn btn-sm btn-outline-danger" @disabled(! $q->is_active)>Nonaktif</button></form></td></tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">Belum ada QR.</td></tr>@endforelse
+        @forelse($qrs as $q)<tr><td><strong>{{ $q->qr_name }}</strong></td><td>{{ $q->qr_type }}</td><td><code>{{ $q->target_url }}</code></td><td>{{ $q->scan_count }}</td><td class="text-end"><a class="btn btn-sm btn-outline-laporin" href="{{ route('admin.qrcodes.download',$q) }}">Unduh PNG</a><form class="d-inline" method="POST" action="{{ route('admin.qrcodes.deactivate',$q) }}" onsubmit="return confirm('Nonaktifkan QR ini?')">@csrf<button class="btn btn-sm btn-outline-danger" @disabled(! $q->is_active)>Nonaktif</button></form></td></tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">Belum ada QR.</td></tr>@endforelse
     </tbody></table></div><div class="mt-3">{{ $qrs->links() }}</div>
 </div>
 @endsection

@@ -6,7 +6,7 @@ LAPORIN adalah aplikasi pelaporan untuk SMK Taruna Bangsa Bekasi. Aplikasi ini m
 
 - Form laporan publik tanpa login dengan CAPTCHA, nomor laporan, dan kode akses.
 - Tracking laporan publik memakai nomor laporan dan kode akses.
-- Dashboard role-based untuk `superadmin`, `kesiswaan`, `sarpras`, dan `wali_kelas`.
+- Dashboard berbasis role untuk `superadmin`, `kesiswaan`, `sarpras`, dan `wali_kelas`.
 - Manajemen master data, QR Code, lampiran aman, audit log, dan histori status.
 - SEO publik untuk halaman panduan lapor dan FAQ.
 
@@ -22,20 +22,20 @@ npm run build
 php artisan serve
 ```
 
-Jika host PHP tidak punya `pdo_sqlite`, jalankan test melalui Docker:
+Jika host PHP tidak punya `pdo_sqlite`, jalankan pengujian melalui Docker:
 
 ```bash
 npm run test:docker
 ```
 
-## Commands
+## Perintah
 
-| Command                | Fungsi                                |
+| Perintah               | Fungsi                                |
 | ---------------------- | ------------------------------------- |
-| `php artisan test`     | Run test Laravel                      |
-| `npm run test:docker`  | Run test memakai image Docker LAPORIN |
-| `npm run build`        | Build asset Vite produksi             |
-| `npm run lint`         | Lint JS/TS/config frontend            |
+| `php artisan test`     | Jalankan test Laravel                 |
+| `npm run test:docker`  | Jalankan test dengan image Docker LAPORIN |
+| `npm run build`        | Bangun asset Vite produksi            |
+| `npm run lint`         | Lint JS/TS dan konfigurasi frontend   |
 | `npm run format:check` | Cek format Prettier                   |
 
 ## Struktur Penting
@@ -47,8 +47,8 @@ app/Models/                Model domain LAPORIN
 database/migrations/       Skema database
 database/seeders/          Seed role, kelas, master data, dan demo user
 resources/views/           Blade UI publik dan dashboard
-public/css/laporin.css     Design tokens dan style utama
-docs/                      Dokumentasi produk, arsitektur, database, dan deploy
+public/css/laporin.css     Token desain dan gaya utama
+docs/                      Dokumentasi produk, arsitektur, database, dan penempatan
 ```
 
 ## Keamanan Secret

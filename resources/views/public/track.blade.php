@@ -1,14 +1,14 @@
 @extends('layouts.app')
 @section('title','Lacak Laporan LAPORIN')
 @section('meta_title','Lacak Laporan LAPORIN SMK Taruna Bangsa Bekasi')
-@section('meta_description','Lacak status laporan perundungan, pembullyan, pelanggaran siswa, atau kerusakan fasilitas menggunakan nomor laporan dan kode akses.')
+@section('meta_description','Lacak status laporan perundungan, pembullyan, pelanggaran siswa, atau kerusakan fasilitas menggunakan nomor laporan dan kode akses. Pelacakan laporan dibatasi untuk menjaga privasi.')
 @section('canonical'){{ route('track.form') }}@endsection
 @section('content')
 <div class="tracking-shell">
     <section class="tracking-overview" aria-labelledby="tracking-title">
-        <span class="page-kicker">Tracking aman</span>
+        <span class="page-kicker">Pelacakan aman</span>
         <h1 id="tracking-title" class="page-title h2 mt-2">Lacak status laporan</h1>
-        <p class="page-subtitle">Masukkan nomor laporan dan kode akses 6 digit yang muncul setelah laporan terkirim. Data tracking dibatasi agar privasi tetap terjaga.</p>
+        <p class="page-subtitle">Masukkan nomor laporan dan kode akses 6 digit yang muncul setelah laporan terkirim. Data pelacakan dibatasi agar privasi tetap terjaga.</p>
         <div class="laporin-card card-soft mt-4">
             <div class="flowchart compact">
                 <div class="flow-node">Masuk</div>
@@ -20,7 +20,7 @@
     </section>
     <section class="tracking-form-panel" aria-labelledby="tracking-form-title">
         <div class="laporin-card p-4 p-lg-5">
-            <h2 id="tracking-form-title" class="h4 fw-bold mb-1">Form Tracking</h2>
+            <h2 id="tracking-form-title" class="h4 fw-bold mb-1">Formulir Pelacakan</h2>
             <p class="small-muted mb-4">Salin dan tempel nomor laporan serta kode akses dari halaman laporan terkirim.</p>
             <form method="POST" action="{{ route('track.search') }}">
                 @csrf

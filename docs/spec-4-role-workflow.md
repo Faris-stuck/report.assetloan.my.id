@@ -70,13 +70,13 @@ Diagram menampilkan laporan masuk per bulan selama enam bulan terakhir:
 
 Diagram harus responsif, memiliki label dan nilai tekstual yang dapat dibaca screen reader, serta tidak bergantung pada library eksternal baru.
 
-## Acceptance criteria
+## Kriteria Penerimaan
 
 - Hanya empat role dapat dibuat, diaktifkan, atau digunakan untuk otorisasi. Nilai `guru`/`siswa` tetap boleh tersimpan hanya sebagai histori akun nonaktif.
 - Akun legacy tidak hilang dan tidak dapat login.
 - SuperAdmin lolos semua gate internal.
 - Kesiswaan dan Sarpras saling terisolasi berdasarkan jenis laporan.
-- Wali Kelas hanya dapat GET/read laporan kelas kejadian yang diampu; semua POST perubahan ditolak.
+- Wali Kelas hanya dapat GET/baca laporan kelas kejadian yang diampu; semua POST perubahan ditolak.
 - Nomor HP kosong/terlalu pendek/format salah ditolak; input valid tersimpan.
 - Navbar setiap role hanya berisi menu role tersebut.
 - Diagram dashboard memakai data yang telah difilter sesuai role.

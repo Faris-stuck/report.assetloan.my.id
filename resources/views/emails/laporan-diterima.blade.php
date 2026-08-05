@@ -62,7 +62,7 @@
             </div>
 
             <p style="font-size:13px;color:#666;margin-top:15px;">
-                <strong>Cara melacak:</strong> Kunjungi halaman tracking LAPORIN, masukkan nomor laporan dan kode akses di atas.
+                <strong>Cara melacak:</strong> Kunjungi halaman Lacak Laporan LAPORIN, masukkan nomor laporan dan kode akses di atas.
             </p>
         </div>
         <div class="footer">

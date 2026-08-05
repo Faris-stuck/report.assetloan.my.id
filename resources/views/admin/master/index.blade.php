@@ -3,6 +3,21 @@
 @section('content')
 @php
     $labels = ['classes'=>'Kelas','subjects'=>'Mata Pelajaran','staff-units'=>'Unit Staf','locations'=>'Lokasi','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan'];
+    $fieldLabels = [
+        'class_name' => 'Nama Kelas',
+        'grade_level' => 'Tingkat',
+        'academic_year' => 'Tahun Ajaran',
+        'room_name' => 'Nama Ruangan',
+        'location_type' => 'Jenis Lokasi',
+        'subject_name' => 'Nama Mapel',
+        'unit_name' => 'Nama Unit',
+        'violation_name' => 'Jenis Pelanggaran',
+        'category_name' => 'Nama Kategori',
+        'description' => 'Deskripsi',
+        'is_active' => 'Aktif',
+        'class_id' => 'Kelas',
+        'point_reduction' => 'Pengurangan Poin',
+    ];
     $required = [
         'classes' => ['class_name','grade_level','academic_year'],
         'subjects' => ['subject_name'],
@@ -12,6 +27,7 @@
         'damage-categories' => ['category_name'],
     ][$resource] ?? [];
     $inputMax = fn (string $field): int => in_array($field, ['class_name','grade_level','academic_year','room_name','location_type'], true) ? 80 : 150;
+    $labelFor = fn (string $field): string => $fieldLabels[$field] ?? str_replace('_',' ', $field);
 @endphp
 <div class="page-header">
     <div>
@@ -36,7 +52,7 @@
                 <div class="col-md-5"><label class="form-label" for="description">Deskripsi</label><input id="description" name="description" class="form-control" maxlength="1000" value="{{ old('description') }}" placeholder="Opsional"></div>
             @else
                 @php($isRequired = in_array($f, $required, true))
-                <div class="col-md-4"><label class="form-label {{ $isRequired ? 'required' : '' }}" for="{{ $f }}">{{ str_replace('_',' ', $f) }}</label><input id="{{ $f }}" name="{{ $f }}" class="form-control" placeholder="{{ str_replace('_',' ', $f) }}" value="{{ old($f) }}" maxlength="{{ $inputMax($f) }}" @required($isRequired)></div>
+                <div class="col-md-4"><label class="form-label {{ $isRequired ? 'required' : '' }}" for="{{ $f }}">{{ $labelFor($f) }}</label><input id="{{ $f }}" name="{{ $f }}" class="form-control" placeholder="{{ $labelFor($f) }}" value="{{ old($f) }}" maxlength="{{ $inputMax($f) }}" @required($isRequired)></div>
             @endif
         @endforeach
         <div class="col-md-2"><button class="btn btn-laporin w-100">Tambah</button></div>
@@ -60,7 +76,7 @@
         <table class="table align-middle">
             <thead>
             <tr>
-                @foreach($fields as $f)<th>{{ str_replace('_',' ',$f) }}</th>@endforeach
+                @foreach($fields as $f)<th>{{ $labelFor($f) }}</th>@endforeach
                 <th class="text-end">Aksi</th>
             </tr>
             </thead>
@@ -86,7 +102,7 @@
                         </td>
                     @endforeach
                     <td class="text-end text-nowrap">
-                        <button form="{{ $updateForm }}" class="btn btn-sm btn-outline-laporin">Update</button>
+                        <button form="{{ $updateForm }}" class="btn btn-sm btn-outline-laporin">Perbarui</button>
                         <button form="{{ $deleteForm }}" class="btn btn-sm btn-outline-danger">Hapus</button>
                     </td>
                 </tr>

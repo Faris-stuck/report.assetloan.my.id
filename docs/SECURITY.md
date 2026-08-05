@@ -1,29 +1,29 @@
-# SECURITY
+# KEAMANAN
 
-## Secret Handling
+## Penanganan Rahasia
 
 - `.env` dan env produksi tidak boleh masuk git.
 - Dokumentasi memakai `[REDACTED]` untuk password/token.
-- GitHub token, DB password, dan app key tidak boleh ditampilkan di output.
+- Token GitHub, password DB, dan app key tidak boleh ditampilkan di output.
 
-## Public Form
+## Form Publik
 
 - CSRF Laravel aktif.
 - CAPTCHA session aktif untuk submit publik.
 - Token anti-duplikat form digunakan pada submit browser.
-- Validation error kembali ke form, bukan error page mentah.
+- Error validasi kembali ke form, bukan halaman error mentah.
 
-## File Upload
+## Unggah File
 
-- Upload dibatasi jumlah, tipe MIME, ekstensi, dan ukuran.
+- Unggah dibatasi jumlah, tipe MIME, ekstensi, dan ukuran.
 - File disimpan di private disk.
-- Download harus lewat controller dan policy.
+- Unduhan harus lewat controller dan policy.
 
-## Headers dan Runtime
+## Header dan Runtime
 
-- Docker image mematikan `expose_php`.
+- Gambar Docker mematikan `expose_php`.
 - Apache memakai `ServerTokens Prod`, `ServerSignature Off`, dan `TraceEnable Off`.
-- Security middleware tersedia untuk header aplikasi.
+- Middleware keamanan tersedia untuk header aplikasi.
 
 ## Audit
 

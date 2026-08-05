@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title','Dashboard - LAPORIN')
+@section('title','Dasbor - LAPORIN')
 @section('content')
 @php
     $user = auth()->user();
@@ -32,7 +32,7 @@
 @endphp
 <div class="page-header">
     <div>
-        <span class="page-kicker">Dashboard laporan</span>
+        <span class="page-kicker">Dasbor laporan</span>
         <h1 class="page-title h2 mt-2">Ringkasan LAPORIN</h1>
         <p class="page-subtitle">Menu dan laporan di bawah mengikuti peran akun <strong>{{ $roleLabel }}</strong>. Jika URL diketik manual, akses tetap dibatasi oleh sistem.</p>
     </div>

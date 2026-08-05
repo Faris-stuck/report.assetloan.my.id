@@ -7,7 +7,7 @@
 @php
     $updatedAt = '2026-07-30';
     $faqs = [
-        ['q' => 'Bagaimana cara lapor pembullyan di SMK Taruna Bangsa Bekasi?', 'a' => 'Buka LAPORIN, pilih jenis laporan Pelanggaran Siswa, isi identitas pelapor, detail kejadian, lokasi, kronologi, lalu kirim laporan. Sistem memberi nomor laporan dan kode akses untuk melacak status.'],
+        ['q' => 'Bagaimana cara lapor pembullyan di SMK Taruna Bangsa Bekasi?', 'a' => 'Buka LAPORIN, pilih jenis laporan Pelanggaran Siswa, isi identitas pelapor, detail kejadian, lokasi, kronologi, lalu kirim laporan. Sistem memberi nomor laporan dan kode akses untuk pelacakan status.'],
         ['q' => 'Apakah laporan perundungan bisa dilacak?', 'a' => 'Bisa. Setelah laporan terkirim, pelapor mendapat nomor laporan dan kode akses 6 digit untuk melihat perkembangan laporan di halaman Lacak Laporan.'],
         ['q' => 'Apa saja yang bisa dilaporkan lewat LAPORIN?', 'a' => 'LAPORIN dapat digunakan untuk laporan perundungan, pembullyan, bullying, pelanggaran tata tertib, kedisiplinan siswa, kejadian tidak aman, dan kerusakan fasilitas sekolah.'],
         ['q' => 'Apakah harus login untuk membuat laporan?', 'a' => 'Pelapor publik tidak perlu login. Pengelola sekolah seperti Kesiswaan, Sarpras, Wali Kelas, Guru, Siswa, dan SuperAdmin menggunakan login sesuai peran.'],

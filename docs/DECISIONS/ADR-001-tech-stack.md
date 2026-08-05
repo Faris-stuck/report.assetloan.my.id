@@ -1,38 +1,38 @@
-# ADR-001: Use Laravel Monolith for LAPORIN
+# ADR-001: Memakai Laravel Monolith untuk LAPORIN
 
 ## Status
 
-Accepted
+Diterima
 
-## Date
+## Tanggal
 
 2026-08-02
 
-## Context
+## Konteks
 
-LAPORIN needs a server-rendered school reporting workflow, role dashboards, file upload handling, validation, audit trail, and straightforward deployment on an existing VPS.
+LAPORIN membutuhkan alur pelaporan sekolah server-rendered, dashboard role, penanganan unggah file, validasi, jejak audit, dan penempatan sederhana pada VPS yang sudah ada.
 
-## Decision
+## Keputusan
 
-Use Laravel 12 with PHP 8.3 as a monolith. Use Blade, Bootstrap 5, Alpine.js, Vite, and a small custom CSS design layer.
+Gunakan Laravel 12 dengan PHP 8.3 sebagai monolith. Gunakan Blade, Bootstrap 5, Alpine.js, Vite, dan lapisan desain CSS kecil.
 
-## Alternatives Considered
+## Alternatif yang Dipertimbangkan
 
-### Next.js Separate Frontend
+### Frontend Terpisah Next.js
 
-- Pros: Strong TypeScript and component ecosystem.
-- Cons: Adds API boundary, auth duplication, and more deployment moving parts.
-- Rejected because current scope benefits from a simpler monolith.
+- Kelebihan: Ekosistem TypeScript dan komponen yang kuat.
+- Kekurangan: Menambahkan batas API, duplikasi autentikasi, dan lebih banyak bagian penempatan.
+- Ditolak karena ruang lingkup saat ini lebih diuntungkan dengan monolith yang lebih sederhana.
 
-### Pure Static Frontend with API
+### Frontend Statis Murni dengan API
 
-- Pros: Fast public pages.
-- Cons: File uploads, tracking, auth, and role dashboards still need backend complexity.
-- Rejected because the application is mostly workflow and data handling.
+- Kelebihan: Halaman publik cepat.
+- Kekurangan: Unggah file, pelacakan, auth, dan dashboard role tetap memerlukan kompleksitas backend.
+- Ditolak karena aplikasi ini sebagian besar adalah workflow dan penanganan data.
 
-## Consequences
+## Konsekuensi
 
-- One deploy artifact handles public form, auth, admin, and dashboard.
-- Laravel policies and middleware centralize authorization.
-- UI remains easy to modify with Blade and CSS.
-- TypeScript config exists for stricter frontend tooling, not as a full frontend rewrite.
+- Satu artefak deploy menangani form publik, auth, admin, dan dashboard.
+- Policy dan middleware Laravel memusatkan otorisasi.
+- UI tetap mudah dimodifikasi dengan Blade dan CSS.
+- Konfigurasi TypeScript ada untuk tooling frontend yang lebih ketat, bukan sebagai rewrite frontend penuh.

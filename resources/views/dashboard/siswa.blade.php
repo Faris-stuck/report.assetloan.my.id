@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title','Dashboard Siswa')
+@section('title','Dasbor Siswa')
 @section('content')
 <div class="page-header">
-    <div><span class="page-kicker">Dashboard siswa</span><h1 class="page-title h2 mt-2">Riwayat Poin dan Pembinaan</h1><p class="page-subtitle">Pantau poin dan riwayat pelanggaran yang tercatat oleh Kesiswaan.</p></div>
+    <div><span class="page-kicker">Dasbor siswa</span><h1 class="page-title h2 mt-2">Riwayat Poin dan Pembinaan</h1><p class="page-subtitle">Pantau poin dan riwayat pelanggaran yang tercatat oleh Kesiswaan.</p></div>
 </div>
 @if(!$student)
     <div class="alert alert-warning">Akun belum terhubung ke data siswa.</div>
 @else
 <div class="row g-4">
-    <div class="col-lg-4"><div class="laporin-card p-4 text-center h-100"><div class="point-circle"><div><span>{{ $student->point }}</span><small>POINT</small></div></div><h2 class="h5 mt-3 mb-1">{{ $student->name }}</h2><p class="text-muted">NIS {{ $student->nis }} · {{ $student->class->class_name }}</p><a class="btn btn-laporin" href="{{ route('siswa.point.pdf') }}">Unduh Riwayat PDF</a></div></div>
+    <div class="col-lg-4"><div class="laporin-card p-4 text-center h-100"><div class="point-circle"><div><span>{{ $student->point }}</span><small>POIN</small></div></div><h2 class="h5 mt-3 mb-1">{{ $student->name }}</h2><p class="text-muted">NIS {{ $student->nis }} · {{ $student->class->class_name }}</p><a class="btn btn-laporin" href="{{ route('siswa.point.pdf') }}">Unduh Riwayat (PDF)</a></div></div>
     <div class="col-lg-8"><div class="laporin-card p-4 h-100"><h2 class="h5 fw-bold">Grafik Riwayat Poin</h2><p class="small-muted">Visualisasi penurunan poin dari riwayat pelanggaran.</p><canvas id="pointChart" height="120"></canvas></div></div>
 </div>
 <div class="laporin-card mt-4">

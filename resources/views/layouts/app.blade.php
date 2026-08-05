@@ -44,7 +44,7 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
     <meta name="twitter:image:alt" content="{{ $ogImageAlt }}">
     <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ url('/sitemap.xml') }}">
-    <link rel="alternate" type="text/plain" title="LLM context" href="{{ url('/llms.txt') }}">
+    <link rel="alternate" type="text/plain" title="Konteks LLM" href="{{ url('/llms.txt') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/laporin.css') }}?v={{ filemtime(public_path('css/laporin.css')) }}" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -69,9 +69,9 @@
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('seo.bullying-guide') ? 'active' : '' }}" href="{{ route('seo.bullying-guide') }}">Panduan Lapor</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('public.report') }}#alur-validasi">Alur Validasi</a></li>
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('track.*') ? 'active' : '' }}" href="{{ route('track.form') }}">Lacak</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('seo.faq') ? 'active' : '' }}" href="{{ route('seo.faq') }}">FAQ</a></li>
+                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('seo.faq') ? 'active' : '' }}" href="{{ route('seo.faq') }}">Pertanyaan Umum</a></li>
                 @else
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dasbor</a></li>
                     @if($currentUser->canAccessMenuFor('kesiswaan'))
                         <li class="nav-item"><a class="nav-link {{ request()->routeIs('kesiswaan.*') ? 'active' : '' }}" href="{{ route('kesiswaan.index') }}">Kesiswaan</a></li>
                     @endif
@@ -80,11 +80,11 @@
                     @endif
                     @if($currentUser->isSuperadmin())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</a>
+                            <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Panel Admin</a>
                             <ul class="dropdown-menu shadow border-0 rounded-4 p-2">
-                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}">Users</a></li>
-                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}">QR Code</a></li>
-                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}">Audit Log</a></li>
+                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}">Pengguna</a></li>
+                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}">Kode QR</a></li>
+                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}">Catatan Audit</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 @foreach(['classes'=>'Kelas','subjects'=>'Mapel','staff-units'=>'Unit Staf','locations'=>'Lokasi','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan'] as $resource=>$label)
                                     <li><a class="dropdown-item rounded-3" href="{{ route('admin.master.index',$resource) }}">{{ $label }}</a></li>

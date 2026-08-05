@@ -1,12 +1,12 @@
-# DEPLOYMENT
+# PENEMPATAN
 
-## Production Host
+## Host Produksi
 
-Aplikasi berjalan sebagai container Docker `app` di network `cf-network`, memakai DB container `laporin-db` dan volume `laporin-prod-storage` untuk storage aplikasi.
+Aplikasi berjalan sebagai container Docker `app` di network `cf-network`, memakai container DB `laporin-db` dan volume `laporin-prod-storage` untuk storage aplikasi.
 
 ## Backup Wajib
 
-Sebelum recreate container:
+Sebelum buat ulang container:
 
 1. Dump database produksi.
 2. Arsipkan storage produksi.
@@ -14,14 +14,14 @@ Sebelum recreate container:
 
 Backup tidak boleh dipush ke GitHub.
 
-## Build dan Deploy
+## Bangun dan Penempatan
 
 ```bash
 npm run build
 docker build -t laporin-app:<timestamp> .
 ```
 
-Deploy container harus memakai env produksi dari container lama atau secret manager, lalu mount volume:
+Container penempatan harus memakai env produksi dari container lama atau secret manager, lalu mount volume:
 
 ```bash
 docker run -d \
@@ -35,7 +35,7 @@ docker run -d \
 
 Entrypoint `docker/start.sh` menjalankan `php artisan migrate --force`, lalu cache Laravel.
 
-## Health Check
+## Pemeriksaan Kesehatan
 
 ```bash
 docker exec app php artisan migrate:status --no-interaction
@@ -43,8 +43,8 @@ docker exec app php artisan tinker --execute="DB::select('select 1')"
 curl -I https://report.assetloan.my.id/
 ```
 
-## Rollback
+## Pemulihan
 
-1. Stop container baru.
+1. Hentikan container baru.
 2. Jalankan lagi image lama dengan env dan volume yang sama.
-3. Jika migration merusak data, restore DB dari backup terakhir.
+3. Jika migrasi merusak data, pulihkan DB dari backup terakhir.
