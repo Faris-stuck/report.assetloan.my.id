@@ -108,10 +108,10 @@
 <main id="main-content" class="main-shell">
     <div class="container mobile-shell">
         @if(session('status'))
-            <div class="alert alert-success shadow-sm" role="status">{{ session('status') }}</div>
+            <div class="alert alert-success shadow-sm" role="status" aria-live="polite">{{ session('status') }}</div>
         @endif
         @if($errors->any())
-            <div class="alert alert-danger shadow-sm" role="alert">
+            <div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive">
                 <strong>Periksa input berikut:</strong>
                 <ul class="mb-0 mt-2">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
             </div>
@@ -124,6 +124,19 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const source = document.getElementById('validation-errors-json');
+    const nav = document.getElementById('mainNav');
+
+    if (nav) {
+        nav.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => {
+                if (window.bootstrap?.Collapse) {
+                    const collapse = bootstrap.Collapse.getOrCreateInstance(nav, { toggle: false });
+                    if (nav.classList.contains('show')) collapse.hide();
+                }
+            });
+        });
+    }
+
     if (!source || !window.CSS || !CSS.escape) return;
 
     let errors = {};
@@ -156,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (firstInvalid) {
         firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalid.focus({ preventScroll: true });
     }
 });
 </script>

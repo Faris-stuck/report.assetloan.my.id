@@ -43,14 +43,14 @@
     <div class="hero-content row align-items-center g-4">
         <div class="col-lg-8">
             <span class="page-kicker">Kanal Laporan SMK Taruna Bangsa Bekasi</span>
-            <h1 class="page-title display-6 mt-3">Lapor Perundungan, Pembullyan, Pelanggaran, atau Kerusakan Fasilitas</h1>
-            <p class="page-subtitle fs-6">Gunakan LAPORIN untuk melaporkan kejadian dengan aman, jelas, dan terlacak. Setelah dikirim, simpan nomor laporan dan kode akses untuk tracking.</p>
+            <h1 class="page-title display-6 mt-3">Laporkan dengan cepat dan jelas</h1>
+            <p class="page-subtitle fs-6">Isi data yang penting, lalu kirim. Setelah selesai, simpan nomor laporan dan kode akses untuk melihat statusnya.</p>
         </div>
         <div class="col-lg-4">
             <div class="laporin-card bg-white h-100">
-                <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">1</span><div><strong>Tanpa login</strong><div class="small-muted">Form aman untuk pelapor.</div></div></div>
-                <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">2</span><div><strong>Validasi bertahap</strong><div class="small-muted">Field wajib langsung ditandai.</div></div></div>
-                <div class="d-flex gap-3 align-items-start"><span class="menu-icon">3</span><div><strong>Tracking mudah</strong><div class="small-muted">Butuh nomor + kode akses.</div></div></div>
+                <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">1</span><div><strong>Tanpa login</strong><div class="small-muted">Langsung isi dan kirim.</div></div></div>
+                <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">2</span><div><strong>3 langkah</strong><div class="small-muted">Tidak perlu banyak kolom.</div></div></div>
+                <div class="d-flex gap-3 align-items-start"><span class="menu-icon">3</span><div><strong>Tracking simpel</strong><div class="small-muted">Cek status dengan nomor + kode.</div></div></div>
             </div>
         </div>
     </div>
@@ -59,8 +59,8 @@
 <div class="laporin-card mb-4" id="alur-validasi">
     <div class="d-flex justify-content-between flex-wrap gap-2 align-items-center mb-3">
         <div>
-            <h2 class="h5 fw-bold mb-1">Alur & Validasi</h2>
-            <div class="small-muted">Setiap tahap punya validasi. Field yang tidak sesuai akan ditandai.</div>
+            <h2 class="h5 fw-bold mb-1">Alur singkat</h2>
+            <div class="small-muted">Isi sesuai urutan, lalu lanjut ke langkah berikutnya.</div>
         </div>
         <span class="badge text-bg-success rounded-pill">Aktif</span>
     </div>
@@ -75,9 +75,9 @@
 <div class="laporin-card mb-4 seo-prose">
     <div class="row g-4 align-items-start">
         <div class="col-lg-8">
-            <h2 class="h4 fw-bold">Kanal Lapor Perundungan dan Pelanggaran SMK Taruna Bangsa Bekasi</h2>
-            <p class="mb-2">LAPORIN digunakan untuk laporan pembullyan, perundungan, pelanggaran tata tertib, atau kerusakan fasilitas yang membutuhkan tindak lanjut sekolah.</p>
-            <p class="small-muted mb-0">Baca panduan lengkap sebelum mengisi di <a href="{{ route('seo.bullying-guide') }}">Panduan Lapor</a>.</p>
+            <h2 class="h4 fw-bold">Kanal laporan untuk sekolah</h2>
+            <p class="mb-2">Gunakan LAPORIN untuk melaporkan perundungan, pelanggaran, atau kerusakan fasilitas yang perlu ditindaklanjuti.</p>
+            <p class="small-muted mb-0">Baca panduan singkat di <a href="{{ route('seo.bullying-guide') }}">Panduan Lapor</a>.</p>
         </div>
         <div class="col-lg-4">
             <div class="d-grid gap-2">
@@ -101,16 +101,17 @@
     <div class="row g-2 text-center">
         @foreach([1=>'Identitas',2=>'Jenis',3=>'Detail',4=>'Kirim'] as $n=>$label)
             <div class="col">
-                <div class="step-dot" :class="step >= {{ $n }} ? 'active' : ''">{{ $n }}</div>
+                <div class="step-dot" :class="step >= {{ $n }} ? 'active' : ''" :aria-current="step === {{ $n }} ? 'step' : undefined">{{ $n }}</div>
                 <div class="small mt-2 fw-semibold">{{ $label }}</div>
             </div>
         @endforeach
     </div>
+    <div class="mt-3 text-center small-muted" x-text="currentStepHint"></div>
 </div>
 
 <div class="invalid-step-hint mb-3" x-show="stepError" x-text="stepError" x-cloak></div>
 
-<div class="laporin-card wizard-panel p-4 p-lg-5">
+<div class="laporin-card wizard-panel p-3 p-lg-4">
 
 {{-- ============================================================ --}}
 {{-- LANGKAH 1: IDENTITAS                                          --}}
@@ -118,7 +119,7 @@
 <section x-show="step===1" data-step="1" x-cloak>
     <span class="page-kicker">Langkah 1</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Identitas Pelapor</h2>
-    <p class="small-muted mb-4">Data pelapor membantu sekolah menghubungi bila ada yang perlu dikonfirmasi.</p>
+    <p class="small-muted mb-4">Isi yang paling penting saja.</p>
     <div class="row g-3">
         <div class="col-md-4">
             <label class="form-label required" for="reporter_type">Jenis Pelapor</label>
@@ -185,17 +186,17 @@
 <section x-show="step===2" data-step="2" x-cloak>
     <span class="page-kicker">Langkah 2</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Pilih Jenis Laporan</h2>
-    <p class="small-muted mb-4">Pilih jenis laporan yang sesuai.</p>
+    <p class="small-muted mb-4">Pilih satu jenis laporan yang paling sesuai.</p>
     <div class="row g-3">
         <div class="col-md-6">
-            <label class="choice-card p-4 w-100">
+            <label class="choice-card p-4 w-100" :class="type === 'violation' ? 'is-selected' : ''">
                 <input type="radio" name="report_type" value="violation" x-model="type" @change="syncConditionalFields()" required>
                 <strong class="d-block mt-2">Perundungan / Pelanggaran</strong>
                 <span class="small-muted">Untuk perundungan, pembullyan, atau pelanggaran tata tertib. Ditangani oleh Kesiswaan.</span>
             </label>
         </div>
         <div class="col-md-6">
-            <label class="choice-card p-4 w-100">
+            <label class="choice-card p-4 w-100" :class="type === 'damage' ? 'is-selected' : ''">
                 <input type="radio" name="report_type" value="damage" x-model="type" @change="syncConditionalFields()" required>
                 <strong class="d-block mt-2">Kerusakan Fasilitas</strong>
                 <span class="small-muted">Untuk kerusakan meja, proyektor, AC, toilet, pintu, dll. Ditangani oleh Sarpras.</span>
@@ -210,18 +211,18 @@
 <section x-show="step===3" data-step="3" x-cloak>
     <span class="page-kicker">Langkah 3</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Detail Kejadian</h2>
-    <p class="small-muted mb-4">Isi sesuai kejadian yang dilaporkan.</p>
+    <p class="small-muted mb-4">Isi singkat dan jelas.</p>
     <div class="row g-3">
 
         {{-- FIELD UNIVERSAL: Judul --}}
-        <div class="col-md-8">
-            <label class="form-label required" for="title">Judul</label>
+        <div class="col-12">
+            <label class="form-label required" for="title">Judul singkat</label>
             <input id="title" name="title" value="{{ old('title') }}" class="form-control" required maxlength="200"
                 :placeholder="type==='violation' ? 'Contoh: Perundungan di Lab Komputer' : 'Contoh: Lampu kelas X Mati'">
         </div>
 
         {{-- FIELD UNIVERSAL: Urgensi --}}
-        <div class="col-md-4">
+        <div class="col-12">
             <label class="form-label required" for="urgency">Tingkat Urgensi</label>
             <select id="urgency" name="urgency" class="form-select" required>
                 @foreach(['rendah','sedang','tinggi','darurat'] as $urgency)
@@ -238,37 +239,19 @@
         <template x-if="type==='violation'">
             <div class="col-12">
                 <div class="detail-box">
-                    <h3 class="h6 fw-bold mb-3">Detail Perundungan / Pelanggaran</h3>
+                    <h3 class="h6 fw-bold mb-3">Detail pelanggaran</h3>
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="alleged_actor_name">Nama Terduga Pelaku</label>
-                            <input id="alleged_actor_name" name="alleged_actor_name" value="{{ old('alleged_actor_name') }}" class="form-control" maxlength="150" placeholder="Isi jika diketahui" :disabled="type!=='violation'">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required" for="related_class_id">Kelas Pelaku</label>
+                        <div class="col-12">
+                            <label class="form-label required" for="related_class_id">Kelas pelaku</label>
                             <select id="related_class_id" name="related_class_id" class="form-select" :required="type==='violation'" :disabled="type!=='violation'">
                                 <option value="">Pilih kelas</option>
                                 @include('public.partials.class-options', ['selectedClassId' => old('related_class_id')])
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="victim_class_id">Kelas Korban</label>
-                            <select id="victim_class_id" name="victim_class_id" class="form-select" :disabled="type!=='violation'">
-                                <option value="">Pilih kelas jika diketahui</option>
-                                @include('public.partials.class-options', ['selectedClassId' => old('victim_class_id')])
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="alleged_actor_class_id">Kelas Terduga Pelaku</label>
-                            <select id="alleged_actor_class_id" name="alleged_actor_class_id" class="form-select" :disabled="type!=='violation'">
-                                <option value="">Pilih kelas jika berbeda</option>
-                                @include('public.partials.class-options', ['selectedClassId' => old('alleged_actor_class_id')])
-                            </select>
-                        </div>
                         <div class="col-12">
-                            <label class="form-label required" for="description">Kronologi</label>
-                            <textarea id="description" name="description" class="form-control" rows="5" required maxlength="5000"
-                                placeholder="Jelaskan apa yang terjadi, kapan, di mana, dan siapa saja yang terlibat."
+                            <label class="form-label required" for="description">Kronologi singkat</label>
+                            <textarea id="description" name="description" class="form-control" rows="4" required maxlength="5000"
+                                placeholder="Jelaskan kejadian singkatnya."
                                 :disabled="type!=='violation'">{{ old('description') }}</textarea>
                         </div>
                     </div>
@@ -282,48 +265,26 @@
         <template x-if="type==='damage'">
             <div class="col-12">
                 <div class="detail-box">
-                    <h3 class="h6 fw-bold mb-3">Detail Kerusakan</h3>
+                    <h3 class="h6 fw-bold mb-3">Detail kerusakan</h3>
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label required" for="item_name">Nama Barang / Fasilitas</label>
+                        <div class="col-12">
+                            <label class="form-label required" for="item_name">Nama barang / fasilitas</label>
                             <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" :required="type==='damage'" :disabled="type!=='damage'">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="item_category">Kategori</label>
-                            <input id="item_category" name="item_category" value="{{ old('item_category') }}" class="form-control" placeholder="Contoh: Elektronik" maxlength="100" :disabled="type!=='damage'">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="priority_damage">Prioritas Perbaikan</label>
-                            <select id="priority_damage" name="priority" class="form-select" :disabled="type!=='damage'">
-                                @foreach(['rendah','sedang','tinggi','darurat'] as $p)
-                                    <option value="{{ $p }}" @selected(old('priority','sedang') === $p)>
-                                        {{ match($p) { 'rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi', 'darurat' => 'Darurat' } }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label" for="location_id_damage">Lokasi</label>
                             <select id="location_id_damage" name="location_id" class="form-select" :disabled="type!=='damage'">
                                 <option value="">Pilih lokasi</option>
                                 @foreach($locations as $l)<option value="{{ $l->id }}" @selected(old('location_id') == $l->id)>{{ $l->location_name }}</option>@endforeach
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="custom_location_damage">Lokasi Lainnya</label>
-                            <input id="custom_location_damage" name="custom_location" value="{{ old('custom_location') }}" class="form-control" maxlength="150" placeholder="Contoh: Koridor Lantai 2" :disabled="type!=='damage'">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label required" for="damage_condition">Kondisi Kerusakan</label>
-                            <textarea id="damage_condition" name="damage_condition" class="form-control" rows="4" placeholder="Jelaskan bagian yang rusak dan kondisi terakhir" maxlength="2000" :required="type==='damage'" :disabled="type!=='damage'">{{ old('damage_condition') }}</textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="suspected_cause">Dugaan Penyebab</label>
-                            <textarea id="suspected_cause" name="suspected_cause" class="form-control" rows="4" placeholder="Isi jika penyebab diketahui" maxlength="1000" :disabled="type!=='damage'">{{ old('suspected_cause') }}</textarea>
+                        <div class="col-12">
+                            <label class="form-label required" for="damage_condition">Kondisi kerusakan</label>
+                            <textarea id="damage_condition" name="damage_condition" class="form-control" rows="4" placeholder="Jelaskan bagian yang rusak." maxlength="2000" :required="type==='damage'" :disabled="type!=='damage'">{{ old('damage_condition') }}</textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="description_damage">Deskripsi Dampak</label>
-                            <textarea id="description_damage" name="description" class="form-control" rows="4" required maxlength="5000" placeholder="Jelaskan dampak kerusakan bagi kegiatan belajar atau operasional." :disabled="type!=='damage'">{{ old('description') }}</textarea>
+                            <label class="form-label required" for="description_damage">Deskripsi dampak</label>
+                            <textarea id="description_damage" name="description" class="form-control" rows="4" required maxlength="5000" placeholder="Sebutkan dampaknya secara singkat." :disabled="type!=='damage'">{{ old('description') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -339,7 +300,7 @@
 <section x-show="step===4" data-step="4" x-cloak>
     <span class="page-kicker">Langkah 4</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Konfirmasi & Kirim</h2>
-    <p class="small-muted mb-4">Pastikan data benar. Setelah kirim, Anda tidak bisa mengirim laporan lagi dari sesi ini.</p>
+    <p class="small-muted mb-4">Cek ulang, lalu kirim.</p>
 
     {{-- Lampiran dipindah ke step akhir --}}
     <div class="detail-box mb-3">
@@ -419,6 +380,15 @@ window.reportWizard = function () {
         type: @js(old('report_type','violation')),
         reporter: @js(old('reporter_type','siswa')),
         stepError: '',
+        get currentStepHint() {
+            return this.step === 1
+                ? 'Isi data pelapor dulu agar sekolah bisa menghubungi Anda jika perlu.'
+                : this.step === 2
+                    ? 'Pilih jenis laporan yang paling sesuai dengan kejadian.'
+                    : this.step === 3
+                        ? 'Berikan detail yang jelas agar proses tindak lanjut lebih cepat.'
+                        : 'Cek kembali sebelum mengirim laporan.';
+        },
         next() {
             if (this.validateCurrentStep()) {
                 this.stepError = '';
@@ -467,6 +437,7 @@ window.reportWizard = function () {
             const firstInvalid = controls.find((el) => !el.checkValidity());
             if (firstInvalid) {
                 firstInvalid.reportValidity();
+                firstInvalid.focus({ preventScroll: true });
                 this.stepError = 'Lengkapi field wajib atau perbaiki format.';
                 return false;
             }
