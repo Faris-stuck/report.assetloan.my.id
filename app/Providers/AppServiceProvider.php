@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\Role\Superadmin\AdminService;
+use App\Services\Role\Superadmin\AdminServiceInterface;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -11,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        $this->app->bind(AdminServiceInterface::class, AdminService::class);
     }
 
     public function boot(): void

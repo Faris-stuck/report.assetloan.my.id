@@ -1,38 +1,30 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Role\Sarpras;
 
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
 use App\Traits\ReportNotificationTrait;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
 
-class SarprasController extends Controller
+class SarprasProcessor
 {
     use ReportNotificationTrait;
+
     private const PROCESSABLE_STATUSES = ['menunggu_verifikasi', 'memerlukan_informasi', 'dibuka_kembali', 'sedang_ditangani'];
 
-    public function index(): View
-    {
-        return view('sarpras.index', [
-            'reports' => Report::where('report_type', 'damage')->with('damageDetail')->latest()->paginate(15),
-        ]);
-    }
-
-    public function process(Request $request, Report $report): RedirectResponse
+    public function process(Request $request, Report $report): void
     {
         if ($report->report_type !== 'damage') {
-            return back()->withErrors(['report' => 'Menu Sarpras hanya dapat memproses laporan kerusakan fasilitas.'])->withInput();
+            throw ValidationException::withMessages(['report' => 'Menu Sarpras hanya dapat memproses laporan kerusakan fasilitas.']);
         }
 
         if (! in_array($report->status, self::PROCESSABLE_STATUSES, true)) {
-            return back()->withErrors(['report' => 'Laporan ini sudah selesai/ditolak dan tidak bisa diproses ulang.'])->withInput();
+            throw ValidationException::withMessages(['report' => 'Laporan ini sudah selesai/ditolak dan tidak bisa diproses ulang.']);
         }
 
         $data = $request->validate([
@@ -101,11 +93,9 @@ class SarprasController extends Controller
 
             $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel($new), $publicNote);
         });
-
-        return back()->with('status', 'Laporan kerusakan diproses.');
     }
 
-    public function reject(Request $request, Report $report): RedirectResponse
+    public function reject(Request $request, Report $report): void
     {
         $data = $request->validate([
             'reason' => ['required', 'string', 'max:2000'],
@@ -144,8 +134,6 @@ class SarprasController extends Controller
 
             $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel('ditolak'), $publicNote);
         });
-
-        return back()->with('status', 'Laporan kerusakan ditolak.');
     }
 
     private function safeOriginalName(string $name): string

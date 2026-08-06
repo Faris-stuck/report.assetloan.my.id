@@ -3,6 +3,7 @@
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\EnterpriseSecurity;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -19,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [SecurityHeaders::class]);
+        $middleware->web(append: [SecurityHeaders::class, EnterpriseSecurity::class]);
         $middleware->alias([
             'active' => EnsureActiveUser::class,
             'role' => CheckRole::class,

@@ -1,15 +1,15 @@
 <?php
 
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\KesiswaanController;
 use App\Http\Controllers\PublicReportController;
 use App\Http\Controllers\QRCodeController;
 use App\Http\Controllers\ReportController;
-use App\Http\Controllers\SarprasController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\Role\Kesiswaan\KesiswaanController as KesiswaanRoleController;
+use App\Http\Controllers\Role\Sarpras\SarprasController as SarprasRoleController;
+use App\Http\Controllers\Role\Superadmin\AdminController as SuperadminAdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicReportController::class, 'create'])->name('public.report');
@@ -30,31 +30,31 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/download-attachment/{attachment}', [AttachmentController::class, 'download'])->name('attachments.download');
 
     Route::middleware('role:superadmin')->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/users', [AdminController::class, 'users'])->name('users.index');
-        Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
-        Route::put('/users/{user}', [AdminController::class, 'updateUser'])->name('users.update');
-        Route::get('/audit', [AdminController::class, 'audit'])->name('audit');
+        Route::get('/users', [SuperadminAdminController::class, 'users'])->name('users.index');
+        Route::post('/users', [SuperadminAdminController::class, 'storeUser'])->name('users.store');
+        Route::put('/users/{user}', [SuperadminAdminController::class, 'updateUser'])->name('users.update');
+        Route::get('/audit', [SuperadminAdminController::class, 'audit'])->name('audit');
         Route::get('/qrcodes', [QRCodeController::class, 'index'])->name('qrcodes.index');
         Route::post('/qrcodes', [QRCodeController::class, 'store'])->name('qrcodes.store');
         Route::get('/qrcodes/{qrCode}/download', [QRCodeController::class, 'download'])->name('qrcodes.download');
         Route::post('/qrcodes/{qrCode}/deactivate', [QRCodeController::class, 'deactivate'])->name('qrcodes.deactivate');
-        Route::get('/master/{resource}', [AdminController::class, 'master'])->name('master.index');
-        Route::post('/master/{resource}', [AdminController::class, 'store'])->name('master.store');
-        Route::put('/master/{resource}/{id}', [AdminController::class, 'update'])->name('master.update');
-        Route::delete('/master/{resource}/{id}', [AdminController::class, 'destroy'])->name('master.destroy');
+        Route::get('/master/{resource}', [SuperadminAdminController::class, 'master'])->name('master.index');
+        Route::post('/master/{resource}', [SuperadminAdminController::class, 'store'])->name('master.store');
+        Route::put('/master/{resource}/{id}', [SuperadminAdminController::class, 'update'])->name('master.update');
+        Route::delete('/master/{resource}/{id}', [SuperadminAdminController::class, 'destroy'])->name('master.destroy');
     });
 
     Route::middleware('role:kesiswaan')->prefix('kesiswaan')->name('kesiswaan.')->group(function (): void {
-        Route::get('/', [KesiswaanController::class, 'index'])->name('index');
-        Route::post('/reports/{report}/process', [KesiswaanController::class, 'process'])->name('process');
-        Route::post('/reports/{report}/reject', [KesiswaanController::class, 'reject'])->name('reject');
-        Route::post('/reports/{report}/complete', [KesiswaanController::class, 'complete'])->name('complete');
+        Route::get('/', [KesiswaanRoleController::class, 'index'])->name('index');
+        Route::post('/reports/{report}/process', [KesiswaanRoleController::class, 'process'])->name('process');
+        Route::post('/reports/{report}/reject', [KesiswaanRoleController::class, 'reject'])->name('reject');
+        Route::post('/reports/{report}/complete', [KesiswaanRoleController::class, 'complete'])->name('complete');
     });
 
     Route::middleware('role:sarpras')->prefix('sarpras')->name('sarpras.')->group(function () {
-        Route::get('/', [SarprasController::class, 'index'])->name('index');
-        Route::post('/reports/{report}/process', [SarprasController::class, 'process'])->name('process');
-        Route::post('/reports/{report}/reject', [SarprasController::class, 'reject'])->name('reject');
+        Route::get('/', [SarprasRoleController::class, 'index'])->name('index');
+        Route::post('/reports/{report}/process', [SarprasRoleController::class, 'process'])->name('process');
+        Route::post('/reports/{report}/reject', [SarprasRoleController::class, 'reject'])->name('reject');
     });
 
 });
