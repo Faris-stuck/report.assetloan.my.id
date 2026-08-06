@@ -26,12 +26,12 @@
                 @csrf
                 <div class="mb-3">
                     <label class="form-label required" for="report_number">Nomor Laporan</label>
-                    <input id="report_number" name="report_number" value="{{ old('report_number') }}" class="form-control" placeholder="LPR2026070001" required maxlength="24" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" aria-describedby="report-number-help" data-normalize-report-number>
+                    <input id="report_number" name="report_number" value="{{ old('report_number') }}" class="form-control" placeholder="LPR2026070001" required autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" aria-describedby="report-number-help" data-normalize-report-number>
                     <div id="report-number-help" class="helper-text">Contoh yang dapat langsung ditempel: <strong>LPR2026070001</strong>. Spasi atau tanda hubung dari hasil salin-tempel akan dihapus otomatis.</div>
                 </div>
                 <div class="mb-4">
                     <label class="form-label required" for="access_code">Kode Akses</label>
-                    <input id="access_code" name="access_code" value="{{ old('access_code') }}" class="form-control" inputmode="numeric" maxlength="16" required autocomplete="one-time-code" enterkeyhint="search" placeholder="Contoh: 123456" aria-describedby="access-code-help" data-normalize-access-code>
+                    <input id="access_code" name="access_code" value="{{ old('access_code') }}" class="form-control" inputmode="numeric" required autocomplete="one-time-code" enterkeyhint="search" placeholder="Contoh: 123456" aria-describedby="access-code-help" data-normalize-access-code>
                     <div id="access-code-help" class="helper-text">Masukkan 6 angka. Spasi atau tanda hubung hasil salin-tempel akan dihapus otomatis.</div>
                 </div>
                 <button class="btn btn-laporin w-100">Lacak Laporan</button>
@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('blur', apply);
     };
 
-    bindNormalizer(reportNumber, (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 13));
-    bindNormalizer(accessCode, (value) => value.replace(/[^0-9]/g, '').slice(0, 6));
+    bindNormalizer(reportNumber, (value) => value.toUpperCase().replace(/[^A-Z0-9-]/g, ''));
+    bindNormalizer(accessCode, (value) => value.replace(/[^0-9]/g, ''));
 });
 </script>
 @endpush
