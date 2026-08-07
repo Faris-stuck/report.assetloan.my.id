@@ -37,7 +37,7 @@
                     </div>
                     <button class="btn btn-laporin w-100">Masuk</button>
                 </form>
-                <div class="helper-text text-center mt-3">Lupa akses? Hubungi SuperAdmin sekolah.</div>
+                <small class="text-muted text-center d-block mt-3">Lupa akses? Hubungi SuperAdmin sekolah.</small>
             </div>
         </div>
     </div>

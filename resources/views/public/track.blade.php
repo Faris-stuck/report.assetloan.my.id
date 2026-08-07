@@ -27,12 +27,12 @@
                 <div class="mb-3">
                     <label class="form-label required" for="report_number">Nomor Laporan</label>
                     <input id="report_number" name="report_number" value="{{ old('report_number') }}" class="form-control" placeholder="LPR2026070001" required autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" aria-describedby="report-number-help" data-normalize-report-number>
-                    <div id="report-number-help" class="helper-text">Contoh yang dapat langsung ditempel: <strong>LPR2026070001</strong>. Spasi atau tanda hubung dari hasil salin-tempel akan dihapus otomatis.</div>
+                    <small id="report-number-help" class="text-muted">Contoh yang dapat langsung ditempel: <strong>LPR2026070001</strong>. Spasi atau tanda hubung dari hasil salin-tempel akan dihapus otomatis.</small>
                 </div>
                 <div class="mb-4">
                     <label class="form-label required" for="access_code">Kode Akses</label>
                     <input id="access_code" name="access_code" value="{{ old('access_code') }}" class="form-control" inputmode="numeric" required autocomplete="one-time-code" enterkeyhint="search" placeholder="Contoh: 123456" aria-describedby="access-code-help" data-normalize-access-code>
-                    <div id="access-code-help" class="helper-text">Masukkan 6 angka. Spasi atau tanda hubung hasil salin-tempel akan dihapus otomatis.</div>
+                    <small id="access-code-help" class="text-muted">Masukkan 6 angka. Spasi atau tanda hubung hasil salin-tempel akan dihapus otomatis.</small>
                 </div>
                 <button class="btn btn-laporin w-100">Lacak Laporan</button>
             </form>

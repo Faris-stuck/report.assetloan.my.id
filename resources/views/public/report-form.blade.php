@@ -141,7 +141,7 @@
                 <option value="">Pilih kelas</option>
                 @include('public.partials.class-options', ['selectedClassId' => old('reporter_class_id')])
             </select>
-            <div class="helper-text">Dikelompokkan per jurusan dan diurutkan.</div>
+            <small class="text-muted">Dikelompokkan per jurusan dan diurutkan.</small>
         </div>
         <div class="col-md-6" x-show="reporter==='siswa'" x-cloak>
             <label class="form-label" for="reporter_absence_number">No. Absen</label>
@@ -170,12 +170,12 @@
         <div class="col-md-6">
             <label class="form-label required" for="reporter_phone">No. HP</label>
             <input id="reporter_phone" name="reporter_phone" value="{{ old('reporter_phone') }}" class="form-control" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
-            <div id="reporter_phone_help" class="helper-text">Nomor HP wajib diisi. Gunakan 8-15 digit.</div>
+            <small id="reporter_phone_help" class="text-muted">Nomor HP wajib diisi. Gunakan 8-15 digit.</small>
         </div>
         <div class="col-md-6">
             <label class="form-label" for="reporter_email">Surel</label>
             <input id="reporter_email" type="email" name="reporter_email" value="{{ old('reporter_email') }}" class="form-control" maxlength="150" autocomplete="email" placeholder="Contoh: nama@surel.com" aria-describedby="reporter_email_help">
-            <div id="reporter_email_help" class="helper-text">Opsional. Jika diisi, surel digunakan untuk notifikasi status laporan.</div>
+            <small id="reporter_email_help" class="text-muted">Opsional. Jika diisi, surel digunakan untuk notifikasi status laporan.</small>
         </div>
     </div>
 </section>
@@ -249,6 +249,18 @@
                             </select>
                         </div>
                         <div class="col-12">
+                            <label class="form-label required" for="alleged_actor_name">Nama terduga pelaku</label>
+                            <input id="alleged_actor_name" name="alleged_actor_name" value="{{ old('alleged_actor_name') }}" class="form-control" required maxlength="150" placeholder="Nama lengkap pelaku" :disabled="type!=='violation'">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="alleged_actor_class_id">Kelas terduga pelaku</label>
+                            <select id="alleged_actor_class_id" name="alleged_actor_class_id" class="form-select" :disabled="type!=='violation'">
+                                <option value="">Pilih kelas (opsional)</option>
+                                @include('public.partials.class-options', ['selectedClassId' => old('alleged_actor_class_id')])
+                            </select>
+                            <small class="text-muted">Opsional jika pelaku berasal dari kelas yang sama diketahui.</small>
+                        </div>
+                        <div class="col-12">
                             <label class="form-label required" for="description">Kronologi singkat</label>
                             <textarea id="description" name="description" class="form-control" rows="4" required maxlength="5000"
                                 placeholder="Jelaskan kejadian singkatnya."
@@ -307,7 +319,7 @@
         <h3 class="h6 fw-bold mb-3">Bukti Foto / Dokumen (Opsional)</h3>
         <label class="form-label" for="attachments">Unggah Bukti</label>
         <input id="attachments" type="file" name="attachments[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" @change="validateAttachments($event)">
-        <div class="helper-text">Maksimal 3 file; JPG, PNG, WEBP, atau PDF; maksimal 4MB per file.</div>
+        <small class="text-muted">Maksimal 3 file; JPG, PNG, WEBP, atau PDF; maksimal 4MB per file.</small>
     </div>
 
     <div class="detail-box mb-3">
@@ -407,8 +419,9 @@ window.reportWizard = function () {
             if (this.step === 3 && this.type === 'violation') {
                 const title = document.getElementById('title');
                 const actorClass = document.getElementById('related_class_id');
+                const allegedActorName = document.getElementById('alleged_actor_name');
                 const desc = document.getElementById('description');
-                const fields = [title, actorClass, desc].filter(f => f && !f.disabled);
+                const fields = [title, actorClass, allegedActorName, desc].filter(f => f && !f.disabled);
                 const firstInvalid = fields.find((el) => !el.checkValidity());
                 if (firstInvalid) {
                     firstInvalid.reportValidity();

@@ -1,17 +1,21 @@
 @props([
     'name',
     'show' => false,
-    'maxWidth' => '2xl'
+    'maxWidth' => 'modal-lg'
 ])
 
 @php
-$maxWidth = [
-    'sm' => 'sm:max-w-sm',
-    'md' => 'sm:max-w-md',
-    'lg' => 'sm:max-w-lg',
-    'xl' => 'sm:max-w-xl',
-    '2xl' => 'sm:max-w-2xl',
-][$maxWidth];
+$sizeClasses = [
+    'sm' => 'modal-sm',
+    'md' => 'modal-md',
+    'lg' => 'modal-lg',
+    'xl' => 'modal-xl',
+    '2xl' => 'modal-lg',
+    'modal-sm' => 'modal-sm',
+    'modal-md' => 'modal-md',
+    'modal-lg' => 'modal-lg',
+    'modal-xl' => 'modal-xl',
+][$maxWidth] ?? 'modal-lg';
 @endphp
 
 <div
@@ -33,10 +37,10 @@ $maxWidth = [
     }"
     x-init="$watch('show', value => {
         if (value) {
-            document.body.classList.add('overflow-y-hidden');
+            document.body.classList.add('modal-open');
             {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
         } else {
-            document.body.classList.remove('overflow-y-hidden');
+            document.body.classList.remove('modal-open');
         }
     })"
     x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
@@ -46,33 +50,17 @@ $maxWidth = [
     x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
     x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
     x-show="show"
-    class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50"
-    style="display: {{ $show ? 'block' : 'none' }};"
+    class="modal fade"
+    id="modal-{{ $name }}"
+    tabindex="-1"
+    role="dialog"
+    style="display: {{ $show ? 'block' : 'none' }}; visibility: {{ $show ? 'visible' : 'hidden' }};"
 >
-    <div
-        x-show="show"
-        class="fixed inset-0 transition-opacity"
-        x-on:click="show = false"
-        x-transition:enter="ease-out duration-150"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="ease-in duration-100"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-    >
-        <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
-
-    <div
-        x-show="show"
-        class="mb-6 bg-white rounded-lg overflow-hidden shadow-xl sm:w-full {{ $maxWidth }} sm:mx-auto"
-        x-transition:enter="ease-out duration-150"
-        x-transition:enter-start="opacity-0 translate-y-2"
-        x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="ease-in duration-100"
-        x-transition:leave-start="opacity-100 translate-y-0"
-        x-transition:leave-end="opacity-0 translate-y-2"
-    >
-        {{ $slot }}
+    <div class="modal-backdrop fade" x-show="show" x-cloak style="display: {{ $show ? 'block' : 'none' }}; opacity: 0.5;"></div>
+    
+    <div class="modal-dialog {{ $sizeClasses }}" role="document">
+        <div class="modal-content">
+            {{ $slot }}
+        </div>
     </div>
 </div>
