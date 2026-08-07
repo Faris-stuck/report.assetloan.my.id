@@ -48,6 +48,27 @@
         <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Jenis Laporan</div><strong>{{ $report->report_type === 'violation' ? 'Pelanggaran siswa / perundungan' : 'Kerusakan fasilitas' }}</strong></div></div>
         <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Waktu Kejadian</div><strong>{{ $report->incident_date->format('d/m/Y') }}</strong> {{ $report->incident_time }}</div></div>
         <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Lokasi</div><strong>{{ $report->location?->location_name ?? $report->custom_location }}</strong></div></div>
+        @if($report->report_type === 'damage')
+        <h2 class="h5 fw-bold mb-3">Detail Kerusakan Fasilitas</h2>
+        <div class="row g-3 mb-4">
+            @if($report->damageDetail?->priority)
+                <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Prioritas</div><span class="badge @switch($report->damageDetail->priority)
+                    @case('rendah') text-bg-secondary @break
+                    @case('sedang') text-bg-warning @break
+                    @case('tinggi') text-bg-danger @break
+                    @case('darurat') text-bg-danger @break
+                @endswitch">{{ ucfirst($report->damageDetail->priority) }}</span></div></div>
+            @endif
+            @if($report->damageDetail?->scheduled_repair_at)
+                <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Jadwal Perbaikan</div><strong>{{ $report->damageDetail->scheduled_repair_at->format('d/m/Y H:i') }}</strong></div></div>
+            @endif
+        </div>
+    @endif
+            <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Nama Terduga Pelaku</div><strong>{{ $report->bullyingDetail->alleged_actor_name }}</strong></div></div>
+            @if($report->bullyingDetail->alleged_actor_class_id && $report->bullyingDetail->allegedActorClass)
+                <div class="col-md-6"><div class="detail-box h-100"><div class="small-muted">Kelas Terduga Pelaku</div><strong>{{ $report->bullyingDetail->allegedActorClass->class_name }}</strong></div></div>
+            @endif
+        @endif
         <div class="col-12"><div class="detail-box"><div class="small-muted">Kronologi / Deskripsi</div><p class="mb-0">{{ $report->description }}</p></div></div>
     </div>
     @if($report->attachments->count())

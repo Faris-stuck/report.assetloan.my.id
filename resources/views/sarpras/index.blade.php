@@ -25,20 +25,149 @@
     <h2 class="h5 fw-bold mb-3">Alur Sarpras</h2>
     <div class="flowchart compact"><div class="flow-node">Laporan Masuk</div><div class="flow-node">Lokasi Dicek</div><div class="flow-node">Waktu Perbaikan</div><div class="flow-node">Perbaikan</div><div class="flow-node">Foto Selesai</div><div class="flow-node">Selesai</div></div>
 </div>
+
+<!-- Search & Filter Card -->
+<div class="laporin-card mb-4">
+    <form method="GET" action="{{ route('sarpras.index') }}" class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-3">
+            <label class="form-label" for="search">Cari</label>
+            <input id="search" name="search" type="text" class="form-control"
+                   placeholder="Cari nomor atau judul laporan..." value="{{ request('search') }}" maxlength="100">
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="status">Status</label>
+            <select id="status" name="status" class="form-select">
+                <option value="">Semua</option>
+                <option value="menunggu_verifikasi" @selected(request('status') === 'menunggu_verifikasi')>Menunggu Verifikasi</option>
+                <option value="memerlukan_informasi" @selected(request('status') === 'memerlukan_informasi')>Perlu Informasi</option>
+                <option value="dibuka_kembali" @selected(request('status') === 'dibuka_kembali')>Dibuka Kembali</option>
+                <option value="sedang_ditangani" @selected(request('status') === 'sedang_ditangani')>Sedang Ditangani</option>
+                <option value="menunggu_konfirmasi" @selected(request('status') === 'menunggu_konfirmasi')>Menunggu Konfirmasi</option>
+                <option value="selesai" @selected(request('status') === 'selesai')>Selesai</option>
+                <option value="ditolak" @selected(request('status') === 'ditolak')>Ditolak</option>
+            </select>
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="priority">Prioritas</label>
+            <select id="priority" name="priority" class="form-select">
+                <option value="">Semua</option>
+                <option value="rendah" @selected(request('priority') === 'rendah')>Rendah</option>
+                <option value="sedang" @selected(request('priority') === 'sedang')>Sedang</option>
+                <option value="tinggi" @selected(request('priority') === 'tinggi')>Tinggi</option>
+                <option value="darurat" @selected(request('priority') === 'darurat')>Darurat</option>
+            </select>
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="from_date">Dari</label>
+            <input id="from_date" name="from_date" type="date" class="form-control" value="{{ request('from_date') }}">
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="to_date">Sampai</label>
+            <input id="to_date" name="to_date" type="date" class="form-control" value="{{ request('to_date') }}">
+        </div>
+
+        <div class="col-md-6 col-lg-1 d-flex gap-2">
+            <button type="submit" class="btn btn-laporin flex-grow-1">Cari</button>
+            <a href="{{ route('sarpras.index') }}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Results Info -->
+@if(request('search') || request('status') || request('priority') || request('from_date') || request('to_date'))
+    <div class="laporin-card mb-3 pb-3 border-bottom">
+        <p class="text-muted small mb-0">
+            Menampilkan {{ $reports->count() }} dari {{ $reports->total() }} laporan
+            @if(request('search'))
+                untuk pencarian "<strong>{{ request('search') }}</strong>"
+            @endif
+        </p>
+    </div>
+@endif
+
 <div class="report-card-list">
 @forelse($reports as $r)
     <article class="report-row-card">
         <div class="d-flex justify-content-between flex-wrap gap-2 mb-3">
             <div><a class="fw-bold" href="{{ route('reports.show',$r) }}">{{ $r->report_number }}</a><h2 class="h5 mb-1">{{ $r->title }}</h2><div class="report-meta"><span>{{ $r->created_at->format('d/m/Y H:i') }}</span><span>Kerusakan fasilitas</span></div></div>
-            <span class="status-pill status-{{ $r->status }}">{{ $statusLabels[$r->status] ?? str_replace('_',' ',$r->status) }}</span>
+            <div class="d-flex gap-2 align-items-start">
+                @if($r->damageDetail?->priority)
+                    <span class="badge @switch($r->damageDetail->priority)
+                        @case('rendah') text-bg-secondary @break
+                        @case('sedang') text-bg-warning @break
+                        @case('tinggi') text-bg-danger @break
+                        @case('darurat') text-bg-danger @break
+                    @endswitch">{{ ucfirst($r->damageDetail->priority) }}</span>
+                @endif
+                <span class="status-pill status-{{ $r->status }}">{{ $statusLabels[$r->status] ?? str_replace('_',' ',$r->status) }}</span>
+            </div>
         </div>
         @if(in_array($r->status, $processable, true))
+            @php
+                $errorsForThisForm = old('report_id') == $r->id;
+                $detail = $r->damageDetail;
+                if ($errorsForThisForm) {
+                    $scheduledRepairAt = old('scheduled_repair_at');
+                    if ($scheduledRepairAt) {
+                        try {
+                            $scheduledRepairAt = \Illuminate\Support\Carbon::parse($scheduledRepairAt)->format('Y-m-d\TH:i');
+                        } catch (\Exception $e) {
+                            // keep raw value if parsing fails
+                        }
+                    }
+                    $priorityValue = old('priority');
+                } else {
+                    $scheduledRepairAt = $detail?->scheduled_repair_at?->format('Y-m-d\TH:i') ?? '';
+                    $priorityValue = $detail?->priority ?? 'sedang';
+                }
+            @endphp
             <form method="POST" enctype="multipart/form-data" action="{{ route('sarpras.process',$r) }}" class="row g-3 align-items-end">@csrf
-                <div class="col-lg-2"><label class="form-label required">Prioritas</label><select name="priority" class="form-select" required><option value="rendah">Rendah</option><option value="sedang" selected>Sedang</option><option value="tinggi">Tinggi</option><option value="darurat">Darurat</option></select></div>
-                <div class="col-lg-3"><label class="form-label">Waktu Perbaikan</label><input type="datetime-local" name="scheduled_repair_at" min="{{ $minSchedule }}" class="form-control"></div>
-                <div class="col-lg-3"><label class="form-label">Foto setelah diperbaiki</label><input type="file" name="repair_photo" class="form-control" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"></div>
-                <div class="col-lg-3"><label class="form-label">Catatan</label><input name="note" class="form-control" placeholder="Opsional" maxlength="2000"></div>
-                <div class="col-lg-1"><button class="btn btn-laporin w-100">Simpan</button></div>
+                <input type="hidden" name="report_id" value="{{ $r->id }}">
+                @if($errorsForThisForm && $errors->has('report'))
+                    <div class="col-12">
+                        <div class="invalid-feedback d-block">{{ $errors->first('report') }}</div>
+                    </div>
+                @endif
+                <div class="col-lg-2">
+                    <label class="form-label required" for="priority_{{ $r->id }}">Prioritas</label>
+                    <select id="priority_{{ $r->id }}" name="priority" class="form-select @if($errorsForThisForm && $errors->has('priority')) is-invalid @endif" required>
+                        <option value="rendah" @selected($priorityValue === 'rendah')>Rendah</option>
+                        <option value="sedang" @selected($priorityValue === 'sedang')>Sedang</option>
+                        <option value="tinggi" @selected($priorityValue === 'tinggi')>Tinggi</option>
+                        <option value="darurat" @selected($priorityValue === 'darurat')>Darurat</option>
+                    </select>
+                    @if($errorsForThisForm && $errors->has('priority'))
+                        <div class="invalid-feedback">{{ $errors->first('priority') }}</div>
+                    @endif
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label" for="scheduled_repair_at_{{ $r->id }}">Waktu Perbaikan</label>
+                    <input id="scheduled_repair_at_{{ $r->id }}" type="datetime-local" name="scheduled_repair_at" min="{{ $minSchedule }}" class="form-control @if($errorsForThisForm && $errors->has('scheduled_repair_at')) is-invalid @endif" value="{{ $scheduledRepairAt }}">
+                    @if($errorsForThisForm && $errors->has('scheduled_repair_at'))
+                        <div class="invalid-feedback">{{ $errors->first('scheduled_repair_at') }}</div>
+                    @endif
+                </div>
+                <div class="col-lg-2">
+                    <label class="form-label" for="repair_photo_{{ $r->id }}">Foto setelah diperbaiki</label>
+                    <input id="repair_photo_{{ $r->id }}" type="file" name="repair_photo" class="form-control @if($errorsForThisForm && $errors->has('repair_photo')) is-invalid @endif" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                    @if($errorsForThisForm && $errors->has('repair_photo'))
+                        <div class="invalid-feedback">{{ $errors->first('repair_photo') }}</div>
+                    @endif
+                </div>
+                <div class="col-lg-3">
+                    <label class="form-label" for="note_{{ $r->id }}">Catatan</label>
+                    <input id="note_{{ $r->id }}" name="note" class="form-control @if($errorsForThisForm && $errors->has('note')) is-invalid @endif" placeholder="Opsional" maxlength="2000" value="{{ $errorsForThisForm ? old('note') : '' }}">
+                    @if($errorsForThisForm && $errors->has('note'))
+                        <div class="invalid-feedback">{{ $errors->first('note') }}</div>
+                    @endif
+                </div>
+                <div class="col-lg-2 col-sm-4 col-6">
+                    <button class="btn btn-laporin w-100 text-nowrap">Simpan</button>
+                </div>
             </form>
             <form method="POST" action="{{ route('sarpras.reject', $r) }}" class="row g-3 align-items-end mt-2" onsubmit="return confirm('Tolak laporan kerusakan ini? Alur laporan akan berhenti.')">
                 @csrf
@@ -53,8 +182,8 @@
         @endif
     </article>
 @empty
-    <div class="laporin-card text-center py-5 text-muted">Belum ada laporan kerusakan fasilitas.</div>
+    <div class="laporin-card text-center py-5 text-muted">Belum ada data.</div>
 @endforelse
 </div>
-<div class="mt-3">{{ $reports->links() }}</div>
+<div class="mt-3">{{ $reports->appends(request()->query())->links() }}</div>
 @endsection
