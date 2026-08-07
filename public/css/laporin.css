@@ -164,8 +164,8 @@ a:hover { color: var(--laporin-green-900); }
 }
 .hero-content { position: relative; z-index: 1; }
 
-.btn { border-radius: .85rem; font-weight: 750; min-height: 2.45rem; }
-.btn-sm { border-radius: .72rem; min-height: 2rem; }
+.btn { border-radius: .85rem; font-weight: 750; min-height: 2.45rem; height: auto; }
+.btn-sm { border-radius: .72rem; min-height: 2rem; height: auto; }
 .btn:focus-visible,
 .form-control:focus-visible,
 .form-select:focus-visible,
@@ -194,6 +194,7 @@ a:hover { color: var(--laporin-green-900); }
     border-radius: .85rem;
     border-color: #d7e8df;
     min-height: 2.75rem;
+    height: auto;
 }
 .form-control:focus,
 .form-select:focus {
@@ -342,7 +343,7 @@ textarea.form-control { min-height: 8rem; }
     text-transform: uppercase;
     letter-spacing: .04em;
 }
-.table td, .table th { vertical-align: middle; padding: .85rem; }
+.table td, .table th { vertical-align: middle; padding: .75rem 1rem; }
 .table tbody tr:hover { background: rgba(0,166,81,.035); }
 .table code { white-space: normal; word-break: break-all; }
 .status-pill {
@@ -559,3 +560,66 @@ svg {
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+/* ========================================== */
+/* DESKTOP UI/UX IMPROVEMENTS (1024px+)      */
+/* ========================================== */
+@media (min-width: 1024px) {
+    /* Wizard form desktop padding */
+    .wizard-panel {
+        padding: 2rem; /* 32px desktop padding */
+    }
+    
+    /* Modal dialog desktop padding */
+    .modal-body {
+        padding: 2rem; /* 32px desktop padding */
+    }
+    
+    /* Button height and alignment */
+    .btn {
+        min-height: 44px;
+    }
+    
+    /* Bottom action buttons alignment */
+    .bottom-action {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem; /* 8px gap */
+    }
+    
+    /* Table cell spacing */
+    table td, table th {
+        padding: 12px 16px; /* Increased from default */
+    }
+    
+    /* Form group spacing */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Step tracker dot accessibility */
+    .step-dot {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    /* Conditional field layout stabilization */
+    [x-show] {
+        display: block;
+    }
+    
+    [x-show="false"],
+    [x-cloak] {
+        display: none;
+    }
+}
+
+/* Ensure conditional fields don't cause layout shifts */
+[x-show] {
+    display: block;
+}
+
+[x-show="false"] {
+    display: none !important;
+}
+

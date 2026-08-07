@@ -36,13 +36,23 @@ class PublicReportService
                         $this->generateReportNumber()
                     ));
 
+                    Log::info('Public report created', [
+                        'report_id' => $report->id,
+                        'report_number' => $report->report_number,
+                        'report_type' => $report->report_type,
+                        'reporter_type' => $report->reporter_type,
+                        'ip_hash' => $report->submitted_ip_hash,
+                        'timestamp' => now()->toIso8601String(),
+                    ]);
+
                     if ($report->report_type === 'violation') {
                         BullyingDetail::create(['report_id' => $report->id] + collect($validated)->only([
                             'reporter_position', 'bullying_type', 'victim_name', 'victim_class_id',
                             'alleged_actor_name', 'alleged_actor_class_id', 'witness_name', 'impact_description',
                         ])->toArray());
                     } else {
-                        DamageDetail::create(['report_id' => $report->id, 'priority' => $validated['priority'] ?? $validated['urgency']] + collect($validated)->only([
+                        // Priority initialized to NULL on creation; Sarpras staff sets priority independently via process modal
+                        DamageDetail::create(['report_id' => $report->id, 'priority' => null] + collect($validated)->only([
                             'item_name', 'item_category', 'damage_condition', 'suspected_cause',
                         ])->toArray());
                     }
@@ -58,6 +68,15 @@ class PublicReportService
                             'mime_type' => $file->getMimeType(),
                             'file_size' => $file->getSize(),
                             'attachment_type' => 'initial_evidence',
+                        ]);
+                        
+                        // Log file attachment separately for audit trail
+                        Log::debug('File attachment stored for public report', [
+                            'report_id' => $report->id,
+                            'original_filename' => $file->getClientOriginalName(),
+                            'mime_type' => $file->getMimeType(),
+                            'size' => $file->getSize(),
+                            'stored_path' => $path,
                         ]);
                     }
 

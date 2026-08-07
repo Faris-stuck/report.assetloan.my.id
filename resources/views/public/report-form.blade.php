@@ -102,18 +102,26 @@
         @foreach([1=>'Identitas',2=>'Jenis',3=>'Detail',4=>'Kirim'] as $n=>$label)
             <div class="col">
                 <div class="step-dot-wrapper">
-                    <button type="button" class="step-dot" :class="step >= {{ $n }} ? 'active' : ''" :aria-current="step === {{ $n }} ? 'step' : undefined" :title="`Langkah {{ $n }}`">{{ $n }}</button>
+                    <button type="button" class="step-dot" style="min-width: 44px; min-height: 44px;" :class="step >= {{ $n }} ? 'active' : ''" :aria-current="step === {{ $n }} ? 'step' : undefined" :title="`Langkah {{ $n }}`">{{ $n }}</button>
                 </div>
-                <div class="small mt-2 fw-semibold">{{ $label }}</div>
+                <div class="small mt-2 fw-semibold" style="max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0 auto;">{{ $label }}</div>
             </div>
         @endforeach
     </div>
-    <div class="mt-3 text-center small-muted" x-text="currentStepHint"></div>
+    <p class="mt-3 text-center small" style="font-size: 14px;" x-text="currentStepHint"></p>
 </div>
 
-<div class="invalid-step-hint mb-3" x-show="stepError" x-text="stepError" x-cloak></div>
+<div class="alert alert-danger mt-3 mb-3" x-show="stepError" x-transition x-cloak>
+    <div class="d-flex align-items-start">
+        <i class="fas fa-exclamation-circle me-2 mt-1"></i>
+        <div>
+            <strong>Lengkapi formulir dengan benar</strong>
+            <div class="mt-2 small" x-text="stepError"></div>
+        </div>
+    </div>
+</div>
 
-<div class="laporin-card wizard-panel p-3 p-lg-4">
+<div class="laporin-card wizard-panel p-3 p-md-4 p-lg-5">
 
 {{-- ============================================================ --}}
 {{-- LANGKAH 1: IDENTITAS                                          --}}
@@ -123,58 +131,58 @@
     <h2 class="h4 fw-bold mt-2 mb-1">Identitas Pelapor</h2>
     <p class="small-muted mb-4">Isi yang paling penting saja.</p>
     <div class="row g-3">
-        <div class="col-md-4">
-            <label class="form-label required" for="reporter_type">Jenis Pelapor</label>
-            <select id="reporter_type" name="reporter_type" class="form-select" x-model="reporter" @change="syncConditionalFields()" required>
+        <div class="col-12 col-md-6">
+            <label class="form-label required" for="reporter_type">Jenis Pelapor <span class="text-danger">*</span></label>
+            <select id="reporter_type" name="reporter_type" class="form-select required" x-model="reporter" @change="syncConditionalFields()" required>
                 <option value="siswa">Siswa</option>
                 <option value="guru">Guru</option>
                 <option value="staff">Staf</option>
             </select>
         </div>
-        <div class="col-md-8">
-            <label class="form-label required" for="reporter_name">Nama Pelapor</label>
-            <input id="reporter_name" name="reporter_name" value="{{ old('reporter_name') }}" class="form-control" required maxlength="150" autocomplete="name" placeholder="Nama lengkap">
+        <div class="col-12 col-md-6">
+            <label class="form-label required" for="reporter_name">Nama Pelapor <span class="text-danger">*</span></label>
+            <input id="reporter_name" name="reporter_name" value="{{ old('reporter_name') }}" class="form-control required" required maxlength="150" autocomplete="name" placeholder="Nama lengkap">
         </div>
 
         {{-- Siswa --}}
-        <div class="col-md-6" x-show="reporter==='siswa'" x-cloak>
-            <label class="form-label required" for="reporter_class_id">Kelas</label>
-            <select id="reporter_class_id" name="reporter_class_id" class="form-select" :required="reporter==='siswa'" :disabled="reporter!=='siswa'">
+        <div class="col-12 col-md-6" x-show="reporter==='siswa'" x-transition>
+            <label class="form-label required" for="reporter_class_id">Kelas <span class="text-danger">*</span></label>
+            <select id="reporter_class_id" name="reporter_class_id" class="form-select required" :required="reporter==='siswa'" :disabled="reporter!=='siswa'">
                 <option value="">Pilih kelas</option>
                 @include('public.partials.class-options', ['selectedClassId' => old('reporter_class_id')])
             </select>
             <small class="text-muted">Dikelompokkan per jurusan dan diurutkan.</small>
         </div>
-        <div class="col-md-6" x-show="reporter==='siswa'" x-cloak>
+        <div class="col-12 col-md-6" x-show="reporter==='siswa'" x-transition>
             <label class="form-label" for="reporter_absence_number">No. Absen</label>
             <input id="reporter_absence_number" type="number" name="reporter_absence_number" value="{{ old('reporter_absence_number') }}" min="1" max="60" class="form-control" :disabled="reporter!=='siswa'" placeholder="1–60">
         </div>
 
         {{-- Guru --}}
-        <div class="col-md-6" x-show="reporter==='guru'" x-cloak>
-            <label class="form-label required" for="reporter_subject_id">Mata Pelajaran</label>
-            <select id="reporter_subject_id" name="reporter_subject_id" class="form-select" :required="reporter==='guru'" :disabled="reporter!=='guru'">
+        <div class="col-12 col-md-6" x-show="reporter==='guru'" x-transition>
+            <label class="form-label required" for="reporter_subject_id">Mata Pelajaran <span class="text-danger">*</span></label>
+            <select id="reporter_subject_id" name="reporter_subject_id" class="form-select required" :required="reporter==='guru'" :disabled="reporter!=='guru'">
                 <option value="">Pilih mapel</option>
                 @foreach($subjects as $s)<option value="{{ $s->id }}" @selected(old('reporter_subject_id') == $s->id)>{{ $s->subject_name }}</option>@endforeach
             </select>
         </div>
 
         {{-- Staf --}}
-        <div class="col-md-6" x-show="reporter==='staff'" x-cloak>
-            <label class="form-label required" for="reporter_staff_unit_id">Unit Staf</label>
-            <select id="reporter_staff_unit_id" name="reporter_staff_unit_id" class="form-select" :required="reporter==='staff'" :disabled="reporter!=='staff'">
+        <div class="col-12 col-md-6" x-show="reporter==='staff'" x-transition>
+            <label class="form-label required" for="reporter_staff_unit_id">Unit Staf <span class="text-danger">*</span></label>
+            <select id="reporter_staff_unit_id" name="reporter_staff_unit_id" class="form-select required" :required="reporter==='staff'" :disabled="reporter!=='staff'">
                 <option value="">Pilih unit</option>
                 @foreach($staffUnits as $u)<option value="{{ $u->id }}" @selected(old('reporter_staff_unit_id') == $u->id)>{{ $u->unit_name }}</option>@endforeach
             </select>
         </div>
 
         {{-- No. HP wajib, email opsional --}}
-        <div class="col-md-6">
-            <label class="form-label required" for="reporter_phone">No. HP</label>
-            <input id="reporter_phone" name="reporter_phone" value="{{ old('reporter_phone') }}" class="form-control" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
+        <div class="col-12 col-md-6">
+            <label class="form-label required" for="reporter_phone">No. HP <span class="text-danger">*</span></label>
+            <input id="reporter_phone" name="reporter_phone" value="{{ old('reporter_phone') }}" class="form-control required" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
             <small id="reporter_phone_help" class="text-muted">Nomor HP wajib diisi. Gunakan 8-15 digit.</small>
         </div>
-        <div class="col-md-6">
+        <div class="col-12 col-md-6">
             <label class="form-label" for="reporter_email">Surel</label>
             <input id="reporter_email" type="email" name="reporter_email" value="{{ old('reporter_email') }}" class="form-control" maxlength="150" autocomplete="email" placeholder="Contoh: nama@surel.com" aria-describedby="reporter_email_help">
             <small id="reporter_email_help" class="text-muted">Opsional. Jika diisi, surel digunakan untuk notifikasi status laporan.</small>
@@ -218,15 +226,15 @@
 
         {{-- FIELD UNIVERSAL: Judul --}}
         <div class="col-12">
-            <label class="form-label required" for="title">Judul singkat</label>
-            <input id="title" name="title" value="{{ old('title') }}" class="form-control" required maxlength="200"
+            <label class="form-label required" for="title">Judul singkat <span class="text-danger">*</span></label>
+            <input id="title" name="title" value="{{ old('title') }}" class="form-control required" required maxlength="200"
                 :placeholder="type==='violation' ? 'Contoh: Perundungan di Lab Komputer' : 'Contoh: Lampu kelas X Mati'">
         </div>
 
         {{-- FIELD UNIVERSAL: Urgensi --}}
-        <div class="col-12">
-            <label class="form-label required" for="urgency">Tingkat Urgensi</label>
-            <select id="urgency" name="urgency" class="form-select" required>
+        <div class="col-12 col-md-6">
+            <label class="form-label required" for="urgency">Tingkat Urgensi <span class="text-danger">*</span></label>
+            <select id="urgency" name="urgency" class="form-select required" required>
                 @foreach(['rendah','sedang','tinggi','darurat'] as $urgency)
                     <option value="{{ $urgency }}" @selected(old('urgency','sedang') === $urgency)>
                         {{ match($urgency) { 'rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi', 'darurat' => 'Darurat' } }}
@@ -251,8 +259,8 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="alleged_actor_name">Nama terduga pelaku</label>
-                            <input id="alleged_actor_name" name="alleged_actor_name" value="{{ old('alleged_actor_name') }}" class="form-control" required maxlength="150" placeholder="Nama lengkap pelaku" :disabled="type!=='violation'">
+                            <label class="form-label required" for="alleged_actor_name">Nama terduga pelaku <span class="text-danger">*</span></label>
+                            <input id="alleged_actor_name" name="alleged_actor_name" value="{{ old('alleged_actor_name') }}" class="form-control required" required maxlength="150" placeholder="Nama lengkap pelaku" :disabled="type!=='violation'">
                         </div>
                         <div class="col-12">
                             <label class="form-label" for="alleged_actor_class_id">Kelas terduga pelaku</label>
@@ -263,8 +271,8 @@
                             <small class="text-muted">Opsional jika pelaku berasal dari kelas yang sama diketahui.</small>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="description">Kronologi singkat</label>
-                            <textarea id="description" name="description" class="form-control" rows="4" required maxlength="5000"
+                            <label class="form-label required" for="description">Kronologi singkat <span class="text-danger">*</span></label>
+                            <textarea id="description" name="description" class="form-control required" rows="4" required maxlength="5000"
                                 placeholder="Jelaskan kejadian singkatnya."
                                 :disabled="type!=='violation'">{{ old('description') }}</textarea>
                         </div>
@@ -281,11 +289,11 @@
                 <div class="detail-box">
                     <h3 class="h6 fw-bold mb-3">Detail kerusakan</h3>
                     <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label required" for="item_name">Nama barang / fasilitas</label>
-                            <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" :required="type==='damage'" :disabled="type!=='damage'">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label required" for="item_name">Nama barang / fasilitas <span class="text-danger">*</span></label>
+                            <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control required" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" :required="type==='damage'" :disabled="type!=='damage'">
                         </div>
-                        <div class="col-12">
+                        <div class="col-12 col-md-6">
                             <label class="form-label" for="location_id_damage">Lokasi</label>
                             <select id="location_id_damage" name="location_id" class="form-select" :disabled="type!=='damage'">
                                 <option value="">Pilih lokasi</option>
@@ -293,12 +301,12 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="damage_condition">Kondisi kerusakan</label>
-                            <textarea id="damage_condition" name="damage_condition" class="form-control" rows="4" placeholder="Jelaskan bagian yang rusak." maxlength="2000" :required="type==='damage'" :disabled="type!=='damage'">{{ old('damage_condition') }}</textarea>
+                            <label class="form-label required" for="damage_condition">Kondisi kerusakan <span class="text-danger">*</span></label>
+                            <textarea id="damage_condition" name="damage_condition" class="form-control required" rows="4" placeholder="Jelaskan bagian yang rusak." maxlength="2000" :required="type==='damage'" :disabled="type!=='damage'">{{ old('damage_condition') }}</textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label required" for="description_damage">Deskripsi dampak</label>
-                            <textarea id="description_damage" name="description" class="form-control" rows="4" required maxlength="5000" placeholder="Sebutkan dampaknya secara singkat." :disabled="type!=='damage'">{{ old('description') }}</textarea>
+                            <label class="form-label required" for="description_damage">Deskripsi dampak <span class="text-danger">*</span></label>
+                            <textarea id="description_damage" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Sebutkan dampaknya secara singkat." :disabled="type!=='damage'">{{ old('description') }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -317,36 +325,48 @@
     <p class="small-muted mb-4">Cek ulang, lalu kirim.</p>
 
     {{-- Lampiran dipindah ke step akhir --}}
-    <div class="detail-box mb-3">
-        <h3 class="h6 fw-bold mb-3">Bukti Foto / Dokumen (Opsional)</h3>
-        <label class="form-label" for="attachments">Unggah Bukti</label>
-        <input id="attachments" type="file" name="attachments[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" @change="validateAttachments($event)">
-        <small class="text-muted">Maksimal 3 file; JPG, PNG, WEBP, atau PDF; maksimal 4MB per file.</small>
-    </div>
-
-    <div class="detail-box mb-3">
-        <div class="form-check mt-3">
-            <input class="form-check-input" type="checkbox" name="consent" value="1" id="consent" required>
-            <label class="form-check-label" for="consent">
-                Saya menyatakan laporan adalah benar
-            </label>
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="detail-box">
+                <h3 class="h6 fw-bold mb-3">Bukti Foto / Dokumen (Opsional)</h3>
+                <label class="form-label" for="attachments">Unggah Bukti</label>
+                <input id="attachments" type="file" name="attachments[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" @change="validateAttachments($event)">
+                <small class="text-muted">Maksimal 3 file; JPG, PNG, WEBP, atau PDF; maksimal 4MB per file.</small>
+            </div>
         </div>
-    </div>
 
-    <div class="mb-3">
-        <label class="form-label required" for="captcha">CAPTCHA: berapa {{ $captchaQuestion }}?</label>
-        <input id="captcha" name="captcha" class="form-control" required inputmode="numeric" pattern="[0-9]+" maxlength="2" placeholder="Jawaban angka">
+        <div class="col-12">
+            <div class="detail-box">
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" name="consent" value="1" id="consent" required>
+                    <label class="form-check-label" for="consent">
+                        Saya menyatakan laporan adalah benar
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label required" for="captcha">CAPTCHA: berapa {{ $captchaQuestion }}? <span class="text-danger">*</span></label>
+            <input id="captcha" name="captcha" class="form-control required" required inputmode="numeric" pattern="[0-9]+" maxlength="2" placeholder="Jawaban angka">
+        </div>
     </div>
 </section>
 
 </div>{{-- end .wizard-panel --}}
 
-<div class="bottom-action">
-    <div class="d-flex justify-content-between gap-2 flex-wrap">
-        <button type="button" class="btn btn-outline-secondary" x-show="step>1" @click="step--; stepError=''">Kembali</button>
-        <span class="d-none d-sm-inline small-muted align-self-center" x-text="`Langkah ${step} dari 4`"></span>
-        <button type="button" class="btn btn-laporin" x-show="step<4" @click="next()">Lanjut</button>
-        <button type="submit" class="btn btn-laporin" x-show="step===4">Kirim Laporan</button>
+<div class="bottom-action mt-4" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-sm-auto">
+            <button type="button" class="btn btn-outline-secondary w-100" style="min-height: 44px; height: auto;" x-show="step>1" @click="step--; stepError=''">Kembali</button>
+        </div>
+        <div class="col-12 col-sm d-none d-sm-block">
+            <span class="small-muted text-center" x-text="`Langkah ${step} dari 4`"></span>
+        </div>
+        <div class="col-12 col-sm-auto">
+            <button type="button" class="btn btn-laporin w-100" style="min-height: 44px; height: auto;" x-show="step<4" @click="next()">Lanjut</button>
+            <button type="submit" class="btn btn-laporin w-100" style="min-height: 44px; height: auto;" x-show="step===4">Kirim Laporan</button>
+        </div>
     </div>
 </div>
 </form>
@@ -412,6 +432,16 @@ window.reportWizard = function () {
                 this.$nextTick(() => {
                     document.getElementById('form-laporan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
+            } else {
+                // Scroll error into view when validation fails
+                if (this.stepError) {
+                    setTimeout(() => {
+                        const errorEl = document.querySelector('[x-show="stepError"]');
+                        if (errorEl) {
+                            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 100);
+                }
             }
         },
         validateCurrentStep() {
