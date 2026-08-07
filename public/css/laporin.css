@@ -122,6 +122,10 @@ a:hover { color: var(--laporin-green-900); }
     background: rgba(255,255,255,.94);
     box-shadow: var(--laporin-shadow-soft);
 }
+.card { overflow: hidden; }
+.card-body { padding: 1rem; }
+.card-title { margin-bottom: .5rem; font-weight: 750; }
+.card-text { margin-bottom: 0; }
 .laporin-card { padding: 1rem; }
 .card-soft { background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(244,255,248,.82)); }
 .dashboard-focus-card {
@@ -189,7 +193,7 @@ a:hover { color: var(--laporin-green-900); }
 .form-select {
     border-radius: .85rem;
     border-color: #d7e8df;
-    min-height: 2.65rem;
+    min-height: 2.75rem;
 }
 .form-control:focus,
 .form-select:focus {
@@ -293,6 +297,13 @@ textarea.form-control { min-height: 8rem; }
     margin-inline: auto;
     border: 2px solid #d0e8da;
 }
+.step-dot-wrapper {
+    padding: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-inline: auto;
+}
 .step-dot.active { background: var(--laporin-green); border-color: var(--laporin-green); color: #fff; box-shadow: 0 0 0 .28rem rgba(0,166,81,.14); }
 .wizard-panel { min-height: 32rem; }
 .choice-card {
@@ -354,6 +365,14 @@ textarea.form-control { min-height: 8rem; }
 .status-memerlukan_informasi,
 .status-menunggu_konfirmasi,
 .status-dibuka_kembali { background:#e7e5ff; color:#2c236b; }
+
+.accordion { border: 1px solid var(--laporin-line); border-radius: .85rem; overflow: hidden; }
+.accordion-item { border: none; }
+.accordion-item + .accordion-item { border-top: 1px solid var(--laporin-line); }
+.accordion-button { background: transparent; border: none; font-weight: 750; color: var(--laporin-ink); padding: .85rem 1rem; }
+.accordion-button:not(.collapsed) { background: rgba(0,166,81,.05); box-shadow: none; }
+.accordion-button:focus { box-shadow: 0 0 0 .22rem rgba(0,166,81,.14); }
+.accordion-body { padding: 1rem; background: #fff; }
 
 .report-card-list { display: grid; gap: .9rem; }
 .report-row-card {
@@ -466,6 +485,42 @@ form.row { min-width: 0; }
     line-height: 1.25;
 }
 
+/* SVG sizing and constraint rules */
+svg {
+  max-width: 100%;
+  height: auto;
+}
+.form-control svg,
+.form-select svg,
+.table svg,
+.input-group svg,
+.table svg path,
+.table svg circle,
+.table svg rect,
+.table svg polygon {
+  max-width: 1.25rem;
+  max-height: 1.25rem;
+}
+.btn svg,
+.btn-sm svg {
+  max-width: 1rem;
+  max-height: 1rem;
+}
+/* Tailwind size constraints */
+.w-5 {
+  max-width: 1.25rem !important;
+}
+.h-5 {
+  max-height: 1.25rem !important;
+}
+/* Form group SVG sizing */
+.form-group svg,
+.col-md-4 svg,
+.col-md-6 svg {
+  max-width: 1.25rem;
+  max-height: 1.25rem;
+}
+
 @media (max-width: 991.98px) {
     .nav-user-chip { max-width: 100%; border-radius: .8rem; }
     .page-header { align-items: stretch; flex-direction: column; }
@@ -488,12 +543,18 @@ form.row { min-width: 0; }
     .table-responsive { margin-inline: -.25rem; }
     .report-row-card { padding: .9rem; }
     .bottom-action { bottom: .5rem; left: .75rem; right: .75rem; }
-    .bottom-action .d-flex { flex-wrap: wrap; }
-    .bottom-action .btn { width: 100%; }
+    .bottom-action .d-flex { flex-direction: column; }
+    .bottom-action .btn { width: 100%; margin-bottom: .5rem; }
+    .bottom-action .btn:last-child { margin-bottom: 0; }
+    .bottom-action .small-muted { display: none; }
     .credential-copy-button { width: auto; min-width: 5.25rem; }
     .btn-group-mobile { display: grid !important; grid-template-columns: 1fr; width: 100%; }
     .status-pill { white-space: normal; text-align: center; justify-content: center; }
     .tracking-overview .flowchart.compact { grid-template-columns: 1fr; }
+    /* Accordion mobile styling */
+    .accordion-button { font-weight: 750; padding: .85rem; }
+    .accordion-body { padding: 1rem; }
+    .accordion-item { border-radius: .85rem; }
 }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }

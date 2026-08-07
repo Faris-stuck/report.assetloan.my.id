@@ -101,7 +101,9 @@
     <div class="row g-2 text-center">
         @foreach([1=>'Identitas',2=>'Jenis',3=>'Detail',4=>'Kirim'] as $n=>$label)
             <div class="col">
-                <div class="step-dot" :class="step >= {{ $n }} ? 'active' : ''" :aria-current="step === {{ $n }} ? 'step' : undefined">{{ $n }}</div>
+                <div class="step-dot-wrapper">
+                    <button type="button" class="step-dot" :class="step >= {{ $n }} ? 'active' : ''" :aria-current="step === {{ $n }} ? 'step' : undefined" :title="`Langkah {{ $n }}`">{{ $n }}</button>
+                </div>
                 <div class="small mt-2 fw-semibold">{{ $label }}</div>
             </div>
         @endforeach
@@ -323,9 +325,11 @@
     </div>
 
     <div class="detail-box mb-3">
-        <div class="form-check">
+        <div class="form-check mt-3">
             <input class="form-check-input" type="checkbox" name="consent" value="1" id="consent" required>
-            <label class="form-check-label required" for="consent">Saya menyatakan laporan ini benar dan bersedia dihubungi sekolah bila diperlukan.</label>
+            <label class="form-check-label" for="consent">
+                Saya menyatakan laporan adalah benar
+            </label>
         </div>
     </div>
 
@@ -338,7 +342,7 @@
 </div>{{-- end .wizard-panel --}}
 
 <div class="bottom-action">
-    <div class="d-flex justify-content-between gap-2">
+    <div class="d-flex justify-content-between gap-2 flex-wrap">
         <button type="button" class="btn btn-outline-secondary" x-show="step>1" @click="step--; stepError=''">Kembali</button>
         <span class="d-none d-sm-inline small-muted align-self-center" x-text="`Langkah ${step} dari 4`"></span>
         <button type="button" class="btn btn-laporin" x-show="step<4" @click="next()">Lanjut</button>

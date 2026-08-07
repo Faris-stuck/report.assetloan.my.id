@@ -66,7 +66,7 @@
         </div>
     @endif
 
-    <div class="table-responsive">
+    <div class="table-responsive d-none d-md-block">
         <table class="table align-middle">
             <thead>
                 <tr>
@@ -99,6 +99,33 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- MOBILE: Card View -->
+    <div class="d-md-none">
+        @forelse($qrs as $q)
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">{{ $q->qr_name }}</h6>
+                    <div class="d-flex gap-2 justify-content-between align-items-center mb-2">
+                        <span class="badge text-bg-info">{{ $q->qr_type }}</span>
+                        <span class="badge {{ $q->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">
+                            {{ $q->is_active ? 'Aktif' : 'Nonaktif' }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-2">Scan: {{ $q->scan_count }}</p>
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-laporin flex-grow-1" href="{{ route('admin.qrcodes.download',$q) }}">Unduh</a>
+                        <form method="POST" action="{{ route('admin.qrcodes.deactivate',$q) }}" onsubmit="return confirm('Nonaktifkan QR?')" class="flex-grow-1">
+                            @csrf
+                            <button class="btn btn-sm btn-outline-danger w-100" @disabled(! $q->is_active)>Nonaktif</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="alert alert-info">Belum ada data</div>
+        @endforelse
     </div>
 
     <!-- Pagination with preserved filters -->

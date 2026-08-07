@@ -127,7 +127,7 @@
         @endif
 
         <!-- Table -->
-        <div class="table-responsive">
+        <div class="table-responsive d-none d-md-block">
             <table class="table align-middle">
                 <thead>
                 <tr>
@@ -169,6 +169,50 @@
                 @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- MOBILE: Card View -->
+        <div class="d-md-none">
+            @forelse($items as $it)
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            @foreach($fields as $f)
+                                @if($f !== 'description' && $f !== 'is_active' && $f !== 'class_id')
+                                    {{ $it->$f }}
+                                    @break
+                                @endif
+                            @endforeach
+                        </h6>
+                        <div class="mb-2">
+                            @foreach($fields as $f)
+                                @if($f !== 'description' && $f !== 'is_active' && $f !== 'class_id')
+                                    @continue
+                                @endif
+                                @if($f === 'is_active')
+                                    <span class="badge {{ $it->$f ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $it->$f ? 'Aktif' : 'Nonaktif' }}</span>
+                                @elseif($f === 'class_id' && $it->class)
+                                    <span class="badge text-bg-secondary">{{ $it->class->class_name }}</span>
+                                @endif
+                            @endforeach
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-laporin flex-grow-1"
+                                x-on:click="openEdit(@js($it))">
+                                Edit
+                            </button>
+                            <form method="POST" action="{{ route('admin.master.destroy', [$resource, $it->id]) }}" 
+                                  onsubmit="return confirm('Hapus?')" class="flex-grow-1">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Hapus</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="alert alert-info">Belum ada data</div>
+            @endforelse
         </div>
 
         <!-- Pagination with preserved filters -->

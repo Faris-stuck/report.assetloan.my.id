@@ -24,6 +24,59 @@
     <h2 class="h5 fw-bold mb-3">Alur Kesiswaan</h2>
     <div class="flowchart compact"><div class="flow-node">Laporan Masuk</div><div class="flow-node">Bukti Dicek</div><div class="flow-node">Pilih Siswa</div><div class="flow-node">Pilih Pelanggaran</div><div class="flow-node">Kesiswaan Menangani</div><div class="flow-node">Pelapor Konfirmasi</div></div>
 </div>
+
+<!-- Search & Filter Card -->
+<div class="laporin-card mb-4">
+    <form method="GET" action="{{ route('kesiswaan.index') }}" class="row g-3 align-items-end">
+        <div class="col-md-6 col-lg-4">
+            <label class="form-label" for="search">Cari</label>
+            <input id="search" name="search" type="text" class="form-control"
+                   placeholder="Cari nomor atau judul laporan..." value="{{ request('search') }}" maxlength="100">
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="status">Status</label>
+            <select id="status" name="status" class="form-select">
+                <option value="">Semua</option>
+                <option value="menunggu_verifikasi" @selected(request('status') === 'menunggu_verifikasi')>Menunggu Verifikasi</option>
+                <option value="memerlukan_informasi" @selected(request('status') === 'memerlukan_informasi')>Perlu Informasi</option>
+                <option value="dibuka_kembali" @selected(request('status') === 'dibuka_kembali')>Dibuka Kembali</option>
+                <option value="sedang_ditangani" @selected(request('status') === 'sedang_ditangani')>Sedang Ditangani</option>
+                <option value="menunggu_konfirmasi" @selected(request('status') === 'menunggu_konfirmasi')>Menunggu Konfirmasi</option>
+                <option value="selesai" @selected(request('status') === 'selesai')>Selesai</option>
+                <option value="ditolak" @selected(request('status') === 'ditolak')>Ditolak</option>
+            </select>
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="from_date">Dari</label>
+            <input id="from_date" name="from_date" type="date" class="form-control" value="{{ request('from_date') }}">
+        </div>
+
+        <div class="col-md-6 col-lg-2">
+            <label class="form-label" for="to_date">Sampai</label>
+            <input id="to_date" name="to_date" type="date" class="form-control" value="{{ request('to_date') }}">
+        </div>
+
+        <div class="col-md-6 col-lg-2 d-flex gap-2">
+            <button type="submit" class="btn btn-laporin flex-grow-1">Cari</button>
+            <a href="{{ route('kesiswaan.index') }}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Results Info -->
+@if(request('search') || request('status') || request('from_date') || request('to_date'))
+    <div class="laporin-card mb-3 pb-3 border-bottom">
+        <p class="text-muted small mb-0">
+            Menampilkan {{ $reports->count() }} dari {{ $reports->total() }} laporan
+            @if(request('search'))
+                untuk pencarian "<strong>{{ request('search') }}</strong>"
+            @endif
+        </p>
+    </div>
+@endif
+
 <div class="report-card-list">
 @forelse($reports as $r)
     <article class="report-row-card">
@@ -32,24 +85,51 @@
             <span class="status-pill status-{{ $r->status }}">{{ $statusLabels[$r->status] ?? str_replace('_',' ',$r->status) }}</span>
         </div>
         @if(in_array($r->status, $processable, true))
-            <form method="POST" action="{{ route('kesiswaan.process',$r) }}" class="row g-3 align-items-end mb-3">@csrf
-                <div class="col-lg-4"><label class="form-label required">Siswa yang terbukti</label><select name="student_id" class="form-select" required><option value="">Pilih siswa</option>@foreach($students as $s)<option value="{{ $s->id }}">{{ $s->name }} - {{ $s->class?->class_name }}</option>@endforeach</select></div>
-                <div class="col-lg-4"><label class="form-label required">Jenis pelanggaran</label><select name="violation_type_id" class="form-select" required><option value="">Pilih jenis</option>@foreach($types as $t)<option value="{{ $t->id }}">{{ $t->violation_name }} (-{{ $t->point_reduction }} poin)</option>@endforeach</select></div>
-                <div class="col-lg-3"><label class="form-label">Catatan pembinaan</label><input name="note" class="form-control" placeholder="Opsional" maxlength="2000"></div>
-                <div class="col-lg-1"><button class="btn btn-laporin w-100">Proses</button></div>
-            </form>
-            <form method="POST" action="{{ route('kesiswaan.reject',$r) }}" class="row g-3 align-items-end reject-report-form" onsubmit="return confirm('Tolak laporan ini? Alur laporan akan berhenti.')">@csrf
-                <div class="col-lg-10"><label class="form-label required">Alasan penolakan</label><input name="reason" class="form-control" placeholder="Wajib diisi jika laporan ditolak" required maxlength="2000"></div>
-                <div class="col-lg-2"><button class="btn btn-outline-danger w-100">Tolak</button></div>
-            </form>
-        @elseif($r->status === 'sedang_ditangani')
-            <form method="POST" action="{{ route('kesiswaan.complete', $r) }}" class="row g-3 align-items-end" onsubmit="return confirm('Tandai penanganan Kesiswaan selesai dan minta konfirmasi pelapor?')">
-                @csrf
-                <div class="col-lg-10">
-                    <label class="form-label" for="completion_note_{{ $r->id }}">Catatan penyelesaian Kesiswaan</label>
-                    <input id="completion_note_{{ $r->id }}" name="note" class="form-control" maxlength="2000" placeholder="Ringkasan pembinaan atau tindak lanjut (opsional)">
+            <div class="accordion" id="accordion-kesiswaan-{{ $r->id }}">
+                <!-- Process Tab -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#process-{{ $r->id }}" aria-expanded="true" aria-controls="process-{{ $r->id }}">
+                            Proses Laporan
+                        </button>
+                    </h2>
+                    <div id="process-{{ $r->id }}" class="accordion-collapse collapse show" data-bs-parent="#accordion-kesiswaan-{{ $r->id }}">
+                        <div class="accordion-body">
+                            <form method="POST" action="{{ route('kesiswaan.process',$r) }}" class="row g-3 align-items-end">@csrf
+                                <div class="col-lg-6"><label class="form-label required">Siswa yang terbukti</label><select name="student_id" class="form-select" required><option value="">Pilih siswa</option>@foreach($students as $s)<option value="{{ $s->id }}">{{ $s->name }} - {{ $s->class?->class_name }}</option>@endforeach</select></div>
+                                <div class="col-lg-6"><label class="form-label required">Jenis pelanggaran</label><select name="violation_type_id" class="form-select" required><option value="">Pilih jenis</option>@foreach($types as $t)<option value="{{ $t->id }}">{{ $t->violation_name }} (-{{ $t->point_reduction }} poin)</option>@endforeach</select></div>
+                                <div class="col-12"><label class="form-label">Catatan pembinaan</label><textarea name="note" class="form-control" placeholder="Opsional" maxlength="2000" rows="3"></textarea></div>
+                                <div class="col-12"><button class="btn btn-laporin">Proses Laporan</button></div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-lg-2"><button class="btn btn-laporin w-100">Selesaikan Penanganan</button></div>
+                
+                <!-- Reject Tab -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reject-{{ $r->id }}" aria-expanded="false" aria-controls="reject-{{ $r->id }}">
+                            Tolak Laporan
+                        </button>
+                    </h2>
+                    <div id="reject-{{ $r->id }}" class="accordion-collapse collapse" data-bs-parent="#accordion-kesiswaan-{{ $r->id }}">
+                        <div class="accordion-body">
+                            <form method="POST" action="{{ route('kesiswaan.reject',$r) }}" class="row g-3" @submit="if(!confirm('Tolak laporan ini? Alur laporan akan berhenti.')) $event.preventDefault()">@csrf
+                                <div class="col-12"><label class="form-label required">Alasan penolakan</label><textarea name="reason" class="form-control" placeholder="Wajib diisi jika laporan ditolak" required maxlength="2000" rows="3"></textarea></div>
+                                <div class="col-12"><button class="btn btn-outline-danger">Tolak Laporan</button></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @elseif($r->status === 'sedang_ditangani')
+            <form method="POST" action="{{ route('kesiswaan.complete', $r) }}" class="row g-3 align-items-end" @submit="if(!confirm('Tandai penanganan Kesiswaan selesai dan minta konfirmasi pelapor?')) $event.preventDefault()">
+                @csrf
+                <div class="col-12">
+                    <label class="form-label" for="completion_note_{{ $r->id }}">Catatan penyelesaian Kesiswaan</label>
+                    <textarea id="completion_note_{{ $r->id }}" name="note" class="form-control" maxlength="2000" placeholder="Ringkasan pembinaan atau tindak lanjut (opsional)" rows="3"></textarea>
+                </div>
+                <div class="col-12"><button class="btn btn-laporin">Selesaikan Penanganan</button></div>
             </form>
         @else
             <div class="status-note mb-0">
@@ -59,8 +139,9 @@
         @endif
     </article>
 @empty
-    <div class="laporin-card text-center py-5 text-muted">Belum ada laporan pelanggaran.</div>
+    <div class="laporin-card text-center py-5 text-muted">Belum ada data.</div>
 @endforelse
 </div>
-<div class="mt-3">{{ $reports->links() }}</div>
+<div class="mt-3">{{ $reports->appends(request()->query())->links() }}</div>
 @endsection
+

@@ -125,55 +125,82 @@
                     $priorityValue = $detail?->priority ?? 'sedang';
                 }
             @endphp
-            <form method="POST" enctype="multipart/form-data" action="{{ route('sarpras.process',$r) }}" class="row g-3 align-items-end">@csrf
-                <input type="hidden" name="report_id" value="{{ $r->id }}">
-                @if($errorsForThisForm && $errors->has('report'))
-                    <div class="col-12">
-                        <div class="invalid-feedback d-block">{{ $errors->first('report') }}</div>
+            <div class="accordion" id="accordion-sarpras-{{ $r->id }}">
+                <!-- Process Tab -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#process-{{ $r->id }}" aria-expanded="true" aria-controls="process-{{ $r->id }}">
+                            Kelola Perbaikan
+                        </button>
+                    </h2>
+                    <div id="process-{{ $r->id }}" class="accordion-collapse collapse show" data-bs-parent="#accordion-sarpras-{{ $r->id }}">
+                        <div class="accordion-body">
+                            <form method="POST" enctype="multipart/form-data" action="{{ route('sarpras.process',$r) }}" class="row g-3">@csrf
+                                <input type="hidden" name="report_id" value="{{ $r->id }}">
+                                @if($errorsForThisForm && $errors->has('report'))
+                                    <div class="col-12">
+                                        <div class="invalid-feedback d-block">{{ $errors->first('report') }}</div>
+                                    </div>
+                                @endif
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label required" for="priority_{{ $r->id }}">Prioritas</label>
+                                    <select id="priority_{{ $r->id }}" name="priority" class="form-select @if($errorsForThisForm && $errors->has('priority')) is-invalid @endif" required>
+                                        <option value="rendah" @selected($priorityValue === 'rendah')>Rendah</option>
+                                        <option value="sedang" @selected($priorityValue === 'sedang')>Sedang</option>
+                                        <option value="tinggi" @selected($priorityValue === 'tinggi')>Tinggi</option>
+                                        <option value="darurat" @selected($priorityValue === 'darurat')>Darurat</option>
+                                    </select>
+                                    @if($errorsForThisForm && $errors->has('priority'))
+                                        <div class="invalid-feedback">{{ $errors->first('priority') }}</div>
+                                    @endif
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="scheduled_repair_at_{{ $r->id }}">Waktu Perbaikan</label>
+                                    <input id="scheduled_repair_at_{{ $r->id }}" type="datetime-local" name="scheduled_repair_at" min="{{ $minSchedule }}" class="form-control @if($errorsForThisForm && $errors->has('scheduled_repair_at')) is-invalid @endif" value="{{ $scheduledRepairAt }}">
+                                    @if($errorsForThisForm && $errors->has('scheduled_repair_at'))
+                                        <div class="invalid-feedback">{{ $errors->first('scheduled_repair_at') }}</div>
+                                    @endif
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="repair_photo_{{ $r->id }}">Foto setelah diperbaiki</label>
+                                    <input id="repair_photo_{{ $r->id }}" type="file" name="repair_photo" class="form-control @if($errorsForThisForm && $errors->has('repair_photo')) is-invalid @endif" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                                    @if($errorsForThisForm && $errors->has('repair_photo'))
+                                        <div class="invalid-feedback">{{ $errors->first('repair_photo') }}</div>
+                                    @endif
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="note_{{ $r->id }}">Catatan</label>
+                                    <input id="note_{{ $r->id }}" name="note" class="form-control @if($errorsForThisForm && $errors->has('note')) is-invalid @endif" placeholder="Opsional" maxlength="2000" value="{{ $errorsForThisForm ? old('note') : '' }}">
+                                    @if($errorsForThisForm && $errors->has('note'))
+                                        <div class="invalid-feedback">{{ $errors->first('note') }}</div>
+                                    @endif
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-laporin">Simpan Perbaikan</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                @endif
-                <div class="col-lg-2">
-                    <label class="form-label required" for="priority_{{ $r->id }}">Prioritas</label>
-                    <select id="priority_{{ $r->id }}" name="priority" class="form-select @if($errorsForThisForm && $errors->has('priority')) is-invalid @endif" required>
-                        <option value="rendah" @selected($priorityValue === 'rendah')>Rendah</option>
-                        <option value="sedang" @selected($priorityValue === 'sedang')>Sedang</option>
-                        <option value="tinggi" @selected($priorityValue === 'tinggi')>Tinggi</option>
-                        <option value="darurat" @selected($priorityValue === 'darurat')>Darurat</option>
-                    </select>
-                    @if($errorsForThisForm && $errors->has('priority'))
-                        <div class="invalid-feedback">{{ $errors->first('priority') }}</div>
-                    @endif
                 </div>
-                <div class="col-lg-3">
-                    <label class="form-label" for="scheduled_repair_at_{{ $r->id }}">Waktu Perbaikan</label>
-                    <input id="scheduled_repair_at_{{ $r->id }}" type="datetime-local" name="scheduled_repair_at" min="{{ $minSchedule }}" class="form-control @if($errorsForThisForm && $errors->has('scheduled_repair_at')) is-invalid @endif" value="{{ $scheduledRepairAt }}">
-                    @if($errorsForThisForm && $errors->has('scheduled_repair_at'))
-                        <div class="invalid-feedback">{{ $errors->first('scheduled_repair_at') }}</div>
-                    @endif
+
+                <!-- Reject Tab -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#reject-{{ $r->id }}" aria-expanded="false" aria-controls="reject-{{ $r->id }}">
+                            Tolak Laporan
+                        </button>
+                    </h2>
+                    <div id="reject-{{ $r->id }}" class="accordion-collapse collapse" data-bs-parent="#accordion-sarpras-{{ $r->id }}">
+                        <div class="accordion-body">
+                            <form method="POST" action="{{ route('sarpras.reject', $r) }}" class="row g-3" @submit="if(!confirm('Tolak laporan kerusakan ini? Alur laporan akan berhenti.')) $event.preventDefault()">
+                                @csrf
+                                <div class="col-12"><label class="form-label required" for="reject_reason_{{ $r->id }}">Alasan penolakan</label><textarea id="reject_reason_{{ $r->id }}" name="reason" class="form-control" required maxlength="2000" placeholder="Jelaskan mengapa laporan tidak dapat diproses" rows="3"></textarea></div>
+                                <div class="col-12"><button class="btn btn-outline-danger">Tolak Laporan</button></div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-lg-2">
-                    <label class="form-label" for="repair_photo_{{ $r->id }}">Foto setelah diperbaiki</label>
-                    <input id="repair_photo_{{ $r->id }}" type="file" name="repair_photo" class="form-control @if($errorsForThisForm && $errors->has('repair_photo')) is-invalid @endif" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-                    @if($errorsForThisForm && $errors->has('repair_photo'))
-                        <div class="invalid-feedback">{{ $errors->first('repair_photo') }}</div>
-                    @endif
-                </div>
-                <div class="col-lg-3">
-                    <label class="form-label" for="note_{{ $r->id }}">Catatan</label>
-                    <input id="note_{{ $r->id }}" name="note" class="form-control @if($errorsForThisForm && $errors->has('note')) is-invalid @endif" placeholder="Opsional" maxlength="2000" value="{{ $errorsForThisForm ? old('note') : '' }}">
-                    @if($errorsForThisForm && $errors->has('note'))
-                        <div class="invalid-feedback">{{ $errors->first('note') }}</div>
-                    @endif
-                </div>
-                <div class="col-lg-2 col-sm-4 col-6">
-                    <button class="btn btn-laporin w-100 text-nowrap">Simpan</button>
-                </div>
-            </form>
-            <form method="POST" action="{{ route('sarpras.reject', $r) }}" class="row g-3 align-items-end mt-2" onsubmit="return confirm('Tolak laporan kerusakan ini? Alur laporan akan berhenti.')">
-                @csrf
-                <div class="col-lg-10"><label class="form-label required" for="reject_reason_{{ $r->id }}">Alasan penolakan</label><input id="reject_reason_{{ $r->id }}" name="reason" class="form-control" required maxlength="2000" placeholder="Jelaskan mengapa laporan tidak dapat diproses"></div>
-                <div class="col-lg-2"><button class="btn btn-outline-danger w-100">Tolak Laporan</button></div>
-            </form>
+            </div>
         @else
             <div class="status-note mb-0">
                 Status laporan saat ini: <strong>{{ $statusLabels[$r->status] ?? str_replace('_',' ',$r->status) }}</strong>.

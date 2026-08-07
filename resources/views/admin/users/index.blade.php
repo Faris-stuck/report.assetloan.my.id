@@ -122,7 +122,8 @@
             </div>
         @endif
 
-        <div class="table-responsive">
+        <!-- DESKTOP: Table View -->
+        <div class="table-responsive d-none d-md-block">
             <table class="table align-middle">
                 <thead>
                     <tr>
@@ -159,6 +160,37 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- MOBILE: Card View -->
+        <div class="d-md-none">
+            @forelse($users as $u)
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ $u->name }}</h6>
+                        <p class="card-text text-muted small mb-2">{{ $u->email }}</p>
+                        <div class="d-flex gap-2 justify-content-between align-items-center mb-3">
+                            <span class="badge {{ $u->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">
+                                {{ $u->is_active ? 'Aktif' : 'Nonaktif' }}
+                            </span>
+                            <span class="text-muted small">{{ str_replace('_', ' ', $u->role) }}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-laporin flex-grow-1"
+                                x-on:click="openEdit(@js([ 'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'phone' => $u->phone, 'is_active' => $u->is_active ]))"
+                            >Edit</button>
+
+                            <form method="POST" action="{{ route('admin.users.destroy', $u) }}" onsubmit="return confirm('Yakin ingin menghapus?')" class="flex-grow-1">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Hapus</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="alert alert-info">Belum ada pengguna</div>
+            @endforelse
         </div>
 
         <!-- Pagination with preserved filters -->

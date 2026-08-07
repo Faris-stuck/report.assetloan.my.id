@@ -61,7 +61,7 @@
         </div>
     @endif
 
-    <div class="table-responsive">
+    <div class="table-responsive d-none d-md-block">
         <table class="table align-middle">
             <thead>
                 <tr>
@@ -88,6 +88,24 @@
                 @endforelse
             </tbody>
         </table>
+    </div>
+
+    <!-- MOBILE: Card View -->
+    <div class="d-md-none">
+        @forelse($logs as $log)
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge text-bg-info">{{ $log->action }}</span>
+                        <small class="text-muted">{{ $log->created_at->format('d M H:i') }}</small>
+                    </div>
+                    <p class="small mb-1"><strong>{{ $log->actor_type }}</strong></p>
+                    <p class="text-muted small mb-0">{{ $log->model_type }} #{{ $log->model_id }}</p>
+                </div>
+            </div>
+        @empty
+            <div class="alert alert-info">Belum ada data</div>
+        @endforelse
     </div>
 
     <!-- Pagination with preserved filters -->
