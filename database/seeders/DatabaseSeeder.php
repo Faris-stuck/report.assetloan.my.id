@@ -18,10 +18,25 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $super = User::updateOrCreate(['email' => 'admin@laporin.local'], ['name' => 'SuperAdmin LAPORIN', 'password' => Hash::make('password123'), 'role' => 'superadmin', 'is_active' => true]);
-        $kesiswaan = User::updateOrCreate(['email' => 'kesiswaan@laporin.local'], ['name' => 'Petugas Kesiswaan', 'password' => Hash::make('password123'), 'role' => 'kesiswaan', 'is_active' => true]);
-        $sarpras = User::updateOrCreate(['email' => 'sarpras@laporin.local'], ['name' => 'Petugas Sarpras', 'password' => Hash::make('password123'), 'role' => 'sarpras', 'is_active' => true]);
-        $wali = User::updateOrCreate(['email' => 'wali@laporin.local'], ['name' => 'Wali Kelas Sample', 'password' => Hash::make('password123'), 'role' => 'wali_kelas', 'is_active' => true]);
+        if (app()->environment('production')) {
+            throw new \LogicException(
+                'DatabaseSeeder is disabled in production. Use reviewed, reversible seeders instead.'
+            );
+        }
+
+        $defaultPassword = (string) env('SEEDER_DEFAULT_PASSWORD');
+
+        if ($defaultPassword === '') {
+            throw new \LogicException(
+                'SEEDER_DEFAULT_PASSWORD must be set outside production before seeding.'
+            );
+        }
+
+        $hashedPassword = Hash::make($defaultPassword);
+        $super = User::updateOrCreate(['email' => 'admin@laporin.local'], ['name' => 'SuperAdmin LAPORIN', 'password' => $hashedPassword, 'role' => 'superadmin', 'is_active' => true]);
+        $kesiswaan = User::updateOrCreate(['email' => 'kesiswaan@laporin.local'], ['name' => 'Petugas Kesiswaan', 'password' => $hashedPassword, 'role' => 'kesiswaan', 'is_active' => true]);
+        $sarpras = User::updateOrCreate(['email' => 'sarpras@laporin.local'], ['name' => 'Petugas Sarpras', 'password' => $hashedPassword, 'role' => 'sarpras', 'is_active' => true]);
+        $wali = User::updateOrCreate(['email' => 'wali@laporin.local'], ['name' => 'Wali Kelas Sample', 'password' => $hashedPassword, 'role' => 'wali_kelas', 'is_active' => true]);
 
         $this->call(TarunaBangsaClassSeeder::class);
         $class = SchoolClass::firstOrCreate(['class_name' => 'Kelas 10 RPL 1', 'academic_year' => '2026/2027'], ['grade_level' => '10', 'major' => 'RPL', 'room_name' => 'Ruang 10 RPL 1', 'is_active' => true]);

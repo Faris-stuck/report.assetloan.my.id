@@ -46,7 +46,7 @@ class LaporinHealthCommand extends Command
         $this->checkApp($mode);
         $this->checkDatabaseConfig($mode);
         $this->checkRedisConfig($mode);
-        $this->checkServices();
+        $this->checkServices($mode);
         $this->checkTrustedProxies($mode, $env['values']);
 
         $this->newLine();
@@ -127,10 +127,21 @@ class LaporinHealthCommand extends Command
         $port = (string) config('database.connections.mysql.port');
         $database = (string) config('database.connections.mysql.database');
 
+        $validHost = $host !== '';
+
+        if ($mode === 'production') {
+            $validHost = $validHost
+                && ! in_array(
+                    strtolower($host),
+                    ['127.0.0.1', 'localhost'],
+                    true
+                );
+        }
+
         $this->assert(
-            $host !== '',
+            $validHost,
             'DB_HOST',
-            'terisi'
+            'host production internal, bukan SSH tunnel lokal'
         );
 
         $this->assert(
@@ -175,11 +186,33 @@ class LaporinHealthCommand extends Command
         $host = (string) config('database.redis.default.host');
         $port = (string) config('database.redis.default.port');
 
+        $validHost = $host !== '';
+
+        if ($mode === 'production') {
+            $validHost = $validHost
+                && ! in_array(
+                    strtolower($host),
+                    ['127.0.0.1', 'localhost'],
+                    true
+                );
+        }
+
         $this->assert(
-            $host !== '',
+            $validHost,
             'REDIS_HOST',
-            'terisi'
+            'host production internal, bukan SSH tunnel lokal'
         );
+
+        $cachePrefix = (string) config('cache.prefix');
+
+        if ($mode === 'production') {
+            $this->assert(
+                $cachePrefix !== ''
+                    && ! str_starts_with($cachePrefix, 'laporin_local_'),
+                'CACHE_PREFIX',
+                'prefix production terisolasi'
+            );
+        }
 
         if ($mode === 'local') {
             $this->assert(
@@ -204,7 +237,7 @@ class LaporinHealthCommand extends Command
         }
     }
 
-    private function checkServices(): void
+    private function checkServices(string $mode): void
     {
         $this->section('SERVICES');
 
@@ -213,6 +246,32 @@ class LaporinHealthCommand extends Command
             'SESSION_DRIVER',
             'redis'
         );
+
+        $this->assert(
+            config('session.connection') === 'default',
+            'SESSION_CONNECTION',
+            'default'
+        );
+
+        if ($mode === 'production') {
+            $this->assert(
+                config('session.secure') === true,
+                'SESSION_SECURE_COOKIE',
+                'true'
+            );
+
+            $this->assert(
+                config('session.http_only') === true,
+                'SESSION_HTTP_ONLY',
+                'true'
+            );
+
+            $this->assert(
+                in_array(config('session.same_site'), ['lax', 'strict', 'none'], true),
+                'SESSION_SAME_SITE',
+                'lax, strict, atau none'
+            );
+        }
 
         $this->assert(
             config('cache.default') === 'redis',
@@ -232,12 +291,50 @@ class LaporinHealthCommand extends Command
             'smtp'
         );
 
+        if ($mode === 'production') {
+            $smtp = (array) config('mail.mailers.smtp');
+
+            $this->assert(
+                ($smtp['host'] ?? '') === 'smtp.gmail.com',
+                'MAIL_HOST',
+                'smtp.gmail.com'
+            );
+
+            $this->assert(
+                (string) ($smtp['port'] ?? '') === '587',
+                'MAIL_PORT',
+                '587'
+            );
+
+            $this->assert(
+                ($smtp['encryption'] ?? '') === 'tls',
+                'MAIL_ENCRYPTION',
+                'tls'
+            );
+
+            $this->assert(
+                ($smtp['username'] ?? '') === 'noreplylaporin@gmail.com',
+                'MAIL_USERNAME',
+                'noreplylaporin@gmail.com'
+            );
+
+            $this->assert(
+                (string) ($smtp['password'] ?? '') !== '',
+                'MAIL_PASSWORD',
+                'SET'
+            );
+        }
+
         $mailFrom = (string) config('mail.from.address');
 
         $this->assert(
-            filter_var($mailFrom, FILTER_VALIDATE_EMAIL) !== false,
+            $mode !== 'production'
+                ? filter_var($mailFrom, FILTER_VALIDATE_EMAIL) !== false
+                : $mailFrom === 'noreplylaporin@gmail.com',
             'MAIL_FROM_ADDRESS',
-            'email valid'
+            $mode === 'production'
+                ? 'noreplylaporin@gmail.com'
+                : 'email valid'
         );
     }
 
@@ -262,15 +359,11 @@ class LaporinHealthCommand extends Command
         }
 
         $this->assert(
-            $trusted !== '',
+            $trusted !== ''
+                && $trusted !== '*'
+                && ! str_contains($trusted, '*'),
             'TRUSTED_PROXIES production',
-            'harus dikonfigurasi'
-        );
-
-        $this->assert(
-            $trusted !== '*',
-            'TRUSTED_PROXIES production',
-            'tidak boleh wildcard *'
+            'specific address/network tanpa wildcard *'
         );
     }
 
@@ -359,6 +452,14 @@ class LaporinHealthCommand extends Command
                 static fn (int $count): bool => $count > 1
             )
         );
+
+        // Docker injects production variables at runtime; use them for checks
+        // while keeping duplicate detection limited to the .env file itself.
+        foreach ((array) getenv() as $key => $value) {
+            if (preg_match('/^[A-Z][A-Z0-9_]*$/', (string) $key)) {
+                $values[$key] = (string) $value;
+            }
+        }
 
         return compact('values', 'duplicates');
     }
