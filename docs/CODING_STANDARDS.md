@@ -20,6 +20,14 @@
 - Jangan simpan rahasia di browser.
 - Jangan buat request baru tanpa CSRF dan validasi server.
 
+## UI/UX Standards
+
+Lihat dokumentasi berikut untuk pattern konsisten:
+- **Panduan Halaman Baru**: `docs/FUTURE_PAGES_IMPLEMENTATION_GUIDE.md` - template search/filter, table vs card, checklist
+- **Modal Workflow**: Semua edit/action HARUS menggunakan modal, bukan inline
+- **Search/Filter**: Semua halaman dengan 20+ items WAJIB punya search/filter server-side
+- **Accessibility**: Focus trap dalam modal, keyboard navigation (Tab/Shift+Tab/Escape)
+
 ## Pemformatan
 
 - Gunakan `prettier.config.js` untuk JS/TS/JSON/Markdown/CSS.

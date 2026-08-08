@@ -1,3 +1,43 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* ============================================
+     Global Focus Indicator Styles (Keyboard Accessibility)
+     ============================================ */
+
+  /* Global :focus-visible for all interactive elements */
+  :focus-visible {
+    outline: 3px solid #228B22;
+    outline-offset: 2px;
+  }
+
+  /* Explicit focus-visible for common interactive elements */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid #228B22;
+    outline-offset: 2px;
+  }
+
+  /* Custom focus for checkboxes and radio buttons */
+  .form-check-input:focus-visible {
+    border-color: #228B22;
+    box-shadow: 0 0 0 0.25rem rgba(34, 139, 34, 0.25);
+  }
+
+  /* Ensure outline is not hidden by overflow */
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role="button"],
+  .form-check-input {
+    overflow: visible;
+  }
+}

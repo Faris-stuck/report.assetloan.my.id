@@ -31,13 +31,13 @@ class SecurityHeaders
             "img-src 'self' data: blob:",
             "font-src 'self' data: https://cdn.jsdelivr.net",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://static.cloudflareinsights.com",
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://static.cloudflareinsights.com",
             "connect-src 'self' https://cloudflareinsights.com",
             'upgrade-insecure-requests',
         ]));
 
         if ($request->isSecure() || str_starts_with((string) config('app.url'), 'https://')) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
         }
 
         return $response;

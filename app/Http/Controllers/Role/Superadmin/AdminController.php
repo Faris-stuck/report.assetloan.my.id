@@ -50,6 +50,11 @@ class AdminController extends Controller
         return $this->service->updateUser($request, $user);
     }
 
+    public function destroyUser(User $user): RedirectResponse
+    {
+        return $this->service->destroy('users', $user->id);
+    }
+
     public function audit(): View
     {
         return $this->service->audit();

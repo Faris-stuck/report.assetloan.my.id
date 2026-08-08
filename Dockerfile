@@ -1,5 +1,7 @@
 FROM php:8.3-apache
 
+# Note: Node.js removed - npm builds happen during CI/CD phase, not in production container
+
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN apt-get update \
@@ -23,11 +25,15 @@ COPY . /var/www/html
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/start.sh /usr/local/bin/laporin-start
 RUN chmod +x /usr/local/bin/laporin-start \
-    && for path in app bootstrap config database lang public resources routes; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 644 {} +; fi; done \
+    && for path in app bootstrap config database lang public resources routes; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 600 {} +; fi; done \
     && touch /var/www/html/.env \
     && chmod 640 /var/www/html/.env \
     && mkdir -p storage/app/private storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chmod -R 700 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache /var/www/html/.env
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/up || exit 1
 
 EXPOSE 8080
 CMD ["laporin-start"]

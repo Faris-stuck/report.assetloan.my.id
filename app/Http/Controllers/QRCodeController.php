@@ -16,8 +16,31 @@ class QRCodeController extends Controller
 {
     public function index(): View
     {
+        $query = QrCode::query();
+        
+        // Search by name
+        if ($search = request('search')) {
+            $query->where('qr_name', 'like', "%{$search}%");
+        }
+        
+        // Filter by type
+        if ($type = request('type')) {
+            if (in_array($type, ['general', 'class', 'location'], true)) {
+                $query->where('qr_type', $type);
+            }
+        }
+        
+        // Filter by status
+        if ($status = request('status')) {
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
         return view('admin.qrcodes.index', [
-            'qrs' => QrCode::latest()->paginate(20),
+            'qrs' => $query->latest()->paginate(20),
             'classes' => SchoolClass::where('is_active', true)->orderBy('class_name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('location_name')->get(),
         ]);

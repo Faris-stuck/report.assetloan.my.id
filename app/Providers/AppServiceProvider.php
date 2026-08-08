@@ -2,7 +2,13 @@
 
 namespace App\Providers;
 
+use App\Models\BullyingDetail;
+use App\Models\DamageDetail;
+use App\Models\Report;
 use App\Models\User;
+use App\Observers\BullyingDetailObserver;
+use App\Observers\DamageDetailObserver;
+use App\Observers\ReportObserver;
 use App\Services\Role\Superadmin\AdminService;
 use App\Services\Role\Superadmin\AdminServiceInterface;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Register Model Observers for automatic cache invalidation
+        Report::observe(ReportObserver::class);
+        DamageDetail::observe(DamageDetailObserver::class);
+        BullyingDetail::observe(BullyingDetailObserver::class);
+
         Gate::before(function (User $user, string $ability): ?bool {
             if (! $user->is_active) {
                 return false;

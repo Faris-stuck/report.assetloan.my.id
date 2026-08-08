@@ -1,0 +1,627 @@
+{
+  "pbtResults": {
+    "3. Write bug condition exploration test (Cache Invalidation Missing)": {
+      "status": "passed",
+      "failingExample": "Test failures demonstrate cache invalidation bug:\n1. test_stale_data_when_new_report_created: Expected 6 reports but got 5 - new report NOT visible (cache not invalidated)\n2. test_stale_data_when_report_updated: Expected 'Updated Title' but got 'Original Title' - updated data NOT visible (cache not invalidated)\n3. test_stale_data_when_report_deleted: Expected 2 reports but got 3 - deleted report still visible (cache not invalidated)\n4. test_consistency_issue_when_data_changes: Expected count to increase but got 0 > 0 (cache not invalidated)\n\nThese counterexamples prove that without cache invalidation strategy:\n- New data doesn't appear in cached lists until natural cache expiration\n- Updated data shows stale values from cache\n- Deleted data remains visible in cached lists\n- Multiple users see inconsistent data\n\nBug Condition confirmed: Cache not invalidated on CREATE/UPDATE/DELETE operations causes stale data display.",
+      "lastRunTimestamp": 1786121033293
+    },
+    "2. Write bug condition exploration test (Query Performance Degradation)": {
+      "status": "passed",
+      "failingExample": "Bug Condition Confirmed - Query Performance Degradation Without Cache:\n- Cache miss response time: 172.47ms (target <100ms)\n- Cache hit response time: 124.75ms (target <50ms)\n- Concurrent average (10 requests): 162.70ms (target <100ms)\n\nThese measurements confirm that without a caching layer, database queries are significantly slower than acceptable performance targets. The bug condition is present in the unfixed code - queries directly hit the database without any caching layer, causing response times 50-72% slower than the target performance.",
+      "lastRunTimestamp": 1786121058101
+    },
+    "1. Write bug condition exploration test (Session Table Missing)": {
+      "status": "passed",
+      "failingExample": "Test Results on Current Code:\n- ✓ PASS: test_sessions_table_exists_and_is_accessible (sessions table EXISTS with correct schema)\n- ⨯ FAIL: test_login_creates_session_successfully (User not authenticated - login workflow issue)\n- ⨯ FAIL: test_session_retrievable_on_subsequent_requests (Cannot create session)\n- ⨯ FAIL: test_session_access_response_time_under_50ms (Cannot measure performance)\n- ⨯ FAIL: test_session_destroyed_on_logout (Cannot logout)\n\nCRITICAL FINDING: Sessions table EXISTS in database and migrations are complete. The test that directly checks for sessions table (test_sessions_table_exists_and_is_accessible) PASSES, confirming that Requirement 1.1 \"sessions table doesn't exist\" is NOT the bug condition on current code. \n\nRoot Cause Analysis:\nThe failing tests are due to login authentication failures in the test environment, not missing sessions table. The phpunit.xml configures SESSION_DRIVER=array for testing, which bypasses database sessions. The user creation succeeds but authentication POST /login fails to authenticate the user.\n\nThis suggests:\n1. Sessions table bug (1.1, 1.2) has been addressed or the actual root cause differs from \"table missing\"\n2. The real bugs are likely Performance Degradation (1.3, 1.4) and Cache Invalidation (1.5)\n3. Authentication flow has a separate issue preventing login in tests",
+      "lastRunTimestamp": 1786121094215
+    }
+  },
+  "executionHistory": {
+    "1. Write bug condition exploration test (Session Table Missing)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699164
+      },
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119720860
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786120836201
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121120362
+      }
+    ],
+    "2. Write bug condition exploration test (Query Performance Degradation)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699363
+      },
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119722337
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786120836371
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121120838
+      }
+    ],
+    "3. Write bug condition exploration test (Cache Invalidation Missing)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699471
+      },
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119721371
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786120836891
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121121223
+      }
+    ],
+    "4. Write preservation property tests (Authentication & Session Security)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699590
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121127302
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121136173
+      }
+    ],
+    "5. Write preservation property tests (Authorization & Access Control)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699688
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121127432
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121137123
+      }
+    ],
+    "6. Write preservation property tests (Data Integrity & Foreign Keys)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699787
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121127931
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121137351
+      }
+    ],
+    "7. Write preservation property tests (File Attachments & Fallback Behavior)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119699926
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121128460
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121137559
+      }
+    ],
+    "8. Verify sessions table migration exists dan properly defined": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119700024
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121146988
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121187754
+      }
+    ],
+    "9. Run database migration untuk create sessions table": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119700197
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121187965
+      }
+    ],
+    "10. Verify session table schema (columns, indexes)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119700427
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121199836
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786122411579
+      }
+    ],
+    "11. Test session creation on login": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119700632
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121200070
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786122412678
+      }
+    ],
+    "12. Install Predis package via composer": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119700823
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121200311
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786122412315
+      }
+    ],
+    "13. Configure Redis connection dalam database.php (Verify existing)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119701027
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121200838
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786122413848
+      }
+    ],
+    "14. Add Redis environment variables ke .env file": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119701233
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121201214
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786122412965
+      }
+    ],
+    "15. Test Redis connection": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119701427
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121200569
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786122413216
+      }
+    ],
+    "16. Configure cache driver ke Redis": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119701611
+      },
+      {
+        "executionId": "96362d97-2f3d-44f9-bc35-9d002621d91b",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786121201493
+      }
+    ],
+    "17. Update SESSION_DRIVER dari database ke redis di .env": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119701763
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166040973
+      }
+    ],
+    "18. Verify session storage to Redis working": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119702008
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166041899
+      }
+    ],
+    "19. Test session lifecycle (create, retrieve, destroy)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119702208
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166042749
+      }
+    ],
+    "20. Create CacheableQuery trait untuk cache key generation": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119702408
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166042379
+      }
+    ],
+    "21. Create cache wrapper functions untuk read queries": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119702627
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166043141
+      }
+    ],
+    "22. Implement cache TTL strategy per query type": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119702889
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166043955
+      }
+    ],
+    "23. Test query caching (cache hit <50ms, cache miss <100ms)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119703187
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166041394
+      }
+    ],
+    "24. Create Model Observers untuk Report, DamageDetail, BullyingDetail": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119703441
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166113572
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166187845
+      }
+    ],
+    "25. Hook Model observers ke boot() method di AppServiceProvider": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119703740
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166188159
+      }
+    ],
+    "26. Implement cache invalidation on CREATE/UPDATE/DELETE": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119704209
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166193616
+      }
+    ],
+    "27. Test cache invalidation (clear cache after update, new data visible)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119704442
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166194104
+      }
+    ],
+    "28. Implement query caching dalam ReportController": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119704664
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166194554
+      }
+    ],
+    "29. Implement query caching dalam PublicReportController": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119706332
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166194915
+      }
+    ],
+    "30. Implement query caching untuk master data queries": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119706739
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166195290
+      }
+    ],
+    "31. Implement query caching untuk user/profile queries": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119707202
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166195753
+      }
+    ],
+    "32. Unit test: session table exists": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119707669
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166196163
+      }
+    ],
+    "33. Unit test: cached query response <50ms": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119708464
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166196527
+      }
+    ],
+    "34. Unit test: uncached query response <100ms": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119708855
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166196919
+      }
+    ],
+    "35. Integration test: concurrent users (50+ concurrent requests)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119709064
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166197353
+      }
+    ],
+    "36. Verification: cache hit rate >80%, database load reduced 60%+": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119709263
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166197980
+      }
+    ],
+    "37. Add Redis health check middleware": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119709682
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166198353
+      }
+    ],
+    "38. Configure cache warming strategy (optional pre-populate)": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119710353
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166198803
+      }
+    ],
+    "39. Add monitoring metrics & observability": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119711131
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166199216
+      }
+    ],
+    "40. Update .env.example dengan Redis configuration": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119711326
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166199652
+      }
+    ],
+    "41. Fix Validation: Re-run bug condition exploration tests": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119711638
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166201266
+      }
+    ],
+    "42. Preservation Validation: Re-run preservation property tests  ": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119712021
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166201664
+      }
+    ],
+    "43. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "cc46a408-f06b-42a7-8fa9-a843a7519ecc",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786119712349
+      },
+      {
+        "executionId": "12b8d6bd-5a3a-4592-8eaf-d6a25d6c3b14",
+        "chatSessionId": "sess_4122f781-92aa-45b3-87cc-252c32f98e68",
+        "timestamp": 1786166201824
+      }
+    ]
+  }
+}

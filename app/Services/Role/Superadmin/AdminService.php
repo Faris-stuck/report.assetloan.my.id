@@ -28,11 +28,42 @@ class AdminService implements AdminServiceInterface
         [$model, $fields] = $this->registry->getModelAndFields($resource);
 
         $classesModel = $this->registry->getClassesModel();
+        
+        // Build query with search/filter support
+        $query = $model::query();
+        
+        // Search across relevant fields
+        if ($search = request('search')) {
+            $searchTerm = "%{$search}%";
+            $query->where(function ($q) use ($resource, $searchTerm) {
+                // Search logic per resource type
+                match($resource) {
+                    'classes' => $q->where('class_name', 'like', $searchTerm)
+                                   ->orWhere('grade_level', 'like', $searchTerm),
+                    'subjects' => $q->where('subject_name', 'like', $searchTerm),
+                    'staff-units' => $q->where('unit_name', 'like', $searchTerm),
+                    'locations' => $q->where('location_name', 'like', $searchTerm)
+                                    ->orWhere('location_type', 'like', $searchTerm),
+                    'violation-types' => $q->where('violation_name', 'like', $searchTerm),
+                    'damage-categories' => $q->where('category_name', 'like', $searchTerm),
+                    default => $q,
+                };
+            });
+        }
+        
+        // Status filter
+        if ($status = request('status')) {
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
 
         return view('admin.master.index', [
             'resource' => $resource,
             'fields' => $fields,
-            'items' => $model::latest()->paginate(20),
+            'items' => $query->latest()->paginate(20),
             'classes' => $classesModel::where('is_active', true)->orderBy('class_name')->get(),
         ]);
     }
@@ -70,7 +101,33 @@ class AdminService implements AdminServiceInterface
 
     public function users(): View
     {
-        return view('admin.users.index', ['users' => User::latest()->paginate(20)]);
+        $query = User::query();
+        
+        // Search by name and email
+        if ($search = request('search')) {
+            $searchTerm = "%{$search}%";
+            $query->where('name', 'like', $searchTerm)
+                  ->orWhere('email', 'like', $searchTerm);
+        }
+        
+        // Filter by role
+        if ($role = request('role')) {
+            $query->where('role', $role);
+        }
+        
+        // Filter by status
+        if ($status = request('status')) {
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        return view('admin.users.index', [
+            'users' => $query->latest()->paginate(20),
+            'roles' => User::ROLES,
+        ]);
     }
 
     public function storeUser(Request $request): RedirectResponse
@@ -110,6 +167,31 @@ class AdminService implements AdminServiceInterface
 
     public function audit(): View
     {
-        return view('admin.audit', ['logs' => AuditLog::latest()->paginate(30)]);
+        $query = AuditLog::query();
+        
+        // Search by actor or action
+        if ($search = request('search')) {
+            $searchTerm = "%{$search}%";
+            $query->where('actor_type', 'like', $searchTerm)
+                  ->orWhere('action', 'like', $searchTerm);
+        }
+        
+        // Filter by action type
+        if ($action = request('action')) {
+            $query->where('action', $action);
+        }
+        
+        // Filter by date range
+        if ($from_date = request('from_date')) {
+            $query->whereDate('created_at', '>=', $from_date);
+        }
+        if ($to_date = request('to_date')) {
+            $query->whereDate('created_at', '<=', $to_date);
+        }
+
+        return view('admin.audit', [
+            'logs' => $query->latest()->paginate(30),
+            'actions' => AuditLog::distinct()->pluck('action'),
+        ]);
     }
 }

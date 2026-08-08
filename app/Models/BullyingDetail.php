@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\SchoolClass;
 
 class BullyingDetail extends Model
 {
@@ -12,5 +13,10 @@ class BullyingDetail extends Model
     public function report(): BelongsTo
     {
         return $this->belongsTo(Report::class);
+    }
+
+    public function allegedActorClass(): BelongsTo
+    {
+        return $this->belongsTo(SchoolClass::class, 'alleged_actor_class_id');
     }
 }

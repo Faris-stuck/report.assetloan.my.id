@@ -53,6 +53,7 @@ class TrackingController extends Controller
     public function addInfo(Request $request, Report $report): RedirectResponse
     {
         if (! $this->hasTrackingAccess($report)) {
+            $this->clearTrackingSession();
             return redirect()
                 ->route('track.form')
                 ->withErrors(['access_code' => 'Sesi tracking sudah habis. Masukkan nomor laporan dan kode akses lagi.']);
@@ -94,6 +95,7 @@ class TrackingController extends Controller
     public function confirmComplete(Report $report): RedirectResponse
     {
         if (! $this->hasTrackingAccess($report)) {
+            $this->clearTrackingSession();
             return redirect()
                 ->route('track.form')
                 ->withErrors(['access_code' => 'Sesi tracking sudah habis. Masukkan nomor laporan dan kode akses lagi.']);
@@ -119,18 +121,30 @@ class TrackingController extends Controller
         return back()->with('status', 'Laporan dikonfirmasi selesai.');
     }
 
+    /**
+     * Pure validation function - no side effects.
+     * Returns boolean based on session TTL, ownership, and verification status.
+     * Session clearing is handled by error handlers in controller methods.
+     */
     private function hasTrackingAccess(Report $report): bool
     {
         $verifiedAt = (int) session('track_verified_at', 0);
         $isFresh = $verifiedAt > 0 && now()->timestamp - $verifiedAt <= self::TRACKING_SESSION_TTL_SECONDS;
 
         if (! $isFresh) {
-            session()->forget(['track_report_id', 'track_access_ok', 'track_verified_at']);
-
             return false;
         }
 
         return session('track_report_id') === $report->id && session('track_access_ok') === true;
+    }
+
+    /**
+     * Clears all tracking session keys.
+     * Called only from error handlers to atomically clear session on validation failure.
+     */
+    private function clearTrackingSession(): void
+    {
+        session()->forget(['track_report_id', 'track_access_ok', 'track_verified_at']);
     }
 
     private function normalizeReportNumber(string $value): string

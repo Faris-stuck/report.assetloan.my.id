@@ -17,8 +17,36 @@ class KesiswaanService
 
     public function index(): View
     {
+        $query = Report::where('report_type', 'violation');
+
+        // Search across report_number, title, and description
+        if ($search = request('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('report_number', 'like', "%{$search}%")
+                  ->orWhere('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by status - validate against allowed statuses
+        $allowedStatuses = ['menunggu_verifikasi', 'memerlukan_informasi', 'dibuka_kembali', 'sedang_ditangani', 'menunggu_konfirmasi', 'selesai', 'ditolak'];
+        if ($status = request('status')) {
+            if (in_array($status, $allowedStatuses, true)) {
+                $query->where('status', $status);
+            }
+        }
+
+        // Filter by date range
+        if ($from_date = request('from_date')) {
+            $query->whereDate('created_at', '>=', $from_date);
+        }
+
+        if ($to_date = request('to_date')) {
+            $query->whereDate('created_at', '<=', $to_date);
+        }
+
         return view('kesiswaan.index', [
-            'reports' => Report::where('report_type', 'violation')->latest()->paginate(15),
+            'reports' => $query->latest()->paginate(15),
             'students' => Student::with('class')->orderBy('name')->get(),
             'types' => ViolationType::where('is_active', true)->get(),
         ]);

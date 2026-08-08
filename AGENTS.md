@@ -46,7 +46,3 @@
 - Akses role berbasis allow-list: `superadmin`, `kesiswaan`, `sarpras`, `wali_kelas`.
 - Migrasi harus idempoten dan aman untuk data produksi.
 
-## Atribusi Commit
-
-Commit AI harus menyertakan:
-`Co-Authored-By: Hermes Agent <noreply@nousresearch.com>`

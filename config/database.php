@@ -59,7 +59,11 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_TIMEOUT => 30,
             ]) : [],
+            'session_options' => [
+                'max_statement_time' => 30, // 30 second statement timeout for MySQL
+            ],
         ],
 
         'mariadb' => [
@@ -79,7 +83,11 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::ATTR_TIMEOUT => 30,
             ]) : [],
+            'session_options' => [
+                'max_statement_time' => 30, // 30 second statement timeout for MariaDB
+            ],
         ],
 
         'pgsql' => [
@@ -143,7 +151,7 @@ return [
 
     'redis' => [
 
-        'client' => env('REDIS_CLIENT', 'phpredis'),
+        'client' => env('REDIS_CLIENT', 'predis'),
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),

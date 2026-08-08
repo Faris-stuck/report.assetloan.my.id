@@ -68,6 +68,10 @@ return Application::configure(basePath: dirname(__DIR__))
             return $request->ip() ?? 'unknown';
         };
 
+        // Rate limiting rationale:
+        // - 5 public reports per 30 minutes: Prevents spam/abuse while allowing legitimate reporting
+        // - 10 tracking queries per minute: Prevents tracking endpoint enumeration attacks
+        // Both limits use client IP for tracking (with CF-Connecting-IP proxy support)
         RateLimiter::for('public-reports', function (Request $request) use ($clientIp) {
             return Limit::perMinutes(30, 5)->by($clientIp($request));
         });

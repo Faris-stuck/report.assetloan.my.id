@@ -153,14 +153,15 @@
                         @endforeach
                         <td class="text-end text-nowrap">
                             <button type="button" class="btn btn-sm btn-outline-laporin"
-                                x-on:click="openEdit(@js($it))">
+                                x-on:click="openEdit(@js($it))"
+                                aria-label="Edit {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">
                                 Edit
                             </button>
                             <form method="POST" action="{{ route('admin.master.destroy', [$resource, $it->id]) }}" 
                                   style="display:inline" onsubmit="return confirm('Hapus data ini?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Hapus {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">Hapus</button>
                             </form>
                         </td>
                     </tr>
@@ -198,14 +199,15 @@
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-sm btn-outline-laporin flex-grow-1"
-                                x-on:click="openEdit(@js($it))">
+                                x-on:click="openEdit(@js($it))"
+                                aria-label="Edit {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">
                                 Edit
                             </button>
                             <form method="POST" action="{{ route('admin.master.destroy', [$resource, $it->id]) }}" 
                                   onsubmit="return confirm('Hapus?')" class="flex-grow-1">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Hapus</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100" aria-label="Hapus {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">Hapus</button>
                             </form>
                         </div>
                     </div>
@@ -223,7 +225,7 @@
 
     <!-- Modal Edit Form -->
     <x-modal name="edit-master" :show="old('edit_id') ? true : false" focusable>
-        <form method="POST" x-bind:action="editingId ? '{{ url('/admin/master') }}/' + editingId : '#'" class="p-4">
+        <form method="POST" x-bind:action="editingId ? '{{ url('/admin/master') }}/' + editingId : '#'" class="p-3 p-lg-5">
             @csrf
             @method('PUT')
             <input type="hidden" name="edit_id" x-bind:value="editingId">

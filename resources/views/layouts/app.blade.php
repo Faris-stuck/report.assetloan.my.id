@@ -58,7 +58,7 @@
             <span class="brand-mark">✓</span>
             <span>LAPORIN</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Buka menu navigasi">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Buka menu navigasi utama">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div id="mainNav" class="collapse navbar-collapse">
@@ -80,14 +80,14 @@
                     @endif
                     @if($currentUser->isSuperadmin())
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Panel Admin</a>
-                            <ul class="dropdown-menu shadow border-0 rounded-4 p-2">
-                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}">Pengguna</a></li>
-                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}">Kode QR</a></li>
-                                <li><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}">Catatan Audit</a></li>
-                                <li><hr class="dropdown-divider"></li>
+                            <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-label="Panel Admin menu" aria-expanded="false">Panel Admin</a>
+                            <ul class="dropdown-menu shadow border-0 rounded-4 p-2" role="menu">
+                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}" role="menuitem" aria-label="Kelola pengguna">Pengguna</a></li>
+                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}" role="menuitem" aria-label="Kelola kode QR">Kode QR</a></li>
+                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}" role="menuitem" aria-label="Lihat catatan audit">Catatan Audit</a></li>
+                                <li role="none"><hr class="dropdown-divider"></li>
                                 @foreach(['classes'=>'Kelas','subjects'=>'Mapel','staff-units'=>'Unit Staf','locations'=>'Lokasi','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan'] as $resource=>$label)
-                                    <li><a class="dropdown-item rounded-3" href="{{ route('admin.master.index',$resource) }}">{{ $label }}</a></li>
+                                    <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.master.index',$resource) }}" role="menuitem" aria-label="Kelola {{ strtolower($label) }}">{{ $label }}</a></li>
                                 @endforeach
                             </ul>
                         </li>
@@ -125,7 +125,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const source = document.getElementById('validation-errors-json');
     const nav = document.getElementById('mainNav');
+    const navDropdowns = nav?.querySelectorAll('.dropdown-toggle');
 
+    // Auto-hide mobile menu on link click
     if (nav) {
         nav.querySelectorAll('a').forEach((link) => {
             link.addEventListener('click', () => {
@@ -133,6 +135,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const collapse = bootstrap.Collapse.getOrCreateInstance(nav, { toggle: false });
                     if (nav.classList.contains('show')) collapse.hide();
                 }
+            });
+        });
+    }
+
+    // Update aria-expanded on dropdown toggle
+    if (navDropdowns) {
+        navDropdowns.forEach(toggle => {
+            toggle.addEventListener('show.bs.dropdown', () => {
+                toggle.setAttribute('aria-expanded', 'true');
+            });
+            toggle.addEventListener('hide.bs.dropdown', () => {
+                toggle.setAttribute('aria-expanded', 'false');
             });
         });
     }

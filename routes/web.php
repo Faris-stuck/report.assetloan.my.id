@@ -18,6 +18,10 @@ Route::get('/faq-laporin-smk-taruna-bangsa-bekasi', [SeoController::class, 'faq'
 Route::get('/lapor/{qr?}', [PublicReportController::class, 'create'])->name('public.report.qr');
 Route::post('/lapor', [PublicReportController::class, 'store'])->middleware('throttle:public-reports')->name('public.report.store');
 Route::get('/lapor-sukses/{report:public_token}', [PublicReportController::class, 'success'])->name('public.report.success');
+
+// Public tracking routes - No CSRF protection required
+// Rationale: Public reports must be accessible without authentication
+// Access control: Controlled by access_code verification in TrackingController
 Route::get('/lacak', [TrackingController::class, 'form'])->name('track.form');
 Route::post('/lacak', [TrackingController::class, 'search'])->middleware('throttle:public-tracking')->name('track.search');
 Route::post('/lacak/{report}/info', [TrackingController::class, 'addInfo'])->middleware('throttle:public-tracking')->name('track.info');
@@ -33,6 +37,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/users', [SuperadminAdminController::class, 'users'])->name('users.index');
         Route::post('/users', [SuperadminAdminController::class, 'storeUser'])->name('users.store');
         Route::put('/users/{user}', [SuperadminAdminController::class, 'updateUser'])->name('users.update');
+        Route::delete('/users/{user}', [SuperadminAdminController::class, 'destroyUser'])->name('users.destroy');
         Route::get('/audit', [SuperadminAdminController::class, 'audit'])->name('audit');
         Route::get('/qrcodes', [QRCodeController::class, 'index'])->name('qrcodes.index');
         Route::post('/qrcodes', [QRCodeController::class, 'store'])->name('qrcodes.store');

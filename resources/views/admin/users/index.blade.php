@@ -144,12 +144,13 @@
                             <td class="d-flex gap-2">
                                 <button type="button" class="btn btn-sm btn-outline-laporin"
                                     x-on:click="openEdit(@js([ 'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'phone' => $u->phone, 'is_active' => $u->is_active ]))"
+                                    aria-label="Edit pengguna {{ $u->name }}"
                                 >Edit</button>
 
                                 <form method="POST" action="{{ route('admin.users.destroy', $u) }}" onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Hapus pengguna {{ $u->name }}">Hapus</button>
                                 </form>
                             </td>
                         </tr>
@@ -178,12 +179,13 @@
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-sm btn-outline-laporin flex-grow-1"
                                 x-on:click="openEdit(@js([ 'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'phone' => $u->phone, 'is_active' => $u->is_active ]))"
+                                aria-label="Edit pengguna {{ $u->name }}"
                             >Edit</button>
 
                             <form method="POST" action="{{ route('admin.users.destroy', $u) }}" onsubmit="return confirm('Yakin ingin menghapus?')" class="flex-grow-1">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">Hapus</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100" aria-label="Hapus pengguna {{ $u->name }}">Hapus</button>
                             </form>
                         </div>
                     </div>
@@ -198,7 +200,7 @@
     </div>
 
     <x-modal name="edit-user" :show="old('edit_user_id') ? true : false" focusable>
-        <form method="POST" x-bind:action="baseUrl + '/' + editingUserId" class="p-4">
+        <form method="POST" x-bind:action="baseUrl + '/' + editingUserId" class="p-3 p-lg-5">
             @csrf
             @method('PUT')
             <input type="hidden" name="edit_user_id" x-bind:value="editingUserId">

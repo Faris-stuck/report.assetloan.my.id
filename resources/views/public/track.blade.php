@@ -22,19 +22,21 @@
         <div class="laporin-card p-4 p-lg-5">
             <h2 id="tracking-form-title" class="h4 fw-bold mb-1">Formulir Pelacakan</h2>
             <p class="small-muted mb-4">Salin dan tempel nomor laporan serta kode akses dari halaman laporan terkirim.</p>
-            <form method="POST" action="{{ route('track.search') }}">
+            <form method="POST" action="{{ route('track.search') }}" class="row g-3">
                 @csrf
-                <div class="mb-3">
+                <div class="col-12">
                     <label class="form-label required" for="report_number">Nomor Laporan</label>
                     <input id="report_number" name="report_number" value="{{ old('report_number') }}" class="form-control" placeholder="LPR2026070001" required autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" aria-describedby="report-number-help" data-normalize-report-number>
                     <small id="report-number-help" class="text-muted">Contoh yang dapat langsung ditempel: <strong>LPR2026070001</strong>. Spasi atau tanda hubung dari hasil salin-tempel akan dihapus otomatis.</small>
                 </div>
-                <div class="mb-4">
+                <div class="col-12">
                     <label class="form-label required" for="access_code">Kode Akses</label>
                     <input id="access_code" name="access_code" value="{{ old('access_code') }}" class="form-control" inputmode="numeric" required autocomplete="one-time-code" enterkeyhint="search" placeholder="Contoh: 123456" aria-describedby="access-code-help" data-normalize-access-code>
                     <small id="access-code-help" class="text-muted">Masukkan 6 angka. Spasi atau tanda hubung hasil salin-tempel akan dihapus otomatis.</small>
                 </div>
-                <button class="btn btn-laporin w-100">Lacak Laporan</button>
+                <div class="col-12">
+                    <button class="btn btn-laporin w-100">Lacak Laporan</button>
+                </div>
             </form>
         </div>
     </section>

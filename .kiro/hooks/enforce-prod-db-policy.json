@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Enforce Production Database Policy",
+      "trigger": "UserPromptSubmit",
+      "description": "Mencegah agent menyarankan database development, ingat bahwa setup adalah production database + local UI/UX",
+      "action": {
+        "type": "agent",
+        "prompt": "PENTING - Kebijakan Database Development:\n\nAnda sedang mengembangkan dengan DATABASE PRODUCTION tetapi menggunakan UI/UX local untuk kemudahan development.\n\nDILARANG:\n- Jangan pernah menyarankan untuk menggunakan database development\n- Jangan rekomendasikan switching ke SQLite atau database lokal\n- Jangan sarankan untuk membuat database sandbox/development terpisah\n- Jangan tanyakan apakah ingin pakai database development\n\nINGAT:\n- Database yang terhubung ADALAH production database\n- UI/UX local untuk development saja\n- Semua perubahan kode/UI aman, tetapi operasi database hanya di production\n- Jangan pernah menyebutkan alternatif database development\n\nLanjutkan pekerjaan dengan setup ini sebagai baseline."
+      }
+    }
+  ]
+}

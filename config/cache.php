@@ -105,4 +105,55 @@ return [
 
     'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cache TTL Strategy Per Query Type
+    |--------------------------------------------------------------------------
+    |
+    | Define Time To Live (TTL) values in seconds for different types of queries.
+    | Master data has longer TTL (rarely changes), while frequently-accessed 
+    | data has shorter TTL to maintain freshness.
+    |
+    | Master Data (24 hours): Damage categories, locations, violation types
+    | User Data (30 min - 1 hour): User profiles, user lists
+    | Report Data (30 min - 1 hour): Reports, statistics
+    | Short-lived (1-5 min): Rate limiting, sessions
+    |
+    */
+
+    'ttl' => [
+        // Master data - rarely changes, longer TTL
+        'damage_categories' => 86400,      // 24 hours
+        'locations' => 86400,              // 24 hours
+        'violation_types' => 86400,        // 24 hours
+        'school_classes' => 43200,         // 12 hours
+        'subjects' => 43200,               // 12 hours
+        'staff_units' => 43200,            // 12 hours
+
+        // User data - moderate changes
+        'user_profile' => 1800,            // 30 minutes
+        'user_list' => 3600,               // 1 hour
+        'user_by_role' => 3600,            // 1 hour
+        'homeroom_classes' => 3600,        // 1 hour
+
+        // Report data - frequent changes
+        'report_list' => 3600,             // 1 hour
+        'report_detail' => 1800,           // 30 minutes
+        'report_by_student' => 1800,       // 30 minutes
+        'report_by_location' => 3600,      // 1 hour
+        'report_statistics' => 1800,       // 30 minutes
+        'report_status_history' => 1800,   // 30 minutes
+
+        // Attachment data
+        'attachment_list' => 1800,         // 30 minutes
+        'attachment_detail' => 900,        // 15 minutes
+
+        // Rate limiting & session - short lived
+        'rate_limit' => 60,                // 1 minute
+        'session' => 7200,                 // 2 hours (SESSION_LIFETIME)
+        'api_request' => 300,              // 5 minutes
+    ],
+
 ];
+
+

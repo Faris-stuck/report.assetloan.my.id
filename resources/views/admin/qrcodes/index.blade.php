@@ -87,10 +87,10 @@
                         <td>{{ $q->scan_count }}</td>
                         <td><span class="badge {{ $q->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $q->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
                         <td class="text-end text-nowrap">
-                            <a class="btn btn-sm btn-outline-laporin" href="{{ route('admin.qrcodes.download',$q) }}">Unduh</a>
+                            <a class="btn btn-sm btn-outline-laporin" href="{{ route('admin.qrcodes.download',$q) }}" aria-label="Download kode QR {{ $q->qr_name }}">Unduh</a>
                             <form class="d-inline" method="POST" action="{{ route('admin.qrcodes.deactivate',$q) }}" onsubmit="return confirm('Nonaktifkan QR ini?')">
                                 @csrf
-                                <button class="btn btn-sm btn-outline-danger" @disabled(! $q->is_active)>Nonaktif</button>
+                                <button class="btn btn-sm btn-outline-danger" aria-label="Nonaktifkan kode QR {{ $q->qr_name }}" @disabled(! $q->is_active)>Nonaktif</button>
                             </form>
                         </td>
                     </tr>
@@ -115,10 +115,10 @@
                     </div>
                     <p class="text-muted small mb-2">Scan: {{ $q->scan_count }}</p>
                     <div class="d-flex gap-2">
-                        <a class="btn btn-sm btn-outline-laporin flex-grow-1" href="{{ route('admin.qrcodes.download',$q) }}">Unduh</a>
+                        <a class="btn btn-sm btn-outline-laporin flex-grow-1" href="{{ route('admin.qrcodes.download',$q) }}" aria-label="Download kode QR {{ $q->qr_name }}">Unduh</a>
                         <form method="POST" action="{{ route('admin.qrcodes.deactivate',$q) }}" onsubmit="return confirm('Nonaktifkan QR?')" class="flex-grow-1">
                             @csrf
-                            <button class="btn btn-sm btn-outline-danger w-100" @disabled(! $q->is_active)>Nonaktif</button>
+                            <button class="btn btn-sm btn-outline-danger w-100" aria-label="Nonaktifkan kode QR {{ $q->qr_name }}" @disabled(! $q->is_active)>Nonaktif</button>
                         </form>
                     </div>
                 </div>
