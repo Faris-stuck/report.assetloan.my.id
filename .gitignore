@@ -35,3 +35,6 @@ __pycache__/
 /.nova
 /.vscode
 /.zed
+.env.before-*
+.env.backup-*
+.env.backup-auto-*

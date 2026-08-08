@@ -2,40 +2,45 @@
 
 namespace App\Observers;
 
+use App\Helpers\CacheHelper;
 use App\Models\DamageDetail;
-use Illuminate\Support\Facades\Cache;
 
 class DamageDetailObserver
 {
-    /**
-     * Handle the DamageDetail "created" event.
-     */
     public function created(DamageDetail $damageDetail): void
     {
-        Cache::tags('damagedetails', 'reports', 'damage_categories')->flush();
+        $this->clearCache();
     }
 
-    /**
-     * Handle the DamageDetail "updated" event.
-     */
     public function updated(DamageDetail $damageDetail): void
     {
-        Cache::tags('damagedetails', 'reports', 'damage_categories')->flush();
+        $this->clearCache();
     }
 
-    /**
-     * Handle the DamageDetail "deleted" event.
-     */
     public function deleted(DamageDetail $damageDetail): void
     {
-        Cache::tags('damagedetails', 'reports', 'damage_categories')->flush();
+        $this->clearCache();
     }
 
-    /**
-     * Handle the DamageDetail "forceDeleted" event.
-     */
+    public function restored(DamageDetail $damageDetail): void
+    {
+        $this->clearCache();
+    }
+
     public function forceDeleted(DamageDetail $damageDetail): void
     {
-        Cache::tags('damagedetails', 'reports', 'damage_categories')->flush();
+        $this->clearCache();
+    }
+
+    private function clearCache(): void
+    {
+        CacheHelper::invalidateTags([
+            'damagedetail',
+            'report',
+            'damagecategory',
+        ]);
+
+        CacheHelper::invalidate('laporin:damagedetail:*');
+        CacheHelper::invalidate('laporin:report:*');
     }
 }

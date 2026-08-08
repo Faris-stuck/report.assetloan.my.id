@@ -705,3 +705,73 @@ section[data-step][x-show="true"] {
     position: relative;
 }
 
+/* ============================================================
+   LAPORIN CUSTOM MODAL
+   Digunakan bersama Alpine.js.
+   Tidak bergantung pada Bootstrap .modal.fade/.show.
+   ============================================================ */
+
+[x-cloak] {
+    display: none !important;
+}
+
+.laporin-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.laporin-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.laporin-modal-wrapper {
+    position: relative;
+    z-index: 1060;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 100%;
+    width: 100%;
+
+    padding: 1rem;
+}
+
+.laporin-modal .modal-dialog {
+    position: relative;
+    width: 100%;
+    max-height: calc(100vh - 2rem);
+}
+
+.laporin-modal .modal-content {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+@media (max-width: 575.98px) {
+    .laporin-modal-wrapper {
+        align-items: flex-end;
+        padding: 0.5rem;
+    }
+
+    .laporin-modal .modal-dialog {
+        max-width: 100%;
+    }
+
+    .laporin-modal .modal-content {
+        max-height: calc(100vh - 1rem);
+    }
+}

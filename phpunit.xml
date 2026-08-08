@@ -27,7 +27,7 @@
         <env name="DB_PORT" value="13306"/>
         <env name="DB_DATABASE" value="laporin_test"/>
         <env name="DB_USERNAME" value="laporin"/>
-        <env name="DB_PASSWORD" value="EKdPPo46ovZSx18LNVz7xGkdPunw37Pa"/>
+        <env name="DB_PASSWORD" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
