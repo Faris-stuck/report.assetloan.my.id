@@ -5,62 +5,166 @@
 ])
 
 @php
-$sizeClasses = [
-    'sm' => 'modal-sm',
-    'md' => 'modal-md',
-    'lg' => 'modal-lg',
-    'xl' => 'modal-xl',
-    '2xl' => 'modal-lg',
-    'modal-sm' => 'modal-sm',
-    'modal-md' => 'modal-md',
-    'modal-lg' => 'modal-lg',
-    'modal-xl' => 'modal-xl',
-][$maxWidth] ?? 'modal-lg';
+    $sizeClasses = [
+        'sm' => 'modal-sm',
+        'md' => 'modal-md',
+        'lg' => 'modal-lg',
+        'xl' => 'modal-xl',
+        '2xl' => 'modal-lg',
+        'modal-sm' => 'modal-sm',
+        'modal-md' => 'modal-md',
+        'modal-lg' => 'modal-lg',
+        'modal-xl' => 'modal-xl',
+    ][$maxWidth] ?? 'modal-lg';
 @endphp
 
 <div
     x-data="{
         show: @js($show),
+
         focusables() {
-            // All focusable element types...
-            let selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])'
+            const selector = 'a, button, input:not([type=\'hidden\']), textarea, select, details, [tabindex]:not([tabindex=\'-1\'])';
+
             return [...$el.querySelectorAll(selector)]
-                // All non-disabled elements...
-                .filter(el => ! el.hasAttribute('disabled'))
+                .filter(el => !el.hasAttribute('disabled'));
         },
-        firstFocusable() { return this.focusables()[0] },
-        lastFocusable() { return this.focusables().slice(-1)[0] },
-        nextFocusable() { return this.focusables()[this.nextFocusableIndex()] || this.firstFocusable() },
-        prevFocusable() { return this.focusables()[this.prevFocusableIndex()] || this.lastFocusable() },
-        nextFocusableIndex() { return (this.focusables().indexOf(document.activeElement) + 1) % (this.focusables().length + 1) },
-        prevFocusableIndex() { return Math.max(0, this.focusables().indexOf(document.activeElement)) -1 },
-    }"
-    x-init="$watch('show', value => {
-        if (value) {
-            document.body.classList.add('modal-open');
-            {{ $attributes->has('focusable') ? 'setTimeout(() => firstFocusable().focus(), 100)' : '' }}
-        } else {
-            document.body.classList.remove('modal-open');
+
+        firstFocusable() {
+            return this.focusables()[0];
+        },
+
+        lastFocusable() {
+            return this.focusables().slice(-1)[0];
+        },
+
+        nextFocusable() {
+            return this.focusables()[this.nextFocusableIndex()]
+                || this.firstFocusable();
+        },
+
+        prevFocusable() {
+            return this.focusables()[this.prevFocusableIndex()]
+                || this.lastFocusable();
+        },
+
+        nextFocusableIndex() {
+            const elements = this.focusables();
+
+            if (elements.length === 0) {
+                return 0;
+            }
+
+            return (
+                elements.indexOf(document.activeElement) + 1
+            ) % elements.length;
+        },
+
+        prevFocusableIndex() {
+            const elements = this.focusables();
+
+            if (elements.length === 0) {
+                return 0;
+            }
+
+            const index = elements.indexOf(document.activeElement);
+
+            return index <= 0
+                ? elements.length - 1
+                : index - 1;
+        },
+
+        closeModal() {
+            this.show = false;
         }
-    })"
-    x-on:open-modal.window="$event.detail == '{{ $name }}' ? show = true : null"
-    x-on:close-modal.window="$event.detail == '{{ $name }}' ? show = false : null"
-    x-on:close.stop="show = false"
-    x-on:keydown.escape.window="show = false"
-    x-on:keydown.tab.prevent="$event.shiftKey || nextFocusable().focus()"
-    x-on:keydown.shift.tab.prevent="prevFocusable().focus()"
+    }"
+
+    x-init="
+        $watch('show', value => {
+            if (value) {
+                document.body.classList.add('modal-open');
+
+                setTimeout(() => {
+                    const element = firstFocusable();
+
+                    if (element) {
+                        element.focus();
+                    }
+                }, 100);
+            } else {
+                document.body.classList.remove('modal-open');
+            }
+        })
+    "
+
+    x-on:open-modal.window="
+        if ($event.detail === '{{ $name }}') {
+            show = true;
+        }
+    "
+
+    x-on:close-modal.window="
+        if ($event.detail === '{{ $name }}') {
+            show = false;
+        }
+    "
+
+    x-on:keydown.escape.window="
+        if (show) {
+            show = false;
+        }
+    "
+
+    x-on:keydown.tab.prevent="
+        if (show && focusables().length) {
+            if ($event.shiftKey) {
+                prevFocusable().focus();
+            } else {
+                nextFocusable().focus();
+            }
+        }
+    "
+
     x-show="show"
-    class="modal fade"
+    x-cloak
+
+    class="laporin-modal"
+
     id="modal-{{ $name }}"
-    tabindex="-1"
+
     role="dialog"
-    style="display: {{ $show ? 'block' : 'none' }}; visibility: {{ $show ? 'visible' : 'hidden' }};"
+    aria-modal="true"
+
+    style="display: none;"
 >
-    <div class="modal-backdrop fade" x-show="show" x-cloak style="display: {{ $show ? 'block' : 'none' }}; opacity: 0.5;"></div>
-    
-    <div class="modal-dialog {{ $sizeClasses }}" role="document">
-        <div class="modal-content">
-            {{ $slot }}
+
+    {{-- BACKDROP --}}
+    <div
+        class="laporin-modal-backdrop"
+        x-on:click="closeModal()"
+        aria-hidden="true"
+    ></div>
+
+
+    {{-- MODAL POSITION --}}
+    <div
+        class="laporin-modal-wrapper"
+        x-on:click.self="closeModal()"
+    >
+
+        {{-- MODAL CONTENT --}}
+        <div
+            class="modal-dialog {{ $sizeClasses }} m-0"
+            role="document"
+        >
+
+            <div class="modal-content">
+
+                {{ $slot }}
+
+            </div>
+
         </div>
+
     </div>
+
 </div>

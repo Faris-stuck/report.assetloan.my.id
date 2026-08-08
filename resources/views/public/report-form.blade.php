@@ -111,12 +111,12 @@
     <p class="mt-3 text-center small" style="font-size: 14px;" x-text="currentStepHint"></p>
 </div>
 
-<div class="alert alert-danger mt-3 mb-3" x-show="stepError" x-transition x-cloak>
+<div class="alert alert-danger mt-3 mb-3" x-show="stepError" x-transition x-cloak id="step-error-alert" @click="$el.scrollIntoView({ behavior: 'smooth', block: 'center' })">
     <div class="d-flex align-items-start">
-        <i class="fas fa-exclamation-circle me-2 mt-1"></i>
-        <div>
-            <strong>Lengkapi formulir dengan benar</strong>
-            <div class="mt-2 small" x-text="stepError"></div>
+        <i class="fas fa-exclamation-circle me-2 mt-1 flex-shrink-0"></i>
+        <div class="flex-grow-1">
+            <strong class="d-block mb-1">Lengkapi formulir dengan benar</strong>
+            <div class="small" x-text="stepError"></div>
         </div>
     </div>
 </div>
@@ -126,14 +126,14 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 1: IDENTITAS                                          --}}
 {{-- ============================================================ --}}
-<section x-show="step===1" data-step="1" x-cloak>
+<section x-show="step===1" data-step="1" x-cloak :data-visible="step===1">
     <span class="page-kicker">Langkah 1</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Identitas Pelapor</h2>
     <p class="small-muted mb-4">Isi yang paling penting saja.</p>
     <div class="row g-3">
         <div class="col-12 col-md-6">
             <label class="form-label required" for="reporter_type">Jenis Pelapor <span class="text-danger">*</span></label>
-            <select id="reporter_type" name="reporter_type" class="form-select required" x-model="reporter" @change="syncConditionalFields()" required>
+            <select id="reporter_type" name="reporter_type" class="form-select required" x-model="formData.step1.reporter_type" @change="reporter=formData.step1.reporter_type; syncConditionalFields()" required>
                 <option value="siswa">Siswa</option>
                 <option value="guru">Guru</option>
                 <option value="staff">Staf</option>
@@ -141,36 +141,36 @@
         </div>
         <div class="col-12 col-md-6">
             <label class="form-label required" for="reporter_name">Nama Pelapor <span class="text-danger">*</span></label>
-            <input id="reporter_name" name="reporter_name" value="{{ old('reporter_name') }}" class="form-control required" required maxlength="150" autocomplete="name" placeholder="Nama lengkap">
+            <input id="reporter_name" name="reporter_name" x-model="formData.step1.reporter_name" class="form-control required" required maxlength="150" autocomplete="name" placeholder="Nama lengkap">
         </div>
 
         {{-- Siswa --}}
-        <div class="col-12 col-md-6" x-show="reporter==='siswa'" x-transition>
+        <div class="col-12 col-md-6 conditional-field" x-show="reporter==='siswa'" x-transition style="overflow: hidden;">
             <label class="form-label required" for="reporter_class_id">Kelas <span class="text-danger">*</span></label>
-            <select id="reporter_class_id" name="reporter_class_id" class="form-select required" :required="reporter==='siswa'" :disabled="reporter!=='siswa'">
+            <select id="reporter_class_id" name="reporter_class_id" class="form-select required" x-model="formData.step1.reporter_class_id" :required="reporter==='siswa'" :disabled="reporter!=='siswa'">
                 <option value="">Pilih kelas</option>
                 @include('public.partials.class-options', ['selectedClassId' => old('reporter_class_id')])
             </select>
             <small class="text-muted">Dikelompokkan per jurusan dan diurutkan.</small>
         </div>
-        <div class="col-12 col-md-6" x-show="reporter==='siswa'" x-transition>
+        <div class="col-12 col-md-6 conditional-field" x-show="reporter==='siswa'" x-transition style="overflow: hidden;">
             <label class="form-label" for="reporter_absence_number">No. Absen</label>
-            <input id="reporter_absence_number" type="number" name="reporter_absence_number" value="{{ old('reporter_absence_number') }}" min="1" max="60" class="form-control" :disabled="reporter!=='siswa'" placeholder="1–60">
+            <input id="reporter_absence_number" type="number" name="reporter_absence_number" x-model="formData.step1.reporter_absence_number" min="1" max="60" class="form-control" :disabled="reporter!=='siswa'" placeholder="1–60">
         </div>
 
         {{-- Guru --}}
-        <div class="col-12 col-md-6" x-show="reporter==='guru'" x-transition>
+        <div class="col-12 col-md-6 conditional-field" x-show="reporter==='guru'" x-transition style="overflow: hidden;">
             <label class="form-label required" for="reporter_subject_id">Mata Pelajaran <span class="text-danger">*</span></label>
-            <select id="reporter_subject_id" name="reporter_subject_id" class="form-select required" :required="reporter==='guru'" :disabled="reporter!=='guru'">
+            <select id="reporter_subject_id" name="reporter_subject_id" class="form-select required" x-model="formData.step1.reporter_subject_id" :required="reporter==='guru'" :disabled="reporter!=='guru'">
                 <option value="">Pilih mapel</option>
                 @foreach($subjects as $s)<option value="{{ $s->id }}" @selected(old('reporter_subject_id') == $s->id)>{{ $s->subject_name }}</option>@endforeach
             </select>
         </div>
 
         {{-- Staf --}}
-        <div class="col-12 col-md-6" x-show="reporter==='staff'" x-transition>
+        <div class="col-12 col-md-6 conditional-field" x-show="reporter==='staff'" x-transition style="overflow: hidden;">
             <label class="form-label required" for="reporter_staff_unit_id">Unit Staf <span class="text-danger">*</span></label>
-            <select id="reporter_staff_unit_id" name="reporter_staff_unit_id" class="form-select required" :required="reporter==='staff'" :disabled="reporter!=='staff'">
+            <select id="reporter_staff_unit_id" name="reporter_staff_unit_id" class="form-select required" x-model="formData.step1.reporter_staff_unit_id" :required="reporter==='staff'" :disabled="reporter!=='staff'">
                 <option value="">Pilih unit</option>
                 @foreach($staffUnits as $u)<option value="{{ $u->id }}" @selected(old('reporter_staff_unit_id') == $u->id)>{{ $u->unit_name }}</option>@endforeach
             </select>
@@ -179,12 +179,12 @@
         {{-- No. HP wajib, email opsional --}}
         <div class="col-12 col-md-6">
             <label class="form-label required" for="reporter_phone">No. HP <span class="text-danger">*</span></label>
-            <input id="reporter_phone" name="reporter_phone" value="{{ old('reporter_phone') }}" class="form-control required" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
+            <input id="reporter_phone" name="reporter_phone" x-model="formData.step1.reporter_phone" class="form-control required" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
             <small id="reporter_phone_help" class="text-muted">Nomor HP wajib diisi. Gunakan 8-15 digit.</small>
         </div>
         <div class="col-12 col-md-6">
             <label class="form-label" for="reporter_email">Surel</label>
-            <input id="reporter_email" type="email" name="reporter_email" value="{{ old('reporter_email') }}" class="form-control" maxlength="150" autocomplete="email" placeholder="Contoh: nama@surel.com" aria-describedby="reporter_email_help">
+            <input id="reporter_email" type="email" name="reporter_email" x-model="formData.step1.reporter_email" class="form-control" maxlength="150" autocomplete="email" placeholder="Contoh: nama@surel.com" aria-describedby="reporter_email_help">
             <small id="reporter_email_help" class="text-muted">Opsional. Jika diisi, surel digunakan untuk notifikasi status laporan.</small>
         </div>
     </div>
@@ -193,21 +193,21 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 2: JENIS LAPORAN                                      --}}
 {{-- ============================================================ --}}
-<section x-show="step===2" data-step="2" x-cloak>
+<section x-show="step===2" data-step="2" x-cloak :data-visible="step===2">
     <span class="page-kicker">Langkah 2</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Pilih Jenis Laporan</h2>
     <p class="small-muted mb-4">Pilih satu jenis laporan yang paling sesuai.</p>
     <div class="row g-3">
         <div class="col-md-6">
             <label class="choice-card p-4 w-100" :class="type === 'violation' ? 'is-selected' : ''">
-                <input type="radio" name="report_type" value="violation" x-model="type" @change="syncConditionalFields()" required>
+                <input type="radio" name="report_type" value="violation" x-model="formData.step2.report_type" @change="type=formData.step2.report_type; syncConditionalFields()" required>
                 <strong class="d-block mt-2">Perundungan / Pelanggaran</strong>
                 <span class="small-muted">Untuk perundungan, pembullyan, atau pelanggaran tata tertib. Ditangani oleh Kesiswaan.</span>
             </label>
         </div>
         <div class="col-md-6">
             <label class="choice-card p-4 w-100" :class="type === 'damage' ? 'is-selected' : ''">
-                <input type="radio" name="report_type" value="damage" x-model="type" @change="syncConditionalFields()" required>
+                <input type="radio" name="report_type" value="damage" x-model="formData.step2.report_type" @change="type=formData.step2.report_type; syncConditionalFields()" required>
                 <strong class="d-block mt-2">Kerusakan Fasilitas</strong>
                 <span class="small-muted">Untuk kerusakan meja, proyektor, AC, toilet, pintu, dll. Ditangani oleh Sarpras.</span>
             </label>
@@ -218,7 +218,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 3: DETAIL (RINGKAS UNTUK PELANGGARAN)                --}}
 {{-- ============================================================ --}}
-<section x-show="step===3" data-step="3" x-cloak>
+<section x-show="step===3" data-step="3" x-cloak :data-visible="step===3">
     <span class="page-kicker">Langkah 3</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Detail Kejadian</h2>
     <p class="small-muted mb-4">Isi singkat dan jelas.</p>
@@ -227,14 +227,14 @@
         {{-- FIELD UNIVERSAL: Judul --}}
         <div class="col-12">
             <label class="form-label required" for="title">Judul singkat <span class="text-danger">*</span></label>
-            <input id="title" name="title" value="{{ old('title') }}" class="form-control required" required maxlength="200"
+            <input id="title" name="title" x-model="formData.step3.title" class="form-control required" required maxlength="200"
                 :placeholder="type==='violation' ? 'Contoh: Perundungan di Lab Komputer' : 'Contoh: Lampu kelas X Mati'">
         </div>
 
         {{-- FIELD UNIVERSAL: Urgensi --}}
         <div class="col-12 col-md-6">
             <label class="form-label required" for="urgency">Tingkat Urgensi <span class="text-danger">*</span></label>
-            <select id="urgency" name="urgency" class="form-select required" required>
+            <select id="urgency" name="urgency" class="form-select required" x-model="formData.step3.urgency" required>
                 @foreach(['rendah','sedang','tinggi','darurat'] as $urgency)
                     <option value="{{ $urgency }}" @selected(old('urgency','sedang') === $urgency)>
                         {{ match($urgency) { 'rendah' => 'Rendah', 'sedang' => 'Sedang', 'tinggi' => 'Tinggi', 'darurat' => 'Darurat' } }}
@@ -253,18 +253,18 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label required" for="related_class_id">Kelas pelaku</label>
-                            <select id="related_class_id" name="related_class_id" class="form-select" :required="type==='violation'" :disabled="type!=='violation'">
+                            <select id="related_class_id" name="related_class_id" class="form-select" x-model="formData.step3.related_class_id" :required="type==='violation'" :disabled="type!=='violation'">
                                 <option value="">Pilih kelas</option>
                                 @include('public.partials.class-options', ['selectedClassId' => old('related_class_id')])
                             </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label required" for="alleged_actor_name">Nama terduga pelaku <span class="text-danger">*</span></label>
-                            <input id="alleged_actor_name" name="alleged_actor_name" value="{{ old('alleged_actor_name') }}" class="form-control required" required maxlength="150" placeholder="Nama lengkap pelaku" :disabled="type!=='violation'">
+                            <input id="alleged_actor_name" name="alleged_actor_name" x-model="formData.step3.alleged_actor_name" class="form-control required" required maxlength="150" placeholder="Nama lengkap pelaku" :disabled="type!=='violation'">
                         </div>
                         <div class="col-12">
                             <label class="form-label" for="alleged_actor_class_id">Kelas terduga pelaku</label>
-                            <select id="alleged_actor_class_id" name="alleged_actor_class_id" class="form-select" :disabled="type!=='violation'">
+                            <select id="alleged_actor_class_id" name="alleged_actor_class_id" class="form-select" x-model="formData.step3.alleged_actor_class_id" :disabled="type!=='violation'">
                                 <option value="">Pilih kelas (opsional)</option>
                                 @include('public.partials.class-options', ['selectedClassId' => old('alleged_actor_class_id')])
                             </select>
@@ -274,7 +274,8 @@
                             <label class="form-label required" for="description">Kronologi singkat <span class="text-danger">*</span></label>
                             <textarea id="description" name="description" class="form-control required" rows="4" required maxlength="5000"
                                 placeholder="Jelaskan kejadian singkatnya."
-                                :disabled="type!=='violation'">{{ old('description') }}</textarea>
+                                x-model="formData.step3.description"
+                                :disabled="type!=='violation'"></textarea>
                         </div>
                     </div>
                 </div>
@@ -291,22 +292,22 @@
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label class="form-label required" for="item_name">Nama barang / fasilitas <span class="text-danger">*</span></label>
-                            <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control required" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" :required="type==='damage'" :disabled="type!=='damage'">
+                            <input id="item_name" name="item_name" x-model="formData.step3.item_name" class="form-control required" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" :required="type==='damage'" :disabled="type!=='damage'">
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label" for="location_id_damage">Lokasi</label>
-                            <select id="location_id_damage" name="location_id" class="form-select" :disabled="type!=='damage'">
+                            <select id="location_id_damage" name="location_id" class="form-select" x-model="formData.step3.location_id" :disabled="type!=='damage'">
                                 <option value="">Pilih lokasi</option>
                                 @foreach($locations as $l)<option value="{{ $l->id }}" @selected(old('location_id') == $l->id)>{{ $l->location_name }}</option>@endforeach
                             </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label required" for="damage_condition">Kondisi kerusakan <span class="text-danger">*</span></label>
-                            <textarea id="damage_condition" name="damage_condition" class="form-control required" rows="4" placeholder="Jelaskan bagian yang rusak." maxlength="2000" :required="type==='damage'" :disabled="type!=='damage'">{{ old('damage_condition') }}</textarea>
+                            <textarea id="damage_condition" name="damage_condition" class="form-control required" rows="4" placeholder="Jelaskan bagian yang rusak." maxlength="2000" x-model="formData.step3.damage_condition" :required="type==='damage'" :disabled="type!=='damage'"></textarea>
                         </div>
                         <div class="col-12">
                             <label class="form-label required" for="description_damage">Deskripsi dampak <span class="text-danger">*</span></label>
-                            <textarea id="description_damage" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Sebutkan dampaknya secara singkat." :disabled="type!=='damage'">{{ old('description') }}</textarea>
+                            <textarea id="description_damage" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Sebutkan dampaknya secara singkat." x-model="formData.step3.description" :disabled="type!=='damage'"></textarea>
                         </div>
                     </div>
                 </div>
@@ -319,7 +320,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 4: KONFIRMASI & KIRIM                                  --}}
 {{-- ============================================================ --}}
-<section x-show="step===4" data-step="4" x-cloak>
+<section x-show="step===4" data-step="4" x-cloak :data-visible="step===4">
     <span class="page-kicker">Langkah 4</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Konfirmasi & Kirim</h2>
     <p class="small-muted mb-4">Cek ulang, lalu kirim.</p>
@@ -338,7 +339,7 @@
         <div class="col-12">
             <div class="detail-box">
                 <div class="form-check mt-3">
-                    <input class="form-check-input" type="checkbox" name="consent" value="1" id="consent" required>
+                    <input class="form-check-input" type="checkbox" name="consent" value="1" x-model="formData.step4.consent" id="consent" required>
                     <label class="form-check-label" for="consent">
                         Saya menyatakan laporan adalah benar
                     </label>
@@ -348,7 +349,7 @@
 
         <div class="col-12">
             <label class="form-label required" for="captcha">CAPTCHA: berapa {{ $captchaQuestion }}? <span class="text-danger">*</span></label>
-            <input id="captcha" name="captcha" class="form-control required" required inputmode="numeric" pattern="[0-9]+" maxlength="2" placeholder="Jawaban angka">
+            <input id="captcha" name="captcha" x-model="formData.step4.captcha" class="form-control required" required inputmode="numeric" pattern="[0-9]+" maxlength="2" placeholder="Jawaban angka">
         </div>
     </div>
 </section>
@@ -365,7 +366,7 @@
         </div>
         <div class="col-12 col-sm-auto">
             <button type="button" class="btn btn-laporin w-100" style="min-height: 44px; height: auto;" x-show="step<4" @click="next()">Lanjut</button>
-            <button type="submit" class="btn btn-laporin w-100" style="min-height: 44px; height: auto;" x-show="step===4">Kirim Laporan</button>
+            <button type="submit" class="btn btn-laporin w-100" style="min-height: 44px; height: auto;" x-show="step===4" @click="saveFormState(); clearFormState();">Kirim Laporan</button>
         </div>
     </div>
 </div>
@@ -416,6 +417,60 @@ window.reportWizard = function () {
         type: @js(old('report_type','violation')),
         reporter: @js(old('reporter_type','siswa')),
         stepError: '',
+        formData: {
+            step1: {
+                reporter_type: @js(old('reporter_type','siswa')),
+                reporter_name: @js(old('reporter_name','')),
+                reporter_class_id: @js(old('reporter_class_id','')),
+                reporter_absence_number: @js(old('reporter_absence_number','')),
+                reporter_subject_id: @js(old('reporter_subject_id','')),
+                reporter_staff_unit_id: @js(old('reporter_staff_unit_id','')),
+                reporter_phone: @js(old('reporter_phone','')),
+                reporter_email: @js(old('reporter_email','')),
+            },
+            step2: {
+                report_type: @js(old('report_type','violation')),
+            },
+            step3: {
+                title: @js(old('title','')),
+                urgency: @js(old('urgency','sedang')),
+                related_class_id: @js(old('related_class_id','')),
+                alleged_actor_name: @js(old('alleged_actor_name','')),
+                alleged_actor_class_id: @js(old('alleged_actor_class_id','')),
+                description: @js(old('description','')),
+                item_name: @js(old('item_name','')),
+                location_id: @js(old('location_id','')),
+                damage_condition: @js(old('damage_condition','')),
+            },
+            step4: {
+                consent: @js(old('consent','') ? '1' : ''),
+                captcha: @js(old('captcha','')),
+            },
+        },
+        
+        init() {
+            // Load form data from localStorage on mount
+            const savedFormData = localStorage.getItem('reportFormData');
+            if (savedFormData) {
+                try {
+                    this.formData = JSON.parse(savedFormData);
+                    // Sync type and reporter from formData to component state
+                    this.type = this.formData.step2.report_type;
+                    this.reporter = this.formData.step1.reporter_type;
+                } catch (e) {
+                    console.warn('Failed to parse saved form data:', e);
+                }
+            }
+        },
+        
+        saveFormState() {
+            localStorage.setItem('reportFormData', JSON.stringify(this.formData));
+        },
+        
+        clearFormState() {
+            localStorage.removeItem('reportFormData');
+        },
+        
         get currentStepHint() {
             return this.step === 1
                 ? 'Isi data pelapor dulu agar sekolah bisa menghubungi Anda jika perlu.'
@@ -427,26 +482,27 @@ window.reportWizard = function () {
         },
         next() {
             if (this.validateCurrentStep()) {
+                // Save current step data before moving to next step
+                this.saveFormState();
                 this.stepError = '';
                 this.step++;
                 this.$nextTick(() => {
                     document.getElementById('form-laporan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             } else {
-                // Scroll error into view when validation fails
-                if (this.stepError) {
-                    setTimeout(() => {
-                        const errorEl = document.querySelector('[x-show="stepError"]');
-                        if (errorEl) {
-                            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }
-                    }, 100);
-                }
+                // Keep form data but show error - allow retry
+                this.saveFormState();
+                setTimeout(() => {
+                    const errorEl = document.querySelector('[x-show="stepError"]');
+                    if (errorEl) {
+                        errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
             }
         },
         validateCurrentStep() {
             this.stepError = '';
-            const section = this.$root.querySelector(`[data-step="${this.step}"]`);
+            const section = document.querySelector(`[data-step="${this.step}"]`);
             if (!section) return true;
 
             // Validasi step 3 violation ringkas
@@ -460,6 +516,12 @@ window.reportWizard = function () {
                 if (firstInvalid) {
                     firstInvalid.reportValidity();
                     this.stepError = 'Lengkapi field wajib pada langkah ini.';
+                    this.$nextTick(() => {
+                        const errorAlert = document.getElementById('step-error-alert');
+                        if (errorAlert) {
+                            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
                     return false;
                 }
                 return true;
@@ -475,6 +537,12 @@ window.reportWizard = function () {
                 if (firstInvalid) {
                     firstInvalid.reportValidity();
                     this.stepError = 'Lengkapi field wajib pada langkah ini.';
+                    this.$nextTick(() => {
+                        const errorAlert = document.getElementById('step-error-alert');
+                        if (errorAlert) {
+                            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
                     return false;
                 }
                 return true;
@@ -486,15 +554,21 @@ window.reportWizard = function () {
                 firstInvalid.reportValidity();
                 firstInvalid.focus({ preventScroll: true });
                 this.stepError = 'Lengkapi field wajib atau perbaiki format.';
+                this.$nextTick(() => {
+                    const errorAlert = document.getElementById('step-error-alert');
+                    if (errorAlert) {
+                        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
                 return false;
             }
             return true;
         },
         syncConditionalFields() {
             this.$nextTick(() => {
-                this.$root.querySelectorAll('[name="reporter_class_id"],[name="reporter_absence_number"]').forEach((el) => el.disabled = this.reporter !== 'siswa');
-                this.$root.querySelectorAll('[name="reporter_subject_id"]').forEach((el) => el.disabled = this.reporter !== 'guru');
-                this.$root.querySelectorAll('[name="reporter_staff_unit_id"]').forEach((el) => el.disabled = this.reporter !== 'staff');
+                document.querySelectorAll('[name="reporter_class_id"],[name="reporter_absence_number"]').forEach((el) => el.disabled = this.reporter !== 'siswa');
+                document.querySelectorAll('[name="reporter_subject_id"]').forEach((el) => el.disabled = this.reporter !== 'guru');
+                document.querySelectorAll('[name="reporter_staff_unit_id"]').forEach((el) => el.disabled = this.reporter !== 'staff');
             });
         },
         validateAttachments(event) {
@@ -507,7 +581,16 @@ window.reportWizard = function () {
                 if (!allowed.includes(ext)) input.setCustomValidity('File hanya JPG, PNG, WEBP, atau PDF.');
                 if (file.size > 4 * 1024 * 1024) input.setCustomValidity('Ukuran maksimal 4MB per file.');
             }
-            if (!input.checkValidity()) { input.reportValidity(); this.stepError = input.validationMessage; }
+            if (!input.checkValidity()) {
+                input.reportValidity();
+                this.stepError = input.validationMessage;
+                this.$nextTick(() => {
+                    const errorAlert = document.getElementById('step-error-alert');
+                    if (errorAlert) {
+                        errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
         },
     };
 };

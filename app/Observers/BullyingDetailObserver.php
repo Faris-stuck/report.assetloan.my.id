@@ -2,40 +2,45 @@
 
 namespace App\Observers;
 
+use App\Helpers\CacheHelper;
 use App\Models\BullyingDetail;
-use Illuminate\Support\Facades\Cache;
 
 class BullyingDetailObserver
 {
-    /**
-     * Handle the BullyingDetail "created" event.
-     */
     public function created(BullyingDetail $bullyingDetail): void
     {
-        Cache::tags('bullyingdetails', 'reports', 'violation_types')->flush();
+        $this->clearCache();
     }
 
-    /**
-     * Handle the BullyingDetail "updated" event.
-     */
     public function updated(BullyingDetail $bullyingDetail): void
     {
-        Cache::tags('bullyingdetails', 'reports', 'violation_types')->flush();
+        $this->clearCache();
     }
 
-    /**
-     * Handle the BullyingDetail "deleted" event.
-     */
     public function deleted(BullyingDetail $bullyingDetail): void
     {
-        Cache::tags('bullyingdetails', 'reports', 'violation_types')->flush();
+        $this->clearCache();
     }
 
-    /**
-     * Handle the BullyingDetail "forceDeleted" event.
-     */
+    public function restored(BullyingDetail $bullyingDetail): void
+    {
+        $this->clearCache();
+    }
+
     public function forceDeleted(BullyingDetail $bullyingDetail): void
     {
-        Cache::tags('bullyingdetails', 'reports', 'violation_types')->flush();
+        $this->clearCache();
+    }
+
+    private function clearCache(): void
+    {
+        CacheHelper::invalidateTags([
+            'bullyingdetail',
+            'report',
+            'violationtype',
+        ]);
+
+        CacheHelper::invalidate('laporin:bullyingdetail:*');
+        CacheHelper::invalidate('laporin:report:*');
     }
 }

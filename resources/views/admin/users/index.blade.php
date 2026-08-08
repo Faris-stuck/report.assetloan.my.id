@@ -147,11 +147,36 @@
                                     aria-label="Edit pengguna {{ $u->name }}"
                                 >Edit</button>
 
-                                <form method="POST" action="{{ route('admin.users.destroy', $u) }}" onsubmit="return confirm('Yakin ingin menghapus pengguna ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Hapus pengguna {{ $u->name }}">Hapus</button>
-                                </form>
+                               <form
+    method="POST"
+    action="{{ route('admin.users.destroy', $u) }}"
+    onsubmit="
+        @if(auth()->id() === $u->id)
+            alert('Anda tidak dapat menghapus akun yang sedang digunakan.');
+            return false;
+        @elseif(
+            $u->role === 'superadmin'
+            && $u->is_active
+            && $activeSuperadminCount <= 1
+        )
+            alert('SuperAdmin aktif terakhir tidak dapat dihapus.');
+            return false;
+        @else
+            return confirm('Yakin ingin menghapus pengguna {{ addslashes($u->name) }}?');
+        @endif
+    "
+>
+    @csrf
+    @method('DELETE')
+
+    <button
+        type="submit"
+        class="btn btn-sm btn-outline-danger"
+        aria-label="Hapus pengguna {{ $u->name }}"
+    >
+        Hapus
+    </button>
+</form>
                             </td>
                         </tr>
                     @empty
@@ -182,11 +207,37 @@
                                 aria-label="Edit pengguna {{ $u->name }}"
                             >Edit</button>
 
-                            <form method="POST" action="{{ route('admin.users.destroy', $u) }}" onsubmit="return confirm('Yakin ingin menghapus?')" class="flex-grow-1">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100" aria-label="Hapus pengguna {{ $u->name }}">Hapus</button>
-                            </form>
+                         <form
+    method="POST"
+    action="{{ route('admin.users.destroy', $u) }}"
+    class="flex-grow-1"
+    onsubmit="
+        @if(auth()->id() === $u->id)
+            alert('Anda tidak dapat menghapus akun yang sedang digunakan.');
+            return false;
+        @elseif(
+            $u->role === 'superadmin'
+            && $u->is_active
+            && $activeSuperadminCount <= 1
+        )
+            alert('SuperAdmin aktif terakhir tidak dapat dihapus.');
+            return false;
+        @else
+            return confirm('Yakin ingin menghapus pengguna {{ addslashes($u->name) }}?');
+        @endif
+    "
+>
+    @csrf
+    @method('DELETE')
+
+    <button
+        type="submit"
+        class="btn btn-sm btn-outline-danger w-100"
+        aria-label="Hapus pengguna {{ $u->name }}"
+    >
+        Hapus
+    </button>
+</form>
                         </div>
                     </div>
                 </div>

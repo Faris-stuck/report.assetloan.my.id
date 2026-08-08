@@ -90,7 +90,10 @@ a:hover { color: var(--laporin-green-900); }
 }
 
 .mobile-shell { max-width: 1160px; margin-inline: auto; }
-.main-shell { padding-block: 1.25rem 3rem; }
+.main-shell {
+    padding-block: 1.25rem 3rem;
+    padding-inline: 1rem;
+}
 .page-kicker {
     display: inline-flex;
     align-items: center;
@@ -213,6 +216,30 @@ a:hover { color: var(--laporin-green-900); }
     color: var(--laporin-danger);
     font-size: .86rem;
     margin-top: .35rem;
+}
+
+/* Enhanced error alert styling */
+.alert.alert-danger {
+    border-width: 1px;
+    border-radius: 1rem;
+    background: #fff5f6;
+    border-color: rgba(220, 53, 69, 0.25);
+    color: #842029;
+}
+
+.alert.alert-danger strong {
+    font-weight: 800;
+    color: #5a0f15;
+}
+
+.alert.alert-danger .fa-exclamation-circle {
+    font-size: 1.1rem;
+    color: var(--laporin-danger);
+}
+
+#step-error-alert {
+    scroll-margin-top: 1.5rem;
+    scroll-behavior: smooth;
 }
 textarea.form-control { min-height: 8rem; }
 .small-muted { font-size: .875rem; color: var(--laporin-muted); }
@@ -531,10 +558,13 @@ svg {
     .dashboard-focus-card { box-shadow: 0 18px 44px rgba(16, 40, 27, .18); }
     .tracking-shell { min-height: auto; grid-template-columns: 1fr; align-items: stretch; }
     .tracking-overview .flowchart.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .main-shell {
+        padding-inline: 1rem;
+    }
 }
 @media (max-width: 575.98px) {
-    .main-shell { padding-top: .8rem; padding-bottom: 5rem; }
-    .mobile-shell { padding-inline: .75rem; }
+    .main-shell { padding-top: .8rem; padding-bottom: 5rem; padding-inline: 0.75rem; }
+    .mobile-shell { padding-inline: 0; }
     .hero-card, .laporin-card { border-radius: 1rem; padding: 1rem !important; }
     .choice-card { padding: .9rem; }
     .flowchart { grid-template-columns: 1fr; }
@@ -543,7 +573,7 @@ svg {
     .table td, .table th { padding: .65rem; }
     .table-responsive { margin-inline: -.25rem; }
     .report-row-card { padding: .9rem; }
-    .bottom-action { bottom: .5rem; left: .75rem; right: .75rem; }
+    .bottom-action { bottom: .5rem; left: .75rem; right: .75rem; margin-left: -0.75rem; margin-right: -0.75rem; }
     .bottom-action .d-flex { flex-direction: column; }
     .bottom-action .btn { width: 100%; margin-bottom: .5rem; }
     .bottom-action .btn:last-child { margin-bottom: 0; }
@@ -565,17 +595,17 @@ svg {
 /* DESKTOP UI/UX IMPROVEMENTS (1024px+)      */
 /* ========================================== */
 @media (min-width: 1024px) {
-    /* Wizard form desktop padding */
+    /* Wizard form desktop padding - increase to 32px */
     .wizard-panel {
-        padding: 2rem; /* 32px desktop padding */
+        padding: 2rem; /* 32px = 2rem desktop padding */
     }
     
-    /* Modal dialog desktop padding */
+    /* Modal dialog desktop padding - increase to 32px */
     .modal-body {
-        padding: 2rem; /* 32px desktop padding */
+        padding: 2rem; /* 32px = 2rem desktop padding */
     }
     
-    /* Button height and alignment */
+    /* Button height and alignment - WCAG AA minimum 44px */
     .btn {
         min-height: 44px;
     }
@@ -587,9 +617,9 @@ svg {
         gap: 0.5rem; /* 8px gap */
     }
     
-    /* Table cell spacing */
+    /* Table cell spacing - increase vertical/horizontal padding */
     table td, table th {
-        padding: 12px 16px; /* Increased from default */
+        padding: 0.75rem 1rem; /* 12px vertical × 16px horizontal */
     }
     
     /* Form group spacing */
@@ -597,7 +627,7 @@ svg {
         margin-bottom: 1.5rem;
     }
     
-    /* Step tracker dot accessibility */
+    /* Step tracker dot accessibility - WCAG AA minimum */
     .step-dot {
         min-width: 44px;
         min-height: 44px;
@@ -614,6 +644,32 @@ svg {
     }
 }
 
+/* ========================================== */
+/* TABLET OPTIMIZATION (768px to 1023px)    */
+/* ========================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .wizard-panel {
+        padding: 1.5rem; /* 24px tablet padding */
+    }
+    
+    .modal-body {
+        padding: 1.5rem; /* 24px tablet padding */
+    }
+}
+
+/* ========================================== */
+/* MOBILE BASELINE (< 768px)                 */
+/* ========================================== */
+@media (max-width: 767px) {
+    .wizard-panel {
+        padding: 1rem; /* 16px mobile padding (unchanged) */
+    }
+    
+    .modal-body {
+        padding: 1rem; /* 16px mobile padding */
+    }
+}
+
 /* Ensure conditional fields don't cause layout shifts */
 [x-show] {
     display: block;
@@ -623,3 +679,99 @@ svg {
     display: none !important;
 }
 
+/* Conditional field smooth transition */
+.conditional-field {
+    transition: opacity 150ms ease-in-out, max-height 150ms ease-in-out;
+}
+
+/* ========================================== */
+/* WIZARD STEP VISIBILITY GUARDS            */
+/* ========================================== */
+/* Force hide steps on initial render before Alpine.js initializes */
+section[data-step] {
+    display: none !important;
+}
+
+/* Only show the active step */
+section[data-step][x-show="true"] {
+    display: block !important;
+}
+
+/* Enhanced wizard panel styling */
+.wizard-panel {
+    max-width: 900px;
+    margin-inline: auto;
+    min-height: 32rem;
+    position: relative;
+}
+
+/* ============================================================
+   LAPORIN CUSTOM MODAL
+   Digunakan bersama Alpine.js.
+   Tidak bergantung pada Bootstrap .modal.fade/.show.
+   ============================================================ */
+
+[x-cloak] {
+    display: none !important;
+}
+
+.laporin-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1055;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.laporin-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.laporin-modal-wrapper {
+    position: relative;
+    z-index: 1060;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 100%;
+    width: 100%;
+
+    padding: 1rem;
+}
+
+.laporin-modal .modal-dialog {
+    position: relative;
+    width: 100%;
+    max-height: calc(100vh - 2rem);
+}
+
+.laporin-modal .modal-content {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+@media (max-width: 575.98px) {
+    .laporin-modal-wrapper {
+        align-items: flex-end;
+        padding: 0.5rem;
+    }
+
+    .laporin-modal .modal-dialog {
+        max-width: 100%;
+    }
+
+    .laporin-modal .modal-content {
+        max-height: calc(100vh - 1rem);
+    }
+}

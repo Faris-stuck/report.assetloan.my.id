@@ -24,81 +24,121 @@ class PublicReportService
     private const REPORT_NUMBER_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
     public function create(Request $request, array $validated): array
-    {
-        for ($attempt = 0; $attempt < self::REPORT_NUMBER_RETRY_LIMIT; $attempt++) {
-            try {
-                return DB::transaction(function () use ($request, $validated) {
-                    $accessCode = (string) random_int(100000, 999999);
-                    $report = Report::create($this->reportData(
+{
+    for ($attempt = 0; $attempt < self::REPORT_NUMBER_RETRY_LIMIT; $attempt++) {
+        try {
+            [$report, $accessCode] = DB::transaction(function () use ($request, $validated) {
+                $accessCode = (string) random_int(100000, 999999);
+
+                $report = Report::create(
+                    $this->reportData(
                         $request,
                         $validated,
                         $accessCode,
                         $this->generateReportNumber()
-                    ));
+                    )
+                );
 
-                    Log::info('Public report created', [
+                Log::info('Public report created', [
+                    'report_id' => $report->id,
+                    'report_number' => $report->report_number,
+                    'report_type' => $report->report_type,
+                    'reporter_type' => $report->reporter_type,
+                    'ip_hash' => $report->submitted_ip_hash,
+                    'timestamp' => now()->toIso8601String(),
+                ]);
+
+                if ($report->report_type === 'violation') {
+                    BullyingDetail::create([
                         'report_id' => $report->id,
-                        'report_number' => $report->report_number,
-                        'report_type' => $report->report_type,
-                        'reporter_type' => $report->reporter_type,
-                        'ip_hash' => $report->submitted_ip_hash,
-                        'timestamp' => now()->toIso8601String(),
-                    ]);
-
-                    if ($report->report_type === 'violation') {
-                        BullyingDetail::create(['report_id' => $report->id] + collect($validated)->only([
-                            'reporter_position', 'bullying_type', 'victim_name', 'victim_class_id',
-                            'alleged_actor_name', 'alleged_actor_class_id', 'witness_name', 'impact_description',
-                        ])->toArray());
-                    } else {
-                        // Priority initialized to NULL on creation; Sarpras staff sets priority independently via process modal
-                        DamageDetail::create(['report_id' => $report->id, 'priority' => null] + collect($validated)->only([
-                            'item_name', 'item_category', 'damage_condition', 'suspected_cause',
-                        ])->toArray());
-                    }
-
-                    foreach ($request->file('attachments', []) as $file) {
-                        $path = $file->store('report-attachments/'.$report->id, 'private');
-                        ReportAttachment::create([
-                            'report_id' => $report->id,
-                            'uploader_type' => 'reporter',
-                            'original_name' => $this->safeOriginalName($file->getClientOriginalName()),
-                            'stored_name' => basename($path),
-                            'file_path' => $path,
-                            'mime_type' => $file->getMimeType(),
-                            'file_size' => $file->getSize(),
-                            'attachment_type' => 'initial_evidence',
-                        ]);
-                        
-                        // Log file attachment separately for audit trail
-                        Log::debug('File attachment stored for public report', [
-                            'report_id' => $report->id,
-                            'original_filename' => $file->getClientOriginalName(),
-                            'mime_type' => $file->getMimeType(),
-                            'size' => $file->getSize(),
-                            'stored_path' => $path,
-                        ]);
-                    }
-
-                    $this->history($report, null, $report->status, 'Laporan diterima sistem.');
-
-                    $notificationSent = $this->kirimNotifikasiEmail($report, $accessCode);
-
-                    return [$report, $accessCode, $notificationSent];
-                });
-            } catch (QueryException $exception) {
-                if ($this->isReportIdentifierCollision($exception)) {
-                    continue;
+                    ] + collect($validated)->only([
+                        'reporter_position',
+                        'bullying_type',
+                        'victim_name',
+                        'victim_class_id',
+                        'alleged_actor_name',
+                        'alleged_actor_class_id',
+                        'witness_name',
+                        'impact_description',
+                    ])->toArray());
+                } else {
+                    DamageDetail::create([
+                        'report_id' => $report->id,
+                        'priority' => null,
+                    ] + collect($validated)->only([
+                        'item_name',
+                        'item_category',
+                        'damage_condition',
+                        'suspected_cause',
+                    ])->toArray());
                 }
 
-                throw $this->convertQueryExceptionToValidationException($exception);
-            }
-        }
+                foreach ($request->file('attachments', []) as $file) {
+                    $path = $file->store(
+                        'report-attachments/'.$report->id,
+                        'private'
+                    );
 
-        throw ValidationException::withMessages([
-            'report_number' => 'Nomor laporan belum berhasil dibuat. Silakan coba kembali.',
-        ]);
+                    ReportAttachment::create([
+                        'report_id' => $report->id,
+                        'uploader_type' => 'reporter',
+                        'original_name' => $this->safeOriginalName(
+                            $file->getClientOriginalName()
+                        ),
+                        'stored_name' => basename($path),
+                        'file_path' => $path,
+                        'mime_type' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                        'attachment_type' => 'initial_evidence',
+                    ]);
+
+                    Log::debug('File attachment stored for public report', [
+                        'report_id' => $report->id,
+                        'original_filename' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                        'stored_path' => $path,
+                    ]);
+                }
+
+                $this->history(
+                    $report,
+                    null,
+                    $report->status,
+                    'Laporan diterima sistem.'
+                );
+
+                return [$report, $accessCode];
+            });
+
+            // PENTING:
+            // Email dikirim SETELAH transaction database berhasil COMMIT.
+            // Kegagalan SMTP tidak membatalkan laporan yang sudah tersimpan.
+            $notificationSent = $this->kirimNotifikasiEmail(
+                $report,
+                $accessCode
+            );
+
+            return [
+                $report,
+                $accessCode,
+                $notificationSent,
+            ];
+        } catch (QueryException $exception) {
+            if ($this->isReportIdentifierCollision($exception)) {
+                continue;
+            }
+
+            throw $this->convertQueryExceptionToValidationException(
+                $exception
+            );
+        }
     }
+
+    throw ValidationException::withMessages([
+        'report_number' => 'Nomor laporan belum berhasil dibuat. Silakan coba kembali.',
+    ]);
+}
 
     private function reportData(Request $request, array $validated, string $accessCode, string $reportNumber): array
     {
@@ -168,22 +208,9 @@ class PublicReportService
     }
 
     private function clientIpForAudit(Request $request): string
-    {
-        $cfConnectingIp = $request->headers->get('CF-Connecting-IP');
-        if (is_string($cfConnectingIp) && filter_var($cfConnectingIp, FILTER_VALIDATE_IP)) {
-            return $cfConnectingIp;
-        }
-
-        $forwardedFor = $request->headers->get('X-Forwarded-For');
-        if (is_string($forwardedFor)) {
-            $firstForwardedIp = trim(explode(',', $forwardedFor)[0] ?? '');
-            if (filter_var($firstForwardedIp, FILTER_VALIDATE_IP)) {
-                return $firstForwardedIp;
-            }
-        }
-
-        return $request->ip() ?? 'unknown';
-    }
+{
+    return $request->ip() ?? 'unknown';
+}
 
     private function generateReportNumber(): string
     {

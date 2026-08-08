@@ -13,16 +13,45 @@ class Report extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['report_number', 'public_token', 'access_code_hash', 'qr_code_id', 'reporter_type', 'reporter_name', 'reporter_class_id', 'reporter_absence_number', 'reporter_subject_id', 'reporter_staff_unit_id', 'reporter_phone', 'reporter_email', 'report_type', 'title', 'related_class_id', 'location_id', 'custom_location', 'incident_date', 'incident_time', 'description', 'urgency', 'status', 'consent_accepted_at', 'rejection_reason', 'assigned_to_user_id', 'assigned_to_role', 'verified_by', 'verified_at', 'submitted_ip_hash', 'submitted_user_agent', 'violation_type_id', 'damage_category_id'];
+    protected $fillable = [
+        'report_number',
+        'public_token',
+        'access_code_hash',
+        'qr_code_id',
+        'reporter_type',
+        'reporter_name',
+        'reporter_class_id',
+        'reporter_absence_number',
+        'reporter_subject_id',
+        'reporter_staff_unit_id',
+        'reporter_phone',
+        'reporter_email',
+        'report_type',
+        'title',
+        'related_class_id',
+        'location_id',
+        'custom_location',
+        'incident_date',
+        'incident_time',
+        'description',
+        'urgency',
+        'status',
+        'consent_accepted_at',
+        'rejection_reason',
+        'assigned_to_user_id',
+        'assigned_to_role',
+        'verified_by',
+        'verified_at',
+        'submitted_ip_hash',
+        'submitted_user_agent',
+        'violation_type_id',
+        'damage_category_id',
+    ];
 
     protected $casts = [
         'incident_date' => 'date',
         'consent_accepted_at' => 'datetime',
         'verified_at' => 'datetime',
-        'reporter_email' => 'encrypted',
-        'reporter_phone' => 'encrypted',
-        'submitted_ip_hash' => 'encrypted',
-        'submitted_user_agent' => 'encrypted:without-prefix',
     ];
 
     public function qrCode(): BelongsTo

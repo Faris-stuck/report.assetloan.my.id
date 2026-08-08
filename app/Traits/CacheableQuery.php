@@ -67,9 +67,9 @@ trait CacheableQuery
      * 
      * @example
      * CacheableQuery::cacheTag()
-     * // Returns: 'reports' (for Report model)
-     * 
-     * Cache::tags('reports')->flush()  // Invalidates all 'reports' tagged cache
+     // Returns: 'report' (for Report model)
+//
+// Cache::tags('report')->flush()  // Invalidates all 'reports' tagged cache
      */
     public static function cacheTag(): string
     {

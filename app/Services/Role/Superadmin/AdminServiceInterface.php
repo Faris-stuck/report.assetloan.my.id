@@ -23,5 +23,7 @@ interface AdminServiceInterface
 
     public function updateUser(Request $request, User $user): RedirectResponse;
 
+    public function destroyUser(User $user): RedirectResponse;
+
     public function audit(): View;
 }

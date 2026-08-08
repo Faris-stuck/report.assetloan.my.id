@@ -100,35 +100,39 @@ class AdminService implements AdminServiceInterface
     }
 
     public function users(): View
-    {
-        $query = User::query();
-        
-        // Search by name and email
-        if ($search = request('search')) {
-            $searchTerm = "%{$search}%";
-            $query->where('name', 'like', $searchTerm)
-                  ->orWhere('email', 'like', $searchTerm);
-        }
-        
-        // Filter by role
-        if ($role = request('role')) {
-            $query->where('role', $role);
-        }
-        
-        // Filter by status
-        if ($status = request('status')) {
-            if ($status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($status === 'inactive') {
-                $query->where('is_active', false);
-            }
-        }
+{
+    $query = User::query();
 
-        return view('admin.users.index', [
-            'users' => $query->latest()->paginate(20),
-            'roles' => User::ROLES,
-        ]);
+    if ($search = request('search')) {
+        $searchTerm = "%{$search}%";
+
+        $query->where(function ($q) use ($searchTerm) {
+            $q->where('name', 'like', $searchTerm)
+                ->orWhere('email', 'like', $searchTerm);
+        });
     }
+
+    if ($role = request('role')) {
+        $query->where('role', $role);
+    }
+
+    if ($status = request('status')) {
+        if ($status === 'active') {
+            $query->where('is_active', true);
+        } elseif ($status === 'inactive') {
+            $query->where('is_active', false);
+        }
+    }
+
+    return view('admin.users.index', [
+        'users' => $query->latest()->paginate(20),
+        'roles' => User::ROLES,
+
+        'activeSuperadminCount' => User::where('role', 'superadmin')
+            ->where('is_active', true)
+            ->count(),
+    ]);
+}
 
     public function storeUser(Request $request): RedirectResponse
     {
@@ -164,6 +168,37 @@ class AdminService implements AdminServiceInterface
 
         return back()->with('status', 'User diperbarui.');
     }
+
+    public function destroyUser(User $user): RedirectResponse
+{
+    $currentUser = request()->user();
+
+    if ($currentUser && $currentUser->id === $user->id) {
+        throw ValidationException::withMessages([
+            'user' => 'Anda tidak dapat menghapus akun yang sedang digunakan.',
+        ]);
+    }
+
+    if (
+        $user->role === 'superadmin'
+        && $user->is_active
+        && ! User::where('role', 'superadmin')
+            ->where('is_active', true)
+            ->whereKeyNot($user->id)
+            ->exists()
+    ) {
+        throw ValidationException::withMessages([
+            'user' => 'SuperAdmin aktif terakhir tidak dapat dihapus.',
+        ]);
+    }
+
+    $user->delete();
+
+    return back()->with(
+        'status',
+        'Pengguna berhasil dihapus.'
+    );
+}
 
     public function audit(): View
     {

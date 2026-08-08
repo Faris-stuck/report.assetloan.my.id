@@ -1,302 +1,1031 @@
 @extends('layouts.app')
-@section('title','Master Data')
+
+@section('title', 'Master Data')
+
 @section('content')
+
 @php
-    $labels = ['classes'=>'Kelas','subjects'=>'Mata Pelajaran','staff-units'=>'Unit Staf','locations'=>'Lokasi','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan'];
+    $labels = [
+        'classes' => 'Kelas',
+        'subjects' => 'Mata Pelajaran',
+        'staff-units' => 'Unit Staf',
+        'locations' => 'Lokasi',
+        'violation-types' => 'Jenis Pelanggaran',
+        'damage-categories' => 'Kategori Kerusakan',
+    ];
+
     $fieldLabels = [
         'class_name' => 'Nama Kelas',
         'grade_level' => 'Tingkat',
+        'major' => 'Jurusan',
         'academic_year' => 'Tahun Ajaran',
         'room_name' => 'Nama Ruangan',
+        'location_name' => 'Nama Lokasi',
         'location_type' => 'Jenis Lokasi',
-        'subject_name' => 'Nama Mapel',
+        'subject_name' => 'Nama Mata Pelajaran',
         'unit_name' => 'Nama Unit',
         'violation_name' => 'Jenis Pelanggaran',
         'category_name' => 'Nama Kategori',
         'description' => 'Deskripsi',
-        'is_active' => 'Aktif',
+        'is_active' => 'Status',
         'class_id' => 'Kelas',
         'point_reduction' => 'Pengurangan Poin',
     ];
+
     $required = [
-        'classes' => ['class_name','grade_level','academic_year'],
-        'subjects' => ['subject_name'],
-        'staff-units' => ['unit_name'],
-        'locations' => ['location_name'],
-        'violation-types' => ['violation_name','point_reduction'],
-        'damage-categories' => ['category_name'],
+        'classes' => [
+            'class_name',
+            'grade_level',
+            'academic_year',
+        ],
+
+        'subjects' => [
+            'subject_name',
+        ],
+
+        'staff-units' => [
+            'unit_name',
+        ],
+
+        'locations' => [
+            'location_name',
+        ],
+
+        'violation-types' => [
+            'violation_name',
+            'point_reduction',
+        ],
+
+        'damage-categories' => [
+            'category_name',
+        ],
     ][$resource] ?? [];
-    $inputMax = fn (string $field): int => in_array($field, ['class_name','grade_level','academic_year','room_name','location_type'], true) ? 80 : 150;
-    $labelFor = fn (string $field): string => $fieldLabels[$field] ?? str_replace('_',' ', $field);
+
+    $inputMax = function (string $field): int {
+        if (
+            in_array(
+                $field,
+                [
+                    'class_name',
+                    'grade_level',
+                    'major',
+                    'academic_year',
+                    'room_name',
+                    'location_type',
+                ],
+                true
+            )
+        ) {
+            return 80;
+        }
+
+        return 150;
+    };
+
+    $labelFor = function (string $field) use ($fieldLabels): string {
+        return $fieldLabels[$field]
+            ?? ucwords(str_replace('_', ' ', $field));
+    };
 @endphp
+
+
+{{-- ============================================================
+     HEADER
+     ============================================================ --}}
+
 <div class="page-header">
+
     <div>
-        <span class="page-kicker">Master Data</span>
-        <h1 class="page-title h2 mt-2">{{ $labels[$resource] ?? $resource }}</h1>
-        <p class="page-subtitle">Kelola data referensi yang dipakai form laporan, QR, dan proses petugas.</p>
+
+        <span class="page-kicker">
+            Master Data
+        </span>
+
+        <h1 class="page-title h2 mt-2">
+            {{ $labels[$resource] ?? $resource }}
+        </h1>
+
+        <p class="page-subtitle">
+            Kelola data referensi yang digunakan pada form laporan,
+            QR Code, dan proses petugas.
+        </p>
+
     </div>
+
 </div>
 
-<!-- Create Card -->
+
+{{-- ============================================================
+     CREATE DATA
+     ============================================================ --}}
+
 <div class="laporin-card mb-4">
-    <h2 class="h5 fw-bold mb-3">Tambah data tervalidasi</h2>
-    <form method="POST" action="{{ route('admin.master.store',$resource) }}" class="row g-3 align-items-end">
+
+    <h2 class="h5 fw-bold mb-3">
+        Tambah Data
+    </h2>
+
+    <form
+        method="POST"
+        action="{{ route('admin.master.store', $resource) }}"
+        class="row g-3 align-items-end"
+    >
+
         @csrf
+
+
         @foreach($fields as $f)
+
+            {{-- STATUS AKTIF --}}
             @if($f === 'is_active')
-                <div class="col-md-2"><div class="form-check"><input id="is_active" class="form-check-input" type="checkbox" name="is_active" value="1" checked><label for="is_active" class="form-check-label">Aktif</label></div></div>
+
+                <div class="col-md-3">
+
+                    <div class="form-check form-switch mt-4">
+
+                        <input
+                            id="create_is_active"
+                            class="form-check-input"
+                            type="checkbox"
+                            name="is_active"
+                            value="1"
+                            checked
+                        >
+
+                        <label
+                            for="create_is_active"
+                            class="form-check-label"
+                        >
+                            Data Aktif
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+            {{-- CLASS ID --}}
             @elseif($f === 'class_id')
-                <div class="col-md-4"><label class="form-label" for="class_id">Kelas</label><select id="class_id" name="class_id" class="form-select"><option value="">Tidak terkait kelas</option>@foreach($classes as $c)<option value="{{ $c->id }}">{{ $c->class_name }}</option>@endforeach</select></div>
+
+                <div class="col-md-4">
+
+                    <label
+                        class="form-label"
+                        for="create_class_id"
+                    >
+                        Kelas
+                    </label>
+
+                    <select
+                        id="create_class_id"
+                        name="class_id"
+                        class="form-select"
+                    >
+
+                        <option value="">
+                            Tidak terkait kelas
+                        </option>
+
+                        @foreach($classes as $c)
+
+                            <option
+                                value="{{ $c->id }}"
+                                @selected(old('class_id') == $c->id)
+                            >
+                                {{ $c->class_name }}
+                            </option>
+
+                        @endforeach
+
+                    </select>
+
+                </div>
+
+
+            {{-- POINT REDUCTION --}}
             @elseif($f === 'point_reduction')
-                <div class="col-md-3"><label class="form-label required" for="point_reduction">Pengurangan Poin</label><input id="point_reduction" type="number" name="point_reduction" class="form-control" required min="1" max="100" value="{{ old('point_reduction') }}"></div>
+
+                <div class="col-md-3">
+
+                    <label
+                        class="form-label required"
+                        for="create_point_reduction"
+                    >
+                        Pengurangan Poin
+                    </label>
+
+                    <input
+                        id="create_point_reduction"
+                        type="number"
+                        name="point_reduction"
+                        class="form-control"
+                        required
+                        min="1"
+                        max="100"
+                        value="{{ old('point_reduction') }}"
+                    >
+
+                </div>
+
+
+            {{-- DESCRIPTION --}}
             @elseif($f === 'description')
-                <div class="col-md-5"><label class="form-label" for="description">Deskripsi</label><input id="description" name="description" class="form-control" maxlength="1000" value="{{ old('description') }}" placeholder="Opsional"></div>
+
+                <div class="col-md-5">
+
+                    <label
+                        class="form-label"
+                        for="create_description"
+                    >
+                        Deskripsi
+                    </label>
+
+                    <textarea
+                        id="create_description"
+                        name="description"
+                        class="form-control"
+                        maxlength="1000"
+                        rows="2"
+                        placeholder="Opsional"
+                    >{{ old('description') }}</textarea>
+
+                </div>
+
+
+            {{-- FIELD BIASA --}}
             @else
-                @php($isRequired = in_array($f, $required, true))
-                <div class="col-md-4"><label class="form-label {{ $isRequired ? 'required' : '' }}" for="{{ $f }}">{{ $labelFor($f) }}</label><input id="{{ $f }}" name="{{ $f }}" class="form-control" placeholder="{{ $labelFor($f) }}" value="{{ old($f) }}" maxlength="{{ $inputMax($f) }}" @required($isRequired)></div>
+
+                @php
+                    $isRequired = in_array($f, $required, true);
+                @endphp
+
+                <div class="col-md-4">
+
+                    <label
+                        class="form-label {{ $isRequired ? 'required' : '' }}"
+                        for="create_{{ $f }}"
+                    >
+                        {{ $labelFor($f) }}
+                    </label>
+
+                    <input
+                        id="create_{{ $f }}"
+                        name="{{ $f }}"
+                        type="text"
+                        class="form-control"
+                        placeholder="{{ $labelFor($f) }}"
+                        value="{{ old($f) }}"
+                        maxlength="{{ $inputMax($f) }}"
+                        @required($isRequired)
+                    >
+
+                </div>
+
             @endif
+
         @endforeach
-        <div class="col-md-2"><button class="btn btn-laporin w-100">Tambah</button></div>
+
+
+        <div class="col-md-2">
+
+            <button
+                type="submit"
+                class="btn btn-laporin w-100"
+            >
+                Tambah
+            </button>
+
+        </div>
+
     </form>
-    <small class="text-muted">Validasi backend tetap menjadi sumber kebenaran; form ini membantu mencegah input salah sejak awal.</small>
+
 </div>
 
-<!-- Search & Filter Card -->
+
+{{-- ============================================================
+     SEARCH & FILTER
+     ============================================================ --}}
+
 <div class="laporin-card mb-4">
-    <form method="GET" action="{{ route('admin.master', $resource) }}" class="row g-3 align-items-end">
+
+    <form
+        method="GET"
+        action="{{ route('admin.master.index', $resource) }}"
+        class="row g-3 align-items-end"
+    >
+
         <div class="col-md-6 col-lg-5">
-            <label class="form-label" for="search">Cari</label>
-            <input id="search" name="search" type="text" class="form-control"
-                   placeholder="Cari nama atau email..." value="{{ request('search') }}" maxlength="100">
+
+            <label
+                class="form-label"
+                for="search"
+            >
+                Cari
+            </label>
+
+            <input
+                id="search"
+                name="search"
+                type="text"
+                class="form-control"
+                placeholder="Cari data..."
+                value="{{ request('search') }}"
+                maxlength="100"
+            >
+
         </div>
+
 
         <div class="col-md-6 col-lg-3">
-            <label class="form-label" for="status">Status</label>
-            <select id="status" name="status" class="form-select">
-                <option value="">Semua</option>
-                <option value="active" @selected(request('status') === 'active')>Aktif</option>
-                <option value="inactive" @selected(request('status') === 'inactive')>Nonaktif</option>
+
+            <label
+                class="form-label"
+                for="status"
+            >
+                Status
+            </label>
+
+            <select
+                id="status"
+                name="status"
+                class="form-select"
+            >
+
+                <option value="">
+                    Semua
+                </option>
+
+                <option
+                    value="active"
+                    @selected(request('status') === 'active')
+                >
+                    Aktif
+                </option>
+
+                <option
+                    value="inactive"
+                    @selected(request('status') === 'inactive')
+                >
+                    Nonaktif
+                </option>
+
             </select>
+
         </div>
+
 
         <div class="col-md-6 col-lg-4 d-flex gap-2">
-            <button type="submit" class="btn btn-laporin flex-grow-1">Cari</button>
-            <a href="{{ route('admin.master', $resource) }}" class="btn btn-outline-secondary">Reset</a>
+
+            <button
+                type="submit"
+                class="btn btn-laporin flex-grow-1"
+            >
+                Cari
+            </button>
+
+            <a
+                href="{{ route('admin.master.index', $resource) }}"
+                class="btn btn-outline-secondary"
+            >
+                Reset
+            </a>
+
         </div>
+
     </form>
+
 </div>
 
-<!-- Modal Edit Forms (hidden, used via Alpine) -->
-@foreach($items as $it)
-    <form id="master-update-{{ $resource }}-{{ $it->id }}" method="POST" action="{{ route('admin.master.update', [$resource, $it->id]) }}" style="display:none;">
-        @csrf
-        @method('PUT')
-    </form>
-    <form id="master-delete-{{ $resource }}-{{ $it->id }}" method="POST" action="{{ route('admin.master.destroy', [$resource, $it->id]) }}" style="display:none;">
-        @csrf
-        @method('DELETE')
-    </form>
-@endforeach
 
-<!-- Main Table with Alpine.js for Modal -->
-<div x-data="{
-    baseUrl: '{{ route('admin.master', $resource) }}',
-    editingId: @js(old('edit_id') ? (int) old('edit_id') : null),
-    editData: @js(old('edit_id') ? old() : {}),
-    
-    openEdit(item) {
-        this.editingId = item.id;
-        this.editData = item;
-        $dispatch('open-modal', 'edit-master');
-    }
-}">
-    <div class="laporin-card">
-        <!-- Results Info -->
-        @if(request('search') || request('status'))
-            <div class="mb-3 pb-3 border-bottom">
-                <p class="text-muted small mb-0">
-                    Menampilkan {{ $items->count() }} dari {{ $items->total() }} hasil
-                    @if(request('search'))
-                        untuk pencarian "<strong>{{ request('search') }}</strong>"
-                    @endif
-                    @if(request('status'))
-                        dengan status <strong>{{ request('status') === 'active' ? 'Aktif' : 'Nonaktif' }}</strong>
-                    @endif
-                </p>
-            </div>
-        @endif
+{{-- ============================================================
+     MAIN CARD
+     ============================================================ --}}
 
-        <!-- Table -->
-        <div class="table-responsive d-none d-md-block">
-            <table class="table align-middle">
-                <thead>
+<div class="laporin-card">
+
+
+    {{-- ========================================================
+         RESULT INFO
+         ======================================================== --}}
+
+    @if(request('search') || request('status'))
+
+        <div class="mb-3 pb-3 border-bottom">
+
+            <p class="text-muted small mb-0">
+
+                Menampilkan
+
+                <strong>
+                    {{ $items->count() }}
+                </strong>
+
+                dari
+
+                <strong>
+                    {{ $items->total() }}
+                </strong>
+
+                hasil.
+
+                @if(request('search'))
+
+                    Pencarian:
+
+                    <strong>
+                        "{{ request('search') }}"
+                    </strong>
+
+                @endif
+
+            </p>
+
+        </div>
+
+    @endif
+
+
+    {{-- ========================================================
+         DESKTOP TABLE
+         ======================================================== --}}
+
+    <div class="table-responsive d-none d-md-block">
+
+        <table class="table align-middle">
+
+            <thead>
+
                 <tr>
-                    @foreach($fields as $f)<th>{{ $labelFor($f) }}</th>@endforeach
-                    <th class="text-end">Aksi</th>
+
+                    @foreach($fields as $f)
+
+                        <th>
+                            {{ $labelFor($f) }}
+                        </th>
+
+                    @endforeach
+
+                    <th class="text-end">
+                        Aksi
+                    </th>
+
                 </tr>
-                </thead>
-                <tbody>
+
+            </thead>
+
+
+            <tbody>
+
                 @forelse($items as $it)
+
                     <tr>
+
                         @foreach($fields as $f)
+
                             <td>
+
                                 @if($f === 'is_active')
-                                    <span class="badge {{ $it->$f ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $it->$f ? 'Aktif' : 'Nonaktif' }}</span>
+
+                                    <span
+                                        class="badge {{ $it->$f ? 'text-bg-success' : 'text-bg-secondary' }}"
+                                    >
+                                        {{ $it->$f ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+
+
                                 @elseif($f === 'class_id')
-                                    {{ $it->class ? $it->class->class_name : 'Tidak terkait' }}
+
+                                    {{ $it->class?->class_name ?? 'Tidak terkait' }}
+
+
                                 @elseif($f === 'description')
-                                    <span class="text-muted small">{{ $it->$f ? substr($it->$f, 0, 50) . '...' : '-' }}</span>
+
+                                    @if($it->$f)
+
+                                        <span
+                                            class="text-muted small"
+                                            title="{{ $it->$f }}"
+                                        >
+                                            {{ \Illuminate\Support\Str::limit($it->$f, 50) }}
+                                        </span>
+
+                                    @else
+
+                                        -
+
+                                    @endif
+
+
                                 @else
-                                    {{ $it->$f }}
+
+                                    {{ $it->$f ?? '-' }}
+
                                 @endif
+
                             </td>
+
                         @endforeach
+
+
                         <td class="text-end text-nowrap">
-                            <button type="button" class="btn btn-sm btn-outline-laporin"
-                                x-on:click="openEdit(@js($it))"
-                                aria-label="Edit {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">
+
+
+                            {{-- EDIT --}}
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-laporin"
+                                data-bs-toggle="modal"
+                                data-bs-target="#edit-master-{{ $it->id }}"
+                                aria-label="Edit data {{ $it->id }}"
+                            >
                                 Edit
                             </button>
-                            <form method="POST" action="{{ route('admin.master.destroy', [$resource, $it->id]) }}" 
-                                  style="display:inline" onsubmit="return confirm('Hapus data ini?')">
+
+
+                            {{-- DELETE --}}
+                            <form
+                                method="POST"
+                                action="{{ route('admin.master.destroy', [$resource, $it->id]) }}"
+                                style="display:inline"
+                                onsubmit="return confirm('Yakin ingin menghapus data ini?')"
+                            >
+
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger" aria-label="Hapus {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">Hapus</button>
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    aria-label="Hapus data {{ $it->id }}"
+                                >
+                                    Hapus
+                                </button>
+
                             </form>
+
                         </td>
+
                     </tr>
+
                 @empty
-                    <tr><td colspan="{{ count($fields) + 1 }}" class="text-center text-muted py-4">Belum ada data.</td></tr>
+
+                    <tr>
+
+                        <td
+                            colspan="{{ count($fields) + 1 }}"
+                            class="text-center text-muted py-4"
+                        >
+                            Belum ada data.
+                        </td>
+
+                    </tr>
+
                 @endforelse
-                </tbody>
-            </table>
-        </div>
 
-        <!-- MOBILE: Card View -->
-        <div class="d-md-none">
-            @forelse($items as $it)
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            @foreach($fields as $f)
-                                @if($f !== 'description' && $f !== 'is_active' && $f !== 'class_id')
-                                    {{ $it->$f }}
-                                    @break
-                                @endif
-                            @endforeach
-                        </h6>
-                        <div class="mb-2">
-                            @foreach($fields as $f)
-                                @if($f !== 'description' && $f !== 'is_active' && $f !== 'class_id')
-                                    @continue
-                                @endif
-                                @if($f === 'is_active')
-                                    <span class="badge {{ $it->$f ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $it->$f ? 'Aktif' : 'Nonaktif' }}</span>
-                                @elseif($f === 'class_id' && $it->class)
-                                    <span class="badge text-bg-secondary">{{ $it->class->class_name }}</span>
-                                @endif
-                            @endforeach
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-laporin flex-grow-1"
-                                x-on:click="openEdit(@js($it))"
-                                aria-label="Edit {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">
-                                Edit
-                            </button>
-                            <form method="POST" action="{{ route('admin.master.destroy', [$resource, $it->id]) }}" 
-                                  onsubmit="return confirm('Hapus?')" class="flex-grow-1">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100" aria-label="Hapus {{ str_replace('-', ' ', $resource) }} {{ $it->name ?? $it->class_name ?? $it->subject_name ?? $it->unit_name ?? $it->location_name ?? $it->violation_name ?? $it->category_name ?? $it->id }}">Hapus</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="alert alert-info">Belum ada data</div>
-            @endforelse
-        </div>
+            </tbody>
 
-        <!-- Pagination with preserved filters -->
-        <div class="mt-3">
-            {{ $items->appends(request()->query())->links() }}
-        </div>
+        </table>
+
     </div>
 
-    <!-- Modal Edit Form -->
-    <x-modal name="edit-master" :show="old('edit_id') ? true : false" focusable>
-        <form method="POST" x-bind:action="editingId ? '{{ url('/admin/master') }}/' + editingId : '#'" class="p-3 p-lg-5">
-            @csrf
-            @method('PUT')
-            <input type="hidden" name="edit_id" x-bind:value="editingId">
 
-            <div class="mb-4">
-                <h2 class="h5 fw-bold mb-1">Ubah {{ strtolower($labels[$resource] ?? $resource) }}</h2>
-                <p class="text-muted small mb-0">Perbarui data sesuai kebutuhan</p>
-            </div>
+    {{-- ========================================================
+         MOBILE CARD VIEW
+         ======================================================== --}}
 
-            @if(old('edit_id') && $errors->any())
-                <div class="alert alert-danger mb-3" role="alert">
-                    <strong>Error:</strong> Periksa kembali field yang wajib diisi.
+    <div class="d-md-none">
+
+        @forelse($items as $it)
+
+            <div class="card mb-3">
+
+                <div class="card-body">
+
+
+                    {{-- TITLE --}}
+                    <h6 class="card-title fw-bold">
+
+                        @php
+                            $mobileTitle = null;
+
+                            foreach ($fields as $field) {
+                                if (
+                                    !in_array(
+                                        $field,
+                                        [
+                                            'description',
+                                            'is_active',
+                                            'class_id',
+                                        ],
+                                        true
+                                    )
+                                    && !empty($it->$field)
+                                ) {
+                                    $mobileTitle = $it->$field;
+                                    break;
+                                }
+                            }
+                        @endphp
+
+                        {{ $mobileTitle ?? 'Data #'.$it->id }}
+
+                    </h6>
+
+
+                    {{-- DETAIL --}}
+                    <div class="small mb-3">
+
+                        @foreach($fields as $f)
+
+                            @if($f === 'is_active')
+
+                                <div class="mb-1">
+
+                                    <strong>
+                                        Status:
+                                    </strong>
+
+                                    <span
+                                        class="badge {{ $it->$f ? 'text-bg-success' : 'text-bg-secondary' }}"
+                                    >
+                                        {{ $it->$f ? 'Aktif' : 'Nonaktif' }}
+                                    </span>
+
+                                </div>
+
+
+                            @elseif($f === 'class_id')
+
+                                <div class="mb-1">
+
+                                    <strong>
+                                        {{ $labelFor($f) }}:
+                                    </strong>
+
+                                    {{ $it->class?->class_name ?? 'Tidak terkait' }}
+
+                                </div>
+
+
+                            @elseif($f === 'description')
+
+                                @if($it->$f)
+
+                                    <div class="mb-1">
+
+                                        <strong>
+                                            {{ $labelFor($f) }}:
+                                        </strong>
+
+                                        {{ \Illuminate\Support\Str::limit($it->$f, 100) }}
+
+                                    </div>
+
+                                @endif
+
+
+                            @else
+
+                                <div class="mb-1">
+
+                                    <strong>
+                                        {{ $labelFor($f) }}:
+                                    </strong>
+
+                                    {{ $it->$f ?? '-' }}
+
+                                </div>
+
+                            @endif
+
+                        @endforeach
+
+                    </div>
+
+
+                    {{-- ACTIONS --}}
+                    <div class="d-flex gap-2">
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-laporin flex-grow-1"
+                            data-bs-toggle="modal"
+                            data-bs-target="#edit-master-{{ $it->id }}"
+                        >
+                            Edit
+                        </button>
+
+
+                        <form
+                            method="POST"
+                            action="{{ route('admin.master.destroy', [$resource, $it->id]) }}"
+                            onsubmit="return confirm('Yakin ingin menghapus data ini?')"
+                            class="flex-grow-1"
+                        >
+
+                            @csrf
+                            @method('DELETE')
+
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-outline-danger w-100"
+                            >
+                                Hapus
+                            </button>
+
+                        </form>
+
+                    </div>
+
                 </div>
-            @endif
 
-            <div class="row g-3 mb-3">
-                @foreach($fields as $f)
-                    @if($f === 'is_active')
-                        <div class="col-12">
-                            <div class="form-check">
-                                <input id="edit_is_active" class="form-check-input" type="checkbox" 
-                                       name="is_active" value="1" 
-                                       x-bind:checked="editData.is_active">
-                                <label for="edit_is_active" class="form-check-label">Aktif</label>
-                            </div>
-                        </div>
-                    @elseif($f === 'class_id')
-                        <div class="col-12">
-                            <label class="form-label" for="edit_class_id">Kelas</label>
-                            <select id="edit_class_id" name="class_id" class="form-select" x-bind:value="editData.class_id">
-                                <option value="">Tidak terkait kelas</option>
-                                @foreach($classes as $c)
-                                    <option value="{{ $c->id }}">{{ $c->class_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    @elseif($f === 'point_reduction')
-                        <div class="col-12">
-                            <label class="form-label required" for="edit_point_reduction">Pengurangan Poin</label>
-                            <input id="edit_point_reduction" type="number" name="point_reduction" class="form-control"
-                                   x-bind:value="editData.point_reduction" required min="1" max="100">
-                        </div>
-                    @elseif($f === 'description')
-                        <div class="col-12">
-                            <label class="form-label" for="edit_description">Deskripsi</label>
-                            <input id="edit_description" name="description" type="text" class="form-control"
-                                   x-bind:value="editData.description ?? ''" maxlength="1000" placeholder="Opsional">
-                        </div>
-                    @else
-                        @php($isRequired = in_array($f, $required, true))
-                        <div class="col-12">
-                            <label class="form-label {{ $isRequired ? 'required' : '' }}" for="edit_{{ $f }}">{{ $labelFor($f) }}</label>
-                            <input id="edit_{{ $f }}" name="{{ $f }}" type="text" class="form-control"
-                                   x-bind:value="editData.{{ $f }} ?? ''" maxlength="{{ $inputMax($f) }}" 
-                                   @required($isRequired)>
-                        </div>
-                    @endif
-                @endforeach
             </div>
 
-            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
-                <button type="button" class="btn btn-outline-secondary"
-                        x-on:click="$dispatch('close-modal', 'edit-master')">
-                    Batal
-                </button>
-                <button type="submit" class="btn btn-laporin">
-                    Simpan
-                </button>
+        @empty
+
+            <div class="alert alert-info">
+                Belum ada data.
             </div>
-        </form>
-    </x-modal>
+
+        @endforelse
+
+    </div>
+
+
+    {{-- ========================================================
+         PAGINATION
+         ======================================================== --}}
+
+    <div class="mt-3">
+
+        {{ $items->appends(request()->query())->links() }}
+
+    </div>
+
 </div>
+
+
+{{-- ============================================================
+     BOOTSTRAP EDIT MODALS
+     SATU MODAL PER ITEM
+     ============================================================ --}}
+
+@foreach($items as $it)
+
+    <div
+        class="modal fade"
+        id="edit-master-{{ $it->id }}"
+        tabindex="-1"
+        aria-labelledby="edit-master-title-{{ $it->id }}"
+        aria-hidden="true"
+    >
+
+        <div
+            class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"
+        >
+
+            <div class="modal-content">
+
+
+                <form
+                    method="POST"
+                    action="{{ route('admin.master.update', [$resource, $it->id]) }}"
+                >
+
+                    @csrf
+                    @method('PUT')
+
+
+                    {{-- HEADER --}}
+                    <div class="modal-header">
+
+                        <div>
+
+                            <h2
+                                class="modal-title h5 fw-bold mb-1"
+                                id="edit-master-title-{{ $it->id }}"
+                            >
+                                Edit {{ $labels[$resource] ?? $resource }}
+                            </h2>
+
+                            <p class="text-muted small mb-0">
+                                Perbarui data kemudian tekan Simpan Perubahan.
+                            </p>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Tutup"
+                        ></button>
+
+                    </div>
+
+
+                    {{-- BODY --}}
+                    <div class="modal-body">
+
+                        <div class="row g-3">
+
+
+                            @foreach($fields as $f)
+
+
+                                {{-- STATUS --}}
+                                @if($f === 'is_active')
+
+                                    <div class="col-12">
+
+                                        <div class="form-check form-switch">
+
+                                            <input
+                                                id="edit_{{ $it->id }}_is_active"
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                name="is_active"
+                                                value="1"
+                                                @checked($it->is_active)
+                                            >
+
+                                            <label
+                                                class="form-check-label"
+                                                for="edit_{{ $it->id }}_is_active"
+                                            >
+                                                Data aktif
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+
+                                {{-- CLASS ID --}}
+                                @elseif($f === 'class_id')
+
+                                    <div class="col-md-6">
+
+                                        <label
+                                            class="form-label"
+                                            for="edit_{{ $it->id }}_class_id"
+                                        >
+                                            Kelas
+                                        </label>
+
+                                        <select
+                                            id="edit_{{ $it->id }}_class_id"
+                                            name="class_id"
+                                            class="form-select"
+                                        >
+
+                                            <option value="">
+                                                Tidak terkait kelas
+                                            </option>
+
+
+                                            @foreach($classes as $c)
+
+                                                <option
+                                                    value="{{ $c->id }}"
+                                                    @selected(
+                                                        (string) $it->class_id
+                                                        ===
+                                                        (string) $c->id
+                                                    )
+                                                >
+                                                    {{ $c->class_name }}
+                                                </option>
+
+                                            @endforeach
+
+                                        </select>
+
+                                    </div>
+
+
+                                {{-- POINT REDUCTION --}}
+                                @elseif($f === 'point_reduction')
+
+                                    <div class="col-md-6">
+
+                                        <label
+                                            class="form-label required"
+                                            for="edit_{{ $it->id }}_point_reduction"
+                                        >
+                                            Pengurangan Poin
+                                        </label>
+
+                                        <input
+                                            id="edit_{{ $it->id }}_point_reduction"
+                                            type="number"
+                                            name="point_reduction"
+                                            class="form-control"
+                                            value="{{ $it->point_reduction }}"
+                                            required
+                                            min="1"
+                                            max="100"
+                                        >
+
+                                    </div>
+
+
+                                {{-- DESCRIPTION --}}
+                                @elseif($f === 'description')
+
+                                    <div class="col-12">
+
+                                        <label
+                                            class="form-label"
+                                            for="edit_{{ $it->id }}_description"
+                                        >
+                                            Deskripsi
+                                        </label>
+
+                                        <textarea
+                                            id="edit_{{ $it->id }}_description"
+                                            name="description"
+                                            class="form-control"
+                                            maxlength="1000"
+                                            rows="4"
+                                            placeholder="Opsional"
+                                        >{{ $it->description }}</textarea>
+
+                                    </div>
+
+
+                                {{-- NORMAL INPUT --}}
+                                @else
+
+                                    @php
+                                        $isRequired = in_array(
+                                            $f,
+                                            $required,
+                                            true
+                                        );
+                                    @endphp
+
+
+                                    <div class="col-md-6">
+
+                                        <label
+                                            class="form-label {{ $isRequired ? 'required' : '' }}"
+                                            for="edit_{{ $it->id }}_{{ $f }}"
+                                        >
+                                            {{ $labelFor($f) }}
+                                        </label>
+
+                                        <input
+                                            id="edit_{{ $it->id }}_{{ $f }}"
+                                            name="{{ $f }}"
+                                            type="text"
+                                            class="form-control"
+                                            value="{{ $it->$f }}"
+                                            maxlength="{{ $inputMax($f) }}"
+                                            @required($isRequired)
+                                        >
+
+                                    </div>
+
+                                @endif
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- FOOTER --}}
+                    <div class="modal-footer">
+
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            data-bs-dismiss="modal"
+                        >
+                            Batal
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-laporin"
+                        >
+                            Simpan Perubahan
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+@endforeach
 
 @endsection
