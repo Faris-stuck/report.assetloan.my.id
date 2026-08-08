@@ -20,42 +20,42 @@ This task list implements all fixes for data persistence, session management, qu
 - [x] Mark complete when migration verified
 
 ### 1.2 Run Database Migration
-- [~] Execute: `php artisan migrate --force`
-- [~] Verify no errors during execution
-- [~] Confirm sessions table created: `php artisan tinker` → `Schema::hasTable('sessions')`
-- [~] Verify table structure: `Schema::getColumns('sessions')`
+- [ ] Execute: `php artisan migrate --force`
+- [ ] Verify no errors during execution
+- [ ] Confirm sessions table created: `php artisan tinker` → `Schema::hasTable('sessions')`
+- [ ] Verify table structure: `Schema::getColumns('sessions')`
 
 ### 1.3 Configure Redis Connection in .env
-- [~] Open `.env` file
-- [~] Add/update: `REDIS_HOST=redis`, `REDIS_PORT=6379`, `REDIS_PASSWORD=null`, `REDIS_DB=0`
-- [~] Add: `REDIS_CACHE_DB=1`
-- [~] Verify values match your environment (localhost for dev, redis for Docker)
+- [ ] Open `.env` file
+- [ ] Add/update: `REDIS_HOST=redis`, `REDIS_PORT=6379`, `REDIS_PASSWORD=null`, `REDIS_DB=0`
+- [ ] Add: `REDIS_CACHE_DB=1`
+- [ ] Verify values match your environment (localhost for dev, redis for Docker)
 
 ### 1.4 Configure Session Driver
 - [ ] Open `.env` file
-- [~] Set: `SESSION_DRIVER=redis`
-- [~] Set: `SESSION_LIFETIME=120`
-- [~] Set: `SESSION_SECURE_COOKIE=true`
-- [~] Set: `SESSION_HTTP_ONLY=true`
-- [~] Set: `SESSION_SAME_SITE=strict`
+- [ ] Set: `SESSION_DRIVER=redis`
+- [ ] Set: `SESSION_LIFETIME=120`
+- [ ] Set: `SESSION_SECURE_COOKIE=true`
+- [ ] Set: `SESSION_HTTP_ONLY=true`
+- [ ] Set: `SESSION_SAME_SITE=strict`
 
 ### 1.5 Test Redis Connection
-- [~] Execute: `php artisan tinker`
-- [~] Run: `Redis::ping()` → Should return "PONG"
-- [~] Run: `Redis::set('test_key', 'test_value')`
-- [~] Run: `Redis::get('test_key')` → Should return 'test_value'
+- [ ] Execute: `php artisan tinker`
+- [ ] Run: `Redis::ping()` → Should return "PONG"
+- [ ] Run: `Redis::set('test_key', 'test_value')`
+- [ ] Run: `Redis::get('test_key')` → Should return 'test_value'
 
 ### 1.6 Test Session Creation on Login
-- [~] Create test user: `User::factory()->create(['email' => 'test@test.com'])`
-- [~] POST to `/login` with valid credentials
-- [~] Verify session created in Redis: `Redis::keys('*')` should show session key
-- [~] Verify accessible on next request
+- [ ] Create test user: `User::factory()->create(['email' => 'test@test.com'])`
+- [ ] POST to `/login` with valid credentials
+- [ ] Verify session created in Redis: `Redis::keys('*')` should show session key
+- [ ] Verify accessible on next request
 
 ### 1.7 Test Session Lifecycle
-- [~] Login → verify authenticated
-- [~] Access protected route → verify session persists
-- [~] Logout → verify session destroyed
-- [~] Session should auto-expire after 120 minutes (test with reduced TTL)
+- [ ] Login → verify authenticated
+- [ ] Access protected route → verify session persists
+- [ ] Logout → verify session destroyed
+- [ ] Session should auto-expire after 120 minutes (test with reduced TTL)
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -64,29 +64,29 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 2: Query Caching Architecture (3-4 hours)
 
 ### 2.1 Create CacheableQuery Trait
-- [~] Create file: `app/Traits/CacheableQuery.php`
-- [~] Implement: `cacheKey()` static method for consistent key generation
-- [~] Format: `laporin:entity:action:params_hash`
-- [~] Implement: `cacheTag()` static method for cache tag generation
+- [ ] Create file: `app/Traits/CacheableQuery.php`
+- [ ] Implement: `cacheKey()` static method for consistent key generation
+- [ ] Format: `laporin:entity:action:params_hash`
+- [ ] Implement: `cacheTag()` static method for cache tag generation
 
 ### 2.2 Create Cache Wrapper Functions
-- [~] Verify `app/Helpers/CacheHelper.php` exists
-- [~] Add methods: `remember()`, `get()`, `invalidate()`, `invalidateTag()`
-- [~] Implement graceful Redis fallback (try Redis, fallback to database)
-- [~] Add error logging for cache failures
+- [ ] Verify `app/Helpers/CacheHelper.php` exists
+- [ ] Add methods: `remember()`, `get()`, `invalidate()`, `invalidateTag()`
+- [ ] Implement graceful Redis fallback (try Redis, fallback to database)
+- [ ] Add error logging for cache failures
 
 ### 2.3 Define TTL Strategy
-- [~] Update or create `config/cache.php` with TTL settings
-- [~] Master data (locations, categories, etc): 86400 seconds (24 hours)
-- [~] Reports list: 3600 seconds (1 hour)
-- [~] Report details: 1800 seconds (30 minutes)
-- [~] User profiles: 1800 seconds (30 minutes)
+- [ ] Update or create `config/cache.php` with TTL settings
+- [ ] Master data (locations, categories, etc): 86400 seconds (24 hours)
+- [ ] Reports list: 3600 seconds (1 hour)
+- [ ] Report details: 1800 seconds (30 minutes)
+- [ ] User profiles: 1800 seconds (30 minutes)
 
 ### 2.4 Test Cache Operations
-- [~] Execute: `Cache::put('test', 'value', 3600)`
-- [~] Execute: `Cache::get('test')` → Should return 'value'
-- [~] Execute: `Cache::forget('test')`
-- [~] Verify cache working via Redis: `redis-cli keys "*"`
+- [ ] Execute: `Cache::put('test', 'value', 3600)`
+- [ ] Execute: `Cache::get('test')` → Should return 'value'
+- [ ] Execute: `Cache::forget('test')`
+- [ ] Verify cache working via Redis: `redis-cli keys "*"`
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -95,31 +95,31 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 3: Cache Invalidation via Model Observers (2-3 hours)
 
 ### 3.1 Create ReportObserver
-- [~] Create file: `app/Observers/ReportObserver.php`
-- [~] Implement `created()`, `updated()`, `deleted()`, `forceDeleted()` methods
-- [~] Each method flushes tags: `Cache::tags('reports', 'locations')->flush()`
-- [~] Register observer in AppServiceProvider
+- [ ] Create file: `app/Observers/ReportObserver.php`
+- [ ] Implement `created()`, `updated()`, `deleted()`, `forceDeleted()` methods
+- [ ] Each method flushes tags: `Cache::tags('reports', 'locations')->flush()`
+- [ ] Register observer in AppServiceProvider
 
 ### 3.2 Create DamageDetailObserver
-- [~] Create file: `app/Observers/DamageDetailObserver.php`
-- [~] Implement CRUD observer methods
-- [~] Flush tags: `Cache::tags('damagedetails', 'reports')->flush()`
+- [ ] Create file: `app/Observers/DamageDetailObserver.php`
+- [ ] Implement CRUD observer methods
+- [ ] Flush tags: `Cache::tags('damagedetails', 'reports')->flush()`
 
 ### 3.3 Create BullyingDetailObserver
-- [~] Create file: `app/Observers/BullyingDetailObserver.php`
+- [ ] Create file: `app/Observers/BullyingDetailObserver.php`
 - [ ] Implement CRUD observer methods
-- [~] Flush tags: `Cache::tags('bullyingdetails', 'reports')->flush()`
+- [ ] Flush tags: `Cache::tags('bullyingdetails', 'reports')->flush()`
 
 ### 3.4 Register Observers in AppServiceProvider
-- [~] Open `app/Providers/AppServiceProvider.php`
-- [~] Add to `boot()` method: Observer registrations
-- [~] Verify all three observers registered
+- [ ] Open `app/Providers/AppServiceProvider.php`
+- [ ] Add to `boot()` method: Observer registrations
+- [ ] Verify all three observers registered
 
 ### 3.5 Test Cache Invalidation
-- [~] Create damage report → verify cache cleared
-- [~] Update report → verify cache cleared
-- [~] Delete report → verify cache cleared
-- [~] Next query should show new data immediately
+- [ ] Create damage report → verify cache cleared
+- [ ] Update report → verify cache cleared
+- [ ] Delete report → verify cache cleared
+- [ ] Next query should show new data immediately
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -129,26 +129,26 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 4: Controller-Level Query Caching (2 hours)
 
 ### 4.1 Implement Caching in ReportController
-- [~] Open `app/Http/Controllers/ReportController.php`
-- [~] Update `index()`: Cache report list with 3600s TTL
-- [~] Update `show()`: Cache individual report with 1800s TTL
-- [~] Use eager loading: `->with('location', 'violationType', 'damageDetails')`
-- [~] Verify no cache on create/update/delete endpoints
+- [ ] Open `app/Http/Controllers/ReportController.php`
+- [ ] Update `index()`: Cache report list with 3600s TTL
+- [ ] Update `show()`: Cache individual report with 1800s TTL
+- [ ] Use eager loading: `->with('location', 'violationType', 'damageDetails')`
+- [ ] Verify no cache on create/update/delete endpoints
 
 ### 4.2 Implement Caching in PublicReportController
-- [~] Open `app/Http/Controllers/PublicReportController.php`
-- [~] Cache public reports list (longer TTL: 86400s)
-- [~] Verify form submission endpoints NOT cached
+- [ ] Open `app/Http/Controllers/PublicReportController.php`
+- [ ] Cache public reports list (longer TTL: 86400s)
+- [ ] Verify form submission endpoints NOT cached
 
 ### 4.3 Implement Caching for Master Data
-- [~] Create `app/Services/MasterDataService.php` (if not exists)
-- [~] Cache locations, damage categories, violation types (24h TTL)
-- [~] Use in controllers/views via `MasterDataService::getLocations()`
+- [ ] Create `app/Services/MasterDataService.php` (if not exists)
+- [ ] Cache locations, damage categories, violation types (24h TTL)
+- [ ] Use in controllers/views via `MasterDataService::getLocations()`
 
 ### 4.4 Test Controller Caching
-- [~] Load reports list page → measure first load (cache miss <100ms)
-- [~] Reload same page → measure second load (cache hit <50ms)
-- [~] Verify cache hit rate >80% with repeated loads
+- [ ] Load reports list page → measure first load (cache miss <100ms)
+- [ ] Reload same page → measure second load (cache hit <50ms)
+- [ ] Verify cache hit rate >80% with repeated loads
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -158,22 +158,22 @@ This task list implements all fixes for data persistence, session management, qu
 
 ### 5.1 Modify PublicReportService
 - [x] Open `app/Services/PublicReport/PublicReportService.php`
-- [~] Find priority initialization logic (line ~56)
-- [~] Replace: `'priority' => $validated['priority'] ?? $validated['urgency']`
-- [~] With: `'priority' => null,  // Initially NULL - Sarpras sets independently`
-- [~] Add comment explaining the change
+- [ ] Find priority initialization logic (line ~56)
+- [ ] Replace: `'priority' => $validated['priority'] ?? $validated['urgency']`
+- [ ] With: `'priority' => null,  // Initially NULL - Sarpras sets independently`
+- [ ] Add comment explaining the change
 
 ### 5.2 Verify SarprasProcessor
-- [~] Open `app/Services/Role/Sarpras/SarprasProcessor.php`
-- [~] Verify priority updates work independently
-- [~] Confirm no logic ties priority to urgency
+- [ ] Open `app/Services/Role/Sarpras/SarprasProcessor.php`
+- [ ] Verify priority updates work independently
+- [ ] Confirm no logic ties priority to urgency
 
 ### 5.3 Test Priority Independence
-- [~] Create damage report with urgency='darurat'
-- [~] Query database: verify `damage_detail.priority = NULL`
-- [~] Login as Sarpras user
-- [~] Process report: set priority='tinggi'
-- [~] Verify priority and urgency display independently
+- [ ] Create damage report with urgency='darurat'
+- [ ] Query database: verify `damage_detail.priority = NULL`
+- [ ] Login as Sarpras user
+- [ ] Process report: set priority='tinggi'
+- [ ] Verify priority and urgency display independently
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -182,39 +182,39 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 6: Form Data Persistence (3-4 hours)
 
 ### 6.1 Implement Alpine.js Form State
-- [~] Open `resources/views/public/report-form.blade.php`
-- [~] Add `x-data` with formData object storing all steps' data
-- [~] Structure: `{ step1: {...}, step2: {...}, step3: {...}, step4: {...} }`
-- [~] Persist form state in localStorage for session recovery
+- [ ] Open `resources/views/public/report-form.blade.php`
+- [ ] Add `x-data` with formData object storing all steps' data
+- [ ] Structure: `{ step1: {...}, step2: {...}, step3: {...}, step4: {...} }`
+- [ ] Persist form state in localStorage for session recovery
 
 ### 6.2 Bind Form Fields to State
-- [~] Update all form inputs with `x-model="formData[currentStep][fieldName]"`
-- [~] Update all textareas with `x-model`
-- [~] Update all selects with `x-model`
-- [~] Verify initial values load from formData
+- [ ] Update all form inputs with `x-model="formData[currentStep][fieldName]"`
+- [ ] Update all textareas with `x-model`
+- [ ] Update all selects with `x-model`
+- [ ] Verify initial values load from formData
 
 ### 6.3 Preserve Data Across Step Navigation
-- [~] Next button: save current step data before navigation
-- [~] Back button: restore previous step's data from formData
-- [~] Validate only current step (not all steps)
+- [ ] Next button: save current step data before navigation
+- [ ] Back button: restore previous step's data from formData
+- [ ] Validate only current step (not all steps)
 
 ### 6.4 Restore Data After Validation Error
-- [~] On validation error: display error alert but KEEP data
-- [~] User can click "Lanjut" again to retry
-- [~] formData should preserve all entries during retry
+- [ ] On validation error: display error alert but KEEP data
+- [ ] User can click "Lanjut" again to retry
+- [ ] formData should preserve all entries during retry
 
 ### 6.5 Submit All Steps' Data
-- [~] Form submission POST entire formData as array
-- [~] Backend validates complete request (not step-by-step)
-- [~] Backend creates single report with all data
+- [ ] Form submission POST entire formData as array
+- [ ] Backend validates complete request (not step-by-step)
+- [ ] Backend creates single report with all data
 
 ### 6.6 Test Form Data Persistence
-- [~] Fill form steps 1-3 correctly
-- [~] Leave step 4 field empty
-- [~] Click "Lanjut" → validation error appears
-- [~] Verify all steps' data still visible/preserved
-- [~] Fill missing field, retry submit → should succeed
-- [~] Test on mobile (375px) and desktop (1024px)
+- [ ] Fill form steps 1-3 correctly
+- [ ] Leave step 4 field empty
+- [ ] Click "Lanjut" → validation error appears
+- [ ] Verify all steps' data still visible/preserved
+- [ ] Fill missing field, retry submit → should succeed
+- [ ] Test on mobile (375px) and desktop (1024px)
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -224,36 +224,36 @@ This task list implements all fixes for data persistence, session management, qu
 
 ### 7.1 Fix Conditional Field Layout
 - [ ] Open `resources/views/public/report-form.blade.php`
-- [~] Find conditional fields (x-show directives)
-- [~] Wrap in div: `<div x-show="condition" x-transition>`
-- [~] Add CSS: Prevent layout shift with `display: contents` or `display: none`
+- [ ] Find conditional fields (x-show directives)
+- [ ] Wrap in div: `<div x-show="condition" x-transition>`
+- [ ] Add CSS: Prevent layout shift with `display: contents` or `display: none`
 
 ### 7.2 Update Error Display to Alert-Danger
-- [~] Find `.invalid-step-hint` or error container
-- [~] Replace with Bootstrap `.alert alert-danger`
-- [~] Add icon: `<i class="fas fa-exclamation-circle"></i>`
-- [~] Include field label in error message
+- [ ] Find `.invalid-step-hint` or error container
+- [ ] Replace with Bootstrap `.alert alert-danger`
+- [ ] Add icon: `<i class="fas fa-exclamation-circle"></i>`
+- [ ] Include field label in error message
 
 ### 7.3 Implement Auto-Scroll to Error
-- [~] On validation error: scroll error into view
-- [~] Use `scrollIntoView({ behavior: 'smooth', block: 'center' })`
-- [~] Delay 100ms to allow DOM render
+- [ ] On validation error: scroll error into view
+- [ ] Use `scrollIntoView({ behavior: 'smooth', block: 'center' })`
+- [ ] Delay 100ms to allow DOM render
 
 ### 7.4 Test Layout Stability
-- [~] Fill step 2: select reporter_type='siswa'
-- [~] Kelas field appears (no layout jump)
-- [~] Change to reporter_type='pegawai'
-- [~] Kelas field disappears smoothly
-- [~] Content below doesn't jump position
-- [~] Test on mobile: scroll position preserved
+- [ ] Fill step 2: select reporter_type='siswa'
+- [ ] Kelas field appears (no layout jump)
+- [ ] Change to reporter_type='pegawai'
+- [ ] Kelas field disappears smoothly
+- [ ] Content below doesn't jump position
+- [ ] Test on mobile: scroll position preserved
 
 ### 7.5 Test Error Display
-- [~] Leave required field empty
-- [~] Click "Lanjut"
-- [~] Error displays in red alert box with icon
-- [~] Error message clear and visible
-- [~] Error scrolls into viewport center
-- [~] Test on mobile and desktop
+- [ ] Leave required field empty
+- [ ] Click "Lanjut"
+- [ ] Error displays in red alert box with icon
+- [ ] Error message clear and visible
+- [ ] Error scrolls into viewport center
+- [ ] Test on mobile and desktop
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -262,31 +262,31 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 8: UI/UX Desktop Optimization (2 hours)
 
 ### 8.1 Add Desktop Media Query
-- [~] Create or update `public/css/custom.css`
-- [~] Add media query: `@media (min-width: 1024px) { ... }`
-- [~] Set form padding: 32px (2rem)
-- [~] Set modal body padding: 32px
-- [~] Set table cell padding: 12px vertical × 16px horizontal
+- [ ] Create or update `public/css/custom.css`
+- [ ] Add media query: `@media (min-width: 1024px) { ... }`
+- [ ] Set form padding: 32px (2rem)
+- [ ] Set modal body padding: 32px
+- [ ] Set table cell padding: 12px vertical × 16px horizontal
 
 ### 8.2 Update Form Container Padding
-- [~] Find `.wizard-panel` or main form container
-- [~] Update classes: `p-3 p-md-4 p-lg-5` (or similar responsive)
-- [~] Or add CSS rule in media query
+- [ ] Find `.wizard-panel` or main form container
+- [ ] Update classes: `p-3 p-md-4 p-lg-5` (or similar responsive)
+- [ ] Or add CSS rule in media query
 
 ### 8.3 Update Modal Padding
-- [~] Find `.modal-body` in admin modals
-- [~] Update classes or add CSS rule for 32px padding on desktop
+- [ ] Find `.modal-body` in admin modals
+- [ ] Update classes or add CSS rule for 32px padding on desktop
 
 ### 8.4 Update Button Alignment
-- [~] Buttons at bottom: ensure 44px minimum height
-- [~] Vertically center with input fields
-- [~] Use flexbox alignment if needed
+- [ ] Buttons at bottom: ensure 44px minimum height
+- [ ] Vertically center with input fields
+- [ ] Use flexbox alignment if needed
 
 ### 8.5 Test Desktop Layout
-- [~] View form on 1024px viewport → verify 32px padding
-- [~] View form on 1366px viewport → padding still 32px
-- [~] View on 768px tablet → should use smaller padding
-- [~] View on 375px mobile → should use 16px (unchanged)
+- [ ] View form on 1024px viewport → verify 32px padding
+- [ ] View form on 1366px viewport → padding still 32px
+- [ ] View on 768px tablet → should use smaller padding
+- [ ] View on 375px mobile → should use 16px (unchanged)
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -295,30 +295,30 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 9: Component Consistency (2-3 hours)
 
 ### 9.1 Standardize Button Styling
-- [~] Audit all pages: admin users, master data, kesiswaan, sarpras
-- [~] Primary action buttons: ALL use `.btn-laporin` (green)
-- [~] Secondary action buttons: ALL use `.btn-outline-secondary` (grey)
-- [~] Danger action buttons: ALL use `.btn-outline-danger` (red)
-- [~] Row action buttons: `.btn-sm` for consistent sizing
+- [ ] Audit all pages: admin users, master data, kesiswaan, sarpras
+- [ ] Primary action buttons: ALL use `.btn-laporin` (green)
+- [ ] Secondary action buttons: ALL use `.btn-outline-secondary` (grey)
+- [ ] Danger action buttons: ALL use `.btn-outline-danger` (red)
+- [ ] Row action buttons: `.btn-sm` for consistent sizing
 
 ### 9.2 Standardize Form Component Styling
-- [~] All form inputs: `.form-control` class
-- [~] All labels: `.form-label` with `for` attribute
-- [~] All required fields: include `<span class="text-danger">*</span>`
-- [~] All form grids: use `row g-3` for spacing
-- [~] All errors: display in `.invalid-feedback` div
+- [ ] All form inputs: `.form-control` class
+- [ ] All labels: `.form-label` with `for` attribute
+- [ ] All required fields: include `<span class="text-danger">*</span>`
+- [ ] All form grids: use `row g-3` for spacing
+- [ ] All errors: display in `.invalid-feedback` div
 
 ### 9.3 Standardize Modal Styling
-- [~] All modals: use same header styling (title + helper text)
-- [~] All modals: button order Batal (left) → Simpan (right)
-- [~] All modals: same padding and spacing
-- [~] All modals: focus trap on Tab key, close on Escape
+- [ ] All modals: use same header styling (title + helper text)
+- [ ] All modals: button order Batal (left) → Simpan (right)
+- [ ] All modals: same padding and spacing
+- [ ] All modals: focus trap on Tab key, close on Escape
 
 ### 9.4 Create Consistency Documentation
-- [~] Document all button patterns and classes
-- [~] Document form component patterns
-- [~] Document modal patterns
-- [~] Create `.md` checklist for future development
+- [ ] Document all button patterns and classes
+- [ ] Document form component patterns
+- [ ] Document modal patterns
+- [ ] Create `.md` checklist for future development
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -327,27 +327,27 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 10: Monitoring & Performance Verification (2 hours)
 
 ### 10.1 Create CacheMetricsService
-- [~] Create file: `app/Services/CacheMetricsService.php`
-- [~] Implement: `getHitRate()`, `getMemoryUsage()`, `getConnectedClients()`
-- [~] Implement: `logMetrics()` for logging to file
+- [ ] Create file: `app/Services/CacheMetricsService.php`
+- [ ] Implement: `getHitRate()`, `getMemoryUsage()`, `getConnectedClients()`
+- [ ] Implement: `logMetrics()` for logging to file
 
 ### 10.2 Create Health Check Middleware
-- [~] Create file: `app/Http/Middleware/CheckRedisHealth.php`
-- [~] Test Redis connection: `Redis::ping()`
-- [~] Log warnings if Redis unavailable
-- [~] Allow application to continue (graceful fallback)
+- [ ] Create file: `app/Http/Middleware/CheckRedisHealth.php`
+- [ ] Test Redis connection: `Redis::ping()`
+- [ ] Log warnings if Redis unavailable
+- [ ] Allow application to continue (graceful fallback)
 
 ### 10.3 Verify Cache Hit Rate
-- [~] Run load test: 100+ repeated requests to reports page
-- [~] Measure cache hit rate: `CacheMetricsService::getHitRate()`
-- [~] Target: >80% hit rate
-- [~] Document baseline metrics
+- [ ] Run load test: 100+ repeated requests to reports page
+- [ ] Measure cache hit rate: `CacheMetricsService::getHitRate()`
+- [ ] Target: >80% hit rate
+- [ ] Document baseline metrics
 
 ### 10.4 Verify Query Performance
-- [~] Measure cached query response: should be <50ms
-- [~] Measure database query response (cache miss): should be <100ms
-- [~] Measure for: reports list, reports detail, master data
-- [~] Document performance improvements
+- [ ] Measure cached query response: should be <50ms
+- [ ] Measure database query response (cache miss): should be <100ms
+- [ ] Measure for: reports list, reports detail, master data
+- [ ] Document performance improvements
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -356,42 +356,42 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 11: Testing & Validation (4-6 hours)
 
 ### 11.1 Write Property-Based Tests
-- [~] Test session persistence across requests
-- [~] Test session timeout after 120 minutes
-- [~] Test priority field NULL initialization
-- [~] Test form data persistence across steps
-- [~] Test cache hit rate >80%
-- [~] Test cache invalidation on create/update/delete
+- [ ] Test session persistence across requests
+- [ ] Test session timeout after 120 minutes
+- [ ] Test priority field NULL initialization
+- [ ] Test form data persistence across steps
+- [ ] Test cache hit rate >80%
+- [ ] Test cache invalidation on create/update/delete
 
 ### 11.2 Write Feature Tests
-- [~] Test login → authentication works
-- [~] Test report creation → all data persists
-- [~] Test priority update → independent from urgency
-- [~] Test form submission with errors → data preserved
-- [~] Test form navigation → conditional fields stable
+- [ ] Test login → authentication works
+- [ ] Test report creation → all data persists
+- [ ] Test priority update → independent from urgency
+- [ ] Test form submission with errors → data preserved
+- [ ] Test form navigation → conditional fields stable
 
 ### 11.3 Write Integration Tests
-- [~] Test full report workflow: create → process → track
-- [~] Test concurrent users (50+): load stable
-- [~] Test cache invalidation doesn't break queries
-- [~] Test Redis failover: graceful database fallback
+- [ ] Test full report workflow: create → process → track
+- [ ] Test concurrent users (50+): load stable
+- [ ] Test cache invalidation doesn't break queries
+- [ ] Test Redis failover: graceful database fallback
 
 ### 11.4 Run Test Suite
-- [~] Execute: `php artisan test`
-- [~] Verify: 0 failures, 0 errors
-- [~] Verify: no console warnings (except expected deprecations)
+- [ ] Execute: `php artisan test`
+- [ ] Verify: 0 failures, 0 errors
+- [ ] Verify: no console warnings (except expected deprecations)
 
 ### 11.5 Docker Build & CI/CD
-- [~] Execute: `npm run test:docker`
-- [~] Verify: Docker image builds successfully
-- [~] Verify: All tests pass in Docker environment
-- [~] Verify: CI/CD pipeline passes (if GitHub Actions configured)
+- [ ] Execute: `npm run test:docker`
+- [ ] Verify: Docker image builds successfully
+- [ ] Verify: All tests pass in Docker environment
+- [ ] Verify: CI/CD pipeline passes (if GitHub Actions configured)
 
 ### 11.6 Performance Benchmarking
-- [~] Load test: 50 concurrent users for 5 minutes
-- [~] Measure: Average response time, error rate, cache hit rate
-- [~] Target: <150ms average response, <1% errors, >80% cache hits
-- [~] Compare: Before/after performance improvement
+- [ ] Load test: 50 concurrent users for 5 minutes
+- [ ] Measure: Average response time, error rate, cache hit rate
+- [ ] Target: <150ms average response, <1% errors, >80% cache hits
+- [ ] Compare: Before/after performance improvement
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -400,30 +400,30 @@ This task list implements all fixes for data persistence, session management, qu
 ## Phase 12: Documentation & Deployment (2 hours)
 
 ### 12.1 Update .env.example
-- [~] Add: `REDIS_HOST=redis`, `REDIS_PORT=6379`, etc.
-- [~] Add: `SESSION_DRIVER=redis`, `SESSION_LIFETIME=120`, etc.
-- [~] Add: `CACHE_STORE=redis`, `CACHE_PREFIX=laporin_`
-- [~] Include placeholders: `[REDACTED]` for sensitive values
+- [ ] Add: `REDIS_HOST=redis`, `REDIS_PORT=6379`, etc.
+- [ ] Add: `SESSION_DRIVER=redis`, `SESSION_LIFETIME=120`, etc.
+- [ ] Add: `CACHE_STORE=redis`, `CACHE_PREFIX=laporin_`
+- [ ] Include placeholders: `[REDACTED]` for sensitive values
 
 ### 12.2 Update Documentation
-- [~] Create: `docs/CONSISTENCY_CHECKLIST.md`
-- [~] Document button patterns, form patterns, modal patterns
-- [~] Create: `docs/FUTURE_PAGES_IMPLEMENTATION_GUIDE.md`
-- [~] Include code snippets and examples
+- [ ] Create: `docs/CONSISTENCY_CHECKLIST.md`
+- [ ] Document button patterns, form patterns, modal patterns
+- [ ] Create: `docs/FUTURE_PAGES_IMPLEMENTATION_GUIDE.md`
+- [ ] Include code snippets and examples
 
 ### 12.3 Update AGENTS.md (if needed)
-- [~] Document new commands: `php artisan cache:warm` (if added)
-- [~] Document new tests: `php artisan test --filter=Cache*`
-- [~] Document deployment steps
+- [ ] Document new commands: `php artisan cache:warm` (if added)
+- [ ] Document new tests: `php artisan test --filter=Cache*`
+- [ ] Document deployment steps
 
 ### 12.4 Create Deployment Checklist
-- [~] Migrations completed
-- [~] Redis service running
-- [~] .env configured
-- [~] All tests passing
-- [~] Performance metrics acceptable
-- [~] Documentation updated
-- [~] Team trained
+- [ ] Migrations completed
+- [ ] Redis service running
+- [ ] .env configured
+- [ ] All tests passing
+- [ ] Performance metrics acceptable
+- [ ] Documentation updated
+- [ ] Team trained
 
 **Status**: [ ] Complete | [ ] Blocked
 
@@ -432,44 +432,44 @@ This task list implements all fixes for data persistence, session management, qu
 ## Verification Checkpoint
 
 ### ✅ All Phase 1-7 Complete
-- [~] Sessions table created and working
-- [~] Redis configured and connected
-- [~] Query caching implemented and hit rate >80%
-- [~] Cache invalidation on CRUD working
-- [~] Priority field NULL on creation
-- [~] Form data persists across steps
-- [~] Layout stable and errors prominent
-- [~] Desktop UI optimized
+- [ ] Sessions table created and working
+- [ ] Redis configured and connected
+- [ ] Query caching implemented and hit rate >80%
+- [ ] Cache invalidation on CRUD working
+- [ ] Priority field NULL on creation
+- [ ] Form data persists across steps
+- [ ] Layout stable and errors prominent
+- [ ] Desktop UI optimized
 
 ### ✅ All Tests Passing
-- [~] Unit tests: 0 failures
-- [~] Feature tests: 0 failures
-- [~] Integration tests: 0 failures
-- [~] Property-based tests: 0 failures
-- [~] Docker build: Successful
-- [~] CI/CD pipeline: Passing
-- [~] Load test: <150ms average, >80% cache hits
+- [ ] Unit tests: 0 failures
+- [ ] Feature tests: 0 failures
+- [ ] Integration tests: 0 failures
+- [ ] Property-based tests: 0 failures
+- [ ] Docker build: Successful
+- [ ] CI/CD pipeline: Passing
+- [ ] Load test: <150ms average, >80% cache hits
 
 ### ✅ Performance Improved
-- [~] Query response time: <50ms (cache), <100ms (db)
-- [~] Page load time: 60-70% improvement
-- [~] Database CPU: <20% with 50 concurrent users
-- [~] Cache hit rate: >80%
+- [ ] Query response time: <50ms (cache), <100ms (db)
+- [ ] Page load time: 60-70% improvement
+- [ ] Database CPU: <20% with 50 concurrent users
+- [ ] Cache hit rate: >80%
 
 ### ✅ No Regressions
-- [~] Authentication workflow unchanged
-- [~] Authorization checks unchanged
-- [~] Report submission unchanged
-- [~] Mobile experience unchanged
-- [~] Public pages unchanged
-- [~] API responses unchanged
+- [ ] Authentication workflow unchanged
+- [ ] Authorization checks unchanged
+- [ ] Report submission unchanged
+- [ ] Mobile experience unchanged
+- [ ] Public pages unchanged
+- [ ] API responses unchanged
 
 ### ✅ Deployment Ready
-- [~] Backup created
-- [~] Rollback plan documented
-- [~] Team aware of changes
-- [~] Monitoring configured
-- [~] Performance baseline established
+- [ ] Backup created
+- [ ] Rollback plan documented
+- [ ] Team aware of changes
+- [ ] Monitoring configured
+- [ ] Performance baseline established
 
 ---
 
