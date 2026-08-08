@@ -217,6 +217,30 @@ a:hover { color: var(--laporin-green-900); }
     font-size: .86rem;
     margin-top: .35rem;
 }
+
+/* Enhanced error alert styling */
+.alert.alert-danger {
+    border-width: 1px;
+    border-radius: 1rem;
+    background: #fff5f6;
+    border-color: rgba(220, 53, 69, 0.25);
+    color: #842029;
+}
+
+.alert.alert-danger strong {
+    font-weight: 800;
+    color: #5a0f15;
+}
+
+.alert.alert-danger .fa-exclamation-circle {
+    font-size: 1.1rem;
+    color: var(--laporin-danger);
+}
+
+#step-error-alert {
+    scroll-margin-top: 1.5rem;
+    scroll-behavior: smooth;
+}
 textarea.form-control { min-height: 8rem; }
 .small-muted { font-size: .875rem; color: var(--laporin-muted); }
 .seo-prose h2,
@@ -571,17 +595,17 @@ svg {
 /* DESKTOP UI/UX IMPROVEMENTS (1024px+)      */
 /* ========================================== */
 @media (min-width: 1024px) {
-    /* Wizard form desktop padding */
+    /* Wizard form desktop padding - increase to 32px */
     .wizard-panel {
-        padding: 2rem; /* 32px desktop padding */
+        padding: 2rem; /* 32px = 2rem desktop padding */
     }
     
-    /* Modal dialog desktop padding */
+    /* Modal dialog desktop padding - increase to 32px */
     .modal-body {
-        padding: 2rem; /* 32px desktop padding */
+        padding: 2rem; /* 32px = 2rem desktop padding */
     }
     
-    /* Button height and alignment */
+    /* Button height and alignment - WCAG AA minimum 44px */
     .btn {
         min-height: 44px;
     }
@@ -593,9 +617,9 @@ svg {
         gap: 0.5rem; /* 8px gap */
     }
     
-    /* Table cell spacing */
+    /* Table cell spacing - increase vertical/horizontal padding */
     table td, table th {
-        padding: 12px 16px; /* Increased from default */
+        padding: 0.75rem 1rem; /* 12px vertical × 16px horizontal */
     }
     
     /* Form group spacing */
@@ -603,7 +627,7 @@ svg {
         margin-bottom: 1.5rem;
     }
     
-    /* Step tracker dot accessibility */
+    /* Step tracker dot accessibility - WCAG AA minimum */
     .step-dot {
         min-width: 44px;
         min-height: 44px;
@@ -620,6 +644,32 @@ svg {
     }
 }
 
+/* ========================================== */
+/* TABLET OPTIMIZATION (768px to 1023px)    */
+/* ========================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .wizard-panel {
+        padding: 1.5rem; /* 24px tablet padding */
+    }
+    
+    .modal-body {
+        padding: 1.5rem; /* 24px tablet padding */
+    }
+}
+
+/* ========================================== */
+/* MOBILE BASELINE (< 768px)                 */
+/* ========================================== */
+@media (max-width: 767px) {
+    .wizard-panel {
+        padding: 1rem; /* 16px mobile padding (unchanged) */
+    }
+    
+    .modal-body {
+        padding: 1rem; /* 16px mobile padding */
+    }
+}
+
 /* Ensure conditional fields don't cause layout shifts */
 [x-show] {
     display: block;
@@ -627,6 +677,11 @@ svg {
 
 [x-show="false"] {
     display: none !important;
+}
+
+/* Conditional field smooth transition */
+.conditional-field {
+    transition: opacity 150ms ease-in-out, max-height 150ms ease-in-out;
 }
 
 /* ========================================== */
