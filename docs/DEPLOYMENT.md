@@ -14,6 +14,39 @@ Sebelum buat ulang container:
 
 Backup tidak boleh dipush ke GitHub.
 
+## Redis Produksi
+
+Aplikasi wajib memakai Redis untuk session dan cache. Redis berjalan sebagai container internal-only di `cf-network` tanpa publish port ke host.
+
+Konfigurasi env produksi yang relevan:
+
+```dotenv
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+SESSION_CONNECTION=default
+QUEUE_CONNECTION=database
+REDIS_CLIENT=phpredis
+REDIS_HOST=laporin-redis
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_CACHE_DB=1
+```
+
+Gunakan `REDIS_PASSWORD` dari secure env file atau secret manager. Jangan commit password Redis ke repository.
+
+Contoh container Redis:
+
+```bash
+docker run -d \
+  --name laporin-redis \
+  --restart unless-stopped \
+  --network cf-network \
+  -v laporin-redis-data:/data \
+  --env-file <secure-redis-env-file> \
+  redis:7-alpine \
+  sh -c 'exec redis-server --appendonly yes --requirepass "$REDIS_PASSWORD" --maxmemory 256mb --maxmemory-policy allkeys-lru'
+```
+
 ## Bangun dan Penempatan
 
 ```bash
