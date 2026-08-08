@@ -1,0 +1,236 @@
+[
+  {
+    "file": "ACCESSIBILITY_COMPLIANCE_REPORT.md",
+    "size_bytes": 11077,
+    "lines": 400,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "API.md",
+    "size_bytes": 1927,
+    "lines": 33,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "ARCHITECTURE.md",
+    "size_bytes": 2331,
+    "lines": 43,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "ARIA_LABEL_CONVENTION.md",
+    "size_bytes": 11014,
+    "lines": 378,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "AUTH.md",
+    "size_bytes": 1105,
+    "lines": 30,
+    "last_modified": "2026-08-03"
+  },
+  {
+    "file": "BUSINESS_RULES.md",
+    "size_bytes": 909,
+    "lines": 30,
+    "last_modified": "2026-08-03"
+  },
+  {
+    "file": "CHANGELOG.md",
+    "size_bytes": 839,
+    "lines": 20,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "CODING_STANDARDS.md",
+    "size_bytes": 1290,
+    "lines": 34,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "CONSISTENCY_CHECKLIST.md",
+    "size_bytes": 17409,
+    "lines": 569,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "CONSISTENCY_VERIFICATION_COMPLETE.md",
+    "size_bytes": 15034,
+    "lines": 394,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "DATABASE.md",
+    "size_bytes": 1678,
+    "lines": 45,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "DECISIONS/ADR-001-tech-stack.md",
+    "size_bytes": 1303,
+    "lines": 38,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "DECISIONS/ADR-002-authentication.md",
+    "size_bytes": 1286,
+    "lines": 38,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "DECISIONS/UI_UX_CONSISTENCY_DECISION.md",
+    "size_bytes": 6168,
+    "lines": 211,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "DEPLOYMENT.md",
+    "size_bytes": 1256,
+    "lines": 50,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "DESIGN.md",
+    "size_bytes": 2050,
+    "lines": 47,
+    "last_modified": "2026-08-03"
+  },
+  {
+    "file": "FUTURE_PAGES_IMPLEMENTATION_GUIDE.md",
+    "size_bytes": 16412,
+    "lines": 499,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "IMPLEMENTATION_CHANGES_DETAILED.md",
+    "size_bytes": 13094,
+    "lines": 482,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "IMPLEMENTATION_PHASE_1_2_SUMMARY.md",
+    "size_bytes": 10944,
+    "lines": 335,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "IMPLEMENTATION_TEST_CHECKLIST.md",
+    "size_bytes": 9002,
+    "lines": 323,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "KEYBOARD_NAVIGATION_TEST_RESULTS.md",
+    "size_bytes": 12881,
+    "lines": 512,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "LIGHTHOUSE_AUDIT_RESULTS.md",
+    "size_bytes": 8491,
+    "lines": 335,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "MOBILE_DEVICE_TESTING_RESULTS.md",
+    "size_bytes": 8585,
+    "lines": 303,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "MOBILE_OPTIMIZATION_COMPLETION_SUMMARY.md",
+    "size_bytes": 9659,
+    "lines": 289,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "PRODUCT.md",
+    "size_bytes": 1548,
+    "lines": 32,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "SECURITY.md",
+    "size_bytes": 891,
+    "lines": 31,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "SECURITY_ENTERPRISE.md",
+    "size_bytes": 3335,
+    "lines": 48,
+    "last_modified": "2026-08-06"
+  },
+  {
+    "file": "TASKS_17_23_COMPLETION_SUMMARY.md",
+    "size_bytes": 10275,
+    "lines": 317,
+    "last_modified": "2026-08-08"
+  },
+  {
+    "file": "TESTING.md",
+    "size_bytes": 675,
+    "lines": 31,
+    "last_modified": "2026-08-05"
+  },
+  {
+    "file": "TESTING_FOCUS_INDICATORS.md",
+    "size_bytes": 11830,
+    "lines": 342,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "UI_UX_IMPLEMENTATION_GUIDE.md",
+    "size_bytes": 18365,
+    "lines": 523,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "UI_UX_QUICK_REFERENCE.md",
+    "size_bytes": 7540,
+    "lines": 286,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "UI_UX_STANDARDS.md",
+    "size_bytes": 20871,
+    "lines": 589,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "UI_UX_STANDARDS_INDEX.md",
+    "size_bytes": 9769,
+    "lines": 255,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "WAVE1_COMPLETION_CHECKLIST.md",
+    "size_bytes": 7937,
+    "lines": 232,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "WAVE2_COMPLETION_CHECKLIST.md",
+    "size_bytes": 10018,
+    "lines": 291,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "WAVE3_COMPLETION_CHECKLIST.md",
+    "size_bytes": 13044,
+    "lines": 410,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "WAVE4-7_IMPLEMENTATION_CHECKLIST.md",
+    "size_bytes": 11845,
+    "lines": 427,
+    "last_modified": "2026-08-07"
+  },
+  {
+    "file": "spec-4-role-workflow.md",
+    "size_bytes": 4625,
+    "lines": 83,
+    "last_modified": "2026-08-07"
+  }
+]

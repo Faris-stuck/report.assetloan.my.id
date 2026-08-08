@@ -126,7 +126,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 1: IDENTITAS                                          --}}
 {{-- ============================================================ --}}
-<section x-show="step===1" data-step="1" x-cloak>
+<section x-show="step===1" data-step="1" x-cloak :data-visible="step===1">
     <span class="page-kicker">Langkah 1</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Identitas Pelapor</h2>
     <p class="small-muted mb-4">Isi yang paling penting saja.</p>
@@ -193,7 +193,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 2: JENIS LAPORAN                                      --}}
 {{-- ============================================================ --}}
-<section x-show="step===2" data-step="2" x-cloak>
+<section x-show="step===2" data-step="2" x-cloak :data-visible="step===2">
     <span class="page-kicker">Langkah 2</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Pilih Jenis Laporan</h2>
     <p class="small-muted mb-4">Pilih satu jenis laporan yang paling sesuai.</p>
@@ -218,7 +218,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 3: DETAIL (RINGKAS UNTUK PELANGGARAN)                --}}
 {{-- ============================================================ --}}
-<section x-show="step===3" data-step="3" x-cloak>
+<section x-show="step===3" data-step="3" x-cloak :data-visible="step===3">
     <span class="page-kicker">Langkah 3</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Detail Kejadian</h2>
     <p class="small-muted mb-4">Isi singkat dan jelas.</p>
@@ -319,7 +319,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 4: KONFIRMASI & KIRIM                                  --}}
 {{-- ============================================================ --}}
-<section x-show="step===4" data-step="4" x-cloak>
+<section x-show="step===4" data-step="4" x-cloak :data-visible="step===4">
     <span class="page-kicker">Langkah 4</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Konfirmasi & Kirim</h2>
     <p class="small-muted mb-4">Cek ulang, lalu kirim.</p>
@@ -416,6 +416,26 @@ window.reportWizard = function () {
         type: @js(old('report_type','violation')),
         reporter: @js(old('reporter_type','siswa')),
         stepError: '',
+        
+        init() {
+            // Ensure sections are properly hidden on init before display
+            this.$nextTick(() => {
+                document.querySelectorAll('[data-step]').forEach((section) => {
+                    const stepNum = parseInt(section.dataset.step);
+                    section.hidden = stepNum !== this.step;
+                });
+                // Watch for step changes to update visibility
+                this.$watch('step', (newStep) => {
+                    this.$nextTick(() => {
+                        document.querySelectorAll('[data-step]').forEach((section) => {
+                            const stepNum = parseInt(section.dataset.step);
+                            section.hidden = stepNum !== newStep;
+                        });
+                    });
+                });
+            });
+        },
+        
         get currentStepHint() {
             return this.step === 1
                 ? 'Isi data pelapor dulu agar sekolah bisa menghubungi Anda jika perlu.'
@@ -430,6 +450,11 @@ window.reportWizard = function () {
                 this.stepError = '';
                 this.step++;
                 this.$nextTick(() => {
+                    // Force update section visibility
+                    document.querySelectorAll('[data-step]').forEach((section) => {
+                        const stepNum = parseInt(section.dataset.step);
+                        section.hidden = stepNum !== this.step;
+                    });
                     document.getElementById('form-laporan')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             } else {
