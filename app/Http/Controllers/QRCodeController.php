@@ -7,6 +7,7 @@ use App\Services\QRCodePosterService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class QRCodeController extends Controller
@@ -31,6 +32,12 @@ class QRCodeController extends Controller
             'qrs' => $query
                 ->latest()
                 ->paginate(20),
+
+            'posterSizes' =>
+                QRCodePosterService::paperSizes(),
+
+            'defaultPosterPaper' =>
+                QRCodePosterService::DEFAULT_PAPER,
         ]);
     }
 
@@ -76,6 +83,7 @@ class QRCodeController extends Controller
 
     public function download(
         QrCode $qrCode,
+        Request $request,
         QRCodePosterService $posterService
     ) {
         abort_unless(
@@ -83,21 +91,52 @@ class QRCodeController extends Controller
             404
         );
 
+        $data = $request->validate([
+            'paper' => [
+                'nullable',
+                'string',
+                Rule::in(
+                    array_keys(
+                        QRCodePosterService::paperSizes()
+                    )
+                ),
+            ],
+        ], [
+            'paper.in' =>
+                'Ukuran poster tidak tersedia.',
+        ]);
+
+        $paper = $data['paper']
+            ?? QRCodePosterService::DEFAULT_PAPER;
+
         $svg = $posterService->generate(
-            $qrCode
+            $qrCode,
+            $paper
         );
 
         $filename = 'LAPORIN-'
             .$qrCode->qr_identifier
+            .'-'
+            .strtoupper($paper)
             .'.svg';
 
         return response(
             $svg,
             200,
             [
-                'Content-Type' => 'image/svg+xml; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="'.$filename.'"',
-                'Cache-Control' => 'private, no-store, max-age=0',
+                'Content-Type' =>
+                    'image/svg+xml; charset=UTF-8',
+
+                'Content-Disposition' =>
+                    'attachment; filename="'
+                    .$filename
+                    .'"',
+
+                'Cache-Control' =>
+                    'private, no-store, max-age=0',
+
+                'X-Content-Type-Options' =>
+                    'nosniff',
             ]
         );
     }

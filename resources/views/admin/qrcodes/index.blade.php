@@ -344,12 +344,39 @@
 
                             @if($q->is_active)
 
-                                <a
-                                    class="btn btn-sm btn-outline-laporin"
-                                    href="{{ route('admin.qrcodes.download', $q) }}"
+                                <form
+                                    method="GET"
+                                    action="{{ route('admin.qrcodes.download', $q) }}"
+                                    class="d-inline-flex gap-1 align-items-center"
                                 >
-                                    Unduh Poster
-                                </a>
+                                    <select
+                                        name="paper"
+                                        class="form-select form-select-sm"
+                                        aria-label="Ukuran poster {{ $q->qr_name }}"
+                                        style="min-width: 165px"
+                                    >
+                                        @foreach($posterSizes as $paperKey => $paperSize)
+
+                                            <option
+                                                value="{{ $paperKey }}"
+                                                @selected(
+                                                    $paperKey ===
+                                                    $defaultPosterPaper
+                                                )
+                                            >
+                                                {{ $paperSize['label'] }}
+                                            </option>
+
+                                        @endforeach
+                                    </select>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-laporin"
+                                    >
+                                        Unduh
+                                    </button>
+                                </form>
 
                             @else
 
@@ -468,12 +495,42 @@
 
                         @if($q->is_active)
 
-                            <a
-                                class="btn btn-sm btn-outline-laporin flex-grow-1"
-                                href="{{ route('admin.qrcodes.download', $q) }}"
+                            <form
+                                method="GET"
+                                action="{{ route('admin.qrcodes.download', $q) }}"
+                                class="flex-grow-1"
                             >
-                                Unduh Poster
-                            </a>
+                                <div class="d-grid gap-2">
+
+                                    <select
+                                        name="paper"
+                                        class="form-select form-select-sm"
+                                        aria-label="Ukuran poster {{ $q->qr_name }}"
+                                    >
+                                        @foreach($posterSizes as $paperKey => $paperSize)
+
+                                            <option
+                                                value="{{ $paperKey }}"
+                                                @selected(
+                                                    $paperKey ===
+                                                    $defaultPosterPaper
+                                                )
+                                            >
+                                                {{ $paperSize['label'] }}
+                                            </option>
+
+                                        @endforeach
+                                    </select>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-sm btn-outline-laporin"
+                                    >
+                                        Unduh Poster
+                                    </button>
+
+                                </div>
+                            </form>
 
                         @else
 

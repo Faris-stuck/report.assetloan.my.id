@@ -38,7 +38,34 @@ class PublicReportController extends Controller
     {
         $qrCode = $qr ? QrCode::where('qr_identifier', $qr)->where('is_active', true)->firstOrFail() : null;
         if ($qrCode) {
-            $qrCode->increment('scan_count');
+            /*
+             * Refresh pada browser/session yang sama
+             * tidak boleh terus menambah scan_count.
+             *
+             * Satu QR dihitung maksimal sekali
+             * per session selama 30 menit.
+             */
+            $scanSessionKey =
+                'laporin_qr_scan_'.$qrCode->id;
+
+            $lastScanAt = (int) session(
+                $scanSessionKey,
+                0
+            );
+
+            if (
+                $lastScanAt === 0
+                || now()->timestamp - $lastScanAt >= 1800
+            ) {
+                $qrCode->increment(
+                    'scan_count'
+                );
+
+                session([
+                    $scanSessionKey =>
+                        now()->timestamp,
+                ]);
+            }
         }
 
         /*

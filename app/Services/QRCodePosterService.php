@@ -8,8 +8,86 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode as QR;
 
 class QRCodePosterService
 {
-    public function generate(QrCode $qrCode): string
+    public const DEFAULT_PAPER = 'a4';
+
+    private const PAPER_SIZES = [
+        'a1' => [
+            'label' => 'A1 - 594 x 841 mm',
+            'width_mm' => 594,
+            'height_mm' => 841,
+        ],
+        'a2' => [
+            'label' => 'A2 - 420 x 594 mm',
+            'width_mm' => 420,
+            'height_mm' => 594,
+        ],
+        'a3' => [
+            'label' => 'A3 - 297 x 420 mm',
+            'width_mm' => 297,
+            'height_mm' => 420,
+        ],
+        'a4' => [
+            'label' => 'A4 - 210 x 297 mm',
+            'width_mm' => 210,
+            'height_mm' => 297,
+        ],
+        'a5' => [
+            'label' => 'A5 - 148 x 210 mm',
+            'width_mm' => 148,
+            'height_mm' => 210,
+        ],
+        'a6' => [
+            'label' => 'A6 - 105 x 148 mm',
+            'width_mm' => 105,
+            'height_mm' => 148,
+        ],
+        'a7' => [
+            'label' => 'A7 - 74 x 105 mm',
+            'width_mm' => 74,
+            'height_mm' => 105,
+        ],
+        'desk' => [
+            'label' => 'Meja Siswa - 10 x 12,5 cm',
+            'width_mm' => 100,
+            'height_mm' => 125,
+        ],
+        'desk-mini' => [
+            'label' => 'Meja Mini - 8 x 10 cm',
+            'width_mm' => 80,
+            'height_mm' => 100,
+        ],
+    ];
+
+    public static function paperSizes(): array
     {
+        return self::PAPER_SIZES;
+    }
+
+    public function generate(
+        QrCode $qrCode,
+        string $paper = self::DEFAULT_PAPER
+    ): string {
+        $paper = strtolower(
+            trim($paper)
+        );
+
+        if (! isset(
+            self::PAPER_SIZES[$paper]
+        )) {
+            throw new RuntimeException(
+                'Ukuran poster QR tidak didukung.'
+            );
+        }
+
+        $paperSize =
+            self::PAPER_SIZES[$paper];
+
+        $paperWidth =
+            $paperSize['width_mm'].'mm';
+
+        $paperHeight =
+            $paperSize['height_mm'].'mm';
+
         $qrSvg = QR::format('svg')
             ->size(420)
             ->margin(1)
@@ -30,9 +108,11 @@ class QRCodePosterService
 
         return <<<SVG
 <svg xmlns="http://www.w3.org/2000/svg"
-     width="1122"
-     height="1402"
-     viewBox="0 0 1122 1402">
+     width="{$paperWidth}"
+     height="{$paperHeight}"
+     viewBox="0 0 1122 1402"
+     preserveAspectRatio="xMidYMid meet"
+     data-paper-size="{$paper}">
 
     <defs>
 
