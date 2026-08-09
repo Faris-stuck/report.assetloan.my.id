@@ -153,14 +153,11 @@ class PublicReportPriorityBugExplorationTest extends TestCase
         $this->assertSame($urgencyValue, $report->urgency,
             "Urgency correctly set to '{$urgencyValue}' from user input"
         );
-
-        // Document the bug: priority mirrors urgency instead of being NULL
-        $this->assertSame($urgencyValue, $damageDetail->priority,
-            "BUG CONFIRMED: Priority mirrors urgency value '{$urgencyValue}' instead of being NULL"
-        );
-
-        $this->assertNotNull($damageDetail->priority,
-            "Priority should be NULL initially, but is '{$damageDetail->priority}'"
+        // Fixed behavior: urgency tetap tersimpan pada report,
+        // sedangkan priority awal harus NULL dan dikelola Sarpras.
+        $this->assertNull(
+            $damageDetail->priority,
+            'Priority awal harus NULL dan tidak boleh menyalin urgency.'
         );
 
         // Log the comparison

@@ -11,7 +11,7 @@ class FormLayoutStabilityTest extends TestCase
      */
     public function test_form_has_conditional_field_class(): void
     {
-        $response = $this->get('/laporan');
+        $response = $this->get('/');
         
         $response->assertStatus(200);
         $response->assertSee('conditional-field', false);
@@ -24,7 +24,7 @@ class FormLayoutStabilityTest extends TestCase
      */
     public function test_error_alert_has_proper_classes(): void
     {
-        $response = $this->get('/laporan');
+        $response = $this->get('/');
         
         $response->assertStatus(200);
         $response->assertSee('alert alert-danger', false);
@@ -37,7 +37,7 @@ class FormLayoutStabilityTest extends TestCase
      */
     public function test_form_preserves_data_on_validation_error(): void
     {
-        $response = $this->post('/laporan', [
+        $response = $this->post(route('public.report.store'), [
             'reporter_name' => 'Test User',
             'reporter_type' => 'siswa',
             // Missing required fields to trigger validation
@@ -110,4 +110,3 @@ class FormLayoutStabilityTest extends TestCase
         $this->assertStringContainsString('display: none !important', $cssContent);
     }
 }
-

@@ -27,7 +27,7 @@ class ValidationWarningTest extends TestCase
         $class = SchoolClass::firstOrFail();
         $location = Location::firstOrFail();
 
-        $response = $this->withSession(['math_captcha_answer' => 12])
+        $response = $this->withSession(['math_captcha_answer' => 12, 'report_submit_token' => 'test-submit-token'])
             ->from('/')
             ->post(route('public.report.store'), [
                 'reporter_type' => 'siswa',
@@ -41,6 +41,7 @@ class ValidationWarningTest extends TestCase
                 'incident_date' => now()->toDateString(),
                 'description' => 'Deskripsi laporan minimal untuk test validasi.',
                 'urgency' => 'sedang',
+                'alleged_actor_name' => 'Pelaku Test',
                 'consent' => '1',
                 'captcha' => '99',
             ]);
@@ -106,23 +107,29 @@ class ValidationWarningTest extends TestCase
         $response->assertSessionHasErrors(['report']);
     }
 
-    public function test_admin_qr_invalid_relation_returns_field_warning(): void
+    public function test_admin_can_create_general_qr_without_relation_fields(): void
     {
         $this->seed();
 
-        $user = User::factory()->create(['role' => 'superadmin', 'is_active' => true]);
+        $user = User::factory()->create([
+            'role' => 'superadmin',
+            'is_active' => true,
+        ]);
 
         $response = $this->actingAs($user)
             ->from(route('admin.qrcodes.index'))
             ->post(route('admin.qrcodes.store'), [
                 'qr_name' => 'QR Umum Test',
                 'qr_type' => 'general',
-                'class_id' => SchoolClass::firstOrFail()->id,
             ]);
 
         $response->assertRedirect(route('admin.qrcodes.index'));
-        $response->assertSessionHasErrors(['class_id']);
-        $this->assertDatabaseCount('qr_codes', 0);
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('qr_codes', [
+            'qr_name' => 'QR Umum Test',
+            'qr_type' => 'general',
+        ]);
     }
 
     public function test_wrong_login_password_returns_warning_instead_of_error_page(): void

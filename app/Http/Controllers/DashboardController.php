@@ -23,10 +23,18 @@ class DashboardController extends Controller
 
         $stats = [
             'total' => (clone $scope)->count(),
-            'violation' => (clone $scope)->where('report_type', 'violation')->count(),
-            'damage' => (clone $scope)->where('report_type', 'damage')->count(),
-            'pending' => (clone $scope)->where('status', 'menunggu_verifikasi')->count(),
-            'done' => (clone $scope)->where('status', 'selesai')->count(),
+            'violation' => (clone $scope)
+                ->where('report_type', 'violation')
+                ->count(),
+            'damage' => (clone $scope)
+                ->where('report_type', 'damage')
+                ->count(),
+            'pending' => (clone $scope)
+                ->where('status', 'menunggu_verifikasi')
+                ->count(),
+            'done' => (clone $scope)
+                ->where('status', 'selesai')
+                ->count(),
         ];
 
         return view('dashboard.index', [
@@ -40,27 +48,52 @@ class DashboardController extends Controller
     {
         $query = Report::query();
 
+        /*
+         * Fail closed.
+         *
+         * Hanya role yang secara eksplisit dikenal boleh mendapatkan
+         * scope laporan.
+         */
+
+        if ($user->isRole('superadmin')) {
+            return $query;
+        }
+
         if ($user->isRole('kesiswaan')) {
-            return $query->where('report_type', 'violation');
+            return $query->where(
+                'report_type',
+                'violation'
+            );
         }
 
         if ($user->isRole('sarpras')) {
-            return $query->where('report_type', 'damage');
+            return $query->where(
+                'report_type',
+                'damage'
+            );
         }
 
         if ($user->isRole('wali_kelas')) {
-            $classIds = $user->homeroomClasses()->pluck('class_id');
+            $classIds = $user
+                ->homeroomClasses()
+                ->pluck('class_id');
 
             return $query
                 ->where('report_type', 'violation')
                 ->whereIn('related_class_id', $classIds);
         }
 
-        return $query;
+        /*
+         * Legacy / unexpected role seperti guru atau siswa tidak boleh
+         * mendapatkan semua laporan hanya karena user aktif.
+         */
+        return $query->whereRaw('1 = 0');
     }
 
-    private function monthlyChart(Builder $scope, User $user): array
-    {
+    private function monthlyChart(
+        Builder $scope,
+        User $user
+    ): array {
         $monthNames = [
             1 => 'Jan',
             2 => 'Feb',
@@ -78,12 +111,19 @@ class DashboardController extends Controller
 
         $labels = [];
         $counts = [];
-        $currentMonth = CarbonImmutable::now()->startOfMonth();
+
+        $currentMonth = CarbonImmutable::now()
+            ->startOfMonth();
 
         for ($offset = 5; $offset >= 0; $offset--) {
             $start = $currentMonth->subMonths($offset);
             $end = $start->addMonth();
-            $labels[] = $monthNames[$start->month].' '.$start->format('Y');
+
+            $labels[] =
+                $monthNames[$start->month]
+                .' '
+                .$start->format('Y');
+
             $counts[] = (clone $scope)
                 ->where('created_at', '>=', $start)
                 ->where('created_at', '<', $end)
@@ -98,7 +138,10 @@ class DashboardController extends Controller
         ];
 
         return [
-            'title' => $titles[$user->role] ?? 'Laporan 6 Bulan Terakhir',
+            'title' =>
+                $titles[$user->role]
+                ?? 'Laporan 6 Bulan Terakhir',
+
             'labels' => $labels,
             'counts' => $counts,
             'max' => max(1, ...$counts),

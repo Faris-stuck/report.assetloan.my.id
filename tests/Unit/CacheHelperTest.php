@@ -141,19 +141,29 @@ class CacheHelperTest extends TestCase
      */
     public function test_flush_clears_cache()
     {
-        // Add some values
         CacheHelper::put('key1', 'value1', 3600);
         CacheHelper::put('key2', 'value2', 3600);
-        
+
         $this->assertTrue(CacheHelper::has('key1'));
-        
-        // Flush cache
+
         $result = CacheHelper::flush();
-        $this->assertTrue($result);
-        
-        // Values should be cleared
-        $this->assertFalse(CacheHelper::has('key1'));
-        $this->assertFalse(CacheHelper::has('key2'));
+
+        if (config('cache.default') === 'redis') {
+            $this->assertTrue($result);
+            $this->assertFalse(CacheHelper::has('key1'));
+            $this->assertFalse(CacheHelper::has('key2'));
+
+            return;
+        }
+
+        /*
+         * CacheHelper::flush() sengaja fail-closed pada store non-Redis.
+         * PHPUnit menggunakan array cache supaya test tidak menyentuh
+         * Redis production.
+         */
+        $this->assertFalse($result);
+        $this->assertTrue(CacheHelper::has('key1'));
+        $this->assertTrue(CacheHelper::has('key2'));
     }
 
     /**

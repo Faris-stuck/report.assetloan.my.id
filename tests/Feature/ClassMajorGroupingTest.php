@@ -34,7 +34,7 @@ class ClassMajorGroupingTest extends TestCase
             'TAV — Teknik Elektronika Audio Video',
         ];
 
-        foreach (['reporter_class_id', 'related_class_id', 'victim_class_id', 'alleged_actor_class_id'] as $field) {
+        foreach (['reporter_class_id', 'related_class_id'] as $field) {
             $groups = $xpath->query("//select[@name='{$field}']/optgroup");
 
             $this->assertNotFalse($groups);

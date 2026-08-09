@@ -48,8 +48,8 @@ class CacheHelper
     /**
      * Menghapus cache berdasarkan pattern menggunakan Redis SCAN.
      *
-     * SCAN dipakai menggantikan KEYS agar Redis production
-     * tidak mengalami blocking ketika jumlah key besar.
+     * Tidak menggunakan Redis KEYS karena dapat memblokir Redis
+     * ketika jumlah key besar.
      */
     public static function invalidate(string $pattern): void
     {
@@ -61,24 +61,22 @@ class CacheHelper
             return;
         }
 
-        $connectionName = config(
+        $connectionName = (string) config(
             'cache.stores.redis.connection',
             'cache'
         );
 
         $redis = Redis::connection($connectionName);
 
-        $prefix = config('cache.prefix', '');
+        $prefix = (string) config('cache.prefix', '');
 
-        $searchPattern = $prefix
-            ? $prefix.$pattern
-            : $pattern;
+        $searchPattern = $prefix.$pattern;
 
         if (! str_contains($searchPattern, '*')) {
             $searchPattern .= '*';
         }
 
-        $cursor = null;
+        $cursor = '0';
 
         do {
             $result = $redis->scan(
@@ -89,21 +87,26 @@ class CacheHelper
                 ]
             );
 
-            if ($result === false) {
+            if (
+                $result === false
+                || ! is_array($result)
+                || count($result) < 2
+            ) {
                 break;
             }
 
-            foreach ($result as $key) {
-                $redis->del($key);
+            [$nextCursor, $keys] = $result;
+
+            $cursor = (string) $nextCursor;
+
+            if (is_array($keys) && $keys !== []) {
+                foreach ($keys as $key) {
+                    $redis->del($key);
+                }
             }
-        } while ($cursor !== 0 && $cursor !== '0');
+        } while ($cursor !== '0');
     }
 
-    /**
-     * Flush cache berdasarkan tag.
-     *
-     * Redis mendukung cache tags Laravel.
-     */
     public static function invalidateTag(string $tag): void
     {
         Cache::tags([$tag])->flush();
@@ -152,10 +155,10 @@ class CacheHelper
     }
 
     /**
-     * Menghapus satu namespace cache aplikasi saja.
+     * Menghapus namespace cache aplikasi saja.
      *
-     * Method ini sengaja tidak memakai Cache::flush()
-     * karena cache terhubung ke Redis production.
+     * Tidak menggunakan Cache::flush() agar Redis production
+     * tidak ikut dikosongkan secara global.
      */
     public static function flush(): bool
     {

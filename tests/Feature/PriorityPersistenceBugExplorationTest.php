@@ -28,6 +28,7 @@ class PriorityPersistenceBugExplorationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed();
     }
 
     /**
@@ -184,8 +185,8 @@ class PriorityPersistenceBugExplorationTest extends TestCase
 
             $reporterValue = match($scenario['reporter']) {
                 'siswa' => SchoolClass::firstOrFail()->id,
-                'guru' => null,
-                'staff' => null,
+                'guru' => \App\Models\Subject::where('is_active', true)->firstOrFail()->id,
+                'staff' => \App\Models\StaffUnit::where('is_active', true)->firstOrFail()->id,
             };
 
             $postData = [
@@ -204,9 +205,7 @@ class PriorityPersistenceBugExplorationTest extends TestCase
                 'captcha' => '8',
             ];
 
-            if ($scenario['reporter'] === 'siswa') {
-                $postData['reporter_class_id'] = $reporterValue;
-            }
+            $postData[$reporterKey] = $reporterValue;
 
             $response = $this->withSession([
                 'math_captcha_answer' => 8,

@@ -24,9 +24,9 @@ class TrackingExperienceTest extends TestCase
         $report = $this->report();
 
         foreach ([
-            [' LPR2026070002 ', ' 123456 '],
-            ["lpr-2026-07-0002\n", '123-456'],
-            ['LPR 2026 07 0002', '123 456'],
+            [' LAP-ABC234-XYZ789 ', ' 123456 '],
+            ["lap-abc234-xyz789\n", '123-456'],
+            ['LAP ABC234 XYZ789', '123 456'],
         ] as [$reportNumber, $accessCode]) {
             $this->post(route('track.search'), [
                 'report_number' => $reportNumber,
@@ -42,7 +42,7 @@ class TrackingExperienceTest extends TestCase
             ->assertSee('data-normalize-access-code', false)
             ->assertSee('maxlength="24"', false)
             ->assertSee('maxlength="16"', false)
-            ->assertSee('LPR2026070001')
+            ->assertSee('LAP-ABC234-XYZ789')
             ->assertDontSee('LPR + tahun/bulan + 4 digit');
     }
 
@@ -95,7 +95,7 @@ class TrackingExperienceTest extends TestCase
     private function report(): Report
     {
         return Report::create([
-            'report_number' => 'LPR2026070002',
+            'report_number' => 'LAP-ABC234-XYZ789',
             'public_token' => (string) Str::uuid(),
             'access_code_hash' => Hash::make('123456'),
             'reporter_type' => 'staff',

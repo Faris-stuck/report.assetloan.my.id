@@ -8,9 +8,9 @@
     $today = date('Y-m-d');
     $errorKeys = $errors->getBag('default')->keys();
     // Step 4 fields (Konfirmasi & Kirim)
-    $step4Fields = ['consent','captcha'];
+    $step4Fields = ['attachments','attachments.0','attachments.1','attachments.2','consent','captcha','form','report_number'];
     // Step 3 fields (Detail) — ringkasan pelanggaran
-    $step3Fields = ['title','urgency','related_class_id','alleged_actor_name','alleged_actor_class_id','description'];
+    $step3Fields = ['title','urgency','related_class_id','location_id','custom_location','incident_date','incident_time','description','reporter_position','bullying_type','victim_name','victim_class_id','alleged_actor_name','alleged_actor_class_id','witness_name','impact_description','item_name','item_category','damage_condition','suspected_cause','priority'];
     // Step 2 fields (Jenis)
     $step2Fields = ['report_type'];
     // Determine which step to start on based on errors
@@ -49,7 +49,7 @@
         <div class="col-lg-4">
             <div class="laporin-card bg-white h-100">
                 <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">1</span><div><strong>Tanpa login</strong><div class="small-muted">Langsung isi dan kirim.</div></div></div>
-                <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">2</span><div><strong>3 langkah</strong><div class="small-muted">Tidak perlu banyak kolom.</div></div></div>
+                <div class="d-flex gap-3 align-items-start mb-3"><span class="menu-icon">2</span><div><strong>4 langkah</strong><div class="small-muted">Tidak perlu banyak kolom.</div></div></div>
                         <div class="d-flex gap-3 align-items-start"><span class="menu-icon">3</span><div><strong>Pelacakan mudah</strong><div class="small-muted">Cek status dengan nomor + kode.</div></div></div>
             </div>
         </div>
@@ -93,7 +93,7 @@
 {{-- ============================================================ --}}
 <form id="form-laporan" method="POST" action="{{ route('public.report.store') }}" enctype="multipart/form-data" x-data="reportWizard()" x-init="syncConditionalFields()" @submit="if (!validateCurrentStep()) $event.preventDefault()">
 @csrf
-<input type="hidden" name="report_submit_token" value="{{ session('report_submit_token') }}">
+<input type="hidden" name="report_submit_token" value="{{ $reportSubmitToken ?? session('report_submit_token') }}">
 <input type="hidden" name="qr_code_id" value="{{ $qrCode?->id }}">
 
 {{-- Step tracker --}}
@@ -179,7 +179,7 @@
         {{-- No. HP wajib, email opsional --}}
         <div class="col-12 col-md-6">
             <label class="form-label required" for="reporter_phone">No. HP <span class="text-danger">*</span></label>
-            <input id="reporter_phone" name="reporter_phone" x-model="formData.step1.reporter_phone" class="form-control required" required maxlength="30" pattern="[0-9+() .*\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
+            <input id="reporter_phone" name="reporter_phone" x-model="formData.step1.reporter_phone" class="form-control required" required maxlength="30" pattern="[0-9+() .\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
             <small id="reporter_phone_help" class="text-muted">Nomor HP wajib diisi. Gunakan 8-15 digit.</small>
         </div>
         <div class="col-12 col-md-6">
@@ -450,7 +450,7 @@ window.reportWizard = function () {
         
         init() {
             // Load form data from localStorage on mount
-            const savedFormData = localStorage.getItem('reportFormData');
+            const savedFormData = sessionStorage.getItem('reportFormData');
             if (savedFormData) {
                 try {
                     this.formData = JSON.parse(savedFormData);
@@ -464,11 +464,11 @@ window.reportWizard = function () {
         },
         
         saveFormState() {
-            localStorage.setItem('reportFormData', JSON.stringify(this.formData));
+            sessionStorage.setItem('reportFormData', JSON.stringify(this.formData));
         },
         
         clearFormState() {
-            localStorage.removeItem('reportFormData');
+            sessionStorage.removeItem('reportFormData');
         },
         
         get currentStepHint() {
@@ -500,6 +500,24 @@ window.reportWizard = function () {
                 }, 100);
             }
         },
+        fieldLabel(input) {
+            if (!input) return 'field wajib';
+
+            const label = input.id
+                ? document.querySelector(`label[for="${input.id}"]`)
+                : null;
+
+            const raw =
+                label?.textContent
+                || input.getAttribute('aria-label')
+                || input.name
+                || 'field wajib';
+
+            return raw
+                .replace(/\s*\*\s*$/, '')
+                .trim();
+        },
+
         validateCurrentStep() {
             this.stepError = '';
             const section = document.querySelector(`[data-step="${this.step}"]`);
@@ -515,7 +533,7 @@ window.reportWizard = function () {
                 const firstInvalid = fields.find((el) => !el.checkValidity());
                 if (firstInvalid) {
                     firstInvalid.reportValidity();
-                    this.stepError = 'Lengkapi field wajib pada langkah ini.';
+                    this.stepError = `Lengkapi ${this.fieldLabel(firstInvalid)}.`;
                     this.$nextTick(() => {
                         const errorAlert = document.getElementById('step-error-alert');
                         if (errorAlert) {
@@ -536,7 +554,7 @@ window.reportWizard = function () {
                 const firstInvalid = fields.find((el) => !el.checkValidity());
                 if (firstInvalid) {
                     firstInvalid.reportValidity();
-                    this.stepError = 'Lengkapi field wajib pada langkah ini.';
+                    this.stepError = `Lengkapi ${this.fieldLabel(firstInvalid)}.`;
                     this.$nextTick(() => {
                         const errorAlert = document.getElementById('step-error-alert');
                         if (errorAlert) {
@@ -553,7 +571,7 @@ window.reportWizard = function () {
             if (firstInvalid) {
                 firstInvalid.reportValidity();
                 firstInvalid.focus({ preventScroll: true });
-                this.stepError = 'Lengkapi field wajib atau perbaiki format.';
+                this.stepError = `Lengkapi atau perbaiki ${this.fieldLabel(firstInvalid)}.`;
                 this.$nextTick(() => {
                     const errorAlert = document.getElementById('step-error-alert');
                     if (errorAlert) {

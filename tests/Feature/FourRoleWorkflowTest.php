@@ -192,6 +192,7 @@ class FourRoleWorkflowTest extends TestCase
             'reporter_name' => 'Pelapor Validasi HP',
             'reporter_class_id' => $class->id,
             'report_type' => 'violation',
+            'alleged_actor_name' => 'Pelaku Validasi HP',
             'title' => 'Laporan validasi nomor HP',
             'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
@@ -209,17 +210,17 @@ class FourRoleWorkflowTest extends TestCase
             ->assertSee('required', false)
             ->assertSee('Nomor HP wajib', false);
 
-        $this->withSession(['math_captcha_answer' => 8])
+        $this->withSession(['math_captcha_answer' => 8, 'report_submit_token' => 'test-submit-token'])
             ->post(route('public.report.store'), $payload)
             ->assertSessionHasErrors(['reporter_phone', 'related_class_id']);
 
-        $this->withSession(['math_captcha_answer' => 8])
+        $this->withSession(['math_captcha_answer' => 8, 'report_submit_token' => 'test-submit-token'])
             ->post(route('public.report.store'), $payload + [
                 'reporter_phone' => '1234',
                 'related_class_id' => $class->id,
             ])->assertSessionHasErrors(['reporter_phone']);
 
-        $this->withSession(['math_captcha_answer' => 8])
+        $this->withSession(['math_captcha_answer' => 8, 'report_submit_token' => 'test-submit-token'])
             ->post(route('public.report.store'), $payload + [
                 'reporter_phone' => '+62 812-3456-7890',
                 'related_class_id' => $class->id,

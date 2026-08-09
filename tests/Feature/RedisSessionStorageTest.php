@@ -34,7 +34,7 @@ class RedisSessionStorageTest extends TestCase
     public function test_session_store_configured()
     {
         $store = config('session.store');
-        $this->assertEquals('default', $store, 'Session store should be default');
+        $this->assertNull($store, 'SESSION_STORE harus null agar Laravel menggunakan cache store default tanpa mencari store literal bernama default.');
     }
 
     /**

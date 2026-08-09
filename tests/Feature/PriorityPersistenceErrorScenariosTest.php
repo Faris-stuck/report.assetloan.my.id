@@ -244,6 +244,7 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_name' => 'Test Violation Reporter',
             'reporter_phone' => '+62812345678905',
             'reporter_class_id' => $class->id,
+            'related_class_id' => $class->id,
             'report_type' => 'violation',
             'title' => 'Violation Report Test',
             'incident_date' => now()->toDateString(),
@@ -516,10 +517,11 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
         $class = SchoolClass::firstOrFail();
         $location = Location::firstOrFail();
         $staffUnit = \App\Models\StaffUnit::firstOrFail();
+        $subject = \App\Models\Subject::where('is_active', true)->firstOrFail();
 
         $reporterConfigs = [
             ['type' => 'siswa', 'name' => 'Siswa', 'phone' => '+62812345678910', 'class_id' => $class->id],
-            ['type' => 'guru', 'name' => 'Guru', 'phone' => '+62812345678911'],
+            ['type' => 'guru', 'name' => 'Guru', 'phone' => '+62812345678911', 'subject_id' => $subject->id],
             ['type' => 'staff', 'name' => 'Staff', 'phone' => '+62812345678912', 'staff_unit_id' => $staffUnit->id],
         ];
 
@@ -542,6 +544,8 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
 
             if ($config['type'] === 'siswa') {
                 $postData['reporter_class_id'] = $config['class_id'];
+            } elseif ($config['type'] === 'guru') {
+                $postData['reporter_subject_id'] = $config['subject_id'];
             } elseif ($config['type'] === 'staff') {
                 $postData['reporter_staff_unit_id'] = $config['staff_unit_id'];
             }

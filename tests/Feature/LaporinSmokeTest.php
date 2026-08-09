@@ -39,6 +39,6 @@ class LaporinSmokeTest extends TestCase
         ])->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs($user);
-        $this->get('/dashboard')->assertOk()->assertSee('Dashboard');
+        $this->get('/dashboard')->assertOk()->assertSee('Dasbor');
     }
 }

@@ -12,9 +12,11 @@ use App\Models\StaffUnit;
 use App\Models\Subject;
 use App\Services\PublicReport\PublicReportService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class PublicReportController extends Controller
 {
@@ -39,8 +41,75 @@ class PublicReportController extends Controller
             $qrCode->increment('scan_count');
         }
 
-        session(['report_submit_token' => (string) Str::uuid()]);
-        session(['math_captcha_answer' => ($a = random_int(1, 9)) + ($b = random_int(1, 9))]);
+        /*
+         * Setiap tab/form memiliki token + CAPTCHA sendiri.
+         * Membuka tab kedua tidak lagi membuat tab pertama invalid.
+         */
+        $submitToken = (string) Str::uuid();
+
+        $a = random_int(1, 9);
+        $b = random_int(1, 9);
+
+        $captchaAnswer = $a + $b;
+
+        $formStates = session(
+            'report_submit_forms',
+            []
+        );
+
+        if (! is_array($formStates)) {
+            $formStates = [];
+        }
+
+        /*
+         * Buang form lama agar session tidak terus membesar.
+         */
+        $cutoff = now()
+            ->subMinutes(30)
+            ->timestamp;
+
+        $formStates = array_filter(
+            $formStates,
+            static fn (mixed $state): bool =>
+                is_array($state)
+                && (int) ($state['created_at'] ?? 0) >= $cutoff
+        );
+
+        $formStates[$submitToken] = [
+            'captcha_answer' => $captchaAnswer,
+            'created_at' => now()->timestamp,
+        ];
+
+        /*
+         * Maksimal lima form/tab aktif per session.
+         */
+        if (count($formStates) > 5) {
+
+            uasort(
+                $formStates,
+                static fn (array $left, array $right): int =>
+                    ((int) ($left['created_at'] ?? 0))
+                    <=>
+                    ((int) ($right['created_at'] ?? 0))
+            );
+
+            $formStates = array_slice(
+                $formStates,
+                -5,
+                null,
+                true
+            );
+        }
+
+        session([
+            'report_submit_forms' => $formStates,
+
+            /*
+             * Legacy testing compatibility.
+             */
+            'report_submit_token' => $submitToken,
+            'math_captcha_answer' => $captchaAnswer,
+        ]);
 
         $majorOrder = array_flip(array_keys(self::CLASS_MAJOR_LABELS));
         $classes = SchoolClass::where('is_active', true)->get()->sort(function (SchoolClass $left, SchoolClass $right) use ($majorOrder): int {
@@ -61,6 +130,7 @@ class PublicReportController extends Controller
 
         return view('public.report-form', [
             'qrCode' => $qrCode,
+            'reportSubmitToken' => $submitToken,
             'captchaQuestion' => "$a + $b",
             'classesByMajor' => $classesByMajor,
             'classMajorLabels' => self::CLASS_MAJOR_LABELS,
@@ -73,26 +143,131 @@ class PublicReportController extends Controller
 
     public function store(PublicReportRequest $request): RedirectResponse
     {
-        $sessionToken = session('report_submit_token');
-        $submittedToken = (string) $request->input('report_submit_token', '');
+        $submittedToken = (string) $request->input(
+            'report_submit_token',
+            ''
+        );
 
-        if ($submittedToken !== '' && (! $sessionToken || ! hash_equals((string) $sessionToken, $submittedToken))) {
+        $legacySessionToken = session(
+            'report_submit_token'
+        );
+
+        $formStates = session(
+            'report_submit_forms',
+            []
+        );
+
+        if (! is_array($formStates)) {
+            $formStates = [];
+        }
+
+        $formState = (
+            $submittedToken !== ''
+            && isset($formStates[$submittedToken])
+            && is_array($formStates[$submittedToken])
+        )
+            ? $formStates[$submittedToken]
+            : null;
+
+        /*
+         * Compatibility dengan session lama dan feature test.
+         */
+        $legacyMatches = (
+            $submittedToken !== ''
+            && is_string($legacySessionToken)
+            && $legacySessionToken !== ''
+            && hash_equals(
+                $legacySessionToken,
+                $submittedToken
+            )
+        );
+
+        if (
+            $formState === null
+            && ! $legacyMatches
+        ) {
             throw ValidationException::withMessages([
-                'form' => 'Sesi formulir sudah habis atau Anda sudah mengirim laporan sebelumnya. Silakan buka halaman baru untuk membuat laporan.',
+                'form' => 'Sesi formulir sudah habis atau laporan ini sudah pernah dikirim. Muat ulang formulir lalu coba kembali.',
             ]);
         }
 
         $validated = $request->validated();
 
-        if ((int) $validated['captcha'] !== (int) session('math_captcha_answer')) {
+        $expectedCaptcha =
+            $formState['captcha_answer']
+            ?? session('math_captcha_answer');
+
+        if (
+            ! is_numeric($expectedCaptcha)
+            || (int) $validated['captcha']
+                !== (int) $expectedCaptcha
+        ) {
             throw ValidationException::withMessages([
                 'captcha' => 'CAPTCHA salah. Hitung ulang pertanyaan yang tampil lalu isi dengan angka yang benar.',
             ]);
         }
 
-        [$report, $accessCode, $notificationSent] = $this->service->create($request, $validated);
+        /*
+         * Cache::add bersifat atomic pada Redis.
+         * Request paralel dengan token sama hanya satu yang lolos.
+         */
+        $consumeKey =
+            'laporin:public-report:consume:'
+            .hash(
+                'sha256',
+                $submittedToken
+            );
 
-        session()->forget(['math_captcha_answer', 'report_submit_token']);
+        if (! Cache::add(
+            $consumeKey,
+            true,
+            now()->addMinutes(30)
+        )) {
+            throw ValidationException::withMessages([
+                'form' => 'Laporan sedang atau sudah diproses. Jangan menekan tombol kirim berulang kali.',
+            ]);
+        }
+
+        try {
+
+            [
+                $report,
+                $accessCode,
+                $notificationSent,
+            ] = $this->service->create(
+                $request,
+                $validated
+            );
+
+        } catch (Throwable $exception) {
+
+            /*
+             * Penyimpanan gagal:
+             * izinkan user mencoba ulang.
+             */
+            Cache::forget($consumeKey);
+
+            throw $exception;
+        }
+
+        /*
+         * Hanya token tab yang berhasil dikirim yang dihapus.
+         */
+        unset(
+            $formStates[$submittedToken]
+        );
+
+        session([
+            'report_submit_forms' => $formStates,
+        ]);
+
+        if ($legacyMatches) {
+            session()->forget([
+                'math_captcha_answer',
+                'report_submit_token',
+            ]);
+        }
+
         $request->session()->regenerateToken();
 
         $redirect = redirect()

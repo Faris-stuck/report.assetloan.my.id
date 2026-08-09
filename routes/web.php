@@ -13,6 +13,7 @@ use App\Http\Controllers\Role\Superadmin\AdminController as SuperadminAdminContr
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicReportController::class, 'create'])->name('public.report');
+
 Route::get('/lapor-pembullyan-smk-taruna-bangsa-bekasi', [SeoController::class, 'bullyingGuide'])->name('seo.bullying-guide');
 Route::get('/faq-laporin-smk-taruna-bangsa-bekasi', [SeoController::class, 'faq'])->name('seo.faq');
 Route::get('/lapor/{qr?}', [PublicReportController::class, 'create'])->name('public.report.qr');
