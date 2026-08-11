@@ -105,6 +105,13 @@ class PublicReportController extends Controller
         $formStates[$submitToken] = [
             'captcha_answer' => $captchaAnswer,
             'created_at' => now()->timestamp,
+
+            /*
+             * Security:
+             * QR attribution diikat ke form token di server.
+             * Jangan mengambil qr_code_id dari browser saat submit.
+             */
+            'qr_code_id' => $qrCode?->id,
         ];
 
         /*
@@ -220,6 +227,17 @@ class PublicReportController extends Controller
 
         $validated = $request->validated();
 
+        /*
+         * Security:
+         * Jangan percaya qr_code_id yang dikirim browser.
+         *
+         * QR ID harus berasal dari form state yang dibuat server
+         * ketika halaman /lapor/{qr} dibuka.
+         */
+        $validated['qr_code_id'] = isset($formState['qr_code_id'])
+            ? (int) $formState['qr_code_id']
+            : null;
+
         $expectedCaptcha =
             $formState['captcha_answer']
             ?? session('math_captcha_answer');
@@ -324,3 +342,4 @@ class PublicReportController extends Controller
         return view('public.success', ['report' => $report, 'accessCode' => session('access_code')]);
     }
 }
+

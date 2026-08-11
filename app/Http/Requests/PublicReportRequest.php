@@ -120,7 +120,7 @@ class PublicReportRequest extends FormRequest
             'related_class_id' => ['nullable', 'required_if:report_type,violation', Rule::exists('classes', 'id')->where('is_active', true)],
             'location_id' => ['nullable', Rule::exists('locations', 'id')->where('is_active', true)],
             'custom_location' => ['nullable', 'string', 'max:150'],
-            'incident_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'incident_date' => ['required', 'date', 'before_or_equal:today'],
             'incident_time' => ['nullable', 'date_format:H:i'],
             'description' => ['required', 'string', 'max:5000'],
             'urgency' => ['required', Rule::in(['rendah', 'sedang', 'tinggi', 'darurat'])],

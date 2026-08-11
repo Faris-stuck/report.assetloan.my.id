@@ -78,6 +78,58 @@ class PublicReportService
                 }
 
                 foreach ($request->file('attachments', []) as $file) {
+
+                    /*
+                     * Security:
+                     * Jangan hanya mengandalkan FormRequest.
+                     * Attachment diverifikasi kembali tepat sebelum
+                     * masuk ke private storage.
+                     */
+
+                    if (! $file->isValid()) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Salah satu file lampiran tidak valid.',
+                        ]);
+                    }
+
+                    if ($file->getSize() > 4 * 1024 * 1024) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Ukuran setiap lampiran maksimal 4 MB.',
+                        ]);
+                    }
+
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+                    if (! $finfo) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Tipe file tidak dapat diverifikasi.',
+                        ]);
+                    }
+
+                    $detectedMime = finfo_file(
+                        $finfo,
+                        $file->getRealPath()
+                    );
+
+                    finfo_close($finfo);
+
+                    $allowedMimes = [
+                        'image/jpeg',
+                        'image/png',
+                        'image/webp',
+                        'application/pdf',
+                    ];
+
+                    if (! in_array($detectedMime, $allowedMimes, true)) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Tipe file lampiran tidak diizinkan.',
+                        ]);
+                    }
+
+                    /*
+                     * Gunakan MIME hasil deteksi server, bukan MIME
+                     * yang diklaim browser.
+                     */
                     $path = $file->store(
                         'report-attachments/'.$report->id,
                         'private'
@@ -192,7 +244,7 @@ class PublicReportService
             'related_class_id' => $validated['related_class_id'] ?? null,
             'location_id' => $validated['location_id'] ?? null,
             'custom_location' => $validated['custom_location'] ?? null,
-            'incident_date' => $validated['incident_date'] ?? now()->toDateString(),
+            'incident_date' => $validated['incident_date'],
             'incident_time' => $validated['incident_time'] ?? null,
             'description' => $validated['description'],
             'urgency' => $validated['urgency'],
