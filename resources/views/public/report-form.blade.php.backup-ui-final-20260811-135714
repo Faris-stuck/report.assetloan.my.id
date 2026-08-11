@@ -18,14 +18,11 @@
         : (count(array_intersect($errorKeys, $step3Fields)) ? 3
         : (count(array_intersect($errorKeys, $step2Fields)) ? 2 : 1));
 
-    // Hanya blokir form bila ada flag submit yang eksplisit.
-    // Jangan menonaktifkan form hanya karena token sesi kosong atau sesi tidak tersedia.
-    $reportSubmitToken = $reportSubmitToken ?? session('report_submit_token');
-    $formBlocked = (bool) session('report_form_submitted', false);
-    $formDisabled = $formBlocked;
+    // Anti-duplikat: jika token sudah kosong, form dinonaktifkan
+    $formDisabled = !session()->has('report_submit_token');
 @endphp
 
-{{-- Anti-duplikat hanya aktif ketika ada flag yang jelas dari submit sukses --}}
+{{-- ANTI-DUPLIKAT: jika sudah pernah submit, tampilkan pesan封锁 --}}
 @if($formDisabled)
 <div class="hero-card p-4 p-lg-5 mb-4 text-center">
     <div class="hero-content">
@@ -129,7 +126,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 1: IDENTITAS                                          --}}
 {{-- ============================================================ --}}
-<section x-show="step===1" data-step="1" :data-visible="step===1">
+<section x-show="step===1" data-step="1" x-cloak :data-visible="step===1">
     <span class="page-kicker">Langkah 1</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Identitas Pelapor</h2>
     <p class="small-muted mb-4">Isi yang paling penting saja.</p>
@@ -196,7 +193,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 2: JENIS LAPORAN                                      --}}
 {{-- ============================================================ --}}
-<section x-show="step===2" data-step="2" :data-visible="step===2">
+<section x-show="step===2" data-step="2" x-cloak :data-visible="step===2">
     <span class="page-kicker">Langkah 2</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Pilih Jenis Laporan</h2>
     <p class="small-muted mb-4">Pilih satu jenis laporan yang paling sesuai.</p>
@@ -221,7 +218,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 3: DETAIL (RINGKAS UNTUK PELANGGARAN)                --}}
 {{-- ============================================================ --}}
-<section x-show="step===3" data-step="3" :data-visible="step===3">
+<section x-show="step===3" data-step="3" x-cloak :data-visible="step===3">
     <span class="page-kicker">Langkah 3</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Detail Kejadian</h2>
     <p class="small-muted mb-4">Isi singkat dan jelas.</p>
@@ -323,7 +320,7 @@
 {{-- ============================================================ --}}
 {{-- LANGKAH 4: KONFIRMASI & KIRIM                                  --}}
 {{-- ============================================================ --}}
-<section x-show="step===4" data-step="4" :data-visible="step===4">
+<section x-show="step===4" data-step="4" x-cloak :data-visible="step===4">
     <span class="page-kicker">Langkah 4</span>
     <h2 class="h4 fw-bold mt-2 mb-1">Konfirmasi & Kirim</h2>
     <p class="small-muted mb-4">Cek ulang, lalu kirim.</p>

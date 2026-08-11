@@ -37,35 +37,41 @@ class PublicReportController extends Controller
     public function create(?string $qr = null): View
     {
         $qrCode = $qr ? QrCode::where('qr_identifier', $qr)->where('is_active', true)->firstOrFail() : null;
-        if ($qrCode) {
-            /*
-             * Refresh pada browser/session yang sama
-             * tidak boleh terus menambah scan_count.
-             *
-             * Satu QR dihitung maksimal sekali
-             * per session selama 30 menit.
-             */
-            $scanSessionKey =
-                'laporin_qr_scan_'.$qrCode->id;
 
-            $lastScanAt = (int) session(
-                $scanSessionKey,
-                0
-            );
+        try {
+            if ($qrCode) {
+                /*
+                 * Refresh pada browser/session yang sama
+                 * tidak boleh terus menambah scan_count.
+                 *
+                 * Satu QR dihitung maksimal sekali
+                 * per session selama 30 menit.
+                 */
+                $scanSessionKey =
+                    'laporin_qr_scan_'.$qrCode->id;
 
-            if (
-                $lastScanAt === 0
-                || now()->timestamp - $lastScanAt >= 1800
-            ) {
-                $qrCode->increment(
-                    'scan_count'
+                $lastScanAt = (int) session(
+                    $scanSessionKey,
+                    0
                 );
 
-                session([
-                    $scanSessionKey =>
-                        now()->timestamp,
-                ]);
+                if (
+                    $lastScanAt === 0
+                    || now()->timestamp - $lastScanAt >= 1800
+                ) {
+                    $qrCode->increment(
+                        'scan_count'
+                    );
+
+                    session([
+                        $scanSessionKey =>
+                            now()->timestamp,
+                    ]);
+                }
             }
+        } catch (Throwable $exception) {
+            // Jika session/cache/storage tidak tersedia (misal Redis mati), tetap lanjutkan.
+            // Halaman harus tetap menampilkan form agar user dapat melapor.
         }
 
         /*
@@ -79,71 +85,78 @@ class PublicReportController extends Controller
 
         $captchaAnswer = $a + $b;
 
-        $formStates = session(
-            'report_submit_forms',
-            []
-        );
+        $formStates = [];
 
-        if (! is_array($formStates)) {
-            $formStates = [];
-        }
-
-        /*
-         * Buang form lama agar session tidak terus membesar.
-         */
-        $cutoff = now()
-            ->subMinutes(30)
-            ->timestamp;
-
-        $formStates = array_filter(
-            $formStates,
-            static fn (mixed $state): bool =>
-                is_array($state)
-                && (int) ($state['created_at'] ?? 0) >= $cutoff
-        );
-
-        $formStates[$submitToken] = [
-            'captcha_answer' => $captchaAnswer,
-            'created_at' => now()->timestamp,
-
-            /*
-             * Security:
-             * QR attribution diikat ke form token di server.
-             * Jangan mengambil qr_code_id dari browser saat submit.
-             */
-            'qr_code_id' => $qrCode?->id,
-        ];
-
-        /*
-         * Maksimal lima form/tab aktif per session.
-         */
-        if (count($formStates) > 5) {
-
-            uasort(
-                $formStates,
-                static fn (array $left, array $right): int =>
-                    ((int) ($left['created_at'] ?? 0))
-                    <=>
-                    ((int) ($right['created_at'] ?? 0))
+        try {
+            $formStates = session(
+                'report_submit_forms',
+                []
             );
 
-            $formStates = array_slice(
-                $formStates,
-                -5,
-                null,
-                true
-            );
-        }
-
-        session([
-            'report_submit_forms' => $formStates,
+            if (! is_array($formStates)) {
+                $formStates = [];
+            }
 
             /*
-             * Legacy testing compatibility.
+             * Buang form lama agar session tidak terus membesar.
              */
-            'report_submit_token' => $submitToken,
-            'math_captcha_answer' => $captchaAnswer,
-        ]);
+            $cutoff = now()
+                ->subMinutes(30)
+                ->timestamp;
+
+            $formStates = array_filter(
+                $formStates,
+                static fn (mixed $state): bool =>
+                    is_array($state)
+                    && (int) ($state['created_at'] ?? 0) >= $cutoff
+            );
+
+            $formStates[$submitToken] = [
+                'captcha_answer' => $captchaAnswer,
+                'created_at' => now()->timestamp,
+
+                /*
+                 * Security:
+                 * QR attribution diikat ke form token di server.
+                 * Jangan mengambil qr_code_id dari browser saat submit.
+                 */
+                'qr_code_id' => $qrCode?->id,
+            ];
+
+            /*
+             * Maksimal lima form/tab aktif per session.
+             */
+            if (count($formStates) > 5) {
+
+                uasort(
+                    $formStates,
+                    static fn (array $left, array $right): int =>
+                        ((int) ($left['created_at'] ?? 0))
+                        <=>
+                        ((int) ($right['created_at'] ?? 0))
+                );
+
+                $formStates = array_slice(
+                    $formStates,
+                    -5,
+                    null,
+                    true
+                );
+            }
+
+            session([
+                'report_submit_forms' => $formStates,
+
+                /*
+                 * Legacy testing compatibility.
+                 */
+                'report_submit_token' => $submitToken,
+                'math_captcha_answer' => $captchaAnswer,
+            ]);
+        } catch (Throwable $exception) {
+            // Jika penyimpanan sesi gagal, tetap buka form tanpa menonaktifkan tampilan.
+            // Kunci submit akan dikirim lewat hidden input untuk validasi request server-side.
+        }
 
         $majorOrder = array_flip(array_keys(self::CLASS_MAJOR_LABELS));
         $classes = SchoolClass::where('is_active', true)->get()->sort(function (SchoolClass $left, SchoolClass $right) use ($majorOrder): int {
@@ -302,9 +315,14 @@ class PublicReportController extends Controller
             $formStates[$submittedToken]
         );
 
-        session([
-            'report_submit_forms' => $formStates,
-        ]);
+        try {
+            session([
+                'report_submit_forms' => $formStates,
+                'report_form_submitted' => true,
+            ]);
+        } catch (Throwable $exception) {
+            // Biarkan user tetap dapat mengakses form jika sesi tidak tersedia.
+        }
 
         if ($legacyMatches) {
             session()->forget([

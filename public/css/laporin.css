@@ -687,14 +687,12 @@ svg {
 /* ========================================== */
 /* WIZARD STEP VISIBILITY GUARDS            */
 /* ========================================== */
-/* Force hide steps on initial render before Alpine.js initializes */
+/* Alpine.js handles the active step visibility.
+ * Do not force all sections hidden with CSS because the x-show expression
+ * is evaluated at runtime and is not a literal "true" attribute value.
+ */
 section[data-step] {
-    display: none !important;
-}
-
-/* Only show the active step */
-section[data-step][x-show="true"] {
-    display: block !important;
+    display: block;
 }
 
 /* Enhanced wizard panel styling */

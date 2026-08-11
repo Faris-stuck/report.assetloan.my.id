@@ -18,14 +18,11 @@
         : (count(array_intersect($errorKeys, $step3Fields)) ? 3
         : (count(array_intersect($errorKeys, $step2Fields)) ? 2 : 1));
 
-    // Hanya blokir form bila ada flag submit yang eksplisit.
-    // Jangan menonaktifkan form hanya karena token sesi kosong atau sesi tidak tersedia.
-    $reportSubmitToken = $reportSubmitToken ?? session('report_submit_token');
-    $formBlocked = (bool) session('report_form_submitted', false);
-    $formDisabled = $formBlocked;
+    // Anti-duplikat: jika token sudah kosong, form dinonaktifkan
+    $formDisabled = !session()->has('report_submit_token');
 @endphp
 
-{{-- Anti-duplikat hanya aktif ketika ada flag yang jelas dari submit sukses --}}
+{{-- ANTI-DUPLIKAT: jika sudah pernah submit, tampilkan pesan封锁 --}}
 @if($formDisabled)
 <div class="hero-card p-4 p-lg-5 mb-4 text-center">
     <div class="hero-content">
