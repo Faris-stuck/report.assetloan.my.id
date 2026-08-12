@@ -52,7 +52,7 @@ class FormDataPersistenceBugFixTest extends TestCase
     }
 
     /**
-     * Test that form has next/back navigation with data preservation
+     * Test that form has single-page submit flow with data preservation
      */
     public function test_form_has_step_navigation_buttons()
     {
@@ -60,10 +60,12 @@ class FormDataPersistenceBugFixTest extends TestCase
         
         $response->assertStatus(200);
         
-        // Check for navigation button logic
-        $response->assertSee('step++', false);  // next() calls saveFormState
-        $response->assertSee('step--', false);  // back button
-        $response->assertSee('saveFormState', false);  // data persistence
+        // Wizard bertahap (JS inline murni): "Lanjut" memvalidasi langkah berjalan lalu
+        // memunculkan langkah berikutnya; "Kembali" untuk mengulang langkah sebelumnya.
+        $response->assertSee('LaporinWizard', false);
+        $response->assertSee('data-wizard-action="next"', false);
+        $response->assertSee('data-wizard-action="prev"', false);
+        $response->assertSee('saveFormState', false);  // data persistence (Alpine)
     }
 
     /**
@@ -73,9 +75,9 @@ class FormDataPersistenceBugFixTest extends TestCase
     {
         $response = $this->get(route('public.report'));
         
-        // Verify the form includes error preservation logic
+        // Verify the form includes error display logic (JS murni: data-step-error-text)
         $response->assertSee('stepError', false);
-        $response->assertSee('x-show="stepError"', false);
+        $response->assertSee('data-step-error-text', false);
         $response->assertSee('alert alert-danger', false);  // Error display
     }
 
@@ -95,7 +97,7 @@ class FormDataPersistenceBugFixTest extends TestCase
     }
 
     /**
-     * Test that form has step hint messages
+     * Test that form shows single-page guidance text
      */
     public function test_form_has_step_hints()
     {
@@ -103,9 +105,9 @@ class FormDataPersistenceBugFixTest extends TestCase
         
         $response->assertStatus(200);
         
-        // Check for step hint text (currentStepHint logic)
-        $response->assertSee('currentStepHint', false);
-        $response->assertSee('x-text="currentStepHint"', false);
+        // Teks panduan wizard langkah-demi-langkah (JS murni)
+        $response->assertSee('data-step-hint', false);
+        $response->assertSee('Kirim Laporan', false);
     }
 
     /**
@@ -229,8 +231,8 @@ class FormDataPersistenceBugFixTest extends TestCase
         
         $response->assertStatus(200);
         
-        // Check for 44px minimum height on buttons
+        // Check for 44px minimum height / touch target on the submit button
         $response->assertSee('min-height: 44px', false);
-        $response->assertSee('min-width: 44px', false);
+        $response->assertSee('aria-label="Kirim laporan"', false);
     }
 }

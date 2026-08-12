@@ -15,8 +15,11 @@ class FormLayoutStabilityTest extends TestCase
         
         $response->assertStatus(200);
         $response->assertSee('conditional-field', false);
-        $response->assertSee('x-show="reporter===\'siswa\'"', false);
-        $response->assertSee('x-transition', false);
+        // Conditional fields tetap ter-mount (d-none), disembunyikan via JS murni.
+        $response->assertSee('data-reporter-role', false);
+        // Langkah (section) memakai class is-active; hanya langkah aktif yang tampil.
+        $response->assertSee('is-active', false);
+        $response->assertDontSee('x-transition', false);
     }
 
     /**
@@ -104,9 +107,9 @@ class FormLayoutStabilityTest extends TestCase
         $cssPath = public_path('css/laporin.css');
         $cssContent = file_get_contents($cssPath);
         
-        // Ensure x-show display rules prevent layout shifts
-        $this->assertStringContainsString('[x-show]', $cssContent);
-        $this->assertStringContainsString('[x-show="false"]', $cssContent);
-        $this->assertStringContainsString('display: none !important', $cssContent);
+        // Hide-based render rules are intentionally removed to prevent blank forms
+        $this->assertStringNotContainsString('[x-cloak]', $cssContent);
+        $this->assertStringNotContainsString('[x-show]', $cssContent);
+        $this->assertStringNotContainsString('display: none !important', $cssContent);
     }
 }

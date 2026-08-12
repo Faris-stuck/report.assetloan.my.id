@@ -22,7 +22,13 @@ class FormValidationErrorVisibilityBugExplorationTest extends TestCase
             $content
         );
 
+        // Visibility dikelola JS inline murni (class d-none di #step-error-alert),
+        // tanpa attribute x-show — konsisten dengan penghapusan mekanisme hide berbasis CSS/JS.
         $this->assertStringContainsString(
+            'data-step-error-text',
+            $content
+        );
+        $this->assertStringNotContainsString(
             'x-show="stepError"',
             $content
         );
@@ -40,7 +46,7 @@ class FormValidationErrorVisibilityBugExplorationTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'this.fieldLabel(firstInvalid)',
+            'getFieldLabel(f)',
             $content
         );
 
@@ -55,19 +61,19 @@ class FormValidationErrorVisibilityBugExplorationTest extends TestCase
         );
     }
 
-    public function test_step_tracker_has_accessible_touch_targets(): void
+    public function test_submit_button_has_accessible_touch_target(): void
     {
         $content = file_get_contents(
             resource_path('views/public/report-form.blade.php')
         );
 
         $this->assertStringContainsString(
-            'min-width: 44px',
+            'min-height: 44px',
             $content
         );
 
         $this->assertStringContainsString(
-            'min-height: 44px',
+            'aria-label="Kirim laporan"',
             $content
         );
     }
@@ -79,7 +85,7 @@ class FormValidationErrorVisibilityBugExplorationTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'errorAlert.scrollIntoView',
+            'alert.scrollIntoView',
             $content
         );
     }

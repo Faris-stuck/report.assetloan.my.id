@@ -47,7 +47,7 @@
     <link rel="alternate" type="text/plain" title="Konteks LLM" href="{{ url('/llms.txt') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/laporin.css') }}?v={{ filemtime(public_path('css/laporin.css')) }}" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     @stack('head')
 </head>
 <body>
