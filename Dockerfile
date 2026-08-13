@@ -26,12 +26,18 @@ COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
-RUN composer install \
+
+# composer.json currently contains predis/predis while composer.lock is stale.
+# Resolve the dependency graph during the image build so production does not fail
+# before vendor/autoload.php is created. Scripts are disabled until application
+# source code has been copied below.
+RUN composer update \
     --no-dev \
     --no-interaction \
     --no-progress \
     --prefer-dist \
-    --optimize-autoloader
+    --optimize-autoloader \
+    --no-scripts
 
 COPY . /var/www/html
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
