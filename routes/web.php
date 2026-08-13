@@ -42,12 +42,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/audit', [SuperadminAdminController::class, 'audit'])->name('audit');
         Route::get('/qrcodes', [QRCodeController::class, 'index'])->name('qrcodes.index');
         Route::post('/qrcodes', [QRCodeController::class, 'store'])->name('qrcodes.store');
-        Route::get('/qrcodes/{qrCode}/download', [QRCodeController::class, 'download'])->name('qrcodes.download');
+        Route::put('/qrcodes/{qrCode}/download', [QRCodeController::class, 'download'])->name('qrcodes.download');
         Route::post('/qrcodes/{qrCode}/deactivate', [QRCodeController::class, 'deactivate'])->name('qrcodes.deactivate');
         Route::get('/master/{resource}', [SuperadminAdminController::class, 'master'])->name('master.index');
         Route::post('/master/{resource}', [SuperadminAdminController::class, 'store'])->name('master.store');
         Route::put('/master/{resource}/{id}', [SuperadminAdminController::class, 'update'])->name('master.update');
-        Route::delete('/master/{resource}/{id}', [SuperadminAdminController::class, 'destroy'])->name('master.destroy');
+        Route::delete('/master/{resource}/{id}', [SuperadminAdminController::class, 'destroy'])->name('admin.master.destroy');
     });
 
     Route::middleware('role:kesiswaan')->prefix('kesiswaan')->name('kesiswaan.')->group(function (): void {
