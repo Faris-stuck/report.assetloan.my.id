@@ -21,6 +21,10 @@
 .env
 .env.backup
 .env.production
+infra/waha/.env
+.env.before-*
+.env.backup-*
+.env.backup-auto-*
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -35,6 +39,3 @@ __pycache__/
 /.nova
 /.vscode
 /.zed
-.env.before-*
-.env.backup-*
-.env.backup-auto-*
