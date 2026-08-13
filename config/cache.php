@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => env('CACHE_STORE', 'failover'),
 
     /*
     |--------------------------------------------------------------------------
@@ -77,6 +77,14 @@ return [
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
         ],
 
+        'failover' => [
+            'driver' => 'failover',
+            'stores' => [
+                'redis',
+                'database',
+            ],
+        ],
+
         'dynamodb' => [
             'driver' => 'dynamodb',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -123,37 +131,35 @@ return [
 
     'ttl' => [
         // Master data - rarely changes, longer TTL
-        'damage_categories' => 86400,      // 24 hours
-        'locations' => 86400,              // 24 hours
-        'violation_types' => 86400,        // 24 hours
-        'school_classes' => 43200,         // 12 hours
-        'subjects' => 43200,               // 12 hours
-        'staff_units' => 43200,            // 12 hours
+        'damage_categories' => 86400,
+        'locations' => 86400,
+        'violation_types' => 86400,
+        'school_classes' => 43200,
+        'subjects' => 43200,
+        'staff_units' => 43200,
 
         // User data - moderate changes
-        'user_profile' => 1800,            // 30 minutes
-        'user_list' => 3600,               // 1 hour
-        'user_by_role' => 3600,            // 1 hour
-        'homeroom_classes' => 3600,        // 1 hour
+        'user_profile' => 1800,
+        'user_list' => 3600,
+        'user_by_role' => 3600,
+        'homeroom_classes' => 3600,
 
         // Report data - frequent changes
-        'report_list' => 3600,             // 1 hour
-        'report_detail' => 1800,           // 30 minutes
-        'report_by_student' => 1800,       // 30 minutes
-        'report_by_location' => 3600,      // 1 hour
-        'report_statistics' => 1800,       // 30 minutes
-        'report_status_history' => 1800,   // 30 minutes
+        'report_list' => 3600,
+        'report_detail' => 1800,
+        'report_by_student' => 1800,
+        'report_by_location' => 3600,
+        'report_statistics' => 1800,
+        'report_status_history' => 1800,
 
         // Attachment data
-        'attachment_list' => 1800,         // 30 minutes
-        'attachment_detail' => 900,        // 15 minutes
+        'attachment_list' => 1800,
+        'attachment_detail' => 900,
 
         // Rate limiting & session - short lived
-        'rate_limit' => 60,                // 1 minute
-        'session' => 7200,                 // 2 hours (SESSION_LIFETIME)
-        'api_request' => 300,              // 5 minutes
+        'rate_limit' => 60,
+        'session' => 7200,
+        'api_request' => 300,
     ],
 
 ];
-
-
