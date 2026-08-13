@@ -157,7 +157,7 @@ class ValidationWarningTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('id="validation-errors-json"', false);
-        $response->assertSee('step: 4', false);
+        $response->assertSee('CAPTCHA salah', false);
     }
 
     private function report(array $overrides = []): Report

@@ -32,6 +32,11 @@ abstract class TestCase extends BaseTestCase
             );
         }
 
+        config([
+            'session.driver' => 'array',
+            'cache.default' => 'array',
+        ]);
+
         if (! Schema::hasTable('migrations')) {
             Artisan::call('migrate', [
                 '--force' => true,

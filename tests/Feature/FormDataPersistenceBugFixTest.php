@@ -133,11 +133,11 @@ class FormDataPersistenceBugFixTest extends TestCase
         
         $response->assertStatus(200);
         
-        // Check for x-show with x-transition for smooth visibility toggle
-        $response->assertSee('x-show="reporter===\'siswa\'"', false);
-        $response->assertSee('x-show="reporter===\'guru\'"', false);
-        $response->assertSee('x-show="reporter===\'staff\'"', false);
-        $response->assertSee('x-transition', false);  // Smooth transitions
+        // Check for conditional fields data-reporter-role attributes
+        $response->assertSee('data-reporter-role="siswa"', false);
+        $response->assertSee('data-reporter-role="guru"', false);
+        $response->assertSee('data-reporter-role="staff"', false);
+        $response->assertSee(':disabled="reporter!==\'siswa\'"', false);
     }
 
     /**

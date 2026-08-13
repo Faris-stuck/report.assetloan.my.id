@@ -42,7 +42,20 @@ class CacheHelper
         string $key,
         int $value = 1
     ): int {
-        return Cache::increment($key, $value);
+        if (! Cache::has($key)) {
+            Cache::put($key, $value, 3600);
+            return $value;
+        }
+
+        $result = Cache::increment($key, $value);
+        if ($result === false || $result === 0) {
+            $current = (int) Cache::get($key, 0);
+            $new = $current + $value;
+            Cache::put($key, $new, 3600);
+            return $new;
+        }
+
+        return (int) $result;
     }
 
     /**
@@ -109,12 +122,24 @@ class CacheHelper
 
     public static function invalidateTag(string $tag): void
     {
+        if (! Cache::supportsTags()) {
+            static::invalidate("laporin:{$tag}:*");
+            return;
+        }
+
         Cache::tags([$tag])->flush();
     }
 
     public static function invalidateTags(array $tags): void
     {
         if (empty($tags)) {
+            return;
+        }
+
+        if (! Cache::supportsTags()) {
+            foreach ($tags as $tag) {
+                static::invalidate("laporin:{$tag}:*");
+            }
             return;
         }
 
@@ -127,7 +152,7 @@ class CacheHelper
         int $ttl,
         array $tags
     ): void {
-        if (empty($tags)) {
+        if (empty($tags) || ! Cache::supportsTags()) {
             Cache::put($key, $value, $ttl);
 
             return;

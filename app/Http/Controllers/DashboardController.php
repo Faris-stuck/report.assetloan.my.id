@@ -17,30 +17,41 @@ class DashboardController extends Controller
         $scope = $this->scopedReports($user);
 
         $reports = (clone $scope)
-            ->with(['relatedClass', 'location'])
+            ->with(['relatedClass', 'location', 'bullyingDetail', 'damageDetail'])
             ->latest()
             ->paginate(12);
 
-        $stats = [
-            'total' => (clone $scope)->count(),
-            'violation' => (clone $scope)
-                ->where('report_type', 'violation')
-                ->count(),
-            'damage' => (clone $scope)
-                ->where('report_type', 'damage')
-                ->count(),
-            'pending' => (clone $scope)
-                ->where('status', 'menunggu_verifikasi')
-                ->count(),
-            'done' => (clone $scope)
-                ->where('status', 'selesai')
-                ->count(),
-        ];
+        $userKey = $user->id . '_' . $user->role;
+        $stats = \App\Helpers\CacheHelper::remember(
+            "laporin:dashboard:stats:{$userKey}",
+            300,
+            fn () => [
+                'total' => (clone $scope)->count(),
+                'violation' => (clone $scope)
+                    ->where('report_type', 'violation')
+                    ->count(),
+                'damage' => (clone $scope)
+                    ->where('report_type', 'damage')
+                    ->count(),
+                'pending' => (clone $scope)
+                    ->where('status', 'menunggu_verifikasi')
+                    ->count(),
+                'done' => (clone $scope)
+                    ->where('status', 'selesai')
+                    ->count(),
+            ]
+        );
+
+        $chart = \App\Helpers\CacheHelper::remember(
+            "laporin:dashboard:chart:{$userKey}",
+            300,
+            fn () => $this->monthlyChart($scope, $user)
+        );
 
         return view('dashboard.index', [
             'reports' => $reports,
             'stats' => $stats,
-            'chart' => $this->monthlyChart($scope, $user),
+            'chart' => $chart,
         ]);
     }
 
