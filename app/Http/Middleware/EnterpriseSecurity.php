@@ -57,33 +57,6 @@ class EnterpriseSecurity
             }
         }
 
-        $userAgent = strtolower(
-            $request->header('User-Agent', '')
-        );
-
-        $blockedUserAgents = [
-            'sqlmap',
-            'wget',
-            'curl',
-            'python-requests',
-            'nikto',
-            'acunetix',
-        ];
-
-        foreach ($blockedUserAgents as $blockedUserAgent) {
-            if (
-                $userAgent !== ''
-                && str_contains($userAgent, $blockedUserAgent)
-            ) {
-                Log::warning('Blocked bad user-agent', [
-                    'ip' => $clientIp,
-                    'ua' => $userAgent,
-                ]);
-
-                return response('Forbidden', 403);
-            }
-        }
-
         return $next($request);
     }
 }
