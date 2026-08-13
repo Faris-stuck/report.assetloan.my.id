@@ -98,7 +98,7 @@ return Application::configure(basePath: dirname(__DIR__))
         RateLimiter::for(
             'public-reports',
             function (Request $request) {
-                return Limit::perMinutes(30, 5)
+                return Limit::perMinutes(120, 5)
                     ->by($request->ip() ?? 'unknown');
             }
         );
