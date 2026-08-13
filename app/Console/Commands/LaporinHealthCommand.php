@@ -177,10 +177,16 @@ class LaporinHealthCommand extends Command
     {
         $this->section('REDIS');
 
+        $redisClient = (string) config('database.redis.client');
+
         $this->assert(
-            config('database.redis.client') === 'phpredis',
+            in_array(
+                $redisClient,
+                ['predis', 'phpredis'],
+                true
+            ),
             'REDIS_CLIENT',
-            'phpredis'
+            'predis atau phpredis'
         );
 
         $host = (string) config('database.redis.default.host');

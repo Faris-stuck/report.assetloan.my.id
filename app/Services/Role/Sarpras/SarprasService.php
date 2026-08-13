@@ -15,7 +15,8 @@ class SarprasService
 
     public function index(): View
     {
-        $query = Report::where('report_type', 'damage')->with('damageDetail');
+        $query = Report::where('report_type', 'damage')
+            ->with(['damageDetail', 'location', 'damageCategory', 'attachments']);
 
         // Search across report_number, title, and description
         if ($search = request('search')) {

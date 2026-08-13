@@ -55,10 +55,13 @@ trait ReportNotificationTrait
 
             return true;
         } catch (\Throwable $e) {
-            Log::error('Gagal kirim email notifikasi laporan: '.$e->getMessage(), [
-                'report_id' => $report->id,
-                'email' => $email,
-            ]);
+            Log::warning(
+                'Gagal kirim email notifikasi laporan.',
+                [
+                    'report_id' => $report->id,
+                    'exception' => $e::class,
+                ]
+            );
 
             return false;
         }
@@ -90,10 +93,13 @@ trait ReportNotificationTrait
 
             return true;
         } catch (\Throwable $e) {
-            Log::error('Gagal kirim email notifikasi status: '.$e->getMessage(), [
-                'report_id' => $report->id,
-                'email' => $email,
-            ]);
+            Log::warning(
+                'Gagal kirim email notifikasi status.',
+                [
+                    'report_id' => $report->id,
+                    'exception' => $e::class,
+                ]
+            );
 
             return false;
         }

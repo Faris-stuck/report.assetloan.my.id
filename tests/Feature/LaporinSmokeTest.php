@@ -13,7 +13,15 @@ class LaporinSmokeTest extends TestCase
 
     public function test_public_report_page_can_be_rendered(): void
     {
-        $this->get('/')->assertOk()->assertSee('LAPORIN');
+        $this->get('/')->assertOk()->assertSee('LAPORIN')->assertSee('form-laporan');
+    }
+
+    public function test_public_report_page_keeps_form_visible_when_session_token_is_missing(): void
+    {
+        $this->withSession(['report_submit_token' => null])->get('/')
+            ->assertOk()
+            ->assertSee('form-laporan')
+            ->assertDontSee('Laporan Sudah Terkirim');
     }
 
     public function test_tracking_page_can_be_rendered(): void
@@ -39,6 +47,6 @@ class LaporinSmokeTest extends TestCase
         ])->assertRedirect('/dashboard');
 
         $this->assertAuthenticatedAs($user);
-        $this->get('/dashboard')->assertOk()->assertSee('Dashboard');
+        $this->get('/dashboard')->assertOk()->assertSee('Dasbor');
     }
 }

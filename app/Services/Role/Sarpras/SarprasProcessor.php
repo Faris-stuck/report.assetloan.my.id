@@ -8,8 +8,10 @@ use App\Models\ReportStatusHistory;
 use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class SarprasProcessor
 {
@@ -20,120 +22,307 @@ class SarprasProcessor
     public function process(Request $request, Report $report): void
     {
         if ($report->report_type !== 'damage') {
-            throw ValidationException::withMessages(['report' => 'Menu Sarpras hanya dapat memproses laporan kerusakan fasilitas.']);
+            throw ValidationException::withMessages([
+                'report' => 'Menu Sarpras hanya dapat memproses laporan kerusakan fasilitas.',
+            ]);
         }
 
-        if (! in_array($report->status, self::PROCESSABLE_STATUSES, true)) {
-            throw ValidationException::withMessages(['report' => 'Laporan ini sudah selesai/ditolak dan tidak bisa diproses ulang.']);
+        if (! in_array(
+            $report->status,
+            self::PROCESSABLE_STATUSES,
+            true
+        )) {
+            throw ValidationException::withMessages([
+                'report' => 'Laporan ini sudah selesai/ditolak dan tidak bisa diproses ulang.',
+            ]);
         }
 
         $data = $request->validate([
-            'priority' => ['required', 'in:rendah,sedang,tinggi,darurat'],
-            'scheduled_repair_at' => ['nullable', 'date', 'after_or_equal:now'],
-            'note' => ['nullable', 'string', 'max:2000'],
-            'repair_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:4096'],
+            'priority' => [
+                'required',
+                'in:rendah,sedang,tinggi,darurat',
+            ],
+            'scheduled_repair_at' => [
+                'nullable',
+                'date',
+                'after_or_equal:now',
+            ],
+            'note' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+            'repair_photo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'mimetypes:image/jpeg,image/png,image/webp',
+                'max:4096',
+            ],
         ]);
 
-        DB::transaction(function () use ($request, $report, $data): void {
-            $lockedReport = Report::whereKey($report->id)->lockForUpdate()->firstOrFail();
-            if ($lockedReport->report_type !== 'damage') {
-                throw ValidationException::withMessages(['report' => 'Menu Sarpras hanya dapat memproses laporan kerusakan fasilitas.']);
+        $storedPath = null;
+
+        try {
+
+            $notification = DB::transaction(
+                function () use (
+                    $request,
+                    $report,
+                    $data,
+                    &$storedPath
+                ): array {
+                    $lockedReport =
+                        Report::whereKey(
+                            $report->id
+                        )
+                            ->lockForUpdate()
+                            ->firstOrFail();
+
+                    if (
+                        $lockedReport->report_type
+                        !== 'damage'
+                    ) {
+                        throw ValidationException::withMessages([
+                            'report' => 'Menu Sarpras hanya dapat memproses laporan kerusakan fasilitas.',
+                        ]);
+                    }
+
+                    if (! in_array(
+                        $lockedReport->status,
+                        self::PROCESSABLE_STATUSES,
+                        true
+                    )) {
+                        throw ValidationException::withMessages([
+                            'report' => 'Laporan ini sudah selesai/ditolak dan tidak bisa diproses ulang.',
+                        ]);
+                    }
+
+                    $old =
+                        $lockedReport->status;
+
+                    $detail =
+                        $lockedReport->damageDetail;
+
+                    if (! $detail) {
+                        throw ValidationException::withMessages([
+                            'report' => 'Detail kerusakan tidak lengkap. Minta pelapor melengkapi laporan terlebih dahulu.',
+                        ]);
+                    }
+
+                    $done = $request->hasFile(
+                        'repair_photo'
+                    );
+
+                    $detail->update([
+                        'priority' =>
+                            $data['priority'],
+                        'scheduled_repair_at' =>
+                            $data['scheduled_repair_at']
+                            ?? null,
+                        'repaired_at' =>
+                            $done ? now() : null,
+                    ]);
+
+                    if ($done) {
+
+                        $file = $request->file(
+                            'repair_photo'
+                        );
+
+                        $storedPath = $file->store(
+                            'report-attachments/'
+                            .$lockedReport->id,
+                            'private'
+                        );
+
+                        ReportAttachment::create([
+                            'report_id' =>
+                                $lockedReport->id,
+                            'uploaded_by_user_id' =>
+                                $request->user()->id,
+                            'uploader_type' =>
+                                'sarpras',
+                            'original_name' =>
+                                $this->safeOriginalName(
+                                    $file->getClientOriginalName()
+                                ),
+                            'stored_name' =>
+                                basename($storedPath),
+                            'file_path' =>
+                                $storedPath,
+                            'mime_type' =>
+                                $file->getMimeType(),
+                            'file_size' =>
+                                $file->getSize(),
+                            'attachment_type' =>
+                                'repair_after',
+                        ]);
+                    }
+
+                    $new = $done
+                        ? 'selesai'
+                        : 'sedang_ditangani';
+
+                    $lockedReport->update([
+                        'status' => $new,
+                        'verified_by' =>
+                            $request->user()->id,
+                        'verified_at' => now(),
+                        'assigned_to_role' =>
+                            'sarpras',
+                    ]);
+
+                    $publicNote = $done
+                        ? 'Perbaikan selesai.'
+                        : 'Perbaikan dijadwalkan.';
+
+                    ReportStatusHistory::create([
+                        'report_id' =>
+                            $lockedReport->id,
+                        'changed_by_user_id' =>
+                            $request->user()->id,
+                        'actor_type' =>
+                            'sarpras',
+                        'previous_status' =>
+                            $old,
+                        'new_status' =>
+                            $new,
+                        'public_note' =>
+                            $publicNote,
+                        'internal_note' =>
+                            $data['note'] ?? null,
+                    ]);
+
+                    return [
+                        $lockedReport->fresh(),
+                        $new,
+                        $publicNote,
+                    ];
+                }
+            );
+
+        } catch (Throwable $exception) {
+
+            if (
+                is_string($storedPath)
+                && $storedPath !== ''
+            ) {
+                try {
+                    Storage::disk('private')
+                        ->delete($storedPath);
+                } catch (Throwable) {
+                    // Jangan menutupi exception asli.
+                }
             }
-            if (! in_array($lockedReport->status, self::PROCESSABLE_STATUSES, true)) {
-                throw ValidationException::withMessages(['report' => 'Laporan ini sudah selesai/ditolak dan tidak bisa diproses ulang.']);
-            }
 
-            $old = $lockedReport->status;
-            $detail = $lockedReport->damageDetail;
-            if (! $detail) {
-                throw ValidationException::withMessages(['report' => 'Detail kerusakan tidak lengkap. Minta pelapor melengkapi laporan terlebih dahulu.']);
-            }
+            throw $exception;
+        }
 
-            $done = $request->hasFile('repair_photo');
-            $detail->update([
-                'priority' => $data['priority'],
-                'scheduled_repair_at' => $data['scheduled_repair_at'] ?? null,
-                'repaired_at' => $done ? now() : null,
-            ]);
+        [
+            $updatedReport,
+            $new,
+            $publicNote,
+        ] = $notification;
 
-            if ($done) {
-                $file = $request->file('repair_photo');
-                $path = $file->store('report-attachments/'.$lockedReport->id, 'private');
-                ReportAttachment::create([
-                    'report_id' => $lockedReport->id,
-                    'uploaded_by_user_id' => $request->user()->id,
-                    'uploader_type' => 'sarpras',
-                    'original_name' => $this->safeOriginalName($file->getClientOriginalName()),
-                    'stored_name' => basename($path),
-                    'file_path' => $path,
-                    'mime_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
-                    'attachment_type' => 'repair_after',
-                ]);
-            }
-
-            $new = $done ? 'selesai' : 'sedang_ditangani';
-            $lockedReport->update([
-                'status' => $new,
-                'verified_by' => $request->user()->id,
-                'verified_at' => now(),
-                'assigned_to_role' => 'sarpras',
-            ]);
-
-            $publicNote = $done ? 'Perbaikan selesai.' : 'Perbaikan dijadwalkan.';
-            ReportStatusHistory::create([
-                'report_id' => $lockedReport->id,
-                'changed_by_user_id' => $request->user()->id,
-                'actor_type' => 'sarpras',
-                'previous_status' => $old,
-                'new_status' => $new,
-                'public_note' => $publicNote,
-                'internal_note' => $data['note'] ?? null,
-            ]);
-
-            $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel($new), $publicNote);
-        });
+        /*
+         * Email sesudah transaction COMMIT.
+         */
+        $this->kirimNotifikasiStatus(
+            $updatedReport,
+            $this->statusLabel($new),
+            $publicNote
+        );
     }
 
     public function reject(Request $request, Report $report): void
     {
         $data = $request->validate([
-            'reason' => ['required', 'string', 'max:2000'],
+            'reason' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
         ]);
 
-        DB::transaction(function () use ($request, $report, $data): void {
-            $lockedReport = Report::whereKey($report->id)->lockForUpdate()->firstOrFail();
+        $notification = DB::transaction(
+            function () use (
+                $request,
+                $report,
+                $data
+            ): array {
+                $lockedReport =
+                    Report::whereKey(
+                        $report->id
+                    )
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-            if ($lockedReport->report_type !== 'damage') {
-                throw ValidationException::withMessages([
-                    'report' => 'Sarpras hanya dapat menolak laporan kerusakan fasilitas.',
+                if (
+                    $lockedReport->report_type
+                    !== 'damage'
+                ) {
+                    throw ValidationException::withMessages([
+                        'report' => 'Sarpras hanya dapat menolak laporan kerusakan fasilitas.',
+                    ]);
+                }
+
+                if (! in_array(
+                    $lockedReport->status,
+                    self::PROCESSABLE_STATUSES,
+                    true
+                )) {
+                    throw ValidationException::withMessages([
+                        'report' => 'Laporan ini tidak bisa ditolak pada status saat ini.',
+                    ]);
+                }
+
+                $old =
+                    $lockedReport->status;
+
+                $lockedReport->update([
+                    'status' => 'ditolak',
+                    'rejection_reason' =>
+                        $data['reason'],
                 ]);
-            }
 
-            if (! in_array($lockedReport->status, self::PROCESSABLE_STATUSES, true)) {
-                throw ValidationException::withMessages([
-                    'report' => 'Laporan ini tidak bisa ditolak pada status saat ini.',
+                $publicNote =
+                    'Laporan kerusakan ditolak oleh Sarpras.';
+
+                ReportStatusHistory::create([
+                    'report_id' =>
+                        $lockedReport->id,
+                    'changed_by_user_id' =>
+                        $request->user()->id,
+                    'actor_type' =>
+                        'sarpras',
+                    'previous_status' =>
+                        $old,
+                    'new_status' =>
+                        'ditolak',
+                    'public_note' =>
+                        $publicNote,
+                    'internal_note' =>
+                        $data['reason'],
                 ]);
+
+                return [
+                    $lockedReport->fresh(),
+                    $publicNote,
+                ];
             }
+        );
 
-            $old = $lockedReport->status;
-            $lockedReport->update([
-                'status' => 'ditolak',
-                'rejection_reason' => $data['reason'],
-            ]);
-            $publicNote = 'Laporan kerusakan ditolak oleh Sarpras.';
-            ReportStatusHistory::create([
-                'report_id' => $lockedReport->id,
-                'changed_by_user_id' => $request->user()->id,
-                'actor_type' => 'sarpras',
-                'previous_status' => $old,
-                'new_status' => 'ditolak',
-                'public_note' => $publicNote,
-                'internal_note' => $data['reason'],
-            ]);
+        [
+            $updatedReport,
+            $publicNote,
+        ] = $notification;
 
-            $this->kirimNotifikasiStatus($lockedReport, $this->statusLabel('ditolak'), $publicNote);
-        });
+        $this->kirimNotifikasiStatus(
+            $updatedReport,
+            $this->statusLabel('ditolak'),
+            $publicNote
+        );
     }
 
     private function safeOriginalName(string $name): string

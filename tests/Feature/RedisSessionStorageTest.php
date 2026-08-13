@@ -34,7 +34,7 @@ class RedisSessionStorageTest extends TestCase
     public function test_session_store_configured()
     {
         $store = config('session.store');
-        $this->assertEquals('default', $store, 'Session store should be default');
+        $this->assertNull($store, 'SESSION_STORE harus null agar Laravel menggunakan cache store default tanpa mencari store literal bernama default.');
     }
 
     /**
@@ -112,5 +112,15 @@ class RedisSessionStorageTest extends TestCase
         $cachePrefix = config('cache.prefix');
         $this->assertNotEmpty($cachePrefix, 'Cache prefix should be configured');
         $this->assertStringContainsString('laporin', $cachePrefix, 'Cache prefix should contain "laporin"');
+    }
+
+    /**
+     * Test Redis health detection fails fast when the configured local socket is closed.
+     */
+    public function test_redis_health_checks_fail_fast_on_closed_socket()
+    {
+        $available = \App\Support\RedisHealth::isAvailable('default', '127.0.0.1', 6380, 0.25);
+
+        $this->assertFalse($available, 'Redis health check should fail fast when the port is closed.');
     }
 }

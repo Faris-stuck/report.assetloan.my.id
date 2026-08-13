@@ -11,12 +11,15 @@ class FormLayoutStabilityTest extends TestCase
      */
     public function test_form_has_conditional_field_class(): void
     {
-        $response = $this->get('/laporan');
+        $response = $this->get('/');
         
         $response->assertStatus(200);
         $response->assertSee('conditional-field', false);
-        $response->assertSee('x-show="reporter===\'siswa\'"', false);
-        $response->assertSee('x-transition', false);
+        // Conditional fields tetap ter-mount (d-none), disembunyikan via JS murni.
+        $response->assertSee('data-reporter-role', false);
+        // Langkah (section) memakai class is-active; hanya langkah aktif yang tampil.
+        $response->assertSee('is-active', false);
+        $response->assertDontSee('x-transition', false);
     }
 
     /**
@@ -24,7 +27,7 @@ class FormLayoutStabilityTest extends TestCase
      */
     public function test_error_alert_has_proper_classes(): void
     {
-        $response = $this->get('/laporan');
+        $response = $this->get('/');
         
         $response->assertStatus(200);
         $response->assertSee('alert alert-danger', false);
@@ -37,7 +40,7 @@ class FormLayoutStabilityTest extends TestCase
      */
     public function test_form_preserves_data_on_validation_error(): void
     {
-        $response = $this->post('/laporan', [
+        $response = $this->post(route('public.report.store'), [
             'reporter_name' => 'Test User',
             'reporter_type' => 'siswa',
             // Missing required fields to trigger validation
@@ -104,10 +107,9 @@ class FormLayoutStabilityTest extends TestCase
         $cssPath = public_path('css/laporin.css');
         $cssContent = file_get_contents($cssPath);
         
-        // Ensure x-show display rules prevent layout shifts
-        $this->assertStringContainsString('[x-show]', $cssContent);
-        $this->assertStringContainsString('[x-show="false"]', $cssContent);
-        $this->assertStringContainsString('display: none !important', $cssContent);
+        // Hide-based render rules are intentionally removed to prevent blank forms
+        $this->assertStringNotContainsString('[x-cloak]', $cssContent);
+        $this->assertStringNotContainsString('[x-show]', $cssContent);
+        $this->assertStringNotContainsString('display: none !important', $cssContent);
     }
 }
-

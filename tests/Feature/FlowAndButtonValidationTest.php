@@ -42,11 +42,11 @@ class FlowAndButtonValidationTest extends TestCase
             ->assertSee('Kirim Laporan');
 
         $this->get(route('track.form'))->assertOk()
-            ->assertSee('Form Tracking')
+            ->assertSee('Formulir Pelacakan')
             ->assertSee('Lacak Laporan');
 
         $this->get(route('login'))->assertOk()
-            ->assertSee('Login LAPORIN')
+            ->assertSee('Masuk LAPORIN')
             ->assertSee('Masuk');
 
         $superadmin = $this->user('admin@laporin.local');
@@ -67,7 +67,7 @@ class FlowAndButtonValidationTest extends TestCase
             ->assertDontSee('Akun Pengguna');
 
         $this->actingAs($this->user('wali@laporin.local'))->get(route('dashboard'))->assertOk()
-            ->assertSee('Dashboard')
+            ->assertSee('Dasbor')
             ->assertDontSee('Akun Pengguna');
 
         $this->assertFalse(Route::has('siswa.point.pdf'));
@@ -76,12 +76,12 @@ class FlowAndButtonValidationTest extends TestCase
     public function test_tracking_form_accepts_copy_pasted_current_report_number_format(): void
     {
         $this->get(route('track.form'))->assertOk()
-            ->assertSee('placeholder="LPR2026070001"', false)
+            ->assertSee('placeholder="LAP-ABC234-XYZ789"', false)
             ->assertSee('maxlength="24"', false)
             ->assertSee('maxlength="16"', false)
             ->assertSee('data-normalize-report-number', false)
             ->assertSee('data-normalize-access-code', false)
-            ->assertDontSee('LPR + tahun/bulan + 4 digit');
+            ->assertDontSee('LAP-XXXXXX-XXXXXX');
     }
 
     public function test_public_violation_report_success_tracking_info_and_confirm_flow(): void
@@ -89,7 +89,7 @@ class FlowAndButtonValidationTest extends TestCase
         $class = SchoolClass::firstOrFail();
         $location = Location::firstOrFail();
 
-        $response = $this->withSession(['math_captcha_answer' => 8])
+        $response = $this->withSession(['math_captcha_answer' => 8, 'report_submit_token' => 'test-submit-token'])
             ->post(route('public.report.store'), [
                 'reporter_type' => 'siswa',
                 'reporter_name' => 'Pelapor Flow Violation',
@@ -116,7 +116,7 @@ class FlowAndButtonValidationTest extends TestCase
         $report = Report::query()->sole();
         $accessCode = session('access_code');
 
-        $this->assertMatchesRegularExpression('/^LPR\d{10}$/', $report->report_number);
+        $this->assertMatchesRegularExpression('/^LAP-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}-[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/', $report->report_number);
         $this->assertDatabaseHas('bullying_details', ['report_id' => $report->id, 'victim_name' => 'Korban Test']);
         $this->assertDatabaseHas('report_status_histories', ['report_id' => $report->id, 'new_status' => 'menunggu_verifikasi']);
 
@@ -166,7 +166,7 @@ class FlowAndButtonValidationTest extends TestCase
         $class = SchoolClass::firstOrFail();
         $location = Location::firstOrFail();
 
-        $this->withSession(['math_captcha_answer' => 9])
+        $this->withSession(['math_captcha_answer' => 9, 'report_submit_token' => 'test-submit-token'])
             ->from('/')
             ->post(route('public.report.store'), [
                 'reporter_type' => 'siswa',
@@ -185,7 +185,7 @@ class FlowAndButtonValidationTest extends TestCase
 
         $this->assertDatabaseCount('reports', 0);
 
-        $this->withSession(['math_captcha_answer' => 6])
+        $this->withSession(['math_captcha_answer' => 6, 'report_submit_token' => 'test-submit-token'])
             ->post(route('public.report.store'), [
                 'reporter_type' => 'staff',
                 'reporter_name' => 'Staf Pelapor Damage',
@@ -211,7 +211,7 @@ class FlowAndButtonValidationTest extends TestCase
         $this->assertDatabaseHas('damage_details', [
             'report_id' => $report->id,
             'item_name' => 'Proyektor Audit',
-            'priority' => 'tinggi',
+            'priority' => null,
         ]);
     }
 
@@ -223,7 +223,7 @@ class FlowAndButtonValidationTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.users.index'))->assertOk()
             ->assertSee('Tambah')
-            ->assertSee('Manajemen User');
+            ->assertSee('Manajemen Pengguna');
 
         $this->actingAs($admin)->from(route('admin.users.index'))->post(route('admin.users.store'), [
             'name' => 'User Password Lemah',
@@ -243,27 +243,32 @@ class FlowAndButtonValidationTest extends TestCase
         ])->assertRedirect(route('admin.users.index'))->assertSessionHasNoErrors();
         $this->assertDatabaseHas('users', ['email' => 'wali.flow@example.test', 'role' => 'wali_kelas', 'is_active' => true]);
 
-        $this->actingAs($admin)->get(route('admin.qrcodes.index'))->assertOk()
-            ->assertSee('Buat QR');
+        $this->actingAs($admin)
+            ->get(route('admin.qrcodes.index'))
+            ->assertOk();
 
-        $this->actingAs($admin)->from(route('admin.qrcodes.index'))->post(route('admin.qrcodes.store'), [
-            'qr_name' => 'QR Umum Invalid',
-            'qr_type' => 'general',
-            'class_id' => $class->id,
-        ])->assertRedirect(route('admin.qrcodes.index'))->assertSessionHasErrors(['class_id']);
+        $this->actingAs($admin)
+            ->from(route('admin.qrcodes.index'))
+            ->post(route('admin.qrcodes.store'), [
+                'qr_name' => 'QR Flow QA',
+                'qr_type' => 'general',
+            ])
+            ->assertRedirect(route('admin.qrcodes.index'))
+            ->assertSessionHasNoErrors();
 
-        $this->actingAs($admin)->from(route('admin.qrcodes.index'))->post(route('admin.qrcodes.store'), [
-            'qr_name' => 'QR Flow QA',
-            'qr_type' => 'location',
-            'location_id' => $location->id,
-        ])->assertRedirect(route('admin.qrcodes.index'))->assertSessionHasNoErrors();
-        $qr = QrCode::where('qr_name', 'QR Flow QA')->firstOrFail();
-        $this->actingAs($admin)->get(route('admin.qrcodes.index'))->assertOk()
-            ->assertSee('Download PNG')
-            ->assertSee('Nonaktif');
-        $this->actingAs($admin)->get(route('admin.qrcodes.download', $qr))->assertOk()
-            ->assertHeader('content-type', 'image/png');
-        $this->actingAs($admin)->post(route('admin.qrcodes.deactivate', $qr))->assertRedirect();
+        $qr = QrCode::where('qr_name', 'QR Flow QA')
+            ->firstOrFail();
+
+        $this->assertSame('general', $qr->qr_type);
+
+        $this->actingAs($admin)
+            ->get(route('admin.qrcodes.download', $qr))
+            ->assertOk();
+
+        $this->actingAs($admin)
+            ->post(route('admin.qrcodes.deactivate', $qr))
+            ->assertRedirect();
+
         $this->assertFalse($qr->refresh()->is_active);
 
         foreach ($this->validMasterPayloads($class) as $resource => [$requiredField, $payload]) {

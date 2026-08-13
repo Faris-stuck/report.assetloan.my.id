@@ -40,5 +40,10 @@ class ReportObserver
         ]);
 
         CacheHelper::invalidate('laporin:report:*');
+
+        // Invalidate per-user dashboard stats & chart cache
+        // so admin/kesiswaan/sarpras see fresh counts after any report change.
+        CacheHelper::invalidate('laporin:dashboard:stats:*');
+        CacheHelper::invalidate('laporin:dashboard:chart:*');
     }
 }

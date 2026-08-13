@@ -13,7 +13,6 @@ class SessionTableSimpleTest extends TestCase
      * Bug Condition: Session table missing causes login to fail
      * Validates: Requirements 1.1, 1.2
      * 
-     * @test
      */
     public function test_sessions_table_exists(): void
     {

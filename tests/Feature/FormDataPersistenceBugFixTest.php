@@ -15,7 +15,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_public_report_form_renders_with_data_persistence()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         $response->assertViewHas('locations');
@@ -26,7 +26,7 @@ class FormDataPersistenceBugFixTest extends TestCase
         $response->assertSee('formData', false);
         $response->assertSee('saveFormState', false);
         $response->assertSee('clearFormState', false);
-        $response->assertSee('localStorage', false);
+        $response->assertSee('sessionStorage', false);
     }
 
     /**
@@ -34,7 +34,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_form_has_four_steps_with_data_models()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -52,18 +52,20 @@ class FormDataPersistenceBugFixTest extends TestCase
     }
 
     /**
-     * Test that form has next/back navigation with data preservation
+     * Test that form has single-page submit flow with data preservation
      */
     public function test_form_has_step_navigation_buttons()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
-        // Check for navigation button logic
-        $response->assertSee('step++', false);  // next() calls saveFormState
-        $response->assertSee('step--', false);  // back button
-        $response->assertSee('saveFormState', false);  // data persistence
+        // Wizard bertahap (JS inline murni): "Lanjut" memvalidasi langkah berjalan lalu
+        // memunculkan langkah berikutnya; "Kembali" untuk mengulang langkah sebelumnya.
+        $response->assertSee('LaporinWizard', false);
+        $response->assertSee('data-wizard-action="next"', false);
+        $response->assertSee('data-wizard-action="prev"', false);
+        $response->assertSee('saveFormState', false);  // data persistence (Alpine)
     }
 
     /**
@@ -71,49 +73,49 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_validation_error_preserves_form_data()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
-        // Verify the form includes error preservation logic
+        // Verify the form includes error display logic (JS murni: data-step-error-text)
         $response->assertSee('stepError', false);
-        $response->assertSee('x-show="stepError"', false);
+        $response->assertSee('data-step-error-text', false);
         $response->assertSee('alert alert-danger', false);  // Error display
     }
 
     /**
-     * Test that form has localStorage integration for data persistence
+     * Test that form has sessionStorage integration for data persistence
      */
     public function test_form_includes_localstorage_integration()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
-        // Check for localStorage methods
-        $response->assertSee("localStorage.getItem('reportFormData')", false);
-        $response->assertSee("localStorage.setItem('reportFormData'", false);
-        $response->assertSee("localStorage.removeItem('reportFormData')", false);
+        // Check for sessionStorage methods
+        $response->assertSee("sessionStorage.getItem('reportFormData')", false);
+        $response->assertSee("sessionStorage.setItem('reportFormData'", false);
+        $response->assertSee("sessionStorage.removeItem('reportFormData')", false);
     }
 
     /**
-     * Test that form has step hint messages
+     * Test that form shows single-page guidance text
      */
     public function test_form_has_step_hints()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
-        // Check for step hint text (currentStepHint logic)
-        $response->assertSee('currentStepHint', false);
-        $response->assertSee('x-text="currentStepHint"', false);
+        // Teks panduan wizard langkah-demi-langkah (JS murni)
+        $response->assertSee('data-step-hint', false);
+        $response->assertSee('Kirim Laporan', false);
     }
 
     /**
-     * Test that form clears localStorage on successful submission
+     * Test that form clears sessionStorage on successful submission
      */
     public function test_form_clears_localstorage_on_submit()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -127,15 +129,15 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_conditional_fields_have_proper_data_binding()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
-        // Check for x-show with x-transition for smooth visibility toggle
-        $response->assertSee('x-show="reporter===\'siswa\'"', false);
-        $response->assertSee('x-show="reporter===\'guru\'"', false);
-        $response->assertSee('x-show="reporter===\'staff\'"', false);
-        $response->assertSee('x-transition', false);  // Smooth transitions
+        // Check for conditional fields data-reporter-role attributes
+        $response->assertSee('data-reporter-role="siswa"', false);
+        $response->assertSee('data-reporter-role="guru"', false);
+        $response->assertSee('data-reporter-role="staff"', false);
+        $response->assertSee(':disabled="reporter!==\'siswa\'"', false);
     }
 
     /**
@@ -143,7 +145,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_reporter_type_syncs_component_state_and_formdata()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -157,7 +159,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_report_type_syncs_component_state_and_formdata()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -172,7 +174,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_step1_all_fields_have_formdata_binding()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -191,7 +193,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_step3_all_fields_have_formdata_binding()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -211,7 +213,7 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_step4_all_fields_have_formdata_binding()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
@@ -225,12 +227,12 @@ class FormDataPersistenceBugFixTest extends TestCase
      */
     public function test_buttons_have_minimum_44px_height_for_accessibility()
     {
-        $response = $this->get(route('public.report.form'));
+        $response = $this->get(route('public.report'));
         
         $response->assertStatus(200);
         
-        // Check for 44px minimum height on buttons
+        // Check for 44px minimum height / touch target on the submit button
         $response->assertSee('min-height: 44px', false);
-        $response->assertSee('min-width: 44px', false);
+        $response->assertSee('aria-label="Kirim laporan"', false);
     }
 }

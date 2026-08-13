@@ -149,7 +149,37 @@ class TrackingController extends Controller
 
     private function normalizeReportNumber(string $value): string
     {
-        return preg_replace('/[^A-Z0-9-]+/', '', strtoupper(trim($value))) ?? '';
+        $upper = strtoupper(trim($value));
+
+        /*
+         * Copy/paste friendly normalization:
+         * - LPR 2026 07 0002
+         * - LPR-2026-07-0002
+         * - lpr2026070002
+         *
+         * Semuanya dinormalisasi menjadi LPR2026070002.
+         */
+        $compact = preg_replace('/[^A-Z0-9]+/', '', $upper) ?? '';
+
+        if (str_starts_with($compact, 'LPR')) {
+            return $compact;
+        }
+
+        /*
+         * Pertahankan kompatibilitas format legacy:
+         * LAP-XXXXXX-XXXXXX
+         */
+        if (
+            preg_match(
+                '/^LAP([A-Z2-9]{6})([A-Z2-9]{6})$/',
+                $compact,
+                $matches
+            ) === 1
+        ) {
+            return 'LAP-'.$matches[1].'-'.$matches[2];
+        }
+
+        return preg_replace('/[^A-Z0-9-]+/', '', $upper) ?? '';
     }
 
     private function normalizeAccessCode(string $value): string

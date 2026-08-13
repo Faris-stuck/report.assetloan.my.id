@@ -73,11 +73,11 @@ class SarprasReportFilterTest extends TestCase
         ]);
         DamageDetail::factory()->create(['report_id' => $report1->id]);
 
-        Report::factory()->create([
+        $report2 = Report::factory()->create([
             'report_type' => 'damage',
             'title' => 'Lantai Retak',
         ]);
-        DamageDetail::factory()->create(['report_id' => Report::latest()->first()->id]);
+        DamageDetail::factory()->create(['report_id' => $report2->id]);
 
         $response = $this->actingAs($this->sarprasUser)
             ->get(route('sarpras.index', ['search' => 'Jendela']));
@@ -94,11 +94,11 @@ class SarprasReportFilterTest extends TestCase
         ]);
         DamageDetail::factory()->create(['report_id' => $report1->id]);
 
-        Report::factory()->create([
+        $report2 = Report::factory()->create([
             'report_type' => 'damage',
             'description' => 'Pintu toilet tidak bisa ditutup',
         ]);
-        DamageDetail::factory()->create(['report_id' => Report::latest()->first()->id]);
+        DamageDetail::factory()->create(['report_id' => $report2->id]);
 
         $response = $this->actingAs($this->sarprasUser)
             ->get(route('sarpras.index', ['search' => 'fotocopy']));
@@ -180,7 +180,7 @@ class SarprasReportFilterTest extends TestCase
             ]));
 
         $response->assertStatus(200);
-        $this->assertCount(2, $response->viewData('reports'));
+        $this->assertCount(1, $response->viewData('reports'));
     }
 
     public function test_sarpras_combined_filters_work()

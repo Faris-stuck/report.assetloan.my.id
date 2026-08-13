@@ -31,6 +31,10 @@ class AdminService implements AdminServiceInterface
         
         // Build query with search/filter support
         $query = $model::query();
+
+        if ($resource === 'locations') {
+            $query->with('class');
+        }
         
         // Search across relevant fields
         if ($search = request('search')) {
@@ -128,9 +132,13 @@ class AdminService implements AdminServiceInterface
         'users' => $query->latest()->paginate(20),
         'roles' => User::ROLES,
 
-        'activeSuperadminCount' => User::where('role', 'superadmin')
-            ->where('is_active', true)
-            ->count(),
+        'activeSuperadminCount' => \App\Helpers\CacheHelper::remember(
+            'laporin:admin:active_superadmin_count',
+            60,
+            fn () => User::where('role', 'superadmin')
+                ->where('is_active', true)
+                ->count()
+        ),
     ]);
 }
 
@@ -225,8 +233,12 @@ class AdminService implements AdminServiceInterface
         }
 
         return view('admin.audit', [
-            'logs' => $query->latest()->paginate(30),
-            'actions' => AuditLog::distinct()->pluck('action'),
+            'logs' => $query->with('user')->latest()->paginate(30),
+            'actions' => \App\Helpers\CacheHelper::remember(
+                'laporin:admin:audit_actions',
+                300,
+                fn () => AuditLog::distinct()->pluck('action')
+            ),
         ]);
     }
 }

@@ -5,12 +5,12 @@
 @section('canonical'){{ route('seo.faq') }}@endsection
 @section('content')
 @php
-    $updatedAt = '2026-07-30';
+    $updatedAt = '2026-08-09';
     $faqs = [
         ['q' => 'Apa itu LAPORIN SMK Taruna Bangsa Bekasi?', 'a' => 'LAPORIN adalah sistem pelaporan berbasis web untuk membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara lebih rapi, aman, dan terlacak.'],
         ['q' => 'Bagaimana cara lapor pembullyan atau perundungan?', 'a' => 'Buka halaman Buat Laporan, pilih Pelanggaran Siswa, isi data pelapor, kronologi, lokasi, waktu kejadian, dan bukti bila ada, lalu kirim laporan. Setelah terkirim, simpan nomor laporan dan kode akses untuk pelacakan.'],
         ['q' => 'Apakah laporan kerusakan fasilitas juga bisa dibuat?', 'a' => 'Bisa. Pilih jenis laporan Kerusakan Fasilitas untuk melaporkan kerusakan seperti lampu, meja, kursi, proyektor, AC, toilet, pintu, jaringan, atau instalasi listrik.'],
-        ['q' => 'Bagaimana cara mengecek status laporan?', 'a' => 'Gunakan menu Lacak Laporan. Masukkan nomor laporan dengan format LPRYYYYMM#### dan kode akses 6 digit yang didapat setelah laporan terkirim untuk pelacakan.'],
+        ['q' => 'Bagaimana cara mengecek status laporan?', 'a' => 'Gunakan menu Lacak Laporan. Masukkan nomor laporan dengan format LAP-XXXXXX-XXXXXX dan kode akses 6 digit yang didapat setelah laporan terkirim untuk pelacakan.'],
         ['q' => 'Siapa yang menangani laporan pelanggaran siswa?', 'a' => 'Laporan pelanggaran siswa diteruskan ke Kesiswaan. Jika perlu tindak lanjut kelas, laporan dapat diteruskan ke Wali Kelas untuk proses konfirmasi pelapor.'],
         ['q' => 'Apa yang terjadi setelah status Menunggu Konfirmasi Pelapor?', 'a' => 'Pelapor dapat mengonfirmasi selesai jika masalah sudah selesai, atau menambahkan informasi jika laporan perlu dibuka kembali.'],
         ['q' => 'Apakah pelapor publik harus login?', 'a' => 'Tidak. Pelapor publik dapat membuat laporan tanpa login. Login hanya digunakan oleh pengelola internal seperti SuperAdmin, Kesiswaan, Sarpras, Wali Kelas, Guru, dan Siswa.'],

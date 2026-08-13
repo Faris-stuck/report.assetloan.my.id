@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title','Pengguna')
 @section('content')
 <div class="page-header">

@@ -11,6 +11,7 @@ use App\Observers\DamageDetailObserver;
 use App\Observers\ReportObserver;
 use App\Services\Role\Superadmin\AdminService;
 use App\Services\Role\Superadmin\AdminServiceInterface;
+use App\Support\RedisHealth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +25,23 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        RedisHealth::applyGracefulFallback();
+
+        $defaultConnection = config('database.default');
+        $connections = config('database.connections', []);
+
+        if (
+            is_string($defaultConnection)
+            && $defaultConnection !== ''
+            && ! array_key_exists('default', $connections)
+            && array_key_exists($defaultConnection, $connections)
+        ) {
+            config()->set(
+                'database.connections.default',
+                $connections[$defaultConnection]
+            );
+        }
+
         // Register Model Observers for automatic cache invalidation
         Report::observe(ReportObserver::class);
         DamageDetail::observe(DamageDetailObserver::class);

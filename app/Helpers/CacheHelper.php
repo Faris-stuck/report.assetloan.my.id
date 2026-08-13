@@ -42,14 +42,27 @@ class CacheHelper
         string $key,
         int $value = 1
     ): int {
-        return Cache::increment($key, $value);
+        if (! Cache::has($key)) {
+            Cache::put($key, $value, 3600);
+            return $value;
+        }
+
+        $result = Cache::increment($key, $value);
+        if ($result === false || $result === 0) {
+            $current = (int) Cache::get($key, 0);
+            $new = $current + $value;
+            Cache::put($key, $new, 3600);
+            return $new;
+        }
+
+        return (int) $result;
     }
 
     /**
      * Menghapus cache berdasarkan pattern menggunakan Redis SCAN.
      *
-     * SCAN dipakai menggantikan KEYS agar Redis production
-     * tidak mengalami blocking ketika jumlah key besar.
+     * Tidak menggunakan Redis KEYS karena dapat memblokir Redis
+     * ketika jumlah key besar.
      */
     public static function invalidate(string $pattern): void
     {
@@ -61,24 +74,22 @@ class CacheHelper
             return;
         }
 
-        $connectionName = config(
+        $connectionName = (string) config(
             'cache.stores.redis.connection',
             'cache'
         );
 
         $redis = Redis::connection($connectionName);
 
-        $prefix = config('cache.prefix', '');
+        $prefix = (string) config('cache.prefix', '');
 
-        $searchPattern = $prefix
-            ? $prefix.$pattern
-            : $pattern;
+        $searchPattern = $prefix.$pattern;
 
         if (! str_contains($searchPattern, '*')) {
             $searchPattern .= '*';
         }
 
-        $cursor = null;
+        $cursor = '0';
 
         do {
             $result = $redis->scan(
@@ -89,29 +100,46 @@ class CacheHelper
                 ]
             );
 
-            if ($result === false) {
+            if (
+                $result === false
+                || ! is_array($result)
+                || count($result) < 2
+            ) {
                 break;
             }
 
-            foreach ($result as $key) {
-                $redis->del($key);
+            [$nextCursor, $keys] = $result;
+
+            $cursor = (string) $nextCursor;
+
+            if (is_array($keys) && $keys !== []) {
+                foreach ($keys as $key) {
+                    $redis->del($key);
+                }
             }
-        } while ($cursor !== 0 && $cursor !== '0');
+        } while ($cursor !== '0');
     }
 
-    /**
-     * Flush cache berdasarkan tag.
-     *
-     * Redis mendukung cache tags Laravel.
-     */
     public static function invalidateTag(string $tag): void
     {
+        if (! Cache::supportsTags()) {
+            static::invalidate("laporin:{$tag}:*");
+            return;
+        }
+
         Cache::tags([$tag])->flush();
     }
 
     public static function invalidateTags(array $tags): void
     {
         if (empty($tags)) {
+            return;
+        }
+
+        if (! Cache::supportsTags()) {
+            foreach ($tags as $tag) {
+                static::invalidate("laporin:{$tag}:*");
+            }
             return;
         }
 
@@ -124,7 +152,7 @@ class CacheHelper
         int $ttl,
         array $tags
     ): void {
-        if (empty($tags)) {
+        if (empty($tags) || ! Cache::supportsTags()) {
             Cache::put($key, $value, $ttl);
 
             return;
@@ -152,10 +180,10 @@ class CacheHelper
     }
 
     /**
-     * Menghapus satu namespace cache aplikasi saja.
+     * Menghapus namespace cache aplikasi saja.
      *
-     * Method ini sengaja tidak memakai Cache::flush()
-     * karena cache terhubung ke Redis production.
+     * Tidak menggunakan Cache::flush() agar Redis production
+     * tidak ikut dikosongkan secara global.
      */
     public static function flush(): bool
     {

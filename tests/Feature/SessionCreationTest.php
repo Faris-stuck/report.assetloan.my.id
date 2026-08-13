@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -14,7 +13,6 @@ class SessionCreationTest extends TestCase
 
     public function test_session_created_on_successful_login(): void
     {
-        // Create test user with is_active = true
         $user = User::factory()->create([
             'email' => 'testuser@test.com',
             'password' => Hash::make('testpass123'),
@@ -22,28 +20,20 @@ class SessionCreationTest extends TestCase
             'role' => 'superadmin',
         ]);
 
-        // Get login page first to establish session
-        $loginPage = $this->get('/login');
-        $loginPage->assertStatus(200);
+        $this->get('/login')->assertOk();
 
-        // Perform login with CSRF token
         $response = $this->post('/login', [
             'login' => 'testuser@test.com',
             'password' => 'testpass123',
         ]);
 
-        // Should redirect to dashboard (successful login)
         $response->assertRedirect();
-
-        // Verify that at least some session exists (Laravel may regenerate)
-        // In database session driver, sessions should be recorded
-        $sessionsCount = DB::table('sessions')->count();
-        $this->assertGreaterThan(0, $sessionsCount);
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotEmpty(session()->getId());
     }
 
     public function test_session_has_correct_attributes(): void
     {
-        // Create test user
         $user = User::factory()->create([
             'email' => 'sessiontest@example.com',
             'password' => Hash::make('password123'),
@@ -51,36 +41,19 @@ class SessionCreationTest extends TestCase
             'role' => 'kesiswaan',
         ]);
 
-        // Get login page first
-        $this->get('/login');
+        $this->get('/login')->assertOk();
 
-        // Login
-        $response = $this->post('/login', [
+        $this->post('/login', [
             'login' => 'sessiontest@example.com',
             'password' => 'password123',
-        ]);
+        ])->assertRedirect();
 
-        $response->assertRedirect();
-
-        // Get sessions from database
-        $sessions = DB::table('sessions')->where('user_id', $user->id)->get();
-
-        // Should have at least one session
-        $this->assertGreaterThanOrEqual(0, count($sessions));
-
-        // If session exists, verify attributes
-        if ($sessions->count() > 0) {
-            $session = $sessions->first();
-            $this->assertNotNull($session->id);
-            $this->assertEquals($user->id, $session->user_id);
-            $this->assertNotNull($session->payload);
-            $this->assertGreaterThan(0, $session->last_activity);
-        }
+        $this->assertAuthenticatedAs($user);
+        $this->assertNotEmpty(session()->getId());
     }
 
     public function test_authenticated_user_can_access_dashboard(): void
     {
-        // Create test user
         $user = User::factory()->create([
             'email' => 'dashtest@test.com',
             'password' => Hash::make('password123'),
@@ -88,26 +61,16 @@ class SessionCreationTest extends TestCase
             'role' => 'superadmin',
         ]);
 
-        // Get login page first to establish session/CSRF
-        $this->get('/login');
+        $this->get('/login')->assertOk();
 
-        // Login with correct redirect expectations
-        $loginResponse = $this->post('/login', [
+        $this->post('/login', [
             'login' => 'dashtest@test.com',
             'password' => 'password123',
-        ]);
+        ])->assertRedirect();
 
-        // Should redirect (to dashboard or home, either is fine since we're testing session creation)
-        $loginResponse->assertRedirect();
+        $this->assertAuthenticatedAs($user);
 
-        // Follow redirect to dashboard
-        $dashboardResponse = $this->followingRedirects()
-            ->post('/login', [
-                'login' => 'dashtest@test.com',
-                'password' => 'password123',
-            ]);
-
-        // Dashboard or home should be accessible
-        $dashboardResponse->assertStatus(200);
+        $this->get('/dashboard')
+            ->assertOk();
     }
 }

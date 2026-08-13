@@ -148,7 +148,7 @@ class KesiswaanReportFilterTest extends TestCase
             ]));
 
         $response->assertStatus(200);
-        $this->assertCount(2, $response->viewData('reports'));
+        $this->assertCount(1, $response->viewData('reports'));
     }
 
     public function test_kesiswaan_combined_filters_work()

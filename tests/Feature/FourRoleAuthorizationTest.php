@@ -38,31 +38,31 @@ class FourRoleAuthorizationTest extends TestCase
         $this->seed();
 
         $kesiswaanNav = $this->navbarFor(User::where('role', 'kesiswaan')->firstOrFail());
-        $this->assertStringContainsString('Dashboard', $kesiswaanNav);
+        $this->assertStringContainsString('Dasbor', $kesiswaanNav);
         $this->assertStringContainsString('Kesiswaan', $kesiswaanNav);
         $this->assertStringNotContainsString('Buat Laporan', $kesiswaanNav);
         $this->assertStringNotContainsString(route('sarpras.index'), $kesiswaanNav);
-        $this->assertStringNotContainsString('>Admin<', $kesiswaanNav);
+        $this->assertStringNotContainsString('Panel Admin', $kesiswaanNav);
 
         $sarprasNav = $this->navbarFor(User::where('role', 'sarpras')->firstOrFail());
-        $this->assertStringContainsString('Dashboard', $sarprasNav);
+        $this->assertStringContainsString('Dasbor', $sarprasNav);
         $this->assertStringContainsString('Sarpras', $sarprasNav);
         $this->assertStringNotContainsString('Buat Laporan', $sarprasNav);
         $this->assertStringNotContainsString(route('kesiswaan.index'), $sarprasNav);
-        $this->assertStringNotContainsString('>Admin<', $sarprasNav);
+        $this->assertStringNotContainsString('Panel Admin', $sarprasNav);
 
         $waliNav = $this->navbarFor(User::where('role', 'wali_kelas')->firstOrFail());
-        $this->assertStringContainsString('Dashboard', $waliNav);
+        $this->assertStringContainsString('Dasbor', $waliNav);
         $this->assertStringNotContainsString('Buat Laporan', $waliNav);
         $this->assertStringNotContainsString(route('kesiswaan.index'), $waliNav);
         $this->assertStringNotContainsString(route('sarpras.index'), $waliNav);
-        $this->assertStringNotContainsString('>Admin<', $waliNav);
+        $this->assertStringNotContainsString('Panel Admin', $waliNav);
 
         $adminNav = $this->navbarFor(User::where('role', 'superadmin')->firstOrFail());
-        $this->assertStringContainsString('Dashboard', $adminNav);
+        $this->assertStringContainsString('Dasbor', $adminNav);
         $this->assertStringContainsString(route('kesiswaan.index'), $adminNav);
         $this->assertStringContainsString(route('sarpras.index'), $adminNav);
-        $this->assertStringContainsString('>Admin<', $adminNav);
+        $this->assertStringContainsString('Panel Admin', $adminNav);
         $this->assertStringNotContainsString('Buat Laporan', $adminNav);
     }
 

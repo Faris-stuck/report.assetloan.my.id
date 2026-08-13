@@ -32,7 +32,7 @@ class SessionLifecycleTest extends TestCase
     public function test_session_store_is_default()
     {
         $store = config('session.store');
-        $this->assertEquals('default', $store, 'Session store should be default to use redis driver');
+        $this->assertNull($store, 'SESSION_STORE harus null agar Laravel menggunakan default Redis/cache store yang dikonfigurasi.');
     }
 
     /**

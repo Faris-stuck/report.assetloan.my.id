@@ -24,12 +24,12 @@ class SeoTechnicalTest extends TestCase
             ->assertSee('Buat laporan perundungan, pembullyan, pelanggaran siswa, atau kerusakan fasilitas SMK Taruna Bangsa Bekasi', false)
             ->assertSee('rel="canonical"', false)
             ->assertSee('rel="sitemap"', false)
-            ->assertSee('rel="alternate" type="text/plain" title="LLM context"', false)
+            ->assertSee('rel="alternate" type="text/plain" title="Konteks LLM"', false)
             ->assertSee('property="og:image"', false)
             ->assertSee('content="summary_large_image"', false)
             ->assertSee('name="twitter:image"', false)
             ->assertSee('application/ld+json', false)
-            ->assertSee('Lapor Perundungan, Pembullyan, Pelanggaran, atau Kerusakan Fasilitas')
+            ->assertSee('Kanal laporan untuk sekolah')
             ->assertSee(route('seo.bullying-guide'), false)
             ->assertSee(route('seo.faq'), false);
     }
@@ -48,7 +48,7 @@ class SeoTechnicalTest extends TestCase
 
         $this->get(route('seo.faq'))
             ->assertOk()
-            ->assertSee('<title>FAQ LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan</title>', false)
+            ->assertSee('<title>Pertanyaan Umum LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan</title>', false)
             ->assertSee('rel="canonical" href="'.route('seo.faq').'"', false)
             ->assertSee('FAQPage', false)
             ->assertSee('WebPage', false)

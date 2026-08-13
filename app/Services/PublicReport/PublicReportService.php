@@ -12,9 +12,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class PublicReportService
 {
@@ -26,8 +28,10 @@ class PublicReportService
     public function create(Request $request, array $validated): array
 {
     for ($attempt = 0; $attempt < self::REPORT_NUMBER_RETRY_LIMIT; $attempt++) {
+        $storedPaths = [];
+
         try {
-            [$report, $accessCode] = DB::transaction(function () use ($request, $validated) {
+            [$report, $accessCode] = DB::transaction(function () use ($request, $validated, &$storedPaths) {
                 $accessCode = (string) random_int(100000, 999999);
 
                 $report = Report::create(
@@ -74,10 +78,67 @@ class PublicReportService
                 }
 
                 foreach ($request->file('attachments', []) as $file) {
+
+                    /*
+                     * Security:
+                     * Jangan hanya mengandalkan FormRequest.
+                     * Attachment diverifikasi kembali tepat sebelum
+                     * masuk ke private storage.
+                     */
+
+                    if (! $file->isValid()) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Salah satu file lampiran tidak valid.',
+                        ]);
+                    }
+
+                    if ($file->getSize() > 4 * 1024 * 1024) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Ukuran setiap lampiran maksimal 4 MB.',
+                        ]);
+                    }
+
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+                    if (! $finfo) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Tipe file tidak dapat diverifikasi.',
+                        ]);
+                    }
+
+                    $detectedMime = finfo_file(
+                        $finfo,
+                        $file->getRealPath()
+                    );
+
+                    finfo_close($finfo);
+
+                    $allowedMimes = [
+                        'image/jpeg',
+                        'image/png',
+                        'image/webp',
+                        'application/pdf',
+                    ];
+
+                    if (! in_array($detectedMime, $allowedMimes, true)) {
+                        throw ValidationException::withMessages([
+                            'attachments' => 'Tipe file lampiran tidak diizinkan.',
+                        ]);
+                    }
+
+                    /*
+                     * Gunakan MIME hasil deteksi server, bukan MIME
+                     * yang diklaim browser.
+                     */
                     $path = $file->store(
                         'report-attachments/'.$report->id,
                         'private'
                     );
+
+                    /*
+                     * Filesystem tidak mengikuti rollback database.
+                     */
+                    $storedPaths[] = $path;
 
                     ReportAttachment::create([
                         'report_id' => $report->id,
@@ -92,13 +153,14 @@ class PublicReportService
                         'attachment_type' => 'initial_evidence',
                     ]);
 
-                    Log::debug('File attachment stored for public report', [
-                        'report_id' => $report->id,
-                        'original_filename' => $file->getClientOriginalName(),
-                        'mime_type' => $file->getMimeType(),
-                        'size' => $file->getSize(),
-                        'stored_path' => $path,
-                    ]);
+                    Log::debug(
+                        'File attachment stored for public report',
+                        [
+                            'report_id' => $report->id,
+                            'mime_type' => $file->getMimeType(),
+                            'size' => $file->getSize(),
+                        ]
+                    );
                 }
 
                 $this->history(
@@ -125,6 +187,16 @@ class PublicReportService
                 $notificationSent,
             ];
         } catch (QueryException $exception) {
+            foreach ($storedPaths as $storedPath) {
+                try {
+                    Storage::disk('private')->delete(
+                        $storedPath
+                    );
+                } catch (Throwable) {
+                    // Jangan menutupi exception database asli.
+                }
+            }
+
             if ($this->isReportIdentifierCollision($exception)) {
                 continue;
             }
@@ -132,6 +204,18 @@ class PublicReportService
             throw $this->convertQueryExceptionToValidationException(
                 $exception
             );
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $storedPath) {
+                try {
+                    Storage::disk('private')->delete(
+                        $storedPath
+                    );
+                } catch (Throwable) {
+                    // Jangan menutupi exception asli.
+                }
+            }
+
+            throw $exception;
         }
     }
 
@@ -160,7 +244,7 @@ class PublicReportService
             'related_class_id' => $validated['related_class_id'] ?? null,
             'location_id' => $validated['location_id'] ?? null,
             'custom_location' => $validated['custom_location'] ?? null,
-            'incident_date' => $validated['incident_date'] ?? now()->toDateString(),
+            'incident_date' => $validated['incident_date'],
             'incident_time' => $validated['incident_time'] ?? null,
             'description' => $validated['description'],
             'urgency' => $validated['urgency'],
@@ -198,10 +282,13 @@ class PublicReportService
 
             return true;
         } catch (\Throwable $e) {
-            Log::error('Gagal kirim email notifikasi laporan: '.$e->getMessage(), [
-                'report_id' => $report->id,
-                'email' => $email,
-            ]);
+            Log::warning(
+                'Gagal kirim email notifikasi laporan.',
+                [
+                    'report_id' => $report->id,
+                    'exception' => $e::class,
+                ]
+            );
 
             return false;
         }
