@@ -9,8 +9,7 @@ return [
     |
     | This file is for storing the credentials for third party services such
     | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
+    | location for this type of service credentials.
     |
     */
 
@@ -33,6 +32,12 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'waha' => [
+        'url' => env('WAHA_URL', 'https://waha.assetloan.my.id'),
+        'api_key' => env('WAHA_API_KEY'),
+        'session' => env('WAHA_SESSION', 'default'),
     ],
 
 ];
