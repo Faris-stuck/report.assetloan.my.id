@@ -1,3 +1,5 @@
+FROM composer:2 AS composer
+
 FROM php:8.3-apache
 
 # Note: Node.js removed - npm builds happen during CI/CD phase, not in production container
@@ -20,12 +22,22 @@ RUN apt-get update \
     && sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
     && rm -rf /var/lib/apt/lists/*
 
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
+
 WORKDIR /var/www/html
+COPY composer.json composer.lock ./
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --optimize-autoloader
+
 COPY . /var/www/html
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/start.sh /usr/local/bin/laporin-start
 RUN chmod +x /usr/local/bin/laporin-start \
-    && for path in app bootstrap config database lang public resources routes; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 600 {} +; fi; done \
+    && for path in app bootstrap config database lang public resources routes vendor; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 600 {} +; fi; done \
     && touch /var/www/html/.env \
     && chmod 640 /var/www/html/.env \
     && mkdir -p storage/app/private storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
