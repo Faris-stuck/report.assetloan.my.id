@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Helpers\CacheHelper;
+use App\Jobs\SendReportNotifications;
 use App\Models\Report;
 
 class ReportObserver
@@ -15,6 +16,13 @@ class ReportObserver
     public function updated(Report $report): void
     {
         $this->clearCache();
+
+        if ($report->wasChanged('status')) {
+            SendReportNotifications::dispatch(
+                $report->id,
+                'status_changed'
+            );
+        }
     }
 
     public function deleted(Report $report): void
@@ -40,9 +48,6 @@ class ReportObserver
         ]);
 
         CacheHelper::invalidate('laporin:report:*');
-
-        // Invalidate per-user dashboard stats & chart cache
-        // so admin/kesiswaan/sarpras see fresh counts after any report change.
         CacheHelper::invalidate('laporin:dashboard:stats:*');
         CacheHelper::invalidate('laporin:dashboard:chart:*');
     }
