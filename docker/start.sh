@@ -8,14 +8,15 @@ echo "============================================================"
 echo " LAPORIN CONTAINER STARTUP"
 echo "============================================================"
 
-# Production Laravel runs inside Docker and must reach the primary
-# MariaDB container over the Docker network. 127.0.0.1:13306 is the
-# developer's SSH tunnel and only exists on the developer workstation.
-# Normalize the known local-tunnel configuration when it is accidentally
-# copied into the production container, before Laravel caches config.
-if [[ "${APP_ENV:-}" == "production" ]] && [[ "${DB_HOST:-}" == "127.0.0.1" || "${DB_HOST:-}" == "localhost" ]] && [[ "${DB_PORT:-}" == "13306" ]]; then
-    echo "[WARN] Production DB points to the local SSH tunnel 127.0.0.1:13306."
-    echo "[FIX] Switching production database connection to laporin-db:3306."
+# 127.0.0.1:13306 is the developer workstation's SSH tunnel.
+# A production Laravel container cannot reach that tunnel because
+# 127.0.0.1 inside the container refers to the container itself.
+# If this exact tunnel configuration is accidentally supplied to a
+# Docker deployment, switch it to the internal MariaDB service before
+# Laravel builds its configuration cache.
+if [[ -f /.dockerenv ]] && [[ "${DB_PORT:-}" == "13306" ]] && [[ "${DB_HOST:-}" == "127.0.0.1" || "${DB_HOST:-}" == "localhost" ]]; then
+    echo "[WARN] Docker container received developer DB target 127.0.0.1:13306."
+    echo "[FIX] Using internal production database laporin-db:3306."
     export DB_HOST="laporin-db"
     export DB_PORT="3306"
 fi
