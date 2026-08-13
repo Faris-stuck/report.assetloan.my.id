@@ -27,10 +27,6 @@ COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
-# composer.json currently contains predis/predis while composer.lock is stale.
-# Resolve the dependency graph during the image build so production does not fail
-# before vendor/autoload.php is created. Scripts are disabled until application
-# source code has been copied below.
 RUN composer update \
     --no-dev \
     --no-interaction \
@@ -43,7 +39,7 @@ COPY . /var/www/html
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/start.sh /usr/local/bin/laporin-start
 RUN chmod +x /usr/local/bin/laporin-start \
-    && for path in app bootstrap config database lang public resources routes vendor; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 600 {} +; fi; done \
+    && for path in app bootstrap config database lang public resources routes vendor; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 644 {} +; fi; done \
     && touch /var/www/html/.env \
     && chmod 640 /var/www/html/.env \
     && mkdir -p storage/app/private storage/app/public storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
