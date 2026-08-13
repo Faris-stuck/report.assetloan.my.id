@@ -8,7 +8,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        git unzip libzip-dev libicu-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libmagickwand-dev libsqlite3-dev \
+        curl git unzip libzip-dev libicu-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libmagickwand-dev libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) pdo_mysql pdo_sqlite gd zip intl mbstring \
     && pecl install imagick \
@@ -50,8 +50,8 @@ RUN chmod +x /usr/local/bin/laporin-start \
     && chmod -R 700 storage bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache /var/www/html/.env
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/up || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD curl -fsS http://localhost:8080/up >/dev/null || exit 1
 
 EXPOSE 8080
 CMD ["laporin-start"]
