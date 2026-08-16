@@ -1,0 +1,27 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: laporin-redis
+    env_file:
+      - .laporin-production.env
+    command:
+      - sh
+      - -lc
+      - exec redis-server --appendonly yes --appendfsync everysec --requirepass "$$REDIS_PASSWORD" --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - laporin-redis-data:/data
+    networks:
+      cf-network:
+        aliases:
+          - laporin-redis
+    ports:
+      - "127.0.0.1:6380:6379"
+    restart: unless-stopped
+
+volumes:
+  laporin-redis-data:
+    external: true
+
+networks:
+  cf-network:
+    external: true

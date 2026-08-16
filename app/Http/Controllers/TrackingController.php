@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\ReportNote;
 use App\Models\ReportStatusHistory;
-use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,8 +12,6 @@ use Illuminate\View\View;
 
 class TrackingController extends Controller
 {
-    use ReportNotificationTrait;
-    private const TRACKING_SESSION_TTL_SECONDS = 1800;
 
     public function form(): View
     {
@@ -41,22 +38,35 @@ class TrackingController extends Controller
             return back()->withErrors(['report_number' => 'Nomor laporan atau kode akses tidak valid.']);
         }
 
-        session([
-            'track_report_id' => $report->id,
-            'track_access_ok' => true,
-            'track_verified_at' => now()->timestamp,
-        ]);
+        // Tracking access is bound to the current client IP instead of a Laravel session.
+        // The report stores only an HMAC hash of the submission IP, never the raw IP.
+        if (! $this->deviceMatchesReport($request, $report)) {
+            return back()->withErrors(['report_number' => 'Laporan hanya dapat dilacak dari perangkat/jaringan yang digunakan saat laporan dibuat.']);
+        }
 
-        return view('public.track-result', ['report' => $report]);
+        $trackingProof = $report->id.'|'.hash_hmac('sha256', (string) $report->access_code_hash, config('app.key'));
+
+        return response()
+            ->view('public.track-result', ['report' => $report])
+            ->withCookie(cookie(
+                'laporin_tracking_proof',
+                $trackingProof,
+                15,
+                '/',
+                null,
+                $request->isSecure(),
+                true,
+                false,
+                'lax'
+            ));
     }
 
     public function addInfo(Request $request, Report $report): RedirectResponse
     {
-        if (! $this->hasTrackingAccess($report)) {
-            $this->clearTrackingSession();
+        if (! $this->deviceMatchesReport($request, $report) || ! $this->trackingProofMatchesReport($request, $report)) {
             return redirect()
                 ->route('track.form')
-                ->withErrors(['access_code' => 'Sesi tracking sudah habis. Masukkan nomor laporan dan kode akses lagi.']);
+                ->withErrors(['access_code' => 'Akses tracking ditolak karena alamat IP perangkat tidak cocok dengan perangkat saat laporan dibuat.']);
         }
 
         if (! in_array($report->status, ['memerlukan_informasi', 'dibuka_kembali', 'menunggu_konfirmasi'], true)) {
@@ -86,19 +96,17 @@ class TrackingController extends Controller
                 'public_note' => $note,
             ]);
 
-            $this->kirimNotifikasiStatus($report, $this->statusLabel('dibuka_kembali'), $note);
         }
 
         return back()->with('status', 'Informasi tambahan dikirim.');
     }
 
-    public function confirmComplete(Report $report): RedirectResponse
+    public function confirmComplete(Request $request, Report $report): RedirectResponse
     {
-        if (! $this->hasTrackingAccess($report)) {
-            $this->clearTrackingSession();
+        if (! $this->deviceMatchesReport($request, $report) || ! $this->trackingProofMatchesReport($request, $report)) {
             return redirect()
                 ->route('track.form')
-                ->withErrors(['access_code' => 'Sesi tracking sudah habis. Masukkan nomor laporan dan kode akses lagi.']);
+                ->withErrors(['access_code' => 'Akses tracking ditolak karena alamat IP perangkat tidak cocok dengan perangkat saat laporan dibuat.']);
         }
 
         if ($report->status !== 'menunggu_konfirmasi') {
@@ -116,35 +124,53 @@ class TrackingController extends Controller
             'public_note' => $publicNote,
         ]);
 
-        $this->kirimNotifikasiStatus($report, $this->statusLabel('selesai'), $publicNote);
 
         return back()->with('status', 'Laporan dikonfirmasi selesai.');
     }
 
-    /**
-     * Pure validation function - no side effects.
-     * Returns boolean based on session TTL, ownership, and verification status.
-     * Session clearing is handled by error handlers in controller methods.
-     */
-    private function hasTrackingAccess(Report $report): bool
+    private function trackingProofMatchesReport(Request $request, Report $report): bool
     {
-        $verifiedAt = (int) session('track_verified_at', 0);
-        $isFresh = $verifiedAt > 0 && now()->timestamp - $verifiedAt <= self::TRACKING_SESSION_TTL_SECONDS;
-
-        if (! $isFresh) {
+        $proof = $request->cookie('laporin_tracking_proof');
+        if (! is_string($proof) || ! str_contains($proof, '|')) {
             return false;
         }
 
-        return session('track_report_id') === $report->id && session('track_access_ok') === true;
+        [$reportId, $proofHash] = explode('|', $proof, 2);
+        if ((int) $reportId !== (int) $report->id || ! preg_match('/^[a-f0-9]{64}$/', $proofHash)) {
+            return false;
+        }
+
+        // The proof contains only an HMAC of the access code; the access code itself is never stored in the cookie.
+        // This prevents a device-only cookie from authorizing state-changing tracking actions.
+        // Reconstruct a stable verifier from the stored password hash. The plaintext access code is not retained.
+        return hash_equals(
+            $proofHash,
+            hash_hmac('sha256', (string) $report->access_code_hash, config('app.key'))
+        );
     }
 
     /**
-     * Clears all tracking session keys.
-     * Called only from error handlers to atomically clear session on validation failure.
+     * Bind public tracking actions to the client IP used when the report was submitted.
+     * The database stores an HMAC, so the raw IP is never persisted in the report.
      */
-    private function clearTrackingSession(): void
+    private function deviceMatchesReport(Request $request, Report $report): bool
     {
-        session()->forget(['track_report_id', 'track_access_ok', 'track_verified_at']);
+        $deviceId = $request->cookie('laporin_device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            return false;
+        }
+
+        $deviceHash = hash_hmac('sha256', $deviceId, config('app.key'));
+        if (is_string($report->submitted_device_hash) && $report->submitted_device_hash !== '') {
+            return hash_equals($report->submitted_device_hash, $deviceHash);
+        }
+
+        // Backward compatibility for reports created before device binding existed.
+        $ip = $request->ip();
+        if (! is_string($ip) || $ip === '' || ! is_string($report->submitted_ip_hash) || $report->submitted_ip_hash === '') {
+            return false;
+        }
+        return hash_equals($report->submitted_ip_hash, hash_hmac('sha256', $ip, config('app.key')));
     }
 
     private function normalizeReportNumber(string $value): string

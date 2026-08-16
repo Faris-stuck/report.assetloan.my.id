@@ -5,7 +5,6 @@ namespace App\Services\Role\Sarpras;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
-use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,8 +14,6 @@ use Throwable;
 
 class SarprasProcessor
 {
-    use ReportNotificationTrait;
-
     private const PROCESSABLE_STATUSES = ['menunggu_verifikasi', 'memerlukan_informasi', 'dibuka_kembali', 'sedang_ditangani'];
 
     public function process(Request $request, Report $report): void
@@ -228,11 +225,6 @@ class SarprasProcessor
         /*
          * Email sesudah transaction COMMIT.
          */
-        $this->kirimNotifikasiStatus(
-            $updatedReport,
-            $this->statusLabel($new),
-            $publicNote
-        );
     }
 
     public function reject(Request $request, Report $report): void
@@ -317,12 +309,6 @@ class SarprasProcessor
             $updatedReport,
             $publicNote,
         ] = $notification;
-
-        $this->kirimNotifikasiStatus(
-            $updatedReport,
-            $this->statusLabel('ditolak'),
-            $publicNote
-        );
     }
 
     private function safeOriginalName(string $name): string

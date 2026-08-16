@@ -67,6 +67,11 @@ a:hover { color: var(--laporin-green-900); }
     color: var(--laporin-green-700);
     box-shadow: inset 0 0 0 1px rgba(0, 166, 81, .18);
 }
+.brand-logo {
+    display: block;
+    object-fit: contain;
+    padding: .18rem;
+}
 .app-navbar .nav-link {
     border-radius: 999px;
     padding-inline: .9rem !important;

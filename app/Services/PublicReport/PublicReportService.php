@@ -2,6 +2,7 @@
 
 namespace App\Services\PublicReport;
 
+use App\Jobs\SendReportNotifications;
 use App\Models\BullyingDetail;
 use App\Models\DamageDetail;
 use App\Models\Report;
@@ -11,7 +12,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -173,18 +173,18 @@ class PublicReportService
                 return [$report, $accessCode];
             });
 
-            // PENTING:
-            // Email dikirim SETELAH transaction database berhasil COMMIT.
-            // Kegagalan SMTP tidak membatalkan laporan yang sudah tersimpan.
-            $notificationSent = $this->kirimNotifikasiEmail(
-                $report,
+            // Notifikasi email + WhatsApp dikirim setelah transaksi database
+            // berhasil commit. Kegagalan provider tidak membatalkan laporan.
+            SendReportNotifications::dispatch(
+                $report->id,
+                'created',
                 $accessCode
             );
 
             return [
                 $report,
                 $accessCode,
-                $notificationSent,
+                true,
             ];
         } catch (QueryException $exception) {
             foreach ($storedPaths as $storedPath) {
@@ -252,52 +252,20 @@ class PublicReportService
             'assigned_to_role' => $validated['report_type'] === 'violation' ? 'kesiswaan' : 'sarpras',
             'consent_accepted_at' => now(),
             'submitted_ip_hash' => hash_hmac('sha256', $this->clientIpForAudit($request), config('app.key')),
+            'submitted_device_hash' => hash_hmac('sha256', $this->deviceIdForAudit($request), config('app.key')),
             'submitted_user_agent' => substr((string) $request->userAgent(), 0, 1000),
         ];
     }
 
-    private function kirimNotifikasiEmail(Report $report, string $accessCode): bool
+    private function clientIpForAudit(Request $request): string
     {
-        $email = $report->reporter_email;
-        if (! $email) {
-            return false;
-        }
-
-        try {
-            Mail::send(
-                'emails.laporan-diterima',
-                [
-                    'report' => $report,
-                    'accessCode' => $accessCode,
-                    'reportNumber' => $report->report_number,
-                    'reportTypeLabel' => $report->report_type === 'violation' ? 'Perundungan / Pelanggaran' : 'Kerusakan Fasilitas',
-                    'statusLabel' => 'Menunggu Verifikasi',
-                ],
-                function ($message) use ($email, $report) {
-                    $message->to($email)
-                        ->subject("[LAPORIN] Laporan {$report->report_number} berhasil diterima")
-                        ->from(config('mail.from.address', 'noreply@laporin.sch.id'), config('mail.from.name', 'LAPORIN'));
-                }
-            );
-
-            return true;
-        } catch (\Throwable $e) {
-            Log::warning(
-                'Gagal kirim email notifikasi laporan.',
-                [
-                    'report_id' => $report->id,
-                    'exception' => $e::class,
-                ]
-            );
-
-            return false;
-        }
+        return $request->ip() ?? 'unknown';
     }
 
-    private function clientIpForAudit(Request $request): string
-{
-    return $request->ip() ?? 'unknown';
-}
+    private function deviceIdForAudit(Request $request): string
+    {
+        return (string) ($request->cookie('laporin_device_id') ?: 'unknown');
+    }
 
     private function generateReportNumber(): string
     {

@@ -17,6 +17,8 @@ Route::get('/', [PublicReportController::class, 'create'])->name('public.report'
 Route::get('/lapor-pembullyan-smk-taruna-bangsa-bekasi', [SeoController::class, 'bullyingGuide'])->name('seo.bullying-guide');
 Route::get('/faq-laporin-smk-taruna-bangsa-bekasi', [SeoController::class, 'faq'])->name('seo.faq');
 Route::get('/lapor/{qr?}', [PublicReportController::class, 'create'])->name('public.report.qr');
+Route::get('/lapor/langkah/{step}', [PublicReportController::class, 'wizardStep'])->whereNumber('step')->name('public.report.step');
+Route::post('/lapor/langkah/{step}', [PublicReportController::class, 'wizardStoreStep'])->whereNumber('step')->middleware('throttle:public-wizard')->name('public.report.step.store');
 Route::post('/lapor', [PublicReportController::class, 'store'])->middleware('throttle:public-reports')->name('public.report.store');
 Route::get('/lapor-sukses/{report:public_token}', [PublicReportController::class, 'success'])->name('public.report.success');
 

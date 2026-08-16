@@ -55,7 +55,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark app-navbar sticky-top" aria-label="Navigasi utama LAPORIN">
     <div class="container mobile-shell">
         <a class="navbar-brand" href="{{ route('public.report') }}" aria-label="Beranda LAPORIN">
-            <span class="brand-mark">✓</span>
+            <img class="brand-mark brand-logo" src="{{ asset('images/branding/logo tb.png') }}" alt="Logo SMK Taruna Bangsa" width="38" height="38">
             <span>LAPORIN</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Buka menu navigasi utama">
@@ -99,7 +99,6 @@
                     <div class="nav-user-chip text-truncate small" title="{{ $currentUser->name }} · {{ $currentUser->role }}">{{ $currentUser->name }} · {{ str_replace('_',' ', $currentUser->role) }}</div>
                     <form method="POST" action="{{ route('logout') }}">@csrf<button class="btn btn-sm btn-light w-100 w-lg-auto">Keluar</button></form>
                 @else
-                    <a class="btn btn-sm btn-light" href="{{ route('login') }}">Login Pengelola</a>
                 @endauth
             </div>
         </div>

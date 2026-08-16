@@ -15,13 +15,13 @@ echo "============================================================"
 if [[ -f /.dockerenv ]]; then
     if [[ "${DB_PORT:-}" == "13306" ]] && [[ "${DB_HOST:-}" == "127.0.0.1" || "${DB_HOST:-}" == "localhost" ]]; then
         echo "[WARN] Docker container received developer DB target 127.0.0.1:13306."
-        echo "[FIX] Using internal production database laporin-role-preview-db:3306."
-        export DB_HOST="laporin-role-preview-db"
+        echo "[FIX] Using internal production database laporin-db:3306."
+        export DB_HOST="laporin-db"
         export DB_PORT="3306"
     elif [[ -z "${DB_HOST:-}" ]]; then
         echo "[WARN] DB_HOST is empty inside Docker."
-        echo "[FIX] Using internal production database laporin-role-preview-db:3306."
-        export DB_HOST="laporin-role-preview-db"
+        echo "[FIX] Using internal production database laporin-db:3306."
+        export DB_HOST="laporin-db"
         export DB_PORT="3306"
     fi
 fi
@@ -41,6 +41,8 @@ php artisan route:cache
 
 echo "[INFO] Building view cache..."
 php artisan view:cache
+echo "[INFO] Building event cache..."
+php artisan event:cache
 
 echo "[OK] Laravel startup preparation completed."
 echo "[INFO] Starting Apache..."

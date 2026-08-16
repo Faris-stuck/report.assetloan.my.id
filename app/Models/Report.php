@@ -45,6 +45,7 @@ class Report extends Model
         'verified_by',
         'verified_at',
         'submitted_ip_hash',
+        'submitted_device_hash',
         'submitted_user_agent',
         'violation_type_id',
         'damage_category_id',

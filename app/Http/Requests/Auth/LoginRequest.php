@@ -23,10 +23,12 @@ class LoginRequest extends FormRequest
             'login' => [
                 'required',
                 'string',
+                'max:255',
             ],
             'password' => [
                 'required',
                 'string',
+                'max:255',
             ],
         ];
     }
@@ -35,7 +37,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $login = $this->string('login')->toString();
+        $login = trim($this->string('login')->toString());
         $email = $login;
 
         if (! str_contains($login, '@')) {
@@ -47,14 +49,14 @@ class LoginRequest extends FormRequest
             $email = $student?->user?->email ?? $login;
         }
 
+        // Eloquent/Auth uses parameterized queries; no SQL is assembled from user input.
         if (! Auth::attempt([
             'email' => $email,
             'password' => $this->password,
             'is_active' => true,
         ], $this->boolean('remember'))) {
-            RateLimiter::hit(
-                $this->throttleKey()
-            );
+            RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->ipThrottleKey(), 600);
 
             throw ValidationException::withMessages([
                 'login' => __('auth.failed'),
@@ -67,28 +69,23 @@ class LoginRequest extends FormRequest
             ])
             ->save();
 
-        RateLimiter::clear(
-            $this->throttleKey()
-        );
+        RateLimiter::clear($this->throttleKey());
     }
 
     public function ensureIsNotRateLimited(): void
     {
-        if (
-            ! RateLimiter::tooManyAttempts(
-                $this->throttleKey(),
-                5
-            )
-        ) {
+        $loginLimit = RateLimiter::tooManyAttempts($this->throttleKey(), 5);
+        $ipLimit = RateLimiter::tooManyAttempts($this->ipThrottleKey(), 20);
+
+        if (! $loginLimit && ! $ipLimit) {
             return;
         }
 
-        event(
-            new Lockout($this)
-        );
+        event(new Lockout($this));
 
-        $seconds = RateLimiter::availableIn(
-            $this->throttleKey()
+        $seconds = max(
+            RateLimiter::availableIn($this->throttleKey()),
+            RateLimiter::availableIn($this->ipThrottleKey())
         );
 
         throw ValidationException::withMessages([
@@ -101,12 +98,13 @@ class LoginRequest extends FormRequest
 
     public function throttleKey(): string
     {
-        return Str::transliterate(
-            Str::lower(
-                $this->string('login')
-            )
-            .'|'
-            .($this->ip() ?? 'unknown')
-        );
+        return 'login:credential:' . Str::transliterate(
+            Str::lower(trim($this->string('login')->toString()))
+        ) . '|' . ($this->ip() ?? 'unknown');
+    }
+
+    public function ipThrottleKey(): string
+    {
+        return 'login:ip:' . ($this->ip() ?? 'unknown');
     }
 }

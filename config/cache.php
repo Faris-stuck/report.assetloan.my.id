@@ -15,7 +15,10 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'database'),
+    'default' => env('CACHE_STORE', 'failover'),
+
+    // Keep rate-limit counters in Redis so quotas are shared across workers.
+    'limiter' => env('CACHE_LIMITER', 'redis'),
 
     /*
     |--------------------------------------------------------------------------

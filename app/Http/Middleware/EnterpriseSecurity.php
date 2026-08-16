@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Str;
 
 class EnterpriseSecurity
 {
@@ -14,7 +15,16 @@ class EnterpriseSecurity
     {
         $clientIp = $request->ip() ?? 'unknown';
 
-        $key = 'enterprise:ip:'.$clientIp;
+        // Browsers cannot reliably expose private/LAN IPs to the server.
+        // Use a server-issued device identifier for per-device controls.
+        $deviceId = $request->cookie('laporin_device_id');
+        $hadDeviceCookie = is_string($deviceId) && $deviceId !== '';
+        if (! is_string($deviceId) || ! preg_match('/^[A-Fa-f0-9-]{32,80}$/', $deviceId)) {
+            $deviceId = (string) Str::uuid();
+            $request->cookies->set('laporin_device_id', $deviceId);
+        }
+
+        $key = 'enterprise:device:'.hash_hmac('sha256', $deviceId, config('app.key'));
         $maxAttempts = 300;
         $decay = 60;
 
@@ -29,61 +39,16 @@ class EnterpriseSecurity
 
         RateLimiter::hit($key, $decay);
 
-        $content = strtolower(
-            $request->getContent() ?: json_encode($request->all())
-        );
+        // Do not reject arbitrary report text using SQL keyword matching.
+        // Eloquent/query-builder parameterization is the application SQL boundary;
+        // Cloudflare/WAF and route-specific throttles handle abusive traffic.
 
-        $suspiciousPatterns = [
-            'union select',
-            ' or 1=1',
-            '--',
-            '/*',
-            '*/',
-            'sleep(',
-            'benchmark(',
-            'information_schema',
-            'load_file(',
-        ];
+        $response = $next($request);
 
-        foreach ($suspiciousPatterns as $pattern) {
-            if (strpos($content, $pattern) !== false) {
-                Log::warning('Suspicious payload detected', [
-                    'ip' => $clientIp,
-                    'pattern' => $pattern,
-                    'path' => $request->path(),
-                ]);
-
-                return response('Bad request', 400);
-            }
+        if (! $hadDeviceCookie) {
+            $response->headers->setCookie(cookie('laporin_device_id', $deviceId, 60 * 24 * 365, '/', null, $request->isSecure(), true, false, 'lax'));
         }
 
-        $userAgent = strtolower(
-            $request->header('User-Agent', '')
-        );
-
-        $blockedUserAgents = [
-            'sqlmap',
-            'wget',
-            'curl',
-            'python-requests',
-            'nikto',
-            'acunetix',
-        ];
-
-        foreach ($blockedUserAgents as $blockedUserAgent) {
-            if (
-                $userAgent !== ''
-                && str_contains($userAgent, $blockedUserAgent)
-            ) {
-                Log::warning('Blocked bad user-agent', [
-                    'ip' => $clientIp,
-                    'ua' => $userAgent,
-                ]);
-
-                return response('Forbidden', 403);
-            }
-        }
-
-        return $next($request);
+        return $response;
     }
 }

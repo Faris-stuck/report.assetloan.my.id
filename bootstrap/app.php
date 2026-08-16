@@ -38,6 +38,9 @@ return Application::configure(basePath: dirname(__DIR__))
             );
         }
 
+        // Use Redis-backed throttle counters so limits are global across app workers.
+        $middleware->throttleWithRedis();
+
         $middleware->web(append: [
             SecurityHeaders::class,
             EnterpriseSecurity::class,
@@ -95,11 +98,24 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->booted(function (): void {
+        RateLimiter::for('public-wizard', function (Request $request) {
+            $device = $request->cookie('laporin_device_id') ?: ($request->ip() ?? 'unknown');
+            return Limit::perMinute(30)->by('public-wizard-device:' . hash_hmac('sha256', (string) $device, config('app.key')));
+        });
+
         RateLimiter::for(
             'public-reports',
             function (Request $request) {
-                return Limit::perMinutes(30, 5)
-                    ->by($request->ip() ?? 'unknown');
+                $ip = (string) ($request->ip() ?: 'unknown');
+                $device = (string) ($request->cookie('laporin_device_id') ?: 'unknown');
+                $appKey = (string) config('app.key');
+
+                return [
+                    Limit::perMinutes(120, 5)
+                        ->by('public-report-ip:' . hash_hmac('sha256', $ip, $appKey)),
+                    Limit::perMinutes(120, 5)
+                        ->by('public-report-device:' . hash_hmac('sha256', $device, $appKey)),
+                ];
             }
         );
 

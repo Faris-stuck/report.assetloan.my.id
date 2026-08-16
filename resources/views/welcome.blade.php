@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
     <head>
         <meta charset="utf-8" />
@@ -27,12 +27,11 @@
     <body>
         <main class="page-shell">
             <article class="card">
-                <div class="brand"><span class="brand-mark">✓</span>LAPORIN</div>
+                <div class="brand"><img src="{{ asset('images/branding/logo tb.png') }}" alt="Logo SMK Taruna Bangsa" style="width:2.25rem;height:2.25rem;border-radius:9999px;background:#fff;padding:.2rem;object-fit:contain;">LAPORIN</div>
                 <h1>Selamat datang di LAPORIN</h1>
                 <p>LAPORIN adalah kanal pelaporan perundungan dan kerusakan fasilitas untuk warga SMK Taruna Bangsa Bekasi. Pelapor publik dapat mengirim laporan tanpa login, sementara pengelola dapat masuk untuk memantau dan menindaklanjuti laporan.</p>
                 <div class="actions">
                     <a href="{{ route('public.report') }}" class="button button-primary">Buat Laporan</a>
-                    <a href="{{ route('login') }}" class="button button-secondary">Login Pengelola</a>
                 </div>
                 <p class="note">Jika belum terdaftar sebagai pengelola, silakan hubungi admin sekolah untuk mendapatkan akses masuk.</p>
             </article>

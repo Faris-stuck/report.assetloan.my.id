@@ -13,3 +13,14 @@ storage/framework/cache/data
 storage/framework/cache/data/**
 storage/app/private/**
 storage/app/public/**
+**/*.bak
+**/*.backup
+**/*.old
+**/*.orig
+.backups-wizard/
+
+.laporin-production.env*
+
+PHASE_*.md
+
+.sentinelx-backups/

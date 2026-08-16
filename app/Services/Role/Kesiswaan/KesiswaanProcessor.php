@@ -7,15 +7,12 @@ use App\Models\ReportStatusHistory;
 use App\Models\Student;
 use App\Models\StudentViolation;
 use App\Models\ViolationType;
-use App\Traits\ReportNotificationTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class KesiswaanProcessor
 {
-    use ReportNotificationTrait;
-
     private const PROCESSABLE_STATUSES = ['menunggu_verifikasi', 'memerlukan_informasi', 'dibuka_kembali'];
 
     public function process(Request $request, Report $report): void
@@ -193,13 +190,6 @@ class KesiswaanProcessor
         /*
          * Email setelah DB COMMIT.
          */
-        $this->kirimNotifikasiStatus(
-            $updatedReport,
-            $this->statusLabel(
-                'sedang_ditangani'
-            ),
-            $publicNote
-        );
     }
 
     public function reject(Request $request, Report $report): void
@@ -279,12 +269,6 @@ class KesiswaanProcessor
             $updatedReport,
             $publicNote,
         ] = $notification;
-
-        $this->kirimNotifikasiStatus(
-            $updatedReport,
-            $this->statusLabel('ditolak'),
-            $publicNote
-        );
     }
 
     public function complete(Request $request, Report $report): void
@@ -363,14 +347,6 @@ class KesiswaanProcessor
             $updatedReport,
             $publicNote,
         ] = $notification;
-
-        $this->kirimNotifikasiStatus(
-            $updatedReport,
-            $this->statusLabel(
-                'menunggu_konfirmasi'
-            ),
-            $publicNote
-        );
     }
 
 }
