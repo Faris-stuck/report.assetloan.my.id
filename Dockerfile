@@ -27,7 +27,7 @@ COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
-RUN composer update \
+RUN composer install \
     --no-dev \
     --no-interaction \
     --no-progress \

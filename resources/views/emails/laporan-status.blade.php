@@ -1,18 +1,2 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Perubahan Status Laporan - {{ $report->report_number }}</title>
-</head>
-<body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
-    <h2>LAPORIN - SMK Taruna Bangsa Bekasi</h2>
-    <p>Yth. {{ $report->reporter_name }},</p>
-    <p>Status laporan Anda telah diperbarui.</p>
-    <p><strong>Nomor Laporan:</strong> {{ $report->report_number }}</p>
-    <p><strong>Status:</strong> {{ $statusLabel }}</p>
-    <p><strong>Judul:</strong> {{ $report->title }}</p>
-    <p>Silakan gunakan fitur Lacak Status di website LAPORIN untuk melihat detail dan riwayat laporan.</p>
-    <p>Pesan ini dikirim otomatis. Mohon tidak membalas email ini.</p>
-</body>
-</html>
+<html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>LAPORIN — Notifikasi {{ $report->report_number }}</title></head><body style="margin:0;padding:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#222;"><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="padding:24px 12px;"><table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;"><tr><td style="padding:28px;font-size:16px;line-height:24px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;"><tr><td><img src="{{ asset('images/branding/logo tb.png') }}" alt="Logo SMK Taruna Bangsa" width="52" height="52" style="display:block;width:52px;height:52px;object-fit:contain;background:#fff;border-radius:10px;padding:4px;"></td><td style="padding-left:12px;"><p style="margin:0;font-size:20px;line-height:28px;font-weight:bold;">LAPORIN — Notifikasi Laporan</p></td></tr></table><p>Yth. {{ $report->reporter_name }},</p><p>{{ $event === 'created' ? 'Laporan Anda telah berhasil diterima oleh sistem LAPORIN.' : 'Status laporan Anda telah diperbarui.' }}</p><p><strong>Nomor Laporan:</strong> {{ $report->report_number }}</p><p><strong>Judul:</strong> {{ $report->title }}</p><p><strong>Status:</strong> {{ $statusLabel }}</p>@if($accessCode)<p><strong>Kode Akses:</strong> {{ $accessCode }}</p>@endif<p>Pantau laporan Anda melalui <a href="{{ url('/lacak') }}">LAPORIN</a>.</p><p style="font-size:14px;color:#666;">Pesan ini dikirim otomatis oleh LAPORIN. Mohon tidak membalas email ini.</p></td></tr></table></td></tr></table></body></html>

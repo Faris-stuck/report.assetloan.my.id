@@ -1,3 +1,5 @@
+.laporin-production.env
+.sentinelx-backups/
 /.phpunit.cache
 /node_modules
 /public/build
