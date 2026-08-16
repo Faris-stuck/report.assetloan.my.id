@@ -1,6 +1,6 @@
 services:
   app:
-    image: lapapp:20260816-ip-device-rate-v2
+    image: lapapp:20260816-production-audit-final
     container_name: app
     env_file:
       - /etc/laporin/laporin-production.env
@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
 
   worker:
-    image: lapapp:20260816-ip-device-rate-v2
+    image: lapapp:20260816-production-audit-final
     container_name: laporin-worker
     env_file:
       - /etc/laporin/laporin-production.env
