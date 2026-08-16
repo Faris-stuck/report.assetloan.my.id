@@ -7,7 +7,7 @@
             <div class="hero-content">
                 <span class="page-kicker">Berhasil Terkirim</span>
                 <h1 class="page-title h2 mt-3">Laporan Berhasil Diterima</h1>
-                <p class="page-subtitle mx-auto">Simpan nomor laporan dan kode akses di bawah ini. Anda tidak dapat mengirim laporan baru dari sesi ini.</p>
+                <p class="page-subtitle mx-auto">Simpan nomor laporan dan kode akses di bawah ini. Anda dapat membuat laporan lain kapan saja dari halaman utama LAPORIN.</p>
 
                 <div class="row g-3 justify-content-center mt-3">
                     <div class="col-md-6">
@@ -44,9 +44,9 @@
                     </div>
                 @endif
 
-                <div class="alert alert-warning mt-4 text-start" role="alert">
-                    <strong>⛔ Tidak dapat mengirim laporan baru dari sesi ini.</strong><br>
-                    <span class="small">Untuk membuat laporan baru, buka <a href="{{ url('/') }}" class="alert-link">halaman utama LAPORIN</a> di tab baru.</span>
+                <div class="alert alert-info mt-4 text-start" role="status">
+                    <strong>Ingin membuat laporan lain?</strong><br>
+                    <span class="small">Mulai laporan baru dari <a href="{{ url('/') }}" class="alert-link">halaman utama LAPORIN</a>. Batas pengiriman tetap mengikuti perlindungan anti-spam per perangkat.</span>
                 </div>
 
                 <div class="mt-3">

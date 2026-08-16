@@ -28,6 +28,14 @@ class WahaService
             ->retry(2, 250);
     }
 
+    public function session(string $session): array
+    {
+        $response = $this->client()->get('/api/sessions/'.rawurlencode($session));
+        $response->throw();
+
+        return $response->json();
+    }
+
     public function sendText(string $chatId, string $text, ?string $session = null): array
     {
         $response = $this->client()->post('/api/sendText', [
@@ -47,8 +55,9 @@ class WahaService
         ?string $caption = null,
         ?string $session = null
     ): array {
+        $sessionName = $session ?: config('services.waha.session', 'default');
         $payload = [
-            'session' => $session ?: config('services.waha.session', 'default'),
+            'session' => $sessionName,
             'chatId' => $chatId,
             'file' => [
                 'url' => $imageUrl,
@@ -62,6 +71,38 @@ class WahaService
         $response = $this->client()->post('/api/sendImage', $payload);
         $response->throw();
 
+        return $response->json();
+    }
+
+
+    public function sendImageFile(
+        string $chatId,
+        string $path,
+        ?string $caption = null,
+        ?string $session = null
+    ): array {
+        if (! is_file($path) || ! is_readable($path)) {
+            throw new RuntimeException('WAHA image file is not readable: '.$path);
+        }
+
+        $mime = mime_content_type($path) ?: 'image/jpeg';
+        $data = base64_encode((string) file_get_contents($path));
+        if ($data === '') {
+            throw new RuntimeException('WAHA image file is empty: '.$path);
+        }
+
+        $response = $this->client()->post('/api/sendImage', [
+            'session' => $session ?: config('services.waha.session', 'default'),
+            'chatId' => $chatId,
+            'file' => [
+                'mimetype' => $mime,
+                'filename' => basename($path),
+                'data' => $data,
+            ],
+            'caption' => $caption,
+        ]);
+
+        $response->throw();
         return $response->json();
     }
 

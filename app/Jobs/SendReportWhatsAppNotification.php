@@ -33,10 +33,19 @@ class SendReportWhatsAppNotification implements ShouldQueue
         $phone = $this->normalizePhone($report->reporter_phone);
         if ($phone === null) return;
 
+        // WAHA may briefly expose the session while it is reconnecting.
+        // Fail the job explicitly so Laravel retries instead of silently losing
+        // the notification during a transient session state.
+        $session = (string) config('services.waha.session', 'default');
+        $sessionInfo = $waha->session($session);
+        if (($sessionInfo['status'] ?? null) !== 'WORKING') {
+            throw new RuntimeException('WAHA session is not ready: '.($sessionInfo['status'] ?? 'UNKNOWN'));
+        }
+
         // Resolve the phone number through WAHA first. This prevents sending to
         // an unintended LID/contact and lets us fail safely when the number is
         // not registered on WhatsApp.
-        $exists = $waha->checkNumberExists($phone);
+        $exists = $waha->checkNumberExists($phone, $session);
         if (($exists['numberExists'] ?? false) !== true) {
             throw new RuntimeException('The reporter WhatsApp number is not registered: '.$phone);
         }
@@ -58,10 +67,23 @@ class SendReportWhatsAppNotification implements ShouldQueue
         $lines[] = 'Pantau laporan: '.url('/lacak');
 
         // Kirim logo SMK Taruna Bangsa sebagai media WhatsApp dengan detail laporan sebagai caption.
-        $logoUrl = asset('images/branding/logo tb.png');
-        $result = $waha->sendImage($chatId, $logoUrl, implode("\n", $lines));
-        if (! is_array($result) || $result === []) {
-            throw new RuntimeException('WAHA returned an empty response.');
+        // Gunakan BASE64 dari file lokal supaya WAHA tidak perlu mengambil asset
+        // melalui domain publik/Cloudflare yang bisa gagal di sisi server.
+        $logoPath = public_path('images/branding/logo tb.png');
+        try {
+            $result = $waha->sendImageFile($chatId, $logoPath, implode("\n", $lines), $session);
+            if (is_array($result) && $result !== []) {
+                return;
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
+        // Never lose the notification just because the remote media URL cannot
+        // be fetched by WAHA. Fall back to a plain-text WhatsApp message.
+        $textResult = $waha->sendText($chatId, implode("\n", $lines), $session);
+        if (! is_array($textResult) || $textResult === []) {
+            throw new RuntimeException('WAHA could not send image or text notification.');
         }
     }
 

@@ -1,6 +1,6 @@
 services:
   app:
-    image: lapapp:20260816-production-audit-final
+    image: lapapp:20260816-whatsapp-image-fix
     container_name: app
     env_file:
       - /etc/laporin/laporin-production.env
@@ -13,11 +13,11 @@ services:
     restart: unless-stopped
 
   worker:
-    image: lapapp:20260816-production-audit-final
+    image: lapapp:20260816-whatsapp-image-fix
     container_name: laporin-worker
     env_file:
       - /etc/laporin/laporin-production.env
-    command: ["php", "artisan", "queue:work", "database", "--sleep=3", "--tries=3", "--timeout=120", "--max-time=3600"]
+    command: ["/usr/local/bin/laporin-worker-start"]
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
       interval: 30s

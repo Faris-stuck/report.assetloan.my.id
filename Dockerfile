@@ -38,7 +38,8 @@ RUN composer install \
 COPY . /var/www/html
 COPY docker/000-default.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/start.sh /usr/local/bin/laporin-start
-RUN chmod +x /usr/local/bin/laporin-start \
+COPY docker/start-worker.sh /usr/local/bin/laporin-worker-start
+RUN chmod +x /usr/local/bin/laporin-start /usr/local/bin/laporin-worker-start \
     && for path in app bootstrap config database lang public resources routes vendor; do if [ -d "/var/www/html/$path" ]; then find "/var/www/html/$path" -type d -exec chmod 755 {} +; find "/var/www/html/$path" -type f -exec chmod 644 {} +; fi; done \
     && touch /var/www/html/.env \
     && chmod 640 /var/www/html/.env \

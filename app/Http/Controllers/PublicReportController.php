@@ -546,10 +546,7 @@ class PublicReportController extends Controller
         );
 
         try {
-            session([
-                'report_submit_forms' => $formStates,
-                'report_form_submitted' => true,
-            ]);
+            session(['report_submit_forms' => $formStates]);
         } catch (Throwable $exception) {
             // Biarkan user tetap dapat mengakses form jika sesi tidak tersedia.
         }
