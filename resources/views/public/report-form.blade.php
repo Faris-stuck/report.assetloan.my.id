@@ -141,13 +141,6 @@
     <p class="small-muted mb-4">Isi singkat dan jelas.</p>
     <div class="row g-3">
 
-        {{-- FIELD UNIVERSAL: Judul --}}
-        <div class="col-12">
-            <label class="form-label required" for="title">Judul singkat</label>
-            <input id="title" name="title" value="{{ old('title') }}" class="form-control required" required maxlength="200"
-                placeholder="{{ $reportType === 'violation' ? 'Contoh: Perundungan di Lab Komputer' : 'Contoh: Lampu kelas X Mati' }}">
-        </div>
-
         {{-- FIELD UNIVERSAL: Urgensi --}}
         <div class="col-12 col-md-6">
             <label class="form-label required" for="urgency">Tingkat Urgensi</label>
@@ -165,6 +158,14 @@
             <label class="form-label required" for="incident_date">Tanggal kejadian</label>
             <input id="incident_date" type="date" name="incident_date" value="{{ old('incident_date') }}" max="{{ $today }}" class="form-control required" required>
             <small class="text-muted">Tanggal saat kejadian berlangsung (tidak boleh di masa depan).</small>
+        </div>
+
+        {{-- Judul tetap digunakan untuk laporan pelanggaran; laporan kerusakan
+             membentuk judul secara otomatis dari nama barang/fasilitas. --}}
+        <div class="col-12{{ $reportType === 'violation' ? '' : ' d-none' }}" data-report-type-content="violation-title">
+            <label class="form-label required" for="title">Judul singkat</label>
+            <input id="title" name="title" value="{{ old('title') }}" class="form-control required" required maxlength="200"
+                placeholder="Contoh: Perundungan di Lab Komputer">
         </div>
 
         {{-- ======================================================== --}}
@@ -216,20 +217,9 @@
                         <label class="form-label required" for="item_name">Nama barang / fasilitas</label>
                         <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control required" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" required>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" for="location_id_damage">Lokasi</label>
-                        <select id="location_id_damage" name="location_id" class="form-select">
-                            <option value="">Pilih lokasi</option>
-                            @foreach($locations as $l)<option value="{{ $l->id }}" @selected(old('location_id') == $l->id)>{{ $l->location_name }}</option>@endforeach
-                        </select>
-                    </div>
                     <div class="col-12">
-                        <label class="form-label required" for="damage_condition">Kondisi kerusakan</label>
-                        <textarea id="damage_condition" name="damage_condition" class="form-control required" rows="4" placeholder="Jelaskan bagian yang rusak." maxlength="2000" required>{{ old('damage_condition') }}</textarea>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label required" for="description_damage">Deskripsi dampak</label>
-                        <textarea id="description_damage" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Sebutkan dampaknya secara singkat.">{{ old('description') }}</textarea>
+                        <label class="form-label required" for="description_damage">Deskripsi kerusakan / dampak</label>
+                        <textarea id="description_damage" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Jelaskan kerusakan dan dampaknya secara singkat.">{{ old('description') }}</textarea>
                     </div>
                 </div>
             </div>

@@ -20,6 +20,13 @@ class PublicReportRequest extends FormRequest
             $value=$this->input($key); if ($value==='' || $value==='null' || $value==='NULL') $this->merge([$key=>null]);
         }
         $email=$this->input('reporter_email'); if(is_string($email))$this->merge(['reporter_email'=>strtolower(trim($email))]);
+        if ($this->input('report_type') === 'damage') {
+            $itemName = trim((string) $this->input('item_name', ''));
+            $description = trim((string) $this->input('description', ''));
+            if (! $this->filled('title') && $itemName !== '') $this->merge(['title' => $itemName]);
+            if (! $this->filled('damage_condition') && $description !== '') $this->merge(['damage_condition' => $description]);
+            if ($this->has('location_id')) $this->merge(['location_id' => null]);
+        }
         $trimmed=[]; foreach(['report_submit_token','reporter_name','reporter_phone','reporter_email','title','custom_location','description','reporter_position','bullying_type','victim_name','alleged_actor_name','witness_name','item_name','item_category','damage_condition','suspected_cause'] as $field){$value=$this->input($field);if(is_string($value))$trimmed[$field]=trim($value);} $this->merge($trimmed);
     }
     public function rules(): array

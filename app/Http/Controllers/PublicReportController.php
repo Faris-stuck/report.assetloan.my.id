@@ -218,6 +218,21 @@ class PublicReportController extends Controller
         $draft = is_array($state['wizard_data'] ?? null) ? $state['wizard_data'] : [];
         $incoming = $request->except(['_token', 'report_submit_token']);
 
+        // Damage reports intentionally use a compact form: the item name and
+        // one description are sufficient for the public UI. Keep the legacy
+        // persistence contract by deriving title/condition server-side.
+        if ($step === 3 && (($incoming['report_type'] ?? $draft['report_type'] ?? null) === 'damage')) {
+            $itemName = trim((string) ($incoming['item_name'] ?? $draft['item_name'] ?? ''));
+            $description = trim((string) ($incoming['description'] ?? $draft['description'] ?? ''));
+            if ($itemName !== '') {
+                $incoming['title'] = $itemName;
+            }
+            if ($description !== '') {
+                $incoming['damage_condition'] = $description;
+            }
+            $incoming['location_id'] = null;
+        }
+
         // The public form is student-only. Keep reporter_type as an internal
         // server value so the persistence/validation contract remains intact;
         // it is never exposed as a category or selectable field in the UI.
@@ -518,9 +533,3 @@ class PublicReportController extends Controller
 
 }
 
-    private function deviceRateKey(Request $request): string
-    {
-        $deviceId = (string) ($request->cookie('laporin_device_id') ?: ($request->ip() ?? 'unknown'));
-        return 'laporin:public-reports:device:'.hash_hmac('sha256', $deviceId, config('app.key'));
-    }
-}
