@@ -23,7 +23,9 @@ class SendReportWhatsAppNotification implements ShouldQueue
         public int $reportId,
         public string $event,
         public ?string $accessCode = null,
-    ) {}
+    ) {
+        $this->onQueue('whatsapp');
+    }
 
     public function handle(WahaService $waha): void
     {

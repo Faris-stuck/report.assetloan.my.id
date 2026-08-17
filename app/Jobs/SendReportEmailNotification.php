@@ -23,7 +23,9 @@ class SendReportEmailNotification implements ShouldQueue
         public int $reportId,
         public string $event,
         public ?string $accessCode = null,
-    ) {}
+    ) {
+        $this->onQueue('email');
+    }
 
     public function handle(): void
     {

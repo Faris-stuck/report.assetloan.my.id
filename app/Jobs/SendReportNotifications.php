@@ -20,7 +20,9 @@ class SendReportNotifications implements ShouldQueue
         public int $reportId,
         public string $event,
         public ?string $accessCode = null,
-    ) {}
+    ) {
+        $this->onQueue('notifications');
+    }
 
     public function handle(): void
     {

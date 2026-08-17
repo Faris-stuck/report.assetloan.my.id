@@ -14,12 +14,48 @@ services:
           - app
     restart: unless-stopped
 
-  worker:
+  worker-notifications:
     image: lapapp:20260817-logo-fix
-    container_name: laporin-worker
+    container_name: laporin-worker-notifications
     env_file:
       - /etc/laporin/laporin-production.env
-    command: ["/usr/local/bin/laporin-worker-start"]
+    command: ["php", "artisan", "queue:work", "redis", "--queue=notifications", "--sleep=1", "--tries=1", "--timeout=60", "--max-time=3600"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    volumes:
+      - laporin-prod-storage:/var/www/html/storage/app
+    networks:
+      - cf-network
+    restart: unless-stopped
+
+  worker-email:
+    image: lapapp:20260817-logo-fix
+    container_name: laporin-worker-email
+    env_file:
+      - /etc/laporin/laporin-production.env
+    command: ["php", "artisan", "queue:work", "redis", "--queue=email", "--sleep=1", "--tries=3", "--backoff=30", "--timeout=120", "--max-time=3600"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    volumes:
+      - laporin-prod-storage:/var/www/html/storage/app
+    networks:
+      - cf-network
+    restart: unless-stopped
+
+  worker-whatsapp:
+    image: lapapp:20260817-logo-fix
+    container_name: laporin-worker-whatsapp
+    env_file:
+      - /etc/laporin/laporin-production.env
+    command: ["php", "artisan", "queue:work", "redis", "--queue=whatsapp", "--sleep=1", "--tries=3", "--backoff=30", "--timeout=120", "--max-time=3600"]
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
       interval: 30s
