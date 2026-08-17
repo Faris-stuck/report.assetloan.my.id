@@ -1,7 +1,9 @@
 services:
   app:
-    image: lapapp:20260816-whatsapp-image-fix
+    image: lapapp:20260817-logo-fix
     container_name: app
+    ports:
+      - "127.0.0.1:18080:8080"
     env_file:
       - /etc/laporin/laporin-production.env
     volumes:
@@ -13,7 +15,7 @@ services:
     restart: unless-stopped
 
   worker:
-    image: lapapp:20260816-whatsapp-image-fix
+    image: lapapp:20260817-logo-fix
     container_name: laporin-worker
     env_file:
       - /etc/laporin/laporin-production.env
