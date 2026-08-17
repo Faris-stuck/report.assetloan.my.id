@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\DamageCategory;
-use App\Models\Location;
 use App\Models\QrCode;
 use App\Http\Requests\PublicReportRequest;
 use App\Models\Report;
@@ -174,7 +173,6 @@ class PublicReportController extends Controller
             'classMajorLabels' => self::CLASS_MAJOR_LABELS,
             'subjects' => Subject::where('is_active', true)->orderBy('subject_name')->get(),
             'staffUnits' => StaffUnit::where('is_active', true)->orderBy('unit_name')->get(),
-            'locations' => Location::where('is_active', true)->orderBy('location_name')->get(),
             'damageCategories' => DamageCategory::where('is_active', true)->orderBy('category_name')->get(),
         ]);
     }
@@ -391,7 +389,6 @@ class PublicReportController extends Controller
             'classMajorLabels' => self::CLASS_MAJOR_LABELS,
             'subjects' => Subject::where('is_active', true)->orderBy('subject_name')->get(),
             'staffUnits' => StaffUnit::where('is_active', true)->orderBy('unit_name')->get(),
-            'locations' => Location::where('is_active', true)->orderBy('location_name')->get(),
             'damageCategories' => DamageCategory::where('is_active', true)->orderBy('category_name')->get(),
         ]);
     }

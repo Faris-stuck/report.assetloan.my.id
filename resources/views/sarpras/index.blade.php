@@ -32,7 +32,7 @@
         <div class="col-md-6 col-lg-3">
             <label class="form-label" for="search">Cari</label>
             <input id="search" name="search" type="text" class="form-control"
-                   placeholder="Cari nomor atau judul laporan..." value="{{ request('search') }}" maxlength="100">
+                   placeholder="Cari nomor, judul, atau deskripsi laporan..." value="{{ request('search') }}" maxlength="100">
         </div>
 
         <div class="col-md-6 col-lg-2">

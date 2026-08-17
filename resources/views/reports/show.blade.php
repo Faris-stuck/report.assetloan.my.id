@@ -134,22 +134,6 @@
             </div>
         </div>
 
-
-        <div class="col-md-6">
-            <div class="detail-box h-100">
-                <div class="small-muted">
-                    Lokasi
-                </div>
-
-                <strong>
-                    {{ $report->location?->location_name
-                        ?? $report->custom_location
-                        ?? '-'
-                    }}
-                </strong>
-            </div>
-        </div>
-
     </div>
 
 
@@ -182,7 +166,7 @@
                 <div class="col-md-6">
                     <div class="detail-box h-100">
                         <div class="small-muted">
-                            Kondisi Kerusakan
+                            Deskripsi Kerusakan / Dampak
                         </div>
 
                         <div>

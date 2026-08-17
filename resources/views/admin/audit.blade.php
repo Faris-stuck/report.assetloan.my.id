@@ -15,7 +15,7 @@
         <div class="col-md-6 col-lg-4">
             <label class="form-label" for="search">Cari</label>
             <input id="search" name="search" type="text" class="form-control"
-                   placeholder="Cari nama atau email..." value="{{ request('search') }}" maxlength="100">
+                   placeholder="Cari nama, email, aktor, atau aksi..." value="{{ request('search') }}" maxlength="100">
         </div>
 
         <div class="col-md-6 col-lg-2">
@@ -76,7 +76,7 @@
                 @forelse($logs as $log)
                     <tr>
                         <td><small>{{ $log->created_at->format('d M Y H:i:s') }}</small></td>
-                        <td>{{ $log->actor_type }}</td>
+                        <td><strong>{{ $log->user?->name ?? $log->actor_type }}</strong>@if($log->user?->email)<div class="small text-muted">{{ $log->user->email }}</div>@endif</td>
                         <td><span class="badge text-bg-info">{{ $log->action }}</span></td>
                         <td>{{ $log->model_type }}</td>
                         <td>#{{ $log->model_id }}</td>
@@ -99,7 +99,7 @@
                         <span class="badge text-bg-info">{{ $log->action }}</span>
                         <small class="text-muted">{{ $log->created_at->format('d M H:i') }}</small>
                     </div>
-                    <p class="small mb-1"><strong>{{ $log->actor_type }}</strong></p>
+                    <p class="small mb-1"><strong>{{ $log->user?->name ?? $log->actor_type }}</strong></p>@if($log->user?->email)<p class="text-muted small mb-1">{{ $log->user->email }}</p>@endif
                     <p class="text-muted small mb-0">{{ $log->model_type }} #{{ $log->model_id }}</p>
                 </div>
             </div>

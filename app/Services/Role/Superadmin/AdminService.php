@@ -212,11 +212,17 @@ class AdminService implements AdminServiceInterface
     {
         $query = AuditLog::query();
         
-        // Search by actor or action
-        if ($search = request('search')) {
+        // Search by user identity, actor type, or action.
+        if ($search = trim((string) request('search'))) {
             $searchTerm = "%{$search}%";
-            $query->where('actor_type', 'like', $searchTerm)
-                  ->orWhere('action', 'like', $searchTerm);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('actor_type', 'like', $searchTerm)
+                    ->orWhere('action', 'like', $searchTerm)
+                    ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
+                        $userQuery->where('name', 'like', $searchTerm)
+                            ->orWhere('email', 'like', $searchTerm);
+                    });
+            });
         }
         
         // Filter by action type
