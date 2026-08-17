@@ -193,7 +193,7 @@
                                     @endif
                                 </div>
                                 <div class="col-12">
-                                    <button class="btn btn-laporin" aria-label="Proses laporan kerusakan #{{ $r->report_number }}">Simpan Perbaikan</button>
+                                    <button type="submit" class="btn btn-laporin" aria-label="Proses laporan kerusakan #{{ $r->report_number }}">Simpan Perbaikan</button>
                                 </div>
                             </form>
                         </div>
@@ -212,7 +212,7 @@
                             <form method="POST" action="{{ route('sarpras.reject', $r) }}" class="row g-3" @submit="if(!confirm('Tolak laporan kerusakan ini? Alur laporan akan berhenti.')) $event.preventDefault()">
                                 @csrf
                                 <div class="col-12"><label class="form-label required" for="reject_reason_{{ $r->id }}">Alasan penolakan</label><textarea id="reject_reason_{{ $r->id }}" name="reason" class="form-control" required maxlength="2000" placeholder="Jelaskan mengapa laporan tidak dapat diproses" rows="3"></textarea></div>
-                                <div class="col-12"><button class="btn btn-outline-danger" aria-label="Tolak laporan kerusakan #{{ $r->report_number }}">Tolak Laporan</button></div>
+                                <div class="col-12"><button type="submit" class="btn btn-outline-danger" aria-label="Tolak laporan kerusakan #{{ $r->report_number }}">Tolak Laporan</button></div>
                             </form>
                         </div>
                     </div>

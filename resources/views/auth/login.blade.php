@@ -32,10 +32,10 @@
                         <input id="password" type="password" name="password" class="form-control" required autocomplete="current-password" placeholder="Masukkan kata sandi/PIN">
                     </div>
                     <div class="form-check mb-4">
-                        <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                        <input class="form-check-input" type="checkbox" name="remember" id="remember" value="1" @checked(old('remember')) autocomplete="off">
                         <label class="form-check-label" for="remember">Ingat saya di perangkat ini</label>
                     </div>
-                    <button class="btn btn-laporin w-100">Masuk</button>
+                    <button type="submit" class="btn btn-laporin w-100">Masuk</button>
                 </form>
                 <small class="text-muted text-center d-block mt-3">Lupa akses? Hubungi SuperAdmin sekolah.</small>
             </div>

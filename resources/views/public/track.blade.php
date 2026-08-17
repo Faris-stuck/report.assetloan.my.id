@@ -35,7 +35,7 @@
                     <small id="access-code-help" class="text-muted">Masukkan 6 angka. Spasi atau tanda hubung hasil salin-tempel akan dihapus otomatis.</small>
                 </div>
                 <div class="col-12">
-                    <button class="btn btn-laporin w-100">Lacak Laporan</button>
+                    <button type="submit" class="btn btn-laporin w-100">Lacak Laporan</button>
                 </div>
             </form>
         </div>
