@@ -33,41 +33,51 @@ class PublicReportService
             try {
                 [$report, $accessCode] = DB::transaction(function () use ($request, $validated, &$storedPaths) {
                     $accessCode = (string) random_int(100000, 999999);
-                    $report = Report::create($this->reportData($request, $validated, $accessCode, $this->generateReportNumber()));
+                    $report = Report::create(
+                        $this->reportData($request, $validated, $accessCode, $this->generateReportNumber())
+                    );
 
                     if ($report->report_type === 'violation') {
                         BullyingDetail::create([
                             'report_id' => $report->id,
                         ] + collect($validated)->only([
-                            'reporter_position','bullying_type','victim_name','victim_class_id',
-                            'alleged_actor_name','alleged_actor_class_id','witness_name','impact_description',
+                            'reporter_position', 'bullying_type', 'victim_name', 'victim_class_id',
+                            'alleged_actor_name', 'alleged_actor_class_id', 'witness_name', 'impact_description',
                         ])->toArray());
                     } else {
                         DamageDetail::create([
                             'report_id' => $report->id,
                             'priority' => null,
                         ] + collect($validated)->only([
-                            'item_name','item_category','damage_condition','suspected_cause',
+                            'item_name', 'item_category', 'damage_condition', 'suspected_cause',
                         ])->toArray());
                     }
 
                     foreach ($request->file('attachments', []) as $file) {
                         if (! $file->isValid()) {
-                            throw ValidationException::withMessages(['attachments' => 'Salah satu file lampiran tidak valid.']);
+                            throw ValidationException::withMessages([
+                                'attachments' => 'Salah satu file lampiran tidak valid.',
+                            ]);
                         }
                         if ($file->getSize() > 4 * 1024 * 1024) {
-                            throw ValidationException::withMessages(['attachments' => 'Ukuran setiap lampiran maksimal 4 MB.']);
+                            throw ValidationException::withMessages([
+                                'attachments' => 'Ukuran setiap lampiran maksimal 4 MB.',
+                            ]);
                         }
 
                         $finfo = finfo_open(FILEINFO_MIME_TYPE);
                         if (! $finfo) {
-                            throw ValidationException::withMessages(['attachments' => 'Tipe file tidak dapat diverifikasi.']);
+                            throw ValidationException::withMessages([
+                                'attachments' => 'Tipe file tidak dapat diverifikasi.',
+                            ]);
                         }
                         $detectedMime = finfo_file($finfo, $file->getRealPath());
                         finfo_close($finfo);
-                        $allowedMimes = ['image/jpeg','image/png','image/webp','application/pdf'];
+                        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
                         if (! in_array($detectedMime, $allowedMimes, true)) {
-                            throw ValidationException::withMessages(['attachments' => 'Tipe file lampiran tidak diizinkan.']);
+                            throw ValidationException::withMessages([
+                                'attachments' => 'Tipe file lampiran tidak diizinkan.',
+                            ]);
                         }
 
                         $path = $file->store('report-attachments/'.$report->id, 'private');
@@ -88,55 +98,39 @@ class PublicReportService
                     return [$report, $accessCode];
                 });
 
+                // Queue notifications only after the database transaction commits.
                 SendReportNotifications::dispatch($report->id, 'created', $accessCode);
+
                 return [$report, $accessCode, true];
             } catch (QueryException $exception) {
                 foreach ($storedPaths as $storedPath) {
-                    try { Storage::disk('private')->delete($storedPath); } catch (Throwable) {}
+                    try {
+                        Storage::disk('private')->delete($storedPath);
+                    } catch (Throwable) {
+                        // Keep the original database exception.
+                    }
                 }
 
-                $this->history(
-                    $report,
-                    null,
-                    $report->status,
-                    'Laporan diterima sistem.'
-                );
-
-                return [$report, $accessCode];
-            });
-
-            // Notifikasi email + WhatsApp dikirim setelah transaksi database
-            // berhasil commit. Kegagalan provider tidak membatalkan laporan.
-            SendReportNotifications::dispatch(
-                $report->id,
-                'created',
-                $accessCode
-            );
-
-            return [
-                $report,
-                $accessCode,
-                true,
-            ];
-        } catch (QueryException $exception) {
-            foreach ($storedPaths as $storedPath) {
-                try {
-                    Storage::disk('private')->delete(
-                        $storedPath
-                    );
-                } catch (Throwable) {
-                    // Jangan menutupi exception database asli.
+                if ($this->isReportIdentifierCollision($exception) && $attempt < self::REPORT_NUMBER_RETRY_LIMIT - 1) {
+                    continue;
                 }
+
                 throw $this->convertQueryExceptionToValidationException($exception);
             } catch (Throwable $exception) {
                 foreach ($storedPaths as $storedPath) {
-                    try { Storage::disk('private')->delete($storedPath); } catch (Throwable) {}
+                    try {
+                        Storage::disk('private')->delete($storedPath);
+                    } catch (Throwable) {
+                        // Keep the original exception.
+                    }
                 }
                 throw $exception;
             }
         }
 
-        throw ValidationException::withMessages(['report_number' => 'Nomor laporan belum berhasil dibuat. Silakan coba kembali.']);
+        throw ValidationException::withMessages([
+            'report_number' => 'Nomor laporan belum berhasil dibuat. Silakan coba kembali.',
+        ]);
     }
 
     private function reportData(Request $request, array $validated, string $accessCode, string $reportNumber): array
