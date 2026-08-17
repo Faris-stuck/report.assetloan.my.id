@@ -120,20 +120,10 @@ class PublicReportController extends Controller
                 'captcha_b' => $b,
                 'wizard_data' => [],
                 'created_at' => now()->timestamp,
-
-                /*
-                 * Security:
-                 * QR attribution diikat ke form token di server.
-                 * Jangan mengambil qr_code_id dari browser saat submit.
-                 */
                 'qr_code_id' => $qrCode?->id,
             ];
 
-            /*
-             * Maksimal lima form/tab aktif per session.
-             */
             if (count($formStates) > 5) {
-
                 uasort(
                     $formStates,
                     static fn (array $left, array $right): int =>
@@ -152,16 +142,10 @@ class PublicReportController extends Controller
 
             session([
                 'report_submit_forms' => $formStates,
-
-                /*
-                 * Legacy testing compatibility.
-                 */
                 'report_submit_token' => $submitToken,
                 'math_captcha_answer' => $captchaAnswer,
             ]);
         } catch (Throwable $exception) {
-            // Jika penyimpanan sesi gagal, tetap buka form tanpa menonaktifkan tampilan.
-            // Kunci submit akan dikirim lewat hidden input untuk validasi request server-side.
         }
 
         $majorOrder = array_flip(array_keys(self::CLASS_MAJOR_LABELS));
@@ -407,19 +391,9 @@ class PublicReportController extends Controller
 
     public function store(PublicReportRequest $request): RedirectResponse
     {
-        $submittedToken = (string) $request->input(
-            'report_submit_token',
-            ''
-        );
-
-        $legacySessionToken = session(
-            'report_submit_token'
-        );
-
-        $formStates = session(
-            'report_submit_forms',
-            []
-        );
+        $submittedToken = (string) $request->input('report_submit_token', '');
+        $legacySessionToken = session('report_submit_token');
+        $formStates = session('report_submit_forms', []);
 
         if (! is_array($formStates)) {
             $formStates = [];
@@ -429,33 +403,30 @@ class PublicReportController extends Controller
             $submittedToken !== ''
             && isset($formStates[$submittedToken])
             && is_array($formStates[$submittedToken])
-        )
-            ? $formStates[$submittedToken]
-            : null;
+        ) ? $formStates[$submittedToken] : null;
 
-        /*
-         * Compatibility dengan session lama dan feature test.
-         */
         $legacyMatches = (
             $submittedToken !== ''
             && is_string($legacySessionToken)
             && $legacySessionToken !== ''
-            && hash_equals(
-                $legacySessionToken,
-                $submittedToken
-            )
+            && hash_equals($legacySessionToken, $submittedToken)
         );
 
-        if (
-            $formState === null
-            && ! $legacyMatches
-        ) {
+        if ($formState === null && ! $legacyMatches) {
             throw ValidationException::withMessages([
                 'form' => 'Sesi formulir sudah habis atau laporan ini sudah pernah dikirim. Muat ulang formulir lalu coba kembali.',
             ]);
         }
 
         $validated = $request->validated();
+        $deviceRateKey = $this->deviceRateKey($request);
+        $deviceAttempt = RateLimiter::increment($deviceRateKey, 7200);
+        if ($deviceAttempt > 5) {
+            RateLimiter::decrement($deviceRateKey, 7200);
+            throw ValidationException::withMessages([
+                'form' => 'Batas pengiriman tercapai: maksimal 5 laporan per perangkat dalam 2 jam. Coba lagi setelah batas waktu berakhir.',
+            ]);
+        }
 
         // Five successfully validated report submissions per browser/device
         // identifier in a rolling two-hour window. This is independent of the
@@ -480,82 +451,36 @@ class PublicReportController extends Controller
             ? (int) $formState['qr_code_id']
             : null;
 
-        $expectedCaptcha =
-            $formState['captcha_answer']
-            ?? session('math_captcha_answer');
-
-        if (
-            ! is_numeric($expectedCaptcha)
-            || (int) $validated['captcha']
-                !== (int) $expectedCaptcha
-        ) {
+        if (! is_numeric($expectedCaptcha) || (int) $validated['captcha'] !== (int) $expectedCaptcha) {
             throw ValidationException::withMessages([
                 'captcha' => 'CAPTCHA salah. Hitung ulang pertanyaan yang tampil lalu isi dengan angka yang benar.',
             ]);
         }
 
-        /*
-         * Cache::add bersifat atomic pada Redis.
-         * Request paralel dengan token sama hanya satu yang lolos.
-         */
-        $consumeKey =
-            'laporin:public-report:consume:'
-            .hash(
-                'sha256',
-                $submittedToken
-            );
-
-        if (! Cache::add(
-            $consumeKey,
-            true,
-            now()->addMinutes(30)
-        )) {
+        $consumeKey = 'laporin:public-report:consume:'.hash('sha256', $submittedToken);
+        if (! Cache::add($consumeKey, true, now()->addMinutes(30))) {
             throw ValidationException::withMessages([
                 'form' => 'Laporan sedang atau sudah diproses. Jangan menekan tombol kirim berulang kali.',
             ]);
         }
 
         try {
-
-            [
-                $report,
-                $accessCode,
-                $notificationSent,
-            ] = $this->service->create(
-                $request,
-                $validated
-            );
-
+            [$report, $accessCode, $notificationSent] = $this->service->create($request, $validated);
         } catch (Throwable $exception) {
-
-            /*
-             * Penyimpanan gagal:
-             * izinkan user mencoba ulang.
-             */
             Cache::forget($consumeKey);
             RateLimiter::decrement($deviceRateKey, 7200);
 
             throw $exception;
         }
 
-        /*
-         * Hanya token tab yang berhasil dikirim yang dihapus.
-         */
-        unset(
-            $formStates[$submittedToken]
-        );
-
+        unset($formStates[$submittedToken]);
         try {
             session(['report_submit_forms' => $formStates]);
         } catch (Throwable $exception) {
-            // Biarkan user tetap dapat mengakses form jika sesi tidak tersedia.
         }
 
         if ($legacyMatches) {
-            session()->forget([
-                'math_captcha_answer',
-                'report_submit_token',
-            ]);
+            session()->forget(['math_captcha_answer', 'report_submit_token']);
         }
 
         $request->session()->regenerateToken();
@@ -577,13 +502,12 @@ class PublicReportController extends Controller
     public function success(Report $report): View|RedirectResponse
     {
         if ((int) session('success_report_id') !== $report->id) {
-            return redirect()
-                ->route('track.form')
-                ->withErrors(['report_number' => 'Halaman sukses hanya bisa dibuka setelah laporan berhasil dikirim. Untuk melihat laporan, masukkan nomor laporan dan kode akses.']);
+            return redirect()->route('track.form')->withErrors([
+                'report_number' => 'Halaman sukses hanya bisa dibuka setelah laporan berhasil dikirim. Untuk melihat laporan, masukkan nomor laporan dan kode akses.',
+            ]);
         }
 
         session()->forget('success_report_id');
-
         return view('public.success', ['report' => $report, 'accessCode' => session('access_code')]);
     }
     private function deviceRateKey(Request $request): string
@@ -594,3 +518,9 @@ class PublicReportController extends Controller
 
 }
 
+    private function deviceRateKey(Request $request): string
+    {
+        $deviceId = (string) ($request->cookie('laporin_device_id') ?: ($request->ip() ?? 'unknown'));
+        return 'laporin:public-reports:device:'.hash_hmac('sha256', $deviceId, config('app.key'));
+    }
+}

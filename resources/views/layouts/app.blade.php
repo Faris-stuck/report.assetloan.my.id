@@ -8,9 +8,7 @@
         $siteName = 'LAPORIN SMK Taruna Bangsa Bekasi';
         $pageTitle = trim($__env->yieldContent('title', 'LAPORIN'));
         $metaTitle = trim($__env->yieldContent('meta_title', ''));
-        if ($metaTitle === '') {
-            $metaTitle = str_contains($pageTitle, 'LAPORIN') ? $pageTitle : $pageTitle.' | LAPORIN';
-        }
+        if ($metaTitle === '') $metaTitle = str_contains($pageTitle, 'LAPORIN') ? $pageTitle : $pageTitle.' | LAPORIN';
         $metaDescription = trim($__env->yieldContent('meta_description', 'LAPORIN adalah kanal laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas untuk warga SMK Taruna Bangsa Bekasi.'));
         $metaTitle = html_entity_decode($metaTitle, ENT_QUOTES | ENT_HTML5, 'UTF-8');
         $metaDescription = html_entity_decode($metaDescription, ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -43,8 +41,6 @@
     <meta name="twitter:description" content="{{ $metaDescription }}">
     <meta name="twitter:image" content="{{ $ogImage }}">
     <meta name="twitter:image:alt" content="{{ $ogImageAlt }}">
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="{{ url('/sitemap.xml') }}">
-    <link rel="alternate" type="text/plain" title="Konteks LLM" href="{{ url('/llms.txt') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/laporin.css') }}?v={{ filemtime(public_path('css/laporin.css')) }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -72,25 +68,10 @@
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('seo.faq') ? 'active' : '' }}" href="{{ route('seo.faq') }}">Pertanyaan Umum</a></li>
                 @else
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dasbor</a></li>
-                    @if($currentUser->canAccessMenuFor('kesiswaan'))
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('kesiswaan.*') ? 'active' : '' }}" href="{{ route('kesiswaan.index') }}">Kesiswaan</a></li>
-                    @endif
-                    @if($currentUser->canAccessMenuFor('sarpras'))
-                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('sarpras.*') ? 'active' : '' }}" href="{{ route('sarpras.index') }}">Sarpras</a></li>
-                    @endif
+                    @if($currentUser->canAccessMenuFor('kesiswaan'))<li class="nav-item"><a class="nav-link {{ request()->routeIs('kesiswaan.*') ? 'active' : '' }}" href="{{ route('kesiswaan.index') }}">Kesiswaan</a></li>@endif
+                    @if($currentUser->canAccessMenuFor('sarpras'))<li class="nav-item"><a class="nav-link {{ request()->routeIs('sarpras.*') ? 'active' : '' }}" href="{{ route('sarpras.index') }}">Sarpras</a></li>@endif
                     @if($currentUser->isSuperadmin())
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-label="Panel Admin menu" aria-expanded="false">Panel Admin</a>
-                            <ul class="dropdown-menu shadow border-0 rounded-4 p-2" role="menu">
-                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}" role="menuitem" aria-label="Kelola pengguna">Pengguna</a></li>
-                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}" role="menuitem" aria-label="Kelola kode QR">Kode QR</a></li>
-                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}" role="menuitem" aria-label="Lihat catatan audit">Catatan Audit</a></li>
-                                <li role="none"><hr class="dropdown-divider"></li>
-                                @foreach(['classes'=>'Kelas','subjects'=>'Mapel','staff-units'=>'Unit Staf','locations'=>'Lokasi','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan'] as $resource=>$label)
-                                    <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.master.index',$resource) }}" role="menuitem" aria-label="Kelola {{ strtolower($label) }}">{{ $label }}</a></li>
-                                @endforeach
-                            </ul>
-                        </li>
+                        <li class="nav-item dropdown"><a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-label="Panel Admin menu" aria-expanded="false">Panel Admin</a><ul class="dropdown-menu shadow border-0 rounded-4 p-2" role="menu"><li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}" role="menuitem">Pengguna</a></li><li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}" role="menuitem">Kode QR</a></li><li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}" role="menuitem">Catatan Audit</a></li></ul></li>
                     @endif
                 @endguest
             </ul>
@@ -104,87 +85,14 @@
         </div>
     </div>
 </nav>
-<main id="main-content" class="main-shell">
-    <div class="container mobile-shell">
-        @if(session('status'))
-            <div class="alert alert-success shadow-sm" role="status" aria-live="polite">{{ session('status') }}</div>
-        @endif
-        @if($errors->any())
-            <div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive">
-                <strong>Periksa input berikut:</strong>
-                <ul class="mb-0 mt-2">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-            </div>
-            <script id="validation-errors-json" type="application/json">@json($errors->getBag('default')->messages())</script>
-        @endif
-        @yield('content')
-    </div>
-</main>
+<main id="main-content" class="main-shell"><div class="container mobile-shell">
+    @if(session('status'))<div class="alert alert-success shadow-sm" role="status" aria-live="polite">{{ session('status') }}</div>@endif
+    @if($errors->any())<div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive"><strong>Periksa input berikut:</strong><ul class="mb-0 mt-2">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div><script id="validation-errors-json" type="application/json">@json($errors->getBag('default')->messages())</script>@endif
+    @yield('content')
+</div></main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const source = document.getElementById('validation-errors-json');
-    const nav = document.getElementById('mainNav');
-    const navDropdowns = nav?.querySelectorAll('.dropdown-toggle');
-
-    // Auto-hide mobile menu on link click
-    if (nav) {
-        nav.querySelectorAll('a').forEach((link) => {
-            link.addEventListener('click', () => {
-                if (window.bootstrap?.Collapse) {
-                    const collapse = bootstrap.Collapse.getOrCreateInstance(nav, { toggle: false });
-                    if (nav.classList.contains('show')) collapse.hide();
-                }
-            });
-        });
-    }
-
-    // Update aria-expanded on dropdown toggle
-    if (navDropdowns) {
-        navDropdowns.forEach(toggle => {
-            toggle.addEventListener('show.bs.dropdown', () => {
-                toggle.setAttribute('aria-expanded', 'true');
-            });
-            toggle.addEventListener('hide.bs.dropdown', () => {
-                toggle.setAttribute('aria-expanded', 'false');
-            });
-        });
-    }
-
-    if (!source || !window.CSS || !CSS.escape) return;
-
-    let errors = {};
-    try { errors = JSON.parse(source.textContent || '{}'); } catch (_) { return; }
-
-    const fieldCandidates = (name) => {
-        const names = [name];
-        if (/\.\d+$/.test(name)) names.push(name.replace(/\.\d+$/, '[]'));
-        if (name.includes('.')) names.push(`${name.split('.')[0]}[]`);
-        return [...new Set(names)];
-    };
-
-    let firstInvalid = null;
-    Object.entries(errors).forEach(([name, messages]) => {
-        const field = fieldCandidates(name)
-            .map((candidate) => document.querySelector(`[name="${CSS.escape(candidate)}"]`))
-            .find(Boolean);
-        if (!field) return;
-
-        field.classList.add('is-invalid');
-        field.setAttribute('aria-invalid', 'true');
-        if (!firstInvalid && field.offsetParent !== null) firstInvalid = field;
-
-        const feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback d-block server-validation-feedback';
-        feedback.textContent = Array.isArray(messages) ? messages[0] : String(messages);
-        const target = field.closest('.form-check') || field;
-        target.insertAdjacentElement('afterend', feedback);
-    });
-
-    if (firstInvalid) {
-        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        firstInvalid.focus({ preventScroll: true });
-    }
-});
+document.addEventListener('DOMContentLoaded',()=>{const source=document.getElementById('validation-errors-json');const nav=document.getElementById('mainNav');const navDropdowns=nav?.querySelectorAll('.dropdown-toggle');if(nav){nav.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{if(window.bootstrap?.Collapse){const collapse=bootstrap.Collapse.getOrCreateInstance(nav,{toggle:false});if(nav.classList.contains('show'))collapse.hide();}}));}if(navDropdowns){navDropdowns.forEach(toggle=>{toggle.addEventListener('show.bs.dropdown',()=>toggle.setAttribute('aria-expanded','true'));toggle.addEventListener('hide.bs.dropdown',()=>toggle.setAttribute('aria-expanded','false'));});}if(!source||!window.CSS||!CSS.escape)return;let errors={};try{errors=JSON.parse(source.textContent||'{}');}catch(_){return;}let firstInvalid=null;Object.entries(errors).forEach(([name,messages])=>{const names=[name];if(/\.\d+$/.test(name))names.push(name.replace(/\.\d+$/,'[]'));if(name.includes('.'))names.push(`${name.split('.')[0]}[]`);const field=[...new Set(names)].map(candidate=>document.querySelector(`[name="${CSS.escape(candidate)}"]`)).find(Boolean);if(!field)return;field.classList.add('is-invalid');field.setAttribute('aria-invalid','true');if(!firstInvalid&&field.offsetParent!==null)firstInvalid=field;const feedback=document.createElement('div');feedback.className='invalid-feedback d-block server-validation-feedback';feedback.textContent=Array.isArray(messages)?messages[0]:String(messages);const target=field.closest('.form-check')||field;target.insertAdjacentElement('afterend',feedback);});if(firstInvalid){firstInvalid.scrollIntoView({behavior:'smooth',block:'center'});firstInvalid.focus({preventScroll:true});}});
 </script>
 @stack('scripts')
 </body>

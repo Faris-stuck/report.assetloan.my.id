@@ -115,13 +115,12 @@ class TrackingController extends Controller
 
         $old = $report->status;
         $report->update(['status' => 'selesai']);
-        $publicNote = 'Pelapor mengonfirmasi selesai.';
         ReportStatusHistory::create([
             'report_id' => $report->id,
             'actor_type' => 'reporter',
             'previous_status' => $old,
             'new_status' => 'selesai',
-            'public_note' => $publicNote,
+            'public_note' => 'Pelapor mengonfirmasi selesai.',
         ]);
 
 
@@ -176,32 +175,13 @@ class TrackingController extends Controller
     private function normalizeReportNumber(string $value): string
     {
         $upper = strtoupper(trim($value));
-
-        /*
-         * Copy/paste friendly normalization:
-         * - LPR 2026 07 0002
-         * - LPR-2026-07-0002
-         * - lpr2026070002
-         *
-         * Semuanya dinormalisasi menjadi LPR2026070002.
-         */
         $compact = preg_replace('/[^A-Z0-9]+/', '', $upper) ?? '';
 
         if (str_starts_with($compact, 'LPR')) {
             return $compact;
         }
 
-        /*
-         * Pertahankan kompatibilitas format legacy:
-         * LAP-XXXXXX-XXXXXX
-         */
-        if (
-            preg_match(
-                '/^LAP([A-Z2-9]{6})([A-Z2-9]{6})$/',
-                $compact,
-                $matches
-            ) === 1
-        ) {
+        if (preg_match('/^LAP([A-Z2-9]{6})([A-Z2-9]{6})$/', $compact, $matches) === 1) {
             return 'LAP-'.$matches[1].'-'.$matches[2];
         }
 

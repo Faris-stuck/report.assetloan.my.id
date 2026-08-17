@@ -306,9 +306,9 @@
         </div>
     </div>
 </div>
+<div class="bottom-action mt-4"><div class="row g-2 align-items-center w-100"><div class="col-12 col-sm"><span class="small-muted">@if($wizardStep === 4)Periksa kembali seluruh isian, lalu kirim laporan.@else Isi lengkap, lalu lanjut ke langkah berikutnya.@endif</span></div><div class="col-12 col-sm-auto"><div class="d-flex gap-2 flex-wrap">@if($wizardStep > 1)<a href="{{ route('public.report.step',$wizardStep-1) }}" class="btn btn-outline-laporin" style="min-height:44px;">Kembali</a>@endif<button type="submit" class="btn btn-laporin" style="min-height:44px;">{{ $wizardStep < 4 ? 'Lanjut' : 'Kirim Laporan' }}</button></div></div></div></div>
 </form>
 @endsection
-
 @push('head')
 @php
     $homeJsonLd = [
@@ -347,3 +347,4 @@
 @push('scripts')
 <script src="{{ asset('js/laporin-report-fix.js') }}?v={{ filemtime(public_path('js/laporin-report-fix.js')) }}" defer></script>
 @endpush
+@push('scripts')<script src="{{ asset('js/laporin-report-fix.js') }}?v={{ filemtime(public_path('js/laporin-report-fix.js')) }}" defer></script>@endpush

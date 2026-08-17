@@ -1,7 +1,6 @@
 /* LAPORIN public report form helpers. */
 (function () {
     'use strict';
-
     function syncReportTypeFields(type) {
         document.querySelectorAll('[data-report-type-content]').forEach(function (group) {
             var active = group.getAttribute('data-report-type-content') === type;
@@ -37,4 +36,5 @@
     } else {
         init();
     }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
 })();

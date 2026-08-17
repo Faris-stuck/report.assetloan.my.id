@@ -7,15 +7,10 @@ use App\Models\Report;
 
 class ReportObserver
 {
-    public function created(Report $report): void
-    {
-        $this->clearCache();
-    }
-
+    public function created(Report $report): void { $this->clearCache(); }
     public function updated(Report $report): void
     {
         $this->clearCache();
-
         if ($report->wasChanged('status')) {
             \App\Jobs\SendReportNotifications::dispatch(
                 $report->id,
@@ -23,29 +18,12 @@ class ReportObserver
             )->afterCommit();
         }
     }
-
-    public function deleted(Report $report): void
-    {
-        $this->clearCache();
-    }
-
-    public function restored(Report $report): void
-    {
-        $this->clearCache();
-    }
-
-    public function forceDeleted(Report $report): void
-    {
-        $this->clearCache();
-    }
-
+    public function deleted(Report $report): void { $this->clearCache(); }
+    public function restored(Report $report): void { $this->clearCache(); }
+    public function forceDeleted(Report $report): void { $this->clearCache(); }
     private function clearCache(): void
     {
-        CacheHelper::invalidateTags([
-            'report',
-            'location',
-        ]);
-
+        CacheHelper::invalidateTags(['report','location']);
         CacheHelper::invalidate('laporin:report:*');
         CacheHelper::invalidate('laporin:dashboard:stats:*');
         CacheHelper::invalidate('laporin:dashboard:chart:*');
