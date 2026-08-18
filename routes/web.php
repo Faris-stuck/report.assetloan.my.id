@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicReportController;
 use App\Http\Controllers\QRCodeController;
@@ -24,6 +25,8 @@ Route::get('/lacak', [TrackingController::class, 'form'])->name('track.form');
 Route::post('/lacak', [TrackingController::class, 'search'])->middleware('throttle:public-tracking')->name('track.search');
 Route::post('/lacak/{report}/info', [TrackingController::class, 'addInfo'])->middleware('throttle:public-tracking')->name('track.info');
 Route::post('/lacak/{report}/confirm', [TrackingController::class, 'confirmComplete'])->middleware('throttle:public-tracking')->name('track.confirm');
+
+Route::post('/ai/chat', [AiChatController::class, 'chat'])->middleware('throttle:ai-chat')->name('ai.chat');
 
 Route::middleware(['auth','active'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');

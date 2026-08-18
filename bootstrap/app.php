@@ -74,5 +74,17 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->by($request->ip() ?? 'unknown');
             }
         );
+
+        RateLimiter::for(
+            'ai-chat',
+            function (Request $request) {
+                $key = $request->user()?->getAuthIdentifier()
+                    ? 'user:'.$request->user()->getAuthIdentifier()
+                    : 'ip:'.($request->ip() ?? 'unknown');
+                return $request->user()
+                    ? Limit::perMinutes(10, 60)->by($key)
+                    : Limit::perMinutes(10, 30)->by($key);
+            }
+        );
     })
     ->create();
