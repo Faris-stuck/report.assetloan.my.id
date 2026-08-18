@@ -25,41 +25,6 @@
     $reportSubmitToken = $reportSubmitToken ?? session('report_submit_token');
 @endphp
 
-<section class="hero-card p-4 p-lg-5 mb-4" aria-labelledby="home-seo-title">
-    <div class="hero-content row align-items-center g-4">
-        <div class="col-lg-8">
-            <span class="page-kicker">Kanal laporan resmi berbasis web</span>
-            <h1 id="home-seo-title" class="page-title display-6 mt-2">LAPORIN SMK Taruna Bangsa Bekasi — Lapor Perundungan, Pelanggaran Siswa, dan Kerusakan Fasilitas</h1>
-            <p class="page-subtitle fs-6">LAPORIN membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara terstruktur, aman, dan dapat dilacak menggunakan nomor laporan serta kode akses.</p>
-            <div class="d-flex flex-wrap gap-2 mt-3">
-                <a class="btn btn-outline-laporin" href="{{ route('seo.bullying-guide') }}">Panduan Lapor Pembullyan</a>
-                <a class="btn btn-outline-laporin" href="{{ route('seo.student-violation') }}">Lapor Pelanggaran Siswa</a>
-                <a class="btn btn-outline-laporin" href="{{ route('seo.facility-damage') }}">Lapor Kerusakan Fasilitas</a>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="laporin-card bg-white h-100">
-                <h2 class="h5 fw-bold">Cara kerja singkat</h2>
-                <ol class="small-muted mb-0 ps-3">
-                    <li>Buat laporan dan isi detail kejadian.</li>
-                    <li>Simpan nomor laporan dan kode akses.</li>
-                    <li>Lacak status dan tindak lanjut laporan.</li>
-                </ol>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="laporin-card p-4 p-lg-5 mb-4 seo-prose" aria-labelledby="home-about-title">
-    <h2 id="home-about-title">Layanan LAPORIN untuk warga SMK Taruna Bangsa Bekasi</h2>
-    <p>LAPORIN adalah kanal pelaporan publik sekolah untuk mencatat kejadian yang memerlukan tindak lanjut. Topik utama yang dapat dilaporkan adalah <strong>perundungan/pembullyan dan pelanggaran siswa</strong> serta <strong>kerusakan fasilitas sekolah</strong>. Setelah laporan masuk, pelapor dapat memantau status melalui halaman Lacak Laporan.</p>
-    <div class="row g-3 mt-1">
-        <div class="col-md-4"><a class="text-decoration-none" href="{{ route('seo.bullying-guide') }}"><strong>Lapor pembullyan & perundungan</strong><br><span class="small-muted">Panduan kronologi, bukti, dan alur tindak lanjut.</span></a></div>
-        <div class="col-md-4"><a class="text-decoration-none" href="{{ route('seo.student-violation') }}"><strong>Lapor pelanggaran siswa</strong><br><span class="small-muted">Untuk kedisiplinan, tata tertib, dan kejadian tidak aman.</span></a></div>
-        <div class="col-md-4"><a class="text-decoration-none" href="{{ route('seo.facility-damage') }}"><strong>Lapor kerusakan fasilitas</strong><br><span class="small-muted">Untuk fasilitas kelas, laboratorium, toilet, listrik, dan sarana sekolah.</span></a></div>
-    </div>
-</section>
-
 {{-- ============================================================ --}}
 {{-- FORM UTAMA --}}
 {{-- ============================================================ --}}
@@ -334,6 +299,21 @@
 </div>
 <div class="bottom-action mt-4"><div class="row g-2 align-items-center w-100"><div class="col-12 col-sm"><span class="small-muted">@if($wizardStep === 4)Periksa kembali seluruh isian, lalu kirim laporan.@else Isi lengkap, lalu lanjut ke langkah berikutnya.@endif</span></div><div class="col-12 col-sm-auto"><div class="d-flex gap-2 flex-wrap">@if($wizardStep > 1)<a href="{{ route('public.report.step',$wizardStep-1) }}" class="btn btn-outline-laporin" style="min-height:44px;">Kembali</a>@endif<button type="submit" class="btn btn-laporin" style="min-height:44px;">{{ $wizardStep < 4 ? 'Lanjut' : 'Kirim Laporan' }}</button></div></div></div></div>
 </form>
+
+<details class="laporin-card mt-4 seo-disclosure">
+    <summary class="fw-semibold">Tentang LAPORIN dan panduan pelaporan</summary>
+    <div class="pt-3 seo-prose">
+        <h1>LAPORIN SMK Taruna Bangsa Bekasi — Lapor Perundungan, Pelanggaran Siswa, dan Kerusakan Fasilitas</h1>
+        <p>LAPORIN membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara terstruktur, aman, dan dapat dilacak menggunakan nomor laporan serta kode akses.</p>
+        <h2>Layanan LAPORIN untuk warga SMK Taruna Bangsa Bekasi</h2>
+        <p>LAPORIN adalah kanal pelaporan publik sekolah untuk mencatat kejadian yang memerlukan tindak lanjut. Topik utama yang dapat dilaporkan adalah perundungan atau pembullyan, pelanggaran siswa, dan kerusakan fasilitas sekolah. Setelah laporan masuk, pelapor dapat memantau status melalui halaman Lacak Laporan.</p>
+        <div class="row g-3">
+            <div class="col-md-4"><a href="{{ route('seo.bullying-guide') }}"><strong>Lapor pembullyan &amp; perundungan</strong></a><br><span class="small-muted">Panduan kronologi, bukti, dan alur tindak lanjut.</span></div>
+            <div class="col-md-4"><a href="{{ route('seo.student-violation') }}"><strong>Lapor pelanggaran siswa</strong></a><br><span class="small-muted">Untuk kedisiplinan, tata tertib, dan kejadian tidak aman.</span></div>
+            <div class="col-md-4"><a href="{{ route('seo.facility-damage') }}"><strong>Lapor kerusakan fasilitas</strong></a><br><span class="small-muted">Untuk fasilitas kelas, laboratorium, toilet, listrik, dan sarana sekolah.</span></div>
+        </div>
+    </div>
+</details>
 @endsection
 @push('head')
 @php
