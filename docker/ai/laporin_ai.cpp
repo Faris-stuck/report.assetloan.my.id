@@ -16,7 +16,7 @@ bool g_backend_initialized = false;
 constexpr const char * kModelPath = "/opt/laporin-ai/models/qwen2.5-0.5b-instruct-q4_k_m.gguf";
 constexpr int32_t kContext = 2048;
 constexpr int32_t kThreads = 2;
-constexpr int32_t kBatch = kContext;
+constexpr int32_t kBatch = 512;
 constexpr int32_t kMaxGenerated = 256;
 constexpr int64_t kTimeoutMs = 10000;
 
@@ -108,11 +108,16 @@ extern "C" int laporin_ai_generate(const char * prompt, char * output, size_t ou
     llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.7f));
     llama_sampler_chain_add(sampler, llama_sampler_init_dist(1234567));
 
-    llama_batch batch = llama_batch_get_one(tokens.data(), tokens.size());
-    if (llama_decode(ctx, batch) != 0) {
-        llama_sampler_free(sampler);
-        llama_free(ctx);
-        return -7;
+    // Decode the prompt in bounded chunks so a long RAG/system prompt never
+    // forces a multi-gigabyte compute buffer in an Apache worker.
+    for (size_t offset = 0; offset < tokens.size(); offset += static_cast<size_t>(kBatch)) {
+        const int32_t chunk = static_cast<int32_t>(std::min(static_cast<size_t>(kBatch), tokens.size() - offset));
+        llama_batch prompt_batch = llama_batch_get_one(tokens.data() + offset, chunk);
+        if (llama_decode(ctx, prompt_batch) != 0) {
+            llama_sampler_free(sampler);
+            llama_free(ctx);
+            return -7;
+        }
     }
 
     std::string response;
