@@ -4,7 +4,7 @@ FROM debian:bookworm-slim AS ai-build
 
 ARG LLAMA_VERSION=b10218
 ARG LLAMA_ASSET=llama-b10218-bin-ubuntu-x64.tar.gz
-ARG LLAMA_SHA256=__PINNED_AT_BUILD__
+ARG LLAMA_SHA256=78ec7a1964710918030e85c132a0995b10b07e4f43001bdf54fe0fd48d1eb85b
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential curl ca-certificates tar gzip \
@@ -14,7 +14,7 @@ WORKDIR /tmp/ai
 RUN curl -fL --retry 5 --retry-delay 2 \
         -o /tmp/ai/llama.tar.gz \
         "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_VERSION}/${LLAMA_ASSET}" \
-    && test "${LLAMA_SHA256}" = "__PINNED_AT_BUILD__" || echo "${LLAMA_SHA256}  /tmp/ai/llama.tar.gz" | sha256sum -c - \
+    && echo "${LLAMA_SHA256}  /tmp/ai/llama.tar.gz" | sha256sum -c - \
     && tar -xzf /tmp/ai/llama.tar.gz
 
 RUN curl -fL --retry 5 --retry-delay 2 \
@@ -23,7 +23,7 @@ RUN curl -fL --retry 5 --retry-delay 2 \
     && tar -xzf /tmp/ai/llama-src.tar.gz -C /tmp/ai
 
 RUN mkdir -p /opt/laporin-ai/lib /opt/laporin-ai/include /opt/laporin-ai/models \
-    && cp /tmp/ai/llama-${LLAMA_VERSION#b}*/lib*.so* /opt/laporin-ai/lib/ 2>/dev/null || true
+    && find /tmp/ai/llama-b10218 -maxdepth 1 -type f -name 'lib*.so*' -exec cp {} /opt/laporin-ai/lib/ \;
 
 COPY docker/ai/laporin_ai.cpp /tmp/ai/laporin_ai.cpp
 
