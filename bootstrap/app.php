@@ -82,8 +82,8 @@ return Application::configure(basePath: dirname(__DIR__))
                     ? 'user:'.$request->user()->getAuthIdentifier()
                     : 'ip:'.($request->ip() ?? 'unknown');
                 return $request->user()
-                    ? Limit::perMinutes(10, 60)->by($key)
-                    : Limit::perMinutes(10, 30)->by($key);
+                    ? Limit::perMinutes(10, 20)->by($key)
+                    : Limit::perMinutes(10, 10)->by($key);
             }
         );
     })

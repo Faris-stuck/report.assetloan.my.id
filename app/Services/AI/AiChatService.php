@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 class AiChatService
 {
     private const MAX_MESSAGE_LENGTH = 1000;
+    private const MAX_MESSAGE_BYTES = 6000;
+    private const MIN_RETRIEVAL_SCORE = 4;
 
     /** @var array<string, array<int, string>> */
     private const SECURITY_PATTERNS = [
@@ -149,20 +151,63 @@ class AiChatService
     /** @return array{reason:string}|null */
     private function securityCheck(string $message): ?array
     {
-        $normalized = mb_strtolower(preg_replace('/\s+/u', ' ', $message) ?? $message);
+        if (strlen($message) > self::MAX_MESSAGE_BYTES) {
+            return ['reason' => 'oversized_input'];
+        }
+
+        $normalized = $this->canonicalizeSecurityText($message);
+        $risk = 0;
+        $matchedReasons = [];
+
         foreach (self::SECURITY_PATTERNS as $reason => $patterns) {
             foreach ($patterns as $pattern) {
                 if (str_contains($normalized, $pattern)) {
-                    return ['reason' => $reason];
+                    $risk += 2;
+                    $matchedReasons[] = $reason;
+                    break;
                 }
             }
         }
 
-        if (preg_match('/(?:https?:\/\/|javascript:|data:text\/html)/i', $message)) {
-            return ['reason' => 'unsafe_uri'];
+        if (preg_match('/(?:https?:\/\/|javascript:|data:text\/html)/i', $normalized)) {
+            $risk += 2;
+            $matchedReasons[] = 'unsafe_uri';
+        }
+
+        if (preg_match('/(?:<\|(?:im_start|im_end|system|assistant|user|tool)\|>|(?:^|\n)\s*(?:system|developer|assistant|tool)\s*:)/iu', $message)) {
+            $risk += 3;
+            $matchedReasons[] = 'prompt_delimiter_injection';
+        }
+
+        if (preg_match('/(?:[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}\x{2066}-\x{2069}])/u', $message)) {
+            $risk += 3;
+            $matchedReasons[] = 'unicode_obfuscation';
+        }
+
+        $compact = preg_replace('/\s+/u', '', $message) ?? $message;
+        if (preg_match('/(?:[A-Za-z0-9+\/]{80,}={0,2})/', $compact)) {
+            $risk += 2;
+            $matchedReasons[] = 'encoded_payload';
+        }
+
+        $uniqueReasons = array_values(array_unique($matchedReasons));
+        if ($risk >= 3 || count($uniqueReasons) >= 2) {
+            return ['reason' => implode(',', $uniqueReasons ?: ['high_risk_input'])];
         }
 
         return null;
+    }
+
+    private function canonicalizeSecurityText(string $message): string
+    {
+        $text = class_exists(\Normalizer::class)
+            ? (\Normalizer::normalize($message, \Normalizer::FORM_KC) ?: $message)
+            : $message;
+
+        $text = preg_replace('/[\x{200B}-\x{200F}\x{202A}-\x{202E}\x{2060}\x{2066}-\x{2069}]/u', '', $text) ?? $text;
+        $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+
+        return mb_strtolower(trim($text));
     }
 
     private function roleFor(?User $user): string
@@ -204,7 +249,7 @@ class AiChatService
                 }
             }
 
-            if ($score > 0) {
+            if ($score >= self::MIN_RETRIEVAL_SCORE) {
                 $results[] = [
                     'title' => $entry['title'],
                     'content' => $entry['content'],
@@ -340,15 +385,23 @@ class AiChatService
 
     private function outputViolatesPolicy(string $answer): bool
     {
-        $normalized = mb_strtolower($answer);
-        $dangerous = [
-            '<?php', 'select ', 'insert into', 'update ', 'delete from', 'drop table', 'truncate table',
-            '.env', 'api key', 'apikey', 'database password', 'secret key', 'system prompt', 'private key',
-            'docker exec', 'bash ', 'ssh ', '/var/www/', 'password=', 'token=',
+        if (mb_strlen($answer) > 4000) {
+            return true;
+        }
+
+        $normalized = $this->canonicalizeSecurityText($answer);
+        $patterns = [
+            '/<\?php|<script|javascript:/i',
+            '/\b(?:select|insert\s+into|update\s+\w+\s+set|delete\s+from|drop\s+table|truncate\s+table)\b/i',
+            '/(?:system\s+prompt|developer\s+message|hidden\s+instruction|internal\s+instruction)/i',
+            '/(?:password|passwd|api[-_ ]?key|secret[-_ ]?key|access[-_ ]?token|private[-_ ]?key|connection[-_ ]?string)\s*[:=]/i',
+            '/(?:\.env|docker\s+exec|bash\s+-c|ssh\s+|/var/www/|/etc/apache2/|/opt/laporin-ai)/i',
+            '/\b(?:credential|credentials|authorization|bearer)\s*[:=]/i',
+            '/(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|127\.0\.0\.1)/',
         ];
 
-        foreach ($dangerous as $pattern) {
-            if (str_contains($normalized, $pattern)) {
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $normalized) === 1) {
                 return true;
             }
         }
@@ -358,7 +411,8 @@ class AiChatService
 
     private function safeResponse(string $answer, array $sources = []): array
     {
-        $answer = preg_replace('/(?:password|api key|apikey|secret|token)\s*[:=]\s*\S+/iu', '[data sensitif disembunyikan]', $answer) ?? $answer;
+        $answer = preg_replace('/(?:password|passwd|api[-_ ]?key|secret[-_ ]?key|token|credential)\s*[:=]\s*\S+/iu', '[data sensitif disembunyikan]', $answer) ?? $answer;
+        $answer = preg_replace('/[\x{0000}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{007F}]/u', '', $answer) ?? $answer;
         return [
             'ok' => true,
             'answer' => trim($answer),
