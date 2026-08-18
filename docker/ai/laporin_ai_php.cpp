@@ -38,7 +38,9 @@ static const zend_function_entry laporin_ai_functions[] = {
     ZEND_FE_END
 };
 
-zend_module_entry laporin_ai_module_entry = {
+extern "C" {
+
+ZEND_DLEXPORT zend_module_entry laporin_ai_module_entry = {
     STANDARD_MODULE_HEADER,
     "laporin_ai_native",
     laporin_ai_functions,
@@ -51,8 +53,9 @@ zend_module_entry laporin_ai_module_entry = {
     STANDARD_MODULE_PROPERTIES
 };
 
-#ifdef COMPILE_DL_LAPORIN_AI_NATIVE
-extern "C" {
-ZEND_GET_MODULE(laporin_ai_module)
+ZEND_DLEXPORT zend_module_entry * get_module(void)
+{
+    return &laporin_ai_module_entry;
 }
-#endif
+
+}
