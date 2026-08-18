@@ -77,10 +77,24 @@
                 body: JSON.stringify({ message })
             });
             const payload = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(payload.message || 'Permintaan tidak dapat diproses.');
+            if (!response.ok) {
+                if (response.status === 419) {
+                    throw new Error('Sesi keamanan halaman kedaluwarsa. Silakan muat ulang halaman lalu coba lagi.');
+                }
+                if (response.status === 429) {
+                    const retryAfter = response.headers.get('Retry-After');
+                    throw new Error(retryAfter
+                        ? `Batas permintaan AI tercapai. Silakan coba lagi dalam ${retryAfter} detik.`
+                        : 'Batas permintaan AI tercapai. Silakan coba lagi beberapa saat lagi.');
+                }
+                if (response.status >= 500) {
+                    throw new Error('Layanan AI sedang mengalami gangguan internal. Silakan coba lagi.');
+                }
+                throw new Error(payload.message || 'Permintaan tidak dapat diproses.');
+            }
             addBubble(payload.answer || 'Maaf, saya belum dapat menjawab pertanyaan tersebut.', 'assistant', payload.sources || []);
         } catch (error) {
-            addBubble('Layanan AI sedang tidak dapat memproses permintaan. Silakan coba lagi.', 'assistant');
+            addBubble(error instanceof Error ? error.message : 'Permintaan AI tidak dapat diproses. Silakan coba lagi.', 'assistant');
         } finally {
             input.disabled = false;
             form.querySelector('button').disabled = false;
