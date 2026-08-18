@@ -26,6 +26,8 @@ RUN mkdir -p /opt/laporin-ai/lib /opt/laporin-ai/include /opt/laporin-ai/models 
     && cp -a /tmp/ai/llama-b10218/lib*.so* /opt/laporin-ai/lib/
 
 COPY docker/ai/laporin_ai.cpp /tmp/ai/laporin_ai.cpp
+COPY docker/ai/laporin_ai.h /opt/laporin-ai/laporin_ai.h
+COPY docker/ai/preload.php /opt/laporin-ai/preload.php
 
 RUN SRC_DIR=$(find /tmp/ai -maxdepth 1 -type d -name 'llama.cpp-*' | head -1) \
     && cp -R "$SRC_DIR/include/." /opt/laporin-ai/include/ \
@@ -42,7 +44,7 @@ RUN curl -fL --retry 5 --retry-delay 2 \
         -o /opt/laporin-ai/models/qwen2.5-0.5b-instruct-q4_k_m.gguf \
         'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf?download=true' \
     && chmod 0555 /opt/laporin-ai/lib/*.so* \
-    && chmod 0444 /opt/laporin-ai/models/*.gguf
+    && chmod 0444 /opt/laporin-ai/models/*.gguf /opt/laporin-ai/*.php /opt/laporin-ai/*.h
 
 FROM php:8.3-apache
 
