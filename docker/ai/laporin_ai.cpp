@@ -16,7 +16,7 @@ bool g_backend_initialized = false;
 constexpr const char * kModelPath = "/opt/laporin-ai/models/qwen2.5-0.5b-instruct-q4_k_m.gguf";
 constexpr int32_t kContext = 2048;
 constexpr int32_t kThreads = 2;
-constexpr int32_t kBatch = 512;
+constexpr int32_t kBatch = kContext;
 constexpr int32_t kMaxGenerated = 256;
 constexpr int64_t kTimeoutMs = 10000;
 
