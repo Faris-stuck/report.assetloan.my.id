@@ -5,7 +5,7 @@
 @section('canonical'){{ route('seo.bullying-guide') }}@endsection
 @section('content')
 @php
-    $updatedAt = '2026-07-30';
+    $updatedAt = '2026-08-18';
     $faqs = [
         ['q' => 'Bagaimana cara lapor pembullyan di SMK Taruna Bangsa Bekasi?', 'a' => 'Buka LAPORIN, pilih jenis laporan Pelanggaran Siswa, isi identitas pelapor, detail kejadian, lokasi, kronologi, lalu kirim laporan. Sistem memberi nomor laporan dan kode akses untuk pelacakan status.'],
         ['q' => 'Apakah laporan perundungan bisa dilacak?', 'a' => 'Bisa. Setelah laporan terkirim, pelapor mendapat nomor laporan dan kode akses 6 digit untuk melihat perkembangan laporan di halaman Lacak Laporan.'],

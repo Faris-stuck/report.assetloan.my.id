@@ -1,5 +1,8 @@
 @extends('layouts.app')
 @section('title','Laporan Terkirim - LAPORIN')
+@section('meta_title','Laporan Terkirim - LAPORIN')
+@section('meta_description','Konfirmasi pengiriman laporan LAPORIN. Simpan nomor laporan dan kode akses untuk melacak status secara aman.')
+@section('robots','noindex, nofollow, noarchive')
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-9">

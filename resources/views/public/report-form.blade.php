@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title','Buat Laporan - LAPORIN')
 @section('meta_title','LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan')
-@section('meta_description','Buat laporan perundungan, pembullyan, pelanggaran siswa, atau kerusakan fasilitas SMK Taruna Bangsa Bekasi secara aman dan terlacak.')
+@section('meta_description','LAPORIN SMK Taruna Bangsa Bekasi untuk melaporkan perundungan, pelanggaran siswa, dan kerusakan fasilitas. Buat laporan tanpa login dan lacak status.')
 @section('canonical'){{ url('/') }}@endsection
 @section('robots', request()->routeIs('public.report') ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' : 'noindex, follow, noarchive')
 @section('content')
@@ -341,14 +341,6 @@
         '@context' => 'https://schema.org',
         '@graph' => [
             [
-                '@type' => 'WebSite',
-                '@id' => url('/').'#website',
-                'url' => url('/'),
-                'name' => 'LAPORIN SMK Taruna Bangsa Bekasi',
-                'description' => 'Kanal laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas SMK Taruna Bangsa Bekasi.',
-                'inLanguage' => 'id-ID',
-            ],
-            [
                 '@type' => ['WebApplication', 'Service'],
                 '@id' => url('/').'#laporin-service',
                 'name' => 'LAPORIN',
@@ -357,6 +349,7 @@
                 'url' => url('/'),
                 'areaServed' => 'SMK Taruna Bangsa Bekasi',
                 'serviceType' => 'Pelaporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas sekolah',
+                'provider' => ['@id' => url('/').'#organization'],
             ],
             [
                 '@type' => 'School',

@@ -19,8 +19,8 @@ class SeoController extends Controller
     public function studentViolation(): View
     {
         return view('public.seo.topic', ['page' => $this->topicPage(
-            'Lapor Pelanggaran Siswa SMK Taruna Bangsa Bekasi | LAPORIN',
-            'Lapor Pelanggaran Siswa SMK Taruna Bangsa Bekasi | LAPORIN',
+            'Lapor Pelanggaran Siswa | LAPORIN SMK Taruna Bangsa Bekasi',
+            'Lapor Pelanggaran Siswa | LAPORIN SMK Taruna Bangsa Bekasi',
             'Panduan menggunakan LAPORIN untuk melaporkan pelanggaran siswa, kedisiplinan, tata tertib, perundungan, dan kejadian tidak aman di SMK Taruna Bangsa Bekasi.',
             'Lapor Pelanggaran Siswa di SMK Taruna Bangsa Bekasi',
             'Panduan singkat untuk membuat laporan pelanggaran siswa dan kejadian tidak aman dengan kronologi yang jelas serta dapat dilacak.',
@@ -36,8 +36,8 @@ class SeoController extends Controller
     public function facilityDamage(): View
     {
         return view('public.seo.topic', ['page' => $this->topicPage(
-            'Lapor Kerusakan Fasilitas Sekolah SMK Taruna Bangsa Bekasi | LAPORIN',
-            'Lapor Kerusakan Fasilitas Sekolah SMK Taruna Bangsa Bekasi | LAPORIN',
+            'Lapor Kerusakan Fasilitas | LAPORIN SMK Taruna Bangsa Bekasi',
+            'Lapor Kerusakan Fasilitas | LAPORIN SMK Taruna Bangsa Bekasi',
             'Panduan melaporkan kerusakan fasilitas sekolah seperti kelas, laboratorium, toilet, listrik, AC, proyektor, meja, kursi, pintu, dan sarana lain melalui LAPORIN.',
             'Lapor Kerusakan Fasilitas Sekolah di SMK Taruna Bangsa Bekasi',
             'Gunakan LAPORIN untuk mencatat kerusakan fasilitas secara jelas agar petugas Sarpras dapat menilai dan menindaklanjuti laporan.',

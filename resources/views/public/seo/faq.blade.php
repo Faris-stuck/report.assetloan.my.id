@@ -1,11 +1,11 @@
 @extends('layouts.app')
 @section('title','Pertanyaan Umum LAPORIN SMK Taruna Bangsa Bekasi')
-@section('meta_title','Pertanyaan Umum LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan')
-@section('meta_description','Pertanyaan umum tentang LAPORIN untuk lapor perundungan, pembullyan, pelanggaran siswa, kerusakan fasilitas, dan pelacakan laporan.')
+@section('meta_title','FAQ LAPORIN SMK Taruna Bangsa Bekasi | Cara Lapor & Lacak')
+@section('meta_description','FAQ LAPORIN SMK Taruna Bangsa Bekasi: cara lapor perundungan, pelanggaran siswa, kerusakan fasilitas, tanpa login, dan cara melacak status laporan.')
 @section('canonical'){{ route('seo.faq') }}@endsection
 @section('content')
 @php
-    $updatedAt = '2026-08-09';
+    $updatedAt = '2026-08-18';
     $faqs = [
         ['q' => 'Apa itu LAPORIN SMK Taruna Bangsa Bekasi?', 'a' => 'LAPORIN adalah sistem pelaporan berbasis web untuk membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara lebih rapi, aman, dan terlacak.'],
         ['q' => 'Bagaimana cara lapor pembullyan atau perundungan?', 'a' => 'Buka halaman Buat Laporan, pilih Pelanggaran Siswa, isi data pelapor, kronologi, lokasi, waktu kejadian, dan bukti bila ada, lalu kirim laporan. Setelah terkirim, simpan nomor laporan dan kode akses untuk pelacakan.'],
@@ -80,6 +80,7 @@
 </div>
 
 <div class="laporin-card p-4 p-lg-5">
+    <p class="small-muted mb-4">Panduan terkait: <a href="{{ route('seo.bullying-guide') }}">cara lapor pembullyan/perundungan</a>, <a href="{{ route('seo.student-violation') }}">lapor pelanggaran siswa</a>, dan <a href="{{ route('seo.facility-damage') }}">lapor kerusakan fasilitas sekolah</a>.</p>
     <div class="accordion" id="faqPageAccordion">
         @foreach($faqs as $i => $faq)
             <div class="accordion-item border-0 border-bottom">

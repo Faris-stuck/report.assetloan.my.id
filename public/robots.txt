@@ -9,25 +9,7 @@ Disallow: /sarpras
 Disallow: /siswa
 Disallow: /reports
 Disallow: /download-attachment
-Disallow: /lapor-sukses/
+Disallow: /lapor-sukses
 Disallow: /ai/
-
-# Explicit crawler access for search and AI-powered discovery.
-User-agent: Googlebot
-Allow: /
-User-agent: Bingbot
-Allow: /
-User-agent: OAI-SearchBot
-Allow: /
-User-agent: ChatGPT-User
-Allow: /
-User-agent: GPTBot
-Allow: /
-User-agent: PerplexityBot
-Allow: /
-User-agent: ClaudeBot
-Allow: /
-User-agent: DuckDuckBot
-Allow: /
 
 Sitemap: https://report.assetloan.my.id/sitemap.xml
