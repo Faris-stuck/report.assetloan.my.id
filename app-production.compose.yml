@@ -1,7 +1,6 @@
 services:
   app:
     image: lapapp:20260818-no-ai
-    image: lapapp:20260818-no-ai
     container_name: app
     ports:
       - "127.0.0.1:18080:8080"
@@ -16,7 +15,6 @@ services:
     restart: unless-stopped
 
   worker-notifications:
-    image: lapapp:20260818-no-ai
     image: lapapp:20260818-no-ai
     container_name: laporin-worker-notifications
     env_file:
@@ -36,7 +34,6 @@ services:
 
   worker-email:
     image: lapapp:20260818-no-ai
-    image: lapapp:20260818-no-ai
     container_name: laporin-worker-email
     env_file:
       - /etc/laporin/laporin-production.env
@@ -54,7 +51,6 @@ services:
     restart: unless-stopped
 
   worker-whatsapp:
-    image: lapapp:20260818-no-ai
     image: lapapp:20260818-no-ai
     container_name: laporin-worker-whatsapp
     env_file:
