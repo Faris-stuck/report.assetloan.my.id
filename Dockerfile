@@ -34,9 +34,8 @@ RUN SRC_DIR=$(find /tmp/ai -maxdepth 1 -type d -name 'llama.cpp-*' | head -1) \
     && g++ -std=c++17 -fPIC -shared /tmp/ai/laporin_ai.cpp \
         -I/opt/laporin-ai/include \
         -I/opt/laporin-ai/include/ggml \
-        -L/opt/laporin-ai/lib \
+        /opt/laporin-ai/lib/libllama.so \
         -Wl,-rpath,/opt/laporin-ai/lib \
-        -llama \
         -o /opt/laporin-ai/lib/liblaporin_ai.so
 
 RUN curl -fL --retry 5 --retry-delay 2 \
