@@ -128,8 +128,8 @@
             <h2>Privasi dan keamanan laporan</h2>
             <p>Nomor laporan dan kode akses digunakan untuk melacak status. Jangan membagikan kode akses ke orang yang tidak berkepentingan. Halaman dashboard, detail laporan, lampiran, dan data internal tidak dimasukkan ke sitemap publik agar tidak menjadi target crawler search engine.</p>
 
-            <h2>Kata kunci yang dijawab halaman ini</h2>
-            <p>Halaman ini ditulis untuk membantu pencarian seperti “lapor pembullyan SMK Taruna Bangsa Bekasi”, “lapor perundungan SMK Taruna Bangsa Bekasi”, “sistem pelaporan bullying sekolah”, “lapor pelanggaran siswa”, dan “LAPORIN SMK Taruna Bangsa Bekasi”.</p>
+            <h2>Halaman terkait</h2>
+            <p>Untuk laporan yang berkaitan dengan tata tertib atau kejadian tidak aman, Anda juga dapat membaca <a href="{{ route('seo.student-violation') }}">panduan lapor pelanggaran siswa</a>. Untuk masalah sarana sekolah, lihat <a href="{{ route('seo.facility-damage') }}">panduan lapor kerusakan fasilitas</a>. Setelah laporan dikirim, statusnya dapat dipantau melalui <a href="{{ route('track.form') }}">Lacak Laporan</a>.</p>
         </article>
     </div>
     <div class="col-lg-4">
