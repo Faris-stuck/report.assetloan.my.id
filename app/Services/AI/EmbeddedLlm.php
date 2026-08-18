@@ -2,17 +2,13 @@
 
 namespace App\Services\AI;
 
-use FFI;
 use RuntimeException;
 
 final class EmbeddedLlm
 {
-    private const BUFFER_SIZE = 8192;
     private const LOCK_FILE = '/tmp/laporin-ai-inference.lock';
     private const LOCK_WAIT_MS = 3000;
     private const LOCK_SLEEP_US = 50000;
-
-    private static ?FFI $ffi = null;
 
     public static function generate(string $prompt): ?string
     {
@@ -36,29 +32,19 @@ final class EmbeddedLlm
         }
 
         try {
-            $ffi = self::ffi();
-        $buffer = $ffi->new('char['.self::BUFFER_SIZE.']', false);
-        $buffer[0] = 0;
+            if (! function_exists('laporin_ai_generate_native')) {
+                throw new RuntimeException('Embedded AI native extension is unavailable.');
+            }
 
-        $result = $ffi->laporin_ai_generate($prompt, $buffer, self::BUFFER_SIZE);
-        if ($result !== 0) {
-            return null;
-        }
+            $generated = \laporin_ai_generate_native($prompt);
+            if (! is_string($generated) || trim($generated) === '') {
+                return null;
+            }
 
-        $output = FFI::string($buffer);
-        return $output !== '' ? trim($output) : null;
+            return trim($generated);
         } finally {
             flock($lockHandle, LOCK_UN);
             fclose($lockHandle);
         }
-    }
-
-    private static function ffi(): FFI
-    {
-        if (! extension_loaded('FFI')) {
-            throw new RuntimeException('Embedded AI runtime is unavailable.');
-        }
-
-        return self::$ffi ??= FFI::scope('LAPORIN_AI');
     }
 }
