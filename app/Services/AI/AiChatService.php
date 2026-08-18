@@ -12,6 +12,10 @@ class AiChatService
     private const MAX_MESSAGE_BYTES = 6000;
     private const MIN_RETRIEVAL_SCORE = 4;
 
+    private const GENERAL_CONTEXT = <<<'CONTEXT'
+LAPORIN adalah sistem pelaporan internal SMK Taruna Bangsa Bekasi. Fungsinya membantu warga sekolah membuat laporan, melacak laporan, memahami jenis laporan, dan memperoleh informasi/panduan terkait penggunaan LAPORIN. AI Chat LAPORIN adalah asisten informasi berbasis pengetahuan resmi aplikasi. AI bersifat read-only: AI tidak mengubah status laporan, tidak menjalankan perintah, dan tidak membuka data internal di luar kewenangan akun.
+CONTEXT;
+
     /** @var array<string, array<int, string>> */
     private const SECURITY_PATTERNS = [
         'prompt_injection' => [
@@ -124,10 +128,9 @@ class AiChatService
         $intent = $this->intent($message);
 
         $approvedFacts = $this->approvedFacts($user, $role, $intent);
-        if ($intent !== 'stats' && $retrieved === [] && $approvedFacts === []) {
-            return $this->safeResponse('Saya belum menemukan informasi yang cukup untuk menjawab pertanyaan tersebut. Silakan gunakan menu Panduan, Pertanyaan Umum, atau Lacak di LAPORIN.');
-        }
 
+        // Semua pertanyaan yang lolos security tetap masuk ke LLM.
+        // Retrieval hanya memperkaya context; retrieval kosong bukan alasan untuk mematikan AI.
         $prompt = $this->buildModelPrompt($message, $role, $retrieved, $approvedFacts);
         $generated = null;
 
@@ -314,7 +317,7 @@ class AiChatService
     /** @param array<int, array{label:string,value:string}> $facts */
     private function buildModelPrompt(string $message, string $role, array $retrieved, array $facts): string
     {
-        $context = [];
+        $context = ['[KONTEKS DASAR RESMI LAPORIN]\n'.self::GENERAL_CONTEXT];
         foreach ($retrieved as $item) {
             $context[] = '[DOKUMEN: '.$item['title'].']\n'.$item['content'];
         }
