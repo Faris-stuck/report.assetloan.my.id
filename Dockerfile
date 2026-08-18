@@ -2,31 +2,38 @@ FROM composer:2 AS composer
 
 FROM debian:bookworm-slim AS ai-build
 
+ARG LLAMA_VERSION=b10218
+ARG LLAMA_ASSET=llama-b10218-bin-ubuntu-x64.tar.gz
+ARG LLAMA_SHA256=__PINNED_AT_BUILD__
+
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential cmake git curl ca-certificates \
+    && apt-get install -y --no-install-recommends build-essential curl ca-certificates tar gzip \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /tmp
-RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp.git
+WORKDIR /tmp/ai
+RUN curl -fL --retry 5 --retry-delay 2 \
+        -o /tmp/ai/llama.tar.gz \
+        "https://github.com/ggml-org/llama.cpp/releases/download/${LLAMA_VERSION}/${LLAMA_ASSET}" \
+    && test "${LLAMA_SHA256}" = "__PINNED_AT_BUILD__" || echo "${LLAMA_SHA256}  /tmp/ai/llama.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/ai/llama.tar.gz
 
-RUN cmake -S /tmp/llama.cpp -B /tmp/llama.cpp/build \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DBUILD_SHARED_LIBS=ON \
-        -DGGML_NATIVE=OFF \
-        -DLLAMA_BUILD_TESTS=OFF \
-        -DLLAMA_BUILD_EXAMPLES=OFF \
-        -DLLAMA_BUILD_SERVER=OFF \
-        -DLLAMA_CURL=OFF \
-    && cmake --build /tmp/llama.cpp/build -j2 --target llama
+RUN curl -fL --retry 5 --retry-delay 2 \
+        -o /tmp/ai/llama-src.tar.gz \
+        "https://github.com/ggml-org/llama.cpp/archive/refs/tags/${LLAMA_VERSION}.tar.gz" \
+    && tar -xzf /tmp/ai/llama-src.tar.gz -C /tmp/ai
 
-RUN mkdir -p /opt/laporin-ai/lib /opt/laporin-ai/models \
-    && cp /tmp/llama.cpp/build/bin/libllama.so* /opt/laporin-ai/lib/ \
-    && cp /tmp/llama.cpp/build/bin/libggml*.so* /opt/laporin-ai/lib/
+RUN mkdir -p /opt/laporin-ai/lib /opt/laporin-ai/include /opt/laporin-ai/models \
+    && cp /tmp/ai/llama-${LLAMA_VERSION#b}*/lib*.so* /opt/laporin-ai/lib/ 2>/dev/null || true
 
-COPY docker/ai/laporin_ai.cpp /tmp/laporin_ai.cpp
+COPY docker/ai/laporin_ai.cpp /tmp/ai/laporin_ai.cpp
 
-RUN g++ -std=c++17 -fPIC -shared /tmp/laporin_ai.cpp \
-        -I/tmp/llama.cpp/include \
+RUN SRC_DIR=$(find /tmp/ai -maxdepth 1 -type d -name 'llama.cpp-*' | head -1) \
+    && cp -R "$SRC_DIR/include/." /opt/laporin-ai/include/ \
+    && mkdir -p /opt/laporin-ai/include/ggml \
+    && cp -R "$SRC_DIR/ggml/include/." /opt/laporin-ai/include/ggml/ \
+    && g++ -std=c++17 -fPIC -shared /tmp/ai/laporin_ai.cpp \
+        -I/opt/laporin-ai/include \
+        -I/opt/laporin-ai/include/ggml \
         -L/opt/laporin-ai/lib \
         -Wl,-rpath,/opt/laporin-ai/lib \
         -llama \
