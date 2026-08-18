@@ -395,7 +395,7 @@ class AiChatService
             '/\b(?:select|insert\s+into|update\s+\w+\s+set|delete\s+from|drop\s+table|truncate\s+table)\b/i',
             '/(?:system\s+prompt|developer\s+message|hidden\s+instruction|internal\s+instruction)/i',
             '/(?:password|passwd|api[-_ ]?key|secret[-_ ]?key|access[-_ ]?token|private[-_ ]?key|connection[-_ ]?string)\s*[:=]/i',
-            '/(?:\.env|docker\s+exec|bash\s+-c|ssh\s+|/var/www/|/etc/apache2/|/opt/laporin-ai)/i',
+            '~(?:\.env|docker\s+exec|bash\s+-c|ssh\s+|/var/www/|/etc/apache2/|/opt/laporin-ai)~i',
             '/\b(?:credential|credentials|authorization|bearer)\s*[:=]/i',
             '/(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|127\.0\.0\.1)/',
         ];
