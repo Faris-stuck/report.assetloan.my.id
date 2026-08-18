@@ -23,7 +23,7 @@ RUN curl -fL --retry 5 --retry-delay 2 \
     && tar -xzf /tmp/ai/llama-src.tar.gz -C /tmp/ai
 
 RUN mkdir -p /opt/laporin-ai/lib /opt/laporin-ai/include /opt/laporin-ai/models \
-    && find /tmp/ai/llama-b10218 -maxdepth 1 -type f -name 'lib*.so*' -exec cp {} /opt/laporin-ai/lib/ \;
+    && cp -a /tmp/ai/llama-b10218/lib*.so* /opt/laporin-ai/lib/
 
 COPY docker/ai/laporin_ai.cpp /tmp/ai/laporin_ai.cpp
 
