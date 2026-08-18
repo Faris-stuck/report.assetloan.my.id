@@ -20,10 +20,13 @@
     @endphp
     <title>{{ $metaTitle }}</title>
     <meta name="description" content="{{ $metaDescription }}">
-    <meta name="robots" content="{{ $robotsMeta }}">
     <meta name="author" content="LAPORIN SMK Taruna Bangsa Bekasi">
+    <meta name="application-name" content="LAPORIN">
+    <meta name="robots" content="{{ $robotsMeta }}">
     <meta name="theme-color" content="#00a651">
     <link rel="canonical" href="{{ $canonicalUrl }}">
+    <link rel="alternate" hreflang="id-ID" href="{{ $canonicalUrl }}">
+    <link rel="alternate" hreflang="x-default" href="{{ $canonicalUrl }}">
     <meta property="og:locale" content="id_ID">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:site_name" content="{{ $siteName }}">
@@ -44,6 +47,28 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ asset('css/laporin.css') }}?v={{ filemtime(public_path('css/laporin.css')) }}" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script type="application/ld+json">
+    {!! json_encode([
+        '@context' => 'https://schema.org',
+        '@graph' => [
+            [
+                '@type' => 'Organization',
+                '@id' => url('/').'#organization',
+                'name' => 'LAPORIN SMK Taruna Bangsa Bekasi',
+                'url' => url('/'),
+                'logo' => ['@type' => 'ImageObject', 'url' => asset('images/branding/logo tb.png')],
+            ],
+            [
+                '@type' => 'WebSite',
+                '@id' => url('/').'#website',
+                'url' => url('/'),
+                'name' => 'LAPORIN SMK Taruna Bangsa Bekasi',
+                'inLanguage' => 'id-ID',
+                'publisher' => ['@id' => url('/').'#organization'],
+            ],
+        ],
+    ], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) !!}
+    </script>
     @stack('head')
 </head>
 <body>
@@ -90,7 +115,6 @@
     @if($errors->any())<div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive"><strong>Periksa input berikut:</strong><ul class="mb-0 mt-2">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div><script id="validation-errors-json" type="application/json">@json($errors->getBag('default')->messages())</script>@endif
     @yield('content')
 </div></main>
-@include('components.ai-chat')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{const source=document.getElementById('validation-errors-json');const nav=document.getElementById('mainNav');const navDropdowns=nav?.querySelectorAll('.dropdown-toggle');if(nav){nav.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{if(window.bootstrap?.Collapse){const collapse=bootstrap.Collapse.getOrCreateInstance(nav,{toggle:false});if(nav.classList.contains('show'))collapse.hide();}}));}if(navDropdowns){navDropdowns.forEach(toggle=>{toggle.addEventListener('show.bs.dropdown',()=>toggle.setAttribute('aria-expanded','true'));toggle.addEventListener('hide.bs.dropdown',()=>toggle.setAttribute('aria-expanded','false'));});}if(!source||!window.CSS||!CSS.escape)return;let errors={};try{errors=JSON.parse(source.textContent||'{}');}catch(_){return;}let firstInvalid=null;Object.entries(errors).forEach(([name,messages])=>{const names=[name];if(/\.\d+$/.test(name))names.push(name.replace(/\.\d+$/,'[]'));if(name.includes('.'))names.push(`${name.split('.')[0]}[]`);const field=[...new Set(names)].map(candidate=>document.querySelector(`[name="${CSS.escape(candidate)}"]`)).find(Boolean);if(!field)return;field.classList.add('is-invalid');field.setAttribute('aria-invalid','true');if(!firstInvalid&&field.offsetParent!==null)firstInvalid=field;const feedback=document.createElement('div');feedback.className='invalid-feedback d-block server-validation-feedback';feedback.textContent=Array.isArray(messages)?messages[0]:String(messages);const target=field.closest('.form-check')||field;target.insertAdjacentElement('afterend',feedback);});if(firstInvalid){firstInvalid.scrollIntoView({behavior:'smooth',block:'center'});firstInvalid.focus({preventScroll:true});}});

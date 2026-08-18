@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicReportController::class, 'create'])->name('public.report');
 Route::get('/lapor-pembullyan-smk-taruna-bangsa-bekasi', [SeoController::class, 'bullyingGuide'])->name('seo.bullying-guide');
 Route::get('/faq-laporin-smk-taruna-bangsa-bekasi', [SeoController::class, 'faq'])->name('seo.faq');
+Route::get('/lapor-pelanggaran-siswa-smk-taruna-bangsa-bekasi', [SeoController::class, 'studentViolation'])->name('seo.student-violation');
+Route::get('/lapor-kerusakan-fasilitas-sekolah-smk-taruna-bangsa-bekasi', [SeoController::class, 'facilityDamage'])->name('seo.facility-damage');
 Route::get('/lapor/{qr?}', [PublicReportController::class, 'create'])->name('public.report.qr');
 Route::get('/lapor/langkah/{step}', [PublicReportController::class, 'wizardStep'])->whereNumber('step')->name('public.report.step');
 Route::post('/lapor/langkah/{step}', [PublicReportController::class, 'wizardStoreStep'])->whereNumber('step')->middleware('throttle:public-wizard')->name('public.report.step.store');

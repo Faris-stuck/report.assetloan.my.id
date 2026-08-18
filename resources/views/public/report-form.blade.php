@@ -3,6 +3,7 @@
 @section('meta_title','LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan')
 @section('meta_description','Buat laporan perundungan, pembullyan, pelanggaran siswa, atau kerusakan fasilitas SMK Taruna Bangsa Bekasi secara aman dan terlacak.')
 @section('canonical'){{ url('/') }}@endsection
+@section('robots', request()->routeIs('public.report') ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' : 'noindex, follow, noarchive')
 @section('content')
 @php
     $today = date('Y-m-d');
@@ -23,6 +24,41 @@
     // oleh middleware throttle berdasarkan IP + device (5 laporan / 120 menit).
     $reportSubmitToken = $reportSubmitToken ?? session('report_submit_token');
 @endphp
+
+<section class="hero-card p-4 p-lg-5 mb-4" aria-labelledby="home-seo-title">
+    <div class="hero-content row align-items-center g-4">
+        <div class="col-lg-8">
+            <span class="page-kicker">Kanal laporan resmi berbasis web</span>
+            <h1 id="home-seo-title" class="page-title display-6 mt-2">LAPORIN SMK Taruna Bangsa Bekasi — Lapor Perundungan, Pelanggaran Siswa, dan Kerusakan Fasilitas</h1>
+            <p class="page-subtitle fs-6">LAPORIN membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara terstruktur, aman, dan dapat dilacak menggunakan nomor laporan serta kode akses.</p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <a class="btn btn-outline-laporin" href="{{ route('seo.bullying-guide') }}">Panduan Lapor Pembullyan</a>
+                <a class="btn btn-outline-laporin" href="{{ route('seo.student-violation') }}">Lapor Pelanggaran Siswa</a>
+                <a class="btn btn-outline-laporin" href="{{ route('seo.facility-damage') }}">Lapor Kerusakan Fasilitas</a>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="laporin-card bg-white h-100">
+                <h2 class="h5 fw-bold">Cara kerja singkat</h2>
+                <ol class="small-muted mb-0 ps-3">
+                    <li>Buat laporan dan isi detail kejadian.</li>
+                    <li>Simpan nomor laporan dan kode akses.</li>
+                    <li>Lacak status dan tindak lanjut laporan.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="laporin-card p-4 p-lg-5 mb-4 seo-prose" aria-labelledby="home-about-title">
+    <h2 id="home-about-title">Layanan LAPORIN untuk warga SMK Taruna Bangsa Bekasi</h2>
+    <p>LAPORIN adalah kanal pelaporan publik sekolah untuk mencatat kejadian yang memerlukan tindak lanjut. Topik utama yang dapat dilaporkan adalah <strong>perundungan/pembullyan dan pelanggaran siswa</strong> serta <strong>kerusakan fasilitas sekolah</strong>. Setelah laporan masuk, pelapor dapat memantau status melalui halaman Lacak Laporan.</p>
+    <div class="row g-3 mt-1">
+        <div class="col-md-4"><a class="text-decoration-none" href="{{ route('seo.bullying-guide') }}"><strong>Lapor pembullyan & perundungan</strong><br><span class="small-muted">Panduan kronologi, bukti, dan alur tindak lanjut.</span></a></div>
+        <div class="col-md-4"><a class="text-decoration-none" href="{{ route('seo.student-violation') }}"><strong>Lapor pelanggaran siswa</strong><br><span class="small-muted">Untuk kedisiplinan, tata tertib, dan kejadian tidak aman.</span></a></div>
+        <div class="col-md-4"><a class="text-decoration-none" href="{{ route('seo.facility-damage') }}"><strong>Lapor kerusakan fasilitas</strong><br><span class="small-muted">Untuk fasilitas kelas, laboratorium, toilet, listrik, dan sarana sekolah.</span></a></div>
+    </div>
+</section>
 
 {{-- ============================================================ --}}
 {{-- FORM UTAMA --}}
@@ -337,4 +373,3 @@
 @push('scripts')
 <script src="{{ asset('js/laporin-report-fix.js') }}?v={{ filemtime(public_path('js/laporin-report-fix.js')) }}" defer></script>
 @endpush
-@push('scripts')<script src="{{ asset('js/laporin-report-fix.js') }}?v={{ filemtime(public_path('js/laporin-report-fix.js')) }}" defer></script>@endpush
