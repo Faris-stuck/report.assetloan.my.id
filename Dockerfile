@@ -1,6 +1,6 @@
 FROM composer:2 AS composer
 
-FROM ubuntu:24.04 AS ai-build
+FROM debian:bookworm-slim AS ai-build
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends build-essential cmake git curl ca-certificates \
@@ -44,7 +44,7 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        curl git unzip cmake g++ libffi-dev libzip-dev libicu-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libmagickwand-dev libsqlite3-dev \
+        curl git unzip libffi-dev libzip-dev libicu-dev libpng-dev libjpeg-dev libfreetype6-dev libonig-dev libmagickwand-dev libsqlite3-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) pdo_mysql pdo_sqlite gd zip intl mbstring ffi \
     && pecl install imagick \
