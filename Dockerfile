@@ -57,7 +57,7 @@ RUN apt-get update \
     && docker-php-ext-install -j$(nproc) pdo_mysql pdo_sqlite gd zip intl mbstring ffi \
     && pecl install imagick \
     && docker-php-ext-enable imagick ffi \
-    && printf "expose_php = Off\nupload_max_filesize = 5M\npost_max_size = 16M\nffi.enable = preload\nffi.preload = /opt/laporin-ai/laporin_ai.h\nopcache.preload = /opt/laporin-ai/preload.php\nopcache.preload_user = www-data\n" > /usr/local/etc/php/conf.d/laporin-security.ini \
+    && printf "expose_php = Off\nupload_max_filesize = 5M\npost_max_size = 16M\nffi.enable = preload\nffi.preload = /opt/laporin-ai/laporin_ai.h\n" > /usr/local/etc/php/conf.d/laporin-security.ini \
     && printf "ServerName report.assetloan.my.id\nServerTokens Prod\nServerSignature Off\nTraceEnable Off\n" > /etc/apache2/conf-available/laporin-security.conf \
     && sed -i "s/^Listen 80$/Listen 8080/" /etc/apache2/ports.conf \
     && a2enmod rewrite headers \
