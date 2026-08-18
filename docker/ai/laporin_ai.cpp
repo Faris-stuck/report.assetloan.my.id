@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <exception>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -61,102 +62,132 @@ extern "C" int laporin_ai_generate(const char * prompt, char * output, size_t ou
         return -1;
     }
 
-    std::lock_guard<std::mutex> lock(g_mutex);
     output[0] = '\0';
+    llama_context * ctx = nullptr;
+    llama_sampler * sampler = nullptr;
 
-    if (!ensure_model()) {
-        return -2;
-    }
+    try {
+        std::lock_guard<std::mutex> lock(g_mutex);
 
-    llama_context_params ctx_params = llama_context_default_params();
-    ctx_params.n_ctx = kContext;
-    ctx_params.n_batch = kBatch;
-    ctx_params.n_ubatch = kBatch;
-    ctx_params.n_threads = kThreads;
-    ctx_params.n_threads_batch = kThreads;
-    ctx_params.no_perf = true;
+        if (!ensure_model()) {
+            return -2;
+        }
 
-    llama_context * ctx = llama_init_from_model(g_model, ctx_params);
-    if (ctx == nullptr) {
-        return -3;
-    }
+        llama_context_params ctx_params = llama_context_default_params();
+        ctx_params.n_ctx = kContext;
+        ctx_params.n_batch = kBatch;
+        ctx_params.n_ubatch = kBatch;
+        ctx_params.n_threads = kThreads;
+        ctx_params.n_threads_batch = kThreads;
+        ctx_params.no_perf = true;
 
-    const llama_vocab * vocab = llama_model_get_vocab(g_model);
-    const std::string formatted = build_prompt(prompt);
+        ctx = llama_init_from_model(g_model, ctx_params);
+        if (ctx == nullptr) {
+            return -3;
+        }
 
-    const int32_t n_prompt = -llama_tokenize(vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
-    if (n_prompt <= 0 || n_prompt >= kContext - 16) {
-        llama_free(ctx);
-        return -4;
-    }
+        const llama_vocab * vocab = llama_model_get_vocab(g_model);
+        const std::string formatted = build_prompt(prompt);
 
-    std::vector<llama_token> tokens(static_cast<size_t>(n_prompt));
-    if (llama_tokenize(vocab, formatted.c_str(), formatted.size(), tokens.data(), tokens.size(), true, true) < 0) {
-        llama_free(ctx);
-        return -5;
-    }
-
-    llama_sampler_chain_params sampler_params = llama_sampler_chain_default_params();
-    sampler_params.no_perf = true;
-    llama_sampler * sampler = llama_sampler_chain_init(sampler_params);
-    if (sampler == nullptr) {
-        llama_free(ctx);
-        return -6;
-    }
-
-    llama_sampler_chain_add(sampler, llama_sampler_init_min_p(0.05f, 1));
-    llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.7f));
-    llama_sampler_chain_add(sampler, llama_sampler_init_dist(1234567));
-
-    // Decode the prompt in bounded chunks so a long RAG/system prompt never
-    // forces a multi-gigabyte compute buffer in an Apache worker.
-    for (size_t offset = 0; offset < tokens.size(); offset += static_cast<size_t>(kBatch)) {
-        const int32_t chunk = static_cast<int32_t>(std::min(static_cast<size_t>(kBatch), tokens.size() - offset));
-        llama_batch prompt_batch = llama_batch_get_one(tokens.data() + offset, chunk);
-        if (llama_decode(ctx, prompt_batch) != 0) {
-            llama_sampler_free(sampler);
+        const int32_t n_prompt = -llama_tokenize(vocab, formatted.c_str(), formatted.size(), nullptr, 0, true, true);
+        if (n_prompt <= 0 || n_prompt >= kContext - 16) {
             llama_free(ctx);
-            return -7;
+            ctx = nullptr;
+            return -4;
         }
+
+        std::vector<llama_token> tokens(static_cast<size_t>(n_prompt));
+        if (llama_tokenize(vocab, formatted.c_str(), formatted.size(), tokens.data(), tokens.size(), true, true) < 0) {
+            llama_free(ctx);
+            ctx = nullptr;
+            return -5;
+        }
+
+        llama_sampler_chain_params sampler_params = llama_sampler_chain_default_params();
+        sampler_params.no_perf = true;
+        sampler = llama_sampler_chain_init(sampler_params);
+        if (sampler == nullptr) {
+            llama_free(ctx);
+            ctx = nullptr;
+            return -6;
+        }
+
+        llama_sampler_chain_add(sampler, llama_sampler_init_min_p(0.05f, 1));
+        llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.7f));
+        llama_sampler_chain_add(sampler, llama_sampler_init_dist(1234567));
+
+        // Decode the prompt in bounded chunks so a long RAG/system prompt never
+        // forces a multi-gigabyte compute buffer in an Apache worker.
+        for (size_t offset = 0; offset < tokens.size(); offset += static_cast<size_t>(kBatch)) {
+            const int32_t chunk = static_cast<int32_t>(std::min(static_cast<size_t>(kBatch), tokens.size() - offset));
+            llama_batch prompt_batch = llama_batch_get_one(tokens.data() + offset, chunk);
+            if (llama_decode(ctx, prompt_batch) != 0) {
+                llama_sampler_free(sampler);
+                sampler = nullptr;
+                llama_free(ctx);
+                ctx = nullptr;
+                return -7;
+            }
+        }
+
+        std::string response;
+        response.reserve(output_size > 64 ? output_size - 1 : 64);
+        const auto started = std::chrono::steady_clock::now();
+
+        for (int generated = 0; generated < kMaxGenerated; ++generated) {
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count() > kTimeoutMs) {
+                break;
+            }
+
+            const llama_token token = llama_sampler_sample(sampler, ctx, -1);
+            llama_sampler_accept(sampler, token);
+
+            if (llama_vocab_is_eog(vocab, token)) {
+                break;
+            }
+
+            char piece[256];
+            const int32_t n = llama_token_to_piece(vocab, token, piece, sizeof(piece), 0, true);
+            if (n <= 0) {
+                continue;
+            }
+
+            if (response.size() + static_cast<size_t>(n) >= output_size) {
+                break;
+            }
+
+            response.append(piece, static_cast<size_t>(n));
+            llama_batch next = llama_batch_get_one(const_cast<llama_token *>(&token), 1);
+            if (llama_decode(ctx, next) != 0) {
+                break;
+            }
+        }
+
+        std::strncpy(output, response.c_str(), output_size - 1);
+        output[output_size - 1] = '\0';
+
+        llama_sampler_free(sampler);
+        sampler = nullptr;
+        llama_free(ctx);
+        ctx = nullptr;
+        return response.empty() ? -8 : 0;
+    } catch (const std::exception &) {
+        if (sampler != nullptr) {
+            llama_sampler_free(sampler);
+        }
+        if (ctx != nullptr) {
+            llama_free(ctx);
+        }
+        output[0] = '\0';
+        return -9;
+    } catch (...) {
+        if (sampler != nullptr) {
+            llama_sampler_free(sampler);
+        }
+        if (ctx != nullptr) {
+            llama_free(ctx);
+        }
+        output[0] = '\0';
+        return -10;
     }
-
-    std::string response;
-    response.reserve(output_size > 64 ? output_size - 1 : 64);
-    const auto started = std::chrono::steady_clock::now();
-
-    for (int generated = 0; generated < kMaxGenerated; ++generated) {
-        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count() > kTimeoutMs) {
-            break;
-        }
-
-        const llama_token token = llama_sampler_sample(sampler, ctx, -1);
-        llama_sampler_accept(sampler, token);
-
-        if (llama_vocab_is_eog(vocab, token)) {
-            break;
-        }
-
-        char piece[256];
-        const int32_t n = llama_token_to_piece(vocab, token, piece, sizeof(piece), 0, true);
-        if (n <= 0) {
-            continue;
-        }
-
-        if (response.size() + static_cast<size_t>(n) >= output_size) {
-            break;
-        }
-
-        response.append(piece, static_cast<size_t>(n));
-        llama_batch next = llama_batch_get_one(const_cast<llama_token *>(&token), 1);
-        if (llama_decode(ctx, next) != 0) {
-            break;
-        }
-    }
-
-    std::strncpy(output, response.c_str(), output_size - 1);
-    output[output_size - 1] = '\0';
-
-    llama_sampler_free(sampler);
-    llama_free(ctx);
-    return response.empty() ? -8 : 0;
 }
