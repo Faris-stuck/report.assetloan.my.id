@@ -1,4 +1,5 @@
 #include "llama.h"
+#include "ggml-backend.h"
 
 #include <chrono>
 #include <cstring>
@@ -25,6 +26,9 @@ bool ensure_model() {
     }
 
     if (!g_backend_initialized) {
+        // llama.cpp ships CPU backends as loadable modules in the binary release.
+        // Register them explicitly before model loading for deterministic in-process inference.
+        ggml_backend_load_all_from_path("/opt/laporin-ai/lib");
         llama_backend_init();
         g_backend_initialized = true;
     }
