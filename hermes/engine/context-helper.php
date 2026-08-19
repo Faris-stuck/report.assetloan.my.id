@@ -516,6 +516,7 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
     if (!empty($lowStockRows)) {
         $lines[] = 'Contoh item low stock: ' . aiAgentFormatLowStockRows($lowStockRows) . '.';
     }
+    if ($role !== 'user') {
 
     $loanCounts = aiAgentFetchLabelTotals($conn, 'SELECT status AS label, COUNT(*) AS total FROM peminjaman GROUP BY status');
     if (!empty($loanCounts)) {
@@ -530,6 +531,7 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
     $extendCounts = aiAgentFetchLabelTotals($conn, 'SELECT status AS label, COUNT(*) AS total FROM extend_peminjaman GROUP BY status');
     if (!empty($extendCounts)) {
         $lines[] = 'Perpanjangan live per status: ' . aiAgentFormatCountMap($extendCounts) . '.';
+    }
     }
 
     if ($role === 'admin') {
@@ -622,7 +624,7 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
             [$userId]
         );
         if (!empty($myLoanCounts)) {
-            $lines[] = 'Peminjaman milik user aktif: ' . aiAgentFormatCountMap($myLoanCounts) . '.';
+            $lines[] = 'Peminjaman milik ANDA (akun login saat ini): ' . aiAgentFormatCountMap($myLoanCounts) . '.';
         }
 
         $myReturnCounts = aiAgentFetchLabelTotals(
@@ -632,7 +634,7 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
             [$userId]
         );
         if (!empty($myReturnCounts)) {
-            $lines[] = 'Pengembalian milik user aktif: ' . aiAgentFormatCountMap($myReturnCounts) . '.';
+            $lines[] = 'Pengembalian milik ANDA (akun login saat ini): ' . aiAgentFormatCountMap($myReturnCounts) . '.';
         }
 
         $myLoanRows = aiAgentFetchRows(
@@ -648,7 +650,7 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
             [$userId]
         );
         if (!empty($myLoanRows)) {
-            $lines[] = 'Contoh peminjaman terbaru milik user aktif: ' . aiAgentFormatCodeStatusRows($myLoanRows) . '.';
+            $lines[] = 'Contoh peminjaman terbaru milik ANDA: ' . aiAgentFormatCodeStatusRows($myLoanRows) . '.';
         }
 
         $myReturnRows = aiAgentFetchRows(
@@ -664,7 +666,7 @@ function aiAgentGetSnapshotLines(mysqli $conn, string $role, int $userId, array 
             [$userId]
         );
         if (!empty($myReturnRows)) {
-            $lines[] = 'Contoh pengembalian terbaru milik user aktif: ' . aiAgentFormatCodeStatusRows($myReturnRows) . '.';
+            $lines[] = 'Contoh pengembalian terbaru milik ANDA: ' . aiAgentFormatCodeStatusRows($myReturnRows) . '.';
         }
     }
 

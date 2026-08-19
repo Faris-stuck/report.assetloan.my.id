@@ -3,8 +3,8 @@
 return [
     'agent_name' => 'Hermes Agent',
     'base_url' => 'https://ai.sumopod.com/v1',
-    'api_key' => 'sk-Tv1OEGIk45g4DpErq4xaow',
-    'model' => 'seed-2-0-pro',
+    'api_key' => 'sk-_o_aA2FtlNzO2hNUUqzRBA',
+    'model' => 'deepseek-v4-flash',
     'temperature' => 0.12,
     'max_tokens' => 900,
     'timeout' => 45,

@@ -233,6 +233,8 @@ try {
         WHEN $initialApprovedCount > 0 THEN 'Approved'
         WHEN $initialRejectedCount > 0 THEN 'Rejected'
         WHEN p.status = 'Partial Approved' THEN 'Partial Approved'
+        WHEN p.status = 'Waiting for Approval' THEN 'Pending Approval'
+        WHEN p.status = 'Disetujui' AND p.tanggal_disetujui IS NOT NULL THEN 'Approved'
         WHEN p.tanggal_disetujui IS NOT NULL THEN 'Approved'
         WHEN p.status = 'Rejected' THEN 'Rejected'
         WHEN p.status IN ('Borrowed','Returned','Return in Process','Partially Returned','Partially Damaged','Fully Damaged','Completed')
@@ -244,6 +246,8 @@ try {
         WHEN $initialApprovedCount > 0 THEN COALESCE(p.tanggal_disetujui, p.created_at)
         WHEN $initialRejectedCount > 0 THEN p.created_at
         WHEN p.status = 'Partial Approved' THEN COALESCE(p.tanggal_disetujui, p.created_at)
+        WHEN p.status = 'Waiting for Approval' THEN p.created_at
+        WHEN p.status = 'Disetujui' AND p.tanggal_disetujui IS NOT NULL THEN p.tanggal_disetujui
         WHEN p.tanggal_disetujui IS NOT NULL THEN COALESCE(p.tanggal_disetujui, p.created_at)
         WHEN p.status = 'Rejected' THEN p.created_at
         WHEN p.status IN ('Borrowed','Returned','Return in Process','Partially Returned','Partially Damaged','Fully Damaged','Completed')

@@ -1453,10 +1453,9 @@
             const baseline = td.baseline || {};
             const raw = td.raw || {};
             const series = selectedStatuses.map(s => {
-                let cum = baseline[s] || 0;
+                // Start from 0 for the selected month only (not cumulative)
                 const data = [1, 2, 3, 4].map(w => {
-                    cum += (raw[w] && raw[w][s]) ? parseInt(raw[w][s]) : 0;
-                    return cum;
+                    return (raw[w] && raw[w][s]) ? parseInt(raw[w][s]) : 0;
                 });
                 return { name: s, data: data };
             });

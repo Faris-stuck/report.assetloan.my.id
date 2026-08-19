@@ -1476,7 +1476,10 @@ function aiAgentToolLiveData(mysqli $conn, array $options = []): array
         if (aiAgentSchemaTableHasColumn($tableMeta, 'status')) {
             $statusCounts = aiAgentQueryScopedStatusCounts($conn, $tableName, $scopeFilter, (int) $toolConfig['max_status_values']);
             if (!empty($statusCounts)) {
-                $summaryParts[] = 'status ' . aiAgentFormatCountMap($statusCounts);
+                $statusLabel = ($role === 'user' && ($scopeFilter['label'] ?? '') === 'scope user aktif')
+                    ? 'status milik ANDA'
+                    : 'status';
+                $summaryParts[] = $statusLabel . ' ' . aiAgentFormatCountMap($statusCounts);
             }
         }
 

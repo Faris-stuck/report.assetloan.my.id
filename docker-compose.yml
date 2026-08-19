@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # =============================================
+  # NGINX — Web Server (BAKED CODE)
+  # =============================================
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    container_name: assetloan_nginx
+    image: assetloan/nginx:latest
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    depends_on:
+      php:
+        condition: service_started
+    networks:
+      - assetloan_net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # =============================================
+  # PHP-FPM — Application Server (BAKED CODE)
+  # =============================================
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: assetloan_php
+    image: assetloan/php:latest
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - assetloan_net
+
+  # =============================================
+  # MYSQL — Database (SAMAKAN DENGAN SOURCE CODE)
+  # =============================================
+  mysql:
+    image: mysql:8.0
+    container_name: assetloan_mysql
+    image: assetloan/mysql:latest
+    restart: unless-stopped
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=
+      - MYSQL_DATABASE=peminjaman
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - assetloan_net
+
+networks:
+  assetloan_net:
+    driver: bridge
+
+volumes:
+  mysql_data:

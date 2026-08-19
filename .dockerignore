@@ -1,0 +1,11 @@
+docker/
+Dockerfile
+docker-compose*.yml
+docker/*.md
+.dockerignore
+.env
+.git/
+.gitignore
+*.log
+*.sql.bak
+*.md
