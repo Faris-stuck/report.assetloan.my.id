@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
+    <script src="../../assets/js/auth/session-validator.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIC Item || Return</title>
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+</head>
+
+<body>
+
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="../dashboard.html" class="b-brand">
+                    <img src="../../assets/images/logo-komatsu-transparan-removebg-preview.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption"><label>PIC Item</label></li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Update</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../update-barang/update-barang.html">Update
+                                    Item</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="pengembalian-barang.html">Return
+                                    Item</a></li>
+                        </ul>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <div class="header-left d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button"><i class="feather-align-left"></i></a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none"><i
+                            class="feather-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="header-right ms-auto">
+                <div class="d-flex align-items-center">
+                    <div class="nxl-h-item d-none d-sm-flex">
+                        <div class="full-screen-switcher">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
+                                <i class="feather-maximize maximize"></i>
+                                <i class="feather-minimize minimize"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                        <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
+                            <div class="user-name" data-user-name>Loading...</div>
+                            <div class="user-email" data-user-email></div>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end user-profile-dropdown">
+                            <a href="javascript:void(0);" data-logout class="dropdown-item">
+                                <i class="feather-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Item Return</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item">Return</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Return Requests (Waiting Inspection)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="px-3 pt-3">
+                            <p class="text-muted fs-12 mb-2" id="picReturnShowingInfo">Showing 0 entries</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead>
+                                    <tr style="background: #3b5998; color: #fff !important;">
+                                        <th style="color: #fff !important;">Return Code</th>
+                                        <th style="color: #fff !important;">Borrow Code</th>
+                                        <th style="color: #fff !important;">Borrower</th>
+                                        <th style="color: #fff !important;">NRP</th>
+                                        <th style="color: #fff !important;">Submitted At</th>
+                                        <th style="color: #fff !important;">Status</th>
+                                        <th style="color: #fff !important;">Action</th>
+                                    </tr>
+                                <tr style="background: #4a69bd;">
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterReturnCode" placeholder="Filter code..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterBorrowCode" placeholder="Filter code..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterBorrower" placeholder="Filter borrower..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterReturnNrp" placeholder="Filter NRP..." oninput="applyReturnFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterSubmittedAt" placeholder="Filter date..." oninput="applyReturnFilters()"></td>
+                                    <td><select class="form-select form-select-sm border-0" id="filterReturnStatus" onchange="applyReturnFilters()"><option value="">All</option></select></td>
+                                    <td></td>
+                                </tr>
+                            </thead>
+                            <tbody id="table-pengembalian">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-12">Show</span>
+                            <select class="form-select form-select-sm" style="width:75px;" id="picReturnPerPage">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span class="fs-12">entries</span>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="picReturnPagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Extend Requests Section -->
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Extend Requests (Loan Extension)</h5>
+                        <div>
+                            <select id="extendFilter" class="form-select form-select-sm"
+                                style="width:auto;display:inline-block;" onchange="loadExtendRequests()">
+                                <option value="Pending" selected>Pending</option>
+                                <option value="Approved">Approved</option>
+                                <option value="Rejected">Rejected</option>
+                                <option value="">All</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="px-3 pt-3">
+                            <p class="text-muted fs-12 mb-2" id="picExtendShowingInfo">Showing 0 entries</p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead>
+                                    <tr style="background: #3b5998; color: #fff !important;">
+                                        <th style="color: #fff !important;">Borrow Code</th>
+                                        <th style="color: #fff !important;">Borrower</th>
+                                        <th style="color: #fff !important;">NRP</th>
+                                        <th style="color: #fff !important;">Current Return</th>
+                                        <th style="color: #fff !important;">Requested Date</th>
+                                        <th style="color: #fff !important;">Reason</th>
+                                        <th style="color: #fff !important;">Status</th>
+                                        <th style="color: #fff !important;">Action</th>
+                                    </tr>
+                                <tr style="background: #4a69bd;">
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendBorrowCode" placeholder="Filter code..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendBorrower" placeholder="Filter borrower..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterExtendNrp" placeholder="Filter NRP..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterCurrentReturn" placeholder="Filter date..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterRequestedDate" placeholder="Filter date..." oninput="applyExtendFilters()"></td>
+                                    <td><input type="text" class="form-control form-control-sm border-0" id="filterReason" placeholder="Filter reason..." oninput="applyExtendFilters()"></td>
+                                    <td><select class="form-select form-select-sm border-0" id="filterExtendStatus" onchange="applyExtendFilters()"><option value="">All</option></select></td>
+                                    <td></td>
+                                </tr>
+                            </thead>
+                            <tbody id="table-extend">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-12">Show</span>
+                            <select class="form-select form-select-sm" style="width:75px;" id="picExtendPerPage">
+                                <option value="10">10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <span class="fs-12">entries</span>
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="picExtendPagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="footer">
+            <p class="fs-11 text-muted mb-0">Copyright ©
+                <script>document.write(new Date().getFullYear());</script>
+            </p>
+        </footer>
+    </main>
+
+    <script src="../../assets/js/auth/role-validator.js"></script>
+    <script src="../../assets/js/auth/logout.js"></script>
+    <script src="../../assets/js/profile-header.js"></script>
+    <script>if (typeof RoleValidator !== 'undefined') RoleValidator.requirePicBarang();</script>
+    <script src="../../assets/vendors/js/vendors.min.js"></script>
+    <script src="../../assets/js/common-init.min.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
+
+    <!-- Modal: Inspeksi Pengembalian -->
+    <div class="modal fade" id="modalInspeksi" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Inspect Return</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <div class="small text-muted">Borrower</div>
+                        <div class="fw-semibold" id="inspeksiBorrower">-</div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Item</th>
+                                    <th class="text-center" style="width: 90px;">Borrow QTY</th>
+                                    <th style="width: 120px;">QTY Return</th>
+                                    <th class="text-center" style="width: 110px;">Good condition</th>
+                                    <th class="text-end" style="width: 150px;">Damage Condition</th>
+                                    <th>Remain Item</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inspeksiItems">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Officer Note</label>
+                        <textarea class="form-control" id="catatanPetugas" rows="2" placeholder="Optional"></textarea>
+                    </div>
+                    <div class="mt-2 d-flex justify-content-end gap-3">
+                        <div class="text-muted">Summary:</div>
+                        <div class="fw-bold" id="totalGantiRugi">0 damaged, 0 remain</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitInspeksi">Finalize</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Approval Confirmation Modal -->
+    <div class="modal fade" id="confirmFinalApprovalModal" tabindex="-1" aria-labelledby="confirmFinalApprovalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="confirmFinalApprovalLabel">
+                        <i class="feather-check-circle me-2"></i>Final Return Approval
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-success">
+                        <strong>✅ Final Approval:</strong>
+                        This is the FINAL APPROVAL that will complete the entire return process.
+                    </div>
+                    <div class="alert alert-warning">
+                        <small>
+                            <strong>Before Final Approval, Verify:</strong><br>
+                            ✓ All inspections are complete<br>
+                            ✓ Final status is correctly recorded<br>
+                            ✓ All damages/missing items documented<br>
+                            ✓ Return process is fully verified<br>
+                            ✓ Borrowing record ready to close
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmFinalApprovalButton">
+                        <i class="feather-check me-2"></i>Yes, Final Approval
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userData = RoleValidator.getUser();
+        if (userData.nama) document.getElementById('header-nama').textContent = userData.nama;
+        if (userData.email) document.getElementById('header-email').textContent = userData.email;
+    </script>
+    <script>
+        const API = BASE_URL + '/api/pengembalian';
+        let currentPengembalianId = null;
+        let modalInspeksi = null;
+        let pendingInspeksiData = null;
+        let returnRequestTableManager = null;
+        let extendRequestTableManager = null;
+
+        function getReturnStatusBadge(status) {
+            const statusText = status || '-';
+            const normalized = statusText.toString().toLowerCase();
+
+            if (normalized.includes('pending') || normalized === 'submitted') {
+                return `<span class="badge bg-warning text-dark">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized.includes('partially')) {
+                return `<span class="badge bg-warning text-dark">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized === 'completed') {
+                return `<span class="badge bg-success text-white">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized === 'rejected') {
+                return `<span class="badge bg-danger">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+            if (normalized === 'being inspected') {
+                return `<span class="badge bg-info text-dark">${TableCardHelper.escapeHtml(statusText)}</span>`;
+            }
+
+            return `<span class="badge bg-secondary">${TableCardHelper.escapeHtml(statusText)}</span>`;
+        }
+
+        function getExtendStatusBadge(status) {
+            if (status === 'Pending') return '<span class="badge bg-warning text-dark">Pending</span>';
+            if (status === 'Approved') return '<span class="badge bg-success">Approved</span>';
+            if (status === 'Rejected') return '<span class="badge bg-danger">Rejected</span>';
+            return `<span class="badge bg-secondary">${TableCardHelper.escapeHtml(status || '-')}</span>`;
+        }
+
+        function initPicTableManagers() {
+            if (!returnRequestTableManager) {
+                returnRequestTableManager = TableCardHelper.createClientTableManager({
+                    tbodyId: 'table-pengembalian',
+                    showingInfoId: 'picReturnShowingInfo',
+                    perPageId: 'picReturnPerPage',
+                    paginationId: 'picReturnPagination',
+                    colspan: 7,
+                    noDataMessage: 'No return request waiting inspection',
+                    filters: [
+                        { id: 'filterReturnCode', getValue: item => item.kode_pengembalian || '-' },
+                        { id: 'filterBorrowCode', getValue: item => item.kode_peminjaman || '-' },
+                        { id: 'filterBorrower', getValue: item => item.nama_peminjam || '-' },
+                        { id: 'filterReturnNrp', getValue: item => item.nrp || '-' },
+                        { id: 'filterSubmittedAt', getValue: item => item.diajukan_at_f || '-' },
+                        { id: 'filterReturnStatus', type: 'select', getValue: item => item.display_status_en || item.display_status || item.status_pengembalian || item.status_peminjaman || '-', defaultLabel: 'All' }
+                    ],
+                    renderRow: function (item) {
+                        const status = item.display_status_en || item.display_status || item.status_pengembalian || item.status_peminjaman || '-';
+
+                        return `
+                            <tr>
+                                <td><code>${TableCardHelper.escapeHtml(item.kode_pengembalian || '-')}</code></td>
+                                <td><code>${TableCardHelper.escapeHtml(item.kode_peminjaman || '-')}</code></td>
+                                <td>${TableCardHelper.escapeHtml(item.nama_peminjam || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.nrp || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.diajukan_at_f || '-')}</td>
+                                <td>${getReturnStatusBadge(status)}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" onclick="openInspeksi('${TableCardHelper.escapeHtml(item.pengembalian_id || '')}')">Inspect</button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+
+            if (!extendRequestTableManager) {
+                extendRequestTableManager = TableCardHelper.createClientTableManager({
+                    tbodyId: 'table-extend',
+                    showingInfoId: 'picExtendShowingInfo',
+                    perPageId: 'picExtendPerPage',
+                    paginationId: 'picExtendPagination',
+                    colspan: 8,
+                    noDataMessage: 'No extend requests',
+                    filters: [
+                        { id: 'filterExtendBorrowCode', getValue: item => item.kode_peminjaman || '-' },
+                        { id: 'filterExtendBorrower', getValue: item => item.nama_peminjam || '-' },
+                        { id: 'filterExtendNrp', getValue: item => item.nrp || '-' },
+                        { id: 'filterCurrentReturn', getValue: item => item.tanggal_kembali_sekarang || '-' },
+                        { id: 'filterRequestedDate', getValue: item => item.tanggal_perpanjang || '-' },
+                        { id: 'filterReason', getValue: item => item.alasan || '-' },
+                        { id: 'filterExtendStatus', type: 'select', getValue: item => item.extend_status || '-', defaultLabel: 'All' }
+                    ],
+                    renderRow: function (item) {
+                        let actionHtml = '';
+                        if (item.extend_status === 'Pending') {
+                            actionHtml = `
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-sm btn-success" onclick="approveExtend('${TableCardHelper.escapeHtml(item.extend_id || '')}')" title="Approve">
+                                        <i class="feather-check"></i> Approve
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="rejectExtend('${TableCardHelper.escapeHtml(item.extend_id || '')}')" title="Reject">
+                                        <i class="feather-x"></i> Reject
+                                    </button>
+                                </div>`;
+                        } else {
+                            actionHtml = `<span class="text-muted small">${TableCardHelper.escapeHtml(item.approved_by_nama ? 'By: ' + item.approved_by_nama : '-')}</span>`;
+                            if (item.approved_at) {
+                                actionHtml += `<br><span class="text-muted small">${TableCardHelper.escapeHtml(item.approved_at)}</span>`;
+                            }
+                        }
+
+                        return `
+                            <tr>
+                                <td><code>${TableCardHelper.escapeHtml(item.kode_peminjaman || '-')}</code></td>
+                                <td>${TableCardHelper.escapeHtml(item.nama_peminjam || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.nrp || '-')}</td>
+                                <td>${TableCardHelper.escapeHtml(item.tanggal_kembali_sekarang || '-')}</td>
+                                <td><strong>${TableCardHelper.escapeHtml(item.tanggal_perpanjang || '-')}</strong></td>
+                                <td><small>${TableCardHelper.escapeHtml(item.alasan || '-')}</small></td>
+                                <td>${getExtendStatusBadge(item.extend_status || '-')}</td>
+                                <td>${actionHtml}</td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+        }
+
+        function formatRupiah(n) {
+            const num = Number(n || 0);
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(num);
+        }
+
+        function recalcTotal() {
+            const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
+            let totalDamaged = 0;
+            let totalRemain = 0;
+
+            rows.forEach(tr => {
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+                const remain = Number(tr.querySelector('.inp-remain')?.value || 0);
+                totalDamaged += isNaN(damaged) ? 0 : damaged;
+                totalRemain += isNaN(remain) ? 0 : remain;
+            });
+
+            const summary = `${totalDamaged} damaged, ${totalRemain} remain`;
+            document.getElementById('totalGantiRugi').textContent = summary;
+        }
+
+        function removeRowFromTable(pengembalianId) {
+            setTimeout(loadPengembalian, 300);
+        }
+
+        function loadPengembalian() {
+            initPicTableManagers();
+            returnRequestTableManager.setLoading('Loading...');
+
+            // Fetch only completely new returns (Diajukan), not ones being examined (Dicek) or finalized (Selesai)
+            fetch(API + '/list.php?status=Submitted', { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = BASE_URL + '/index.html';
+                        throw new Error('Unauthorized');
+                    }
+                    return r.json();
+                })
+                .then(res => {
+                    if (!res.status) {
+                        if (res.message && res.message.toLowerCase().includes('access denied')) {
+                            window.location.href = BASE_URL + '/index.html';
+                            return;
+                        }
+                        returnRequestTableManager.setError(res.message || 'Failed');
+                        return;
+                    }
+                    const list = res.data || [];
+                    if (list.length === 0) {
+                        returnRequestTableManager.setMessage('No return request waiting inspection', 'text-muted');
+                        return;
+                    }
+                    returnRequestTableManager.setData(list);
+                })
+                .catch(() => returnRequestTableManager.setError('Connection error'));
+        }
+
+        function openInspeksi(pengembalianId) {
+            currentPengembalianId = pengembalianId;
+            document.getElementById('catatanPetugas').value = '';
+            document.getElementById('totalGantiRugi').textContent = '0 damaged, 0 remain';
+            document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>';
+
+            fetch(API + '/detail.php?pengembalian_id=' + encodeURIComponent(pengembalianId), { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = BASE_URL + '/index.html';
+                        throw new Error('Unauthorized');
+                    }
+                    if (!r.ok) throw new Error('API returned status ' + r.status);
+                    return r.json();
+                })
+                .then(res => {
+                    if (!res.status) {
+                        if (res.message && res.message.toLowerCase().includes('access denied')) {
+                            window.location.href = BASE_URL + '/index.html';
+                            return;
+                        }
+                        throw new Error(res.message || 'Failed');
+                    }
+                    const h = res.header || {};
+                    document.getElementById('inspeksiBorrower').textContent = `${h.nama_peminjam || '-'} (${h.nrp || '-'}) - ${h.kode_peminjaman || '-'}`;
+
+                    const items = res.items || [];
+                    if (items.length === 0) {
+                        document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items</td></tr>';
+                        return;
+                    }
+                    document.getElementById('inspeksiItems').innerHTML = items.map(it => {
+                        // All data comes from API - no hardcoding
+                        const qtPinjam = Number(it.jumlah_pinjam) || 0;
+                        const qtReturnThisSubmission = Number(it.jumlah_kembali) || 0;
+                        const qtRusakThisSubmission = Number(it.jumlah_rusak) || 0;
+                        const qtBaikThisSubmission = qtReturnThisSubmission - qtRusakThisSubmission;
+                        const sudahDikembalikan = Number(it.sudah_dikembalikan) || 0;
+                        const sisaDikembalikan = Number(it.sisa_dikembalikan) || 0;
+                        // Calculate sisa pinjam: total pinjam - yang sudah dikembalikan
+                        const sisaPinjam = qtPinjam - sudahDikembalikan;
+                        // Calculate remain items: sisa - qty return
+                        const remainItems = sisaDikembalikan - qtReturnThisSubmission;
+
+                        return `
+                        <tr data-barang-id="${it.barang_id}" data-qty-pinjam="${qtPinjam}" data-remain-db="${sisaDikembalikan}">
+                            <td>
+                                <div class="fw-semibold">${it.nama_barang}</div>
+                                <div class="small text-muted"><code>${it.kode_barang}</code></div>
+                                ${sudahDikembalikan > 0 ? `<div class="small" style="color: #28a745;"><strong>✓ ${sudahDikembalikan} returned</strong></div>` : ''}
+                            </td>
+                            <td class="text-center">
+                                <div><strong>${qtPinjam}</strong></div>
+                                ${sisaPinjam > 0 ? `<div class="small text-muted">Remaining: ${sisaPinjam}</div>` : ''}
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" max="${sisaDikembalikan}" class="form-control form-control-sm inp-qty-return" value="${qtReturnThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-good-condition" value="${qtBaikThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="number" min="0" class="form-control form-control-sm inp-damaged" value="${qtRusakThisSubmission}">
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="form-control form-control-sm inp-remain" value="${remainItems}" readonly style="background-color: #f5f5f5;">
+                            </td>
+                        </tr>
+                    `;
+                    }).join('');
+
+                    // Setup event listeners for all input fields
+                    const allInputs = document.querySelectorAll('#inspeksiItems .inp-qty-return, #inspeksiItems .inp-good-condition, #inspeksiItems .inp-damaged');
+                    allInputs.forEach(input => {
+                        input.addEventListener('input', function () {
+                            const tr = this.closest('tr');
+                            const qtReturn = Number(tr.querySelector('.inp-qty-return').value || 0);
+                            const goodCond = Number(tr.querySelector('.inp-good-condition').value || 0);
+                            const damaged = Number(tr.querySelector('.inp-damaged').value || 0);
+                            const remainDB = Number(tr.getAttribute('data-remain-db') || 0);
+
+                            // Validasi: qty return tidak boleh melebihi remain dari database
+                            if (qtReturn > remainDB) {
+                                tr.querySelector('.inp-qty-return').value = remainDB;
+                            }
+
+                            // Calculate remain items: remain_database - qty return
+                            const qtReturnFinal = Number(tr.querySelector('.inp-qty-return').value || 0);
+                            const remainItems = remainDB - qtReturnFinal;
+                            tr.querySelector('.inp-remain').value = remainItems;
+
+                            // Validasi: good condition + damaged tidak boleh melebihi qty return
+                            if (goodCond + damaged > qtReturn) {
+                                // Auto-correct: set damaged = qty return - good condition
+                                const newDamaged = Math.max(0, qtReturn - goodCond);
+                                tr.querySelector('.inp-damaged').value = newDamaged;
+                            }
+
+                            recalcTotal();
+                        });
+                    });
+                    recalcTotal();
+                })
+                .catch(err => {
+                    document.getElementById('inspeksiItems').innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + (err.message || 'Failed') + '</td></tr>';
+                })
+                .finally(() => {
+                    if (!modalInspeksi) modalInspeksi = new bootstrap.Modal(document.getElementById('modalInspeksi'));
+                    modalInspeksi.show();
+                });
+        }
+
+        function submitInspeksi() {
+            if (!currentPengembalianId) return;
+
+            const rows = document.querySelectorAll('#inspeksiItems tr[data-barang-id]');
+            const items = [];
+            let hasError = false;
+
+            rows.forEach(tr => {
+                const barang_id = Number(tr.getAttribute('data-barang-id'));
+                const qty_pinjam = Number(tr.getAttribute('data-qty-pinjam'));
+                const remainDB = Number(tr.getAttribute('data-remain-db') || 0);
+                const qty_return = Number(tr.querySelector('.inp-qty-return')?.value || 0);
+                const good_condition = Number(tr.querySelector('.inp-good-condition')?.value || 0);
+                const damaged = Number(tr.querySelector('.inp-damaged')?.value || 0);
+
+                // Validasi: qty return >= 0
+                if (qty_return < 0) {
+                    alert('QTY Return cannot be negative');
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: qty return tidak boleh melebihi sisa yang perlu dikembalikan
+                if (qty_return > remainDB) {
+                    alert(`QTY Return cannot exceed remaining items to return (${remainDB})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Validasi: good condition + damaged = qty return
+                if (good_condition + damaged !== qty_return) {
+                    alert(`Good condition (${good_condition}) + Damaged (${damaged}) must equal QTY Return (${qty_return})`);
+                    hasError = true;
+                    return;
+                }
+
+                // Determine kondisi_kembali based on whether there is damage
+                const kondisi_kembali = damaged > 0 ? 'Damaged' : 'Good';
+
+                items.push({
+                    barang_id,
+                    jumlah_kembali: qty_return,
+                    kondisi_kembali: kondisi_kembali,
+                    jumlah_rusak: damaged,
+                    biaya_ganti_rugi: 0,
+                    catatan: ''
+                });
+            });
+
+            if (hasError) return;
+
+            if (!confirm('✅ FINAL RETURN CONFIRMATION\n\nThis is the FINAL APPROVAL that will:\n✓ Complete the return process\n✓ Update final item status\n✓ Close the borrowing record\n✓ Record all damages/missing items\n\nEnsure all inspections are complete!\n\nConfirm final approval?')) return;
+
+            pendingInspeksiData = {
+                pengembalian_id: currentPengembalianId,
+                catatan_petugas: document.getElementById('catatanPetugas').value || '',
+                items: JSON.stringify(items)
+            };
+
+            doSubmitInspeksi();
+        }
+
+        function doSubmitInspeksi() {
+            if (!pendingInspeksiData) return;
+
+            const fd = new FormData();
+            fd.append('pengembalian_id', pendingInspeksiData.pengembalian_id);
+            fd.append('catatan_petugas', pendingInspeksiData.catatan_petugas);
+            fd.append('items', pendingInspeksiData.items);
+
+            fetch(API + '/inspect.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = BASE_URL + '/index.html';
+                        throw new Error('Unauthorized');
+                    }
+                    return r.json();
+                })
+                .then(res => {
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
+                    if (res.status) {
+                        // Hide confirmation modal
+                        const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmFinalApprovalModal'));
+                        if (confirmModal) confirmModal.hide();
+                        if (modalInspeksi) modalInspeksi.hide();
+                        removeRowFromTable(pendingInspeksiData.pengembalian_id);
+                    }
+                })
+                .catch(() => alert('Connection error'));
+        }
+        document.addEventListener('DOMContentLoaded', loadPengembalian);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btnSubmitInspeksi');
+            if (btn) btn.addEventListener('click', submitInspeksi);
+        });
+
+        // ═══════════════════════════════════════════════════════
+        // Extend (Perpanjang) Functions
+        // ═══════════════════════════════════════════════════════
+        const API_EXTEND = BASE_URL + '/api/extend';
+
+        function removeExtendRow(extendId) {
+            setTimeout(loadExtendRequests, 300);
+        }
+
+        function loadExtendRequests() {
+            initPicTableManagers();
+            extendRequestTableManager.setLoading('Loading...');
+
+            const filterStatus = document.getElementById('extendFilter').value;
+            const url = API_EXTEND + '/list.php' + (filterStatus ? '?status=' + encodeURIComponent(filterStatus) : '');
+
+            fetch(url, { credentials: 'same-origin' })
+                .then(r => {
+                    if (r.status === 403) {
+                        window.location.href = BASE_URL + '/index.html';
+                        throw new Error('Unauthorized');
+                    }
+                    return r.json();
+                })
+                .then(res => {
+                    if (!res.status) {
+                        extendRequestTableManager.setError(res.message || 'Failed');
+                        return;
+                    }
+                    const list = res.data || [];
+                    if (list.length === 0) {
+                        extendRequestTableManager.setMessage('No extend requests', 'text-muted');
+                        return;
+                    }
+                    extendRequestTableManager.setData(list);
+                })
+                .catch(err => {
+                    extendRequestTableManager.setError('Connection error');
+                });
+        }
+
+        function approveExtend(extendId) {
+            if (!confirm('Approve this loan extension?\n\nReturn date will be updated to the requested date.')) return;
+
+            const fd = new FormData();
+            fd.append('extend_id', extendId);
+
+            fetch(API_EXTEND + '/approve.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
+                    if (res.status) removeExtendRow(extendId);
+                })
+                .catch(() => alert('Connection error'));
+        }
+
+        function rejectExtend(extendId) {
+            if (!confirm('Reject this loan extension?')) return;
+
+            const fd = new FormData();
+            fd.append('extend_id', extendId);
+
+            fetch(API_EXTEND + '/reject.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+                .then(r => r.json())
+                .then(res => {
+                    alert(res.message || (res.status ? 'Success' : 'Failed'));
+                    if (res.status) removeExtendRow(extendId);
+                })
+                .catch(() => alert('Connection error'));
+        }
+
+        function applyReturnFilters() {
+            if (!returnRequestTableManager) return;
+            returnRequestTableManager.state.currentPage = 1;
+            returnRequestTableManager.render();
+        }
+
+        function applyExtendFilters() {
+            if (!extendRequestTableManager) return;
+            extendRequestTableManager.state.currentPage = 1;
+            extendRequestTableManager.render();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadExtendRequests);
+    </script>
+</body>
+
+</html>

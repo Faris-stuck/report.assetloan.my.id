@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
+    <script src="../../assets/js/auth/session-validator.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/page-guard.js"></script>
+    <script src="../../assets/js/auth/role-validator.js"></script>
+    <script>
+        // Page protection - PIC Barang only
+        if (typeof RoleValidator !== 'undefined') {
+            RoleValidator.requirePicBarang();
+        }
+    </script>
+
+
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIC Item || Update Item</title>
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/daterangepicker.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+</head>
+
+<body>
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="../dashboard.html" class="b-brand">
+                    <img src="../../assets/images/logo-komatsu-transparan-removebg-preview.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption"><label>PIC Item</label></li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Update</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="update-barang.html">Update
+                                    Item</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../pengembalian/pengembalian-barang.html">Return
+                                    Item</a></li>
+                        </ul>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <div class="header-left d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button"><i class="feather-align-left"></i></a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none"><i
+                            class="feather-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="header-right ms-auto">
+                <div class="d-flex align-items-center">
+                    <div class="nxl-h-item d-none d-sm-flex">
+                        <div class="full-screen-switcher">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
+                                <i class="feather-maximize maximize"></i>
+                                <i class="feather-minimize minimize"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                        <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
+                            <div class="user-name" data-user-name>Loading...</div>
+                            <div class="user-email" data-user-email></div>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end user-profile-dropdown">
+                            <a href="javascript:void(0);" data-logout class="dropdown-item">
+                                <i class="feather-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <!-- [ page-header ] start -->
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Item Data</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item">Item Data</li>
+                    </ul>
+                </div>
+                <div class="page-header-right ms-auto">
+                    <div class="page-header-right-items">
+                        <div class="d-flex d-md-none">
+                            <a href="javascript:void(0)" class="page-header-right-close-toggle">
+                                <i class="feather-arrow-left me-2"></i>
+                                <span>Back</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="d-md-none d-flex align-items-center">
+                        <a href="javascript:void(0)" class="page-header-right-open-toggle">
+                            <i class="feather-align-right fs-20"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- [ page-header ] end -->
+            <!-- [ Main Content ] start -->
+            <div class="main-content">
+                <div class="row">
+                    <!-- [ Data Barang Table ] start -->
+                    <div class="card stretch stretch-full">
+                        <!-- Toolbar -->
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">Item Data</h3>
+
+                            <div class="d-flex gap-2">
+
+                                <button class="btn btn-primary" onclick="openAddModal()">
+                                    Add Item
+                                </button>
+
+                                <button class="btn btn-warning" onclick="initEditButton()">
+                                    Edit Item
+                                </button>
+
+                                <button class="btn btn-danger" onclick="hapusBarang()">
+                                    Delete Item
+                                </button>
+
+                                <button class="btn btn-outline-secondary" onclick="exportCSV()">
+                                    Export CSV
+                                </button>
+
+                                <button class="btn btn-outline-primary" onclick="printList()">
+                                    Print
+                                </button>
+
+                            </div>
+                        </div>
+
+
+                        <!-- ================= MODAL EDIT BARANG ================= -->
+                        <div class="modal fade" id="modalEditBarang" tabindex="-1">
+                            <div class="modal-dialog modal-md">
+                                <div class="modal-content">
+
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Item</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <!-- ID BARANG (HIDDEN) -->
+                                        <input type="hidden" id="edit_id">
+
+                                        <!-- KODE BARANG -->
+                                        <div class="mb-3">
+                                            <label>Item Code</label>
+                                            <input type="text" id="edit_kode" class="form-control" readonly>
+                                        </div>
+
+                                        <!-- NAMA BARANG -->
+                                        <div class="mb-3">
+                                            <label>Item Name</label>
+                                            <input type="text" id="edit_nama" class="form-control" readonly>
+                                        </div>
+
+                                        <!-- KATEGORI -->
+                                        <div class="mb-3">
+                                            <label>Category</label>
+                                            <input type="text" id="edit_kategori" class="form-control"
+                                                placeholder="e.g. Electronics, Accessories, etc.">
+                                        </div>
+
+                                        <!-- LOKASI -->
+                                        <div class="mb-3">
+                                            <label>Location</label>
+                                            <input type="text" id="edit_lokasi" class="form-control">
+                                        </div>
+
+                                        <!-- SAFETY STOCK -->
+                                        <div class="mb-3">
+                                            <label>Safety Stock</label>
+                                            <input type="number" id="edit_safety" class="form-control" min="1"
+                                                value="1">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label>Stock</label>
+                                            <input type="number" id="edit_stok" class="form-control" min="0">
+                                        </div>
+
+                                        <!-- KONDISI -->
+                                        <div class="mb-3">
+                                            <label>Condition</label>
+                                            <select id="edit_kondisi" class="form-select">
+                                                <option value="Good">Good</option>
+                                                <option value="Damaged">Damaged</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label>Notes</label>
+                                            <textarea id="edit_keterangan" class="form-control" rows="2"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button class="btn btn-primary" onclick="simpanEditBarang()">Save</button>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                        <!-- ===================================================== -->
+
+
+                        <div class="card-body p-0">
+                            <div class="px-3 pt-3">
+                                <p class="text-muted fs-12 mb-2" id="showingInfo">Showing 0 entries</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered align-middle mb-0" id="barangTable">
+                                    <thead>
+                                        <tr style="background: #3b5998; color: #fff !important;">
+                                            <th class="text-center" style="color: #fff !important;">Select</th>
+                                            <th style="color: #fff !important;">No</th>
+                                            <th style="color: #fff !important;">Item Code</th>
+                                            <th style="cursor:pointer; color: #fff !important;" onclick="sortTable('nama_barang')">
+                                                Item Name <i class="feather-arrow-up fs-10" id="sort-nama_barang"></i>
+                                            </th>
+                                            <th style="color: #fff !important;">Category</th>
+                                            <th style="color: #fff !important;">Location</th>
+                                            <th style="color: #fff !important;">Safety Stock</th>
+                                            <th style="color: #fff !important;">Stock</th>
+                                            <th style="color: #fff !important;">Condition</th>
+                                            <th style="color: #fff !important;">Status</th>
+                                            <th class="text-center" style="color: #fff !important;">Action</th>
+                                        </tr>
+                                        <tr style="background: #4a69bd;">
+                                            <td></td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterNo" placeholder="Filter no..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterItemCode" placeholder="Filter item code..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterItemName" placeholder="Filter item name..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterCategory" placeholder="Filter category..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterLocation" placeholder="Filter location..." oninput="applyFilters()">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterSafetyStock" placeholder="Filter safety stock..." oninput="applyFilters()">
+                                            </td>
+                                            <td></td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterCondition" onchange="applyFilters(true, false)">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterStatus" onchange="applyFilters(true, false)">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="tabelBarang">
+                                        <!-- DATA FROM API -->
+                                    </tbody>
+
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12">Show</span>
+                                <select class="form-select form-select-sm" style="width:75px;" id="perPage" onchange="changePerPage()">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="fs-12">entries</span>
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="pagination"></ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <!-- [ Data Barang Table ] end -->
+                </div>
+
+
+                <!-- MODAL TAMBAH BARANG -->
+                <div class="modal fade" id="modalTambahBarang" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form id="formTambahBarang" method="POST" action="../../api/barang/update.php">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="judulModal">Add Item</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <input type="hidden" id="barang_id" name="id">
+
+                                    <div class="mb-2">
+                                        <label>Item Code</label>
+                                        <input type="text" id="kode_barang" name="kode_barang" class="form-control"
+                                            required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Item Name</label>
+                                        <input type="text" id="nama_barang" name="nama_barang" class="form-control"
+                                            required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Category</label>
+                                        <input type="text" id="kategori" name="kategori" class="form-control"
+                                            placeholder="e.g. Electronics, Accessories, etc.">
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Location</label>
+                                        <input type="text" id="lokasi" name="lokasi" class="form-control" required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Safety Stock</label>
+                                        <input type="number" id="safety_stock" name="safety_stock" class="form-control"
+                                            min="1" value="1" required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Total Stock</label>
+                                        <input type="number" id="stok_total" name="stok_total" class="form-control"
+                                            min="0" required>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Condition</label>
+                                        <select id="kondisi" name="kondisi" class="form-control">
+                                            <option value="Good">Good</option>
+                                            <option value="Damaged">Damaged</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <label>Notes</label>
+                                        <textarea id="keterangan" name="keterangan" class="form-control"
+                                            rows="2"></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- [ Main Content ] end -->
+            </div>
+            <!-- [ Footer ] start -->
+            <footer class="footer">
+                <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
+                    <span>Copyright ©</span>
+                    <script>
+                        document.write(new Date().getFullYear());
+                    </script>
+                </p>
+                <div class="d-flex align-items-center gap-4">
+                    <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Help</a>
+                    <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Terms</a>
+                    <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Privacy</a>
+                </div>
+            </footer>
+            <!-- [ Footer ] end -->
+    </main>
+
+    <!--! BEGIN: Vendors JS -->
+    <script src="../../assets/vendors/js/vendors.min.js"></script>
+    <script src="../../assets/vendors/js/daterangepicker.min.js"></script>
+    <script src="../../assets/vendors/js/apexcharts.min.js"></script>
+    <script src="../../assets/vendors/js/circle-progress.min.js"></script>
+    <!--! END: Vendors JS -->
+    <!--! BEGIN: Apps Init -->
+    <script src="../../assets/js/common-init.min.js"></script>
+    <script src="../../assets/js/dashboard-init.min.js"></script>
+    <!--! END: Apps Init -->
+    <!-- BASE URL DETECTION (REQUIRED) -->
+    <script src="../../assets/js/base-url.js"></script>
+    <!-- KONEKSI KE API.JS -->
+    <script src="../../assets/js/config/api.js"></script>
+    <!-- DATA BARANG JS (shared with admin) -->
+    <script src="../../assets/js/barang/data-barang.js"></script>
+    <!-- Profile Header & Logout Scripts -->
+    <script src="../../assets/js/profile-header.js"></script>
+    <script src="../../assets/js/auth/logout.js"></script>
+
+    <!-- Fix detail links: redirect to detail-barang.php for PIC context -->
+    <script>
+        (function () {
+            var tabel = document.getElementById('tabelBarang');
+            if (tabel) {
+                tabel.addEventListener('click', function (e) {
+                    var link = e.target.closest('a[href*="detail-barang.html"]');
+                    if (link) {
+                        e.preventDefault();
+                        window.location.href = link.href.replace('detail-barang.html', 'detail-barang.php');
+                    }
+                });
+            }
+        })();
+    </script>
+
+    <!-- Modal: Duplicate Warning -->
+    <div class="modal fade" id="modalDuplicateWarning" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Duplicate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="duplicateMessage">Item code or name already exists.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="duplicateOk">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

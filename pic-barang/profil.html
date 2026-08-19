@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
+    <script src="../assets/js/auth/session-validator.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIC Item || Profile</title>
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="../assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../assets/css/custom.css">
+</head>
+
+<body>
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="dashboard.html" class="b-brand">
+                    <img src="../assets/images/logo-komatsu-transparan-removebg-preview.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption"><label>PIC Item</label></li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="dashboard.html">Dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Update</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="update-barang/update-barang.html">Update
+                                    Item</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="pengembalian/pengembalian-barang.html">Return
+                                    Item</a></li>
+                        </ul>
+                        </a>
+                    </li>
+                    <li class="nxl-item">
+                        <a class="nxl-link" href="profil.html">
+                            <span class="nxl-micon"><i class="feather-user"></i></span>
+                            <span class="nxl-mtext">Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <div class="header-left d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button"><i class="feather-align-left"></i></a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none"><i
+                            class="feather-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="header-right ms-auto">
+                <div class="d-flex align-items-center">
+                    <div class="nxl-h-item d-none d-sm-flex">
+                        <div class="full-screen-switcher">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
+                                <i class="feather-maximize maximize"></i>
+                                <i class="feather-minimize minimize"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <!--PROFILE-->
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                        <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
+                            <div class="user-name" data-user-name>Loading...</div>
+                            <div class="user-email" data-user-email></div>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end user-profile-dropdown">
+                            <a href="javascript:void(0);" data-logout class="dropdown-item">
+                                <i class="feather-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Profile</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item">Profile</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="main-content">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Full Name</label>
+                                    <h5 class="mb-0" id="profil-nama">-</h5>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Email</label>
+                                    <p class="mb-0" id="profil-email">-</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Employee ID (NRP)</label>
+                                    <p class="mb-0" id="profil-nrp">-</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted">Role</label>
+                                    <p class="mb-0"><span class="badge bg-primary" id="profil-role">PIC Item</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="footer">
+            <p class="fs-11 text-muted mb-0">Copyright ©
+                <script>document.write(new Date().getFullYear());</script>
+            </p>
+        </footer>
+    </main>
+
+    <script src="../assets/js/auth/role-validator.js"></script>
+    <script src="../assets/js/auth/logout.js"></script>
+    <script src="../assets/js/profile-header.js"></script>
+    <script>if (typeof RoleValidator !== 'undefined') RoleValidator.requirePicBarang();</script>
+    <script src="../assets/vendors/js/vendors.min.js"></script>
+    <script src="../assets/js/common-init.min.js"></script>
+    <script>
+        const userData = RoleValidator.getUser();
+        if (userData.nama) document.getElementById('profil-nama').textContent = userData.nama;
+        if (userData.email) document.getElementById('profil-email').textContent = userData.email;
+        if (userData.nrp) document.getElementById('profil-nrp').textContent = userData.nrp;
+
+        fetch(BASE_URL + '/api/pic_barang/profile.php', { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(res => {
+                if (res.status && res.data) {
+                    const d = res.data;
+                    document.getElementById('profil-nama').textContent = d.nama;
+                    document.getElementById('profil-email').textContent = d.email;
+                    document.getElementById('profil-nrp').textContent = d.nrp || '-';
+                }
+            })
+            .catch(() => { });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,605 @@
+<?php
+// Redirect to list page if no valid ID provided
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id <= 0) {
+    header('Location: update-barang.html');
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../../assets/js/base-url.js"></script>
+    <script src="../../assets/js/auth/session-validator.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../../assets/js/auth/page-guard.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="keyword" content="" />
+    <meta name="author" content="flexilecode" />
+    <!--! BEGIN: Apps Title-->
+    <title>PIC Item || Item Detail</title>
+    <!--! END:  Apps Title-->
+    <!--! BEGIN: Favicon-->
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <!--! END: Favicon-->
+    <!--! BEGIN: Bootstrap CSS-->
+    <link rel="stylesheet" type="text/css" href="../../assets/css/bootstrap.min.css" />
+    <!--! END: Bootstrap CSS-->
+    <!--! BEGIN: Vendors CSS-->
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../assets/vendors/css/daterangepicker.min.css" />
+    <!--! END: Vendors CSS-->
+    <!--! BEGIN: Custom CSS-->
+    <link rel="stylesheet" type="text/css" href="../../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../../assets/css/custom.css">
+    <!--! END: Custom CSS-->
+</head>
+
+<body>
+    <!--! [Start] Navigation Menu -->
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="../dashboard.html" class="b-brand">
+                    <img src="../../assets/images/logo-komatsu-transparan-removebg-preview.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption"><label>PIC Item</label></li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboards</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="../dashboard.html">Dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Update</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="update-barang.html">Update
+                                    Item</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-cast"></i></span>
+                            <span class="nxl-mtext">Return</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link"
+                                    href="../pengembalian/pengembalian-barang.html">Return
+                                    Item</a></li>
+                        </ul>
+                        </a>
+                    </li>
+                    <li class="nxl-item">
+                        <a class="nxl-link" href="../profil.html">
+                            <span class="nxl-micon"><i class="feather-user"></i></span>
+                            <span class="nxl-mtext">Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!--! [End] Navigation Menu -->
+
+    <!--! [Start] Header -->
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <div class="header-left d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button"><i class="feather-align-left"></i></a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none"><i
+                            class="feather-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="header-right ms-auto">
+                <div class="d-flex align-items-center">
+                    <div class="nxl-h-item d-none d-sm-flex">
+                        <div class="full-screen-switcher">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
+                                <i class="feather-maximize maximize"></i>
+                                <i class="feather-minimize minimize"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                        <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
+                            <div class="user-name" data-user-name>Loading...</div>
+                            <div class="user-email" data-user-email></div>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end user-profile-dropdown">
+                            <a href="javascript:void(0);" data-logout class="dropdown-item">
+                                <i class="feather-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!--! [End] Header -->
+
+    <!--! [Start] Main Content -->
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <!-- [ page-header ] start -->
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Item Detail</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../dashboard.html">Home</a></li>
+                        <li class="breadcrumb-item"><a href="update-barang.html">Item Data</a></li>
+                        <li class="breadcrumb-item">Item Detail</li>
+                    </ul>
+                </div>
+                <div class="page-header-right ms-auto">
+                    <div class="page-header-right-items">
+                        <div class="d-flex d-md-none">
+                            <a href="javascript:void(0)" class="page-header-right-close-toggle">
+                                <i class="feather-arrow-left me-2"></i>
+                                <span>Back</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="d-md-none d-flex align-items-center">
+                        <a href="javascript:void(0)" class="page-header-right-open-toggle">
+                            <i class="feather-align-right fs-20"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <!-- [ page-header ] end -->
+
+            <!-- [ Main Content ] start -->
+            <div class="main-content">
+                <div class="row">
+                    <!-- Page Header -->
+                    <div class="page-header mb-4">
+                        <h4 class="fw-bold">Item Detail</h4>
+                    </div>
+
+                    <!-- Informasi Barang -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <div class="row g-4">
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Item Code</small><br>
+                                    <span id="kodeBarang">-</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Item Name</small><br>
+                                    <span id="namaBarang">-</span>
+                                </div>
+                                <div class="col-md-4">
+                                    <small class="text-muted">Item Location</small><br>
+                                    <span id="lokasiBarang">-</span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Description</small><br>
+                                    <span id="keteranganBarang">-</span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Total Stock</small><br>
+                                    <span id="stokTotal" class="badge bg-secondary stokTotal">-</span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Available Stock</small><br>
+                                    <span id="stokTersediaBadge" class="badge bg-secondary">-</span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Damaged Stock</small><br>
+                                    <span id="stokRusak" class="badge bg-danger">0</span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Item Condition</small><br>
+                                    <span id="kondisiBarang" class="badge bg-secondary">-</span>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <small class="text-muted">Item Status</small><br>
+                                    <span id="statusBarang" class="badge bg-secondary">-</span>
+                                </div>
+                                <input type="hidden" id="id_barang">
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan Stok -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <small class="text-muted">Total Stock</small>
+                                    <h4> <span class="stokTotal"></span> </h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <small class="text-muted">Available</small>
+                                    <h4 class="text-success" id="stokTersedia">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <small class="text-muted">Borrowed</small>
+                                    <h4 class="text-primary" id="stokDipinjam">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabel Peminjam -->
+                    <div class="card stretch stretch-full">
+                        <div class="card-header">
+                            <h6 class="mb-0">Borrower List</h6>
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="px-3 pt-3">
+                                <p class="text-muted fs-12 mb-2" id="borrowerCardShowingInfo">Showing 0 entries</p>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-bordered align-middle mb-0">
+                                    <thead>
+                                        <tr style="background: #3b5998; color: #fff !important;">
+                                            <th style="color: #fff !important;">No</th>
+                                            <th style="color: #fff !important;">Name</th>
+                                            <th style="color: #fff !important;">NRP</th>
+                                            <th style="color: #fff !important;">Qty Borrowed</th>
+                                            <th style="color: #fff !important;">Borrow Date</th>
+                                            <th style="color: #fff !important;">Due Date</th>
+                                            <th style="color: #fff !important;">Status</th>
+                                            <th style="color: #fff !important;">Return Condition</th>
+                                        </tr>
+                                        <tr style="background: #4a69bd;">
+                                            <td></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardName" placeholder="Filter name..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardNrp" placeholder="Filter NRP..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardQty" placeholder="Filter qty..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardDate" placeholder="Filter date..."></td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardDueDate" placeholder="Filter date..."></td>
+                                            <td>
+                                                <select class="form-select form-select-sm border-0" id="filterBorrowCardStatus">
+                                                    <option value="">All</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="text" class="form-control form-control-sm border-0"
+                                                    id="filterBorrowCardCondition" placeholder="Filter condition..."></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabelPeminjam">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">
+                                                No data
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-12">Show</span>
+                                <select class="form-select form-select-sm" style="width:75px;" id="borrowerCardPerPage">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span class="fs-12">entries</span>
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="borrowerCardPagination"></ul>
+                            </nav>
+                        </div>
+                    </div>
+
+                    <!-- Purchase History Table -->
+                    <div class="card mt-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Purchase History</h6>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPembelian">
+                                    <i class="feather-plus"></i> Add Purchase
+                                </button>
+                                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#modalEditVendor">
+                                    <i class="feather-edit"></i> Edit Vendor
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Vendor</th>
+                                        <th>Qty</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyPembelian">
+                                    <!-- filled by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- Modal Add Purchase -->
+            <div class="modal fade" id="modalPembelian" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="formPembelian">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">Add Item Purchase</h5>
+                            </div>
+
+                            <div class="modal-body">
+                                <input type="hidden" id="id_barang_purchase" name="id_barang">
+
+                                <div class="mb-2">
+                                    <label>Purchase Date</label>
+                                    <input type="date" id="tanggal_pembelian" name="tanggal_pembelian"
+                                        class="form-control" required>
+                                    <small class="text-muted">Purchase date cannot be earlier than today</small>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Vendor</label>
+
+                                    <select id="vendor" class="form-select mb-2">
+                                        <option value="">Select Vendor</option>
+                                        <option value="baru">+ Add New Vendor</option>
+                                    </select>
+
+                                    <input type="text" id="vendorBaru" class="form-control"
+                                        placeholder="Enter new vendor name" style="display:none;">
+
+                                    <input type="text" id="alamat_vendor" name="alamat" class="form-control mb-2"
+                                        placeholder="Vendor Address" style="display:none;">
+
+                                    <input type="text" id="kontak_vendor" name="kontak" class="form-control mb-2"
+                                        placeholder="Vendor Contact" style="display:none;">
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Qty</label>
+                                    <input type="number" id="jumlah" class="form-control" min="1" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Unit Price</label>
+                                    <input type="number" id="harga_satuan" class="form-control" step="0.01" min="0.01"
+                                        required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Notes</label>
+                                    <textarea id="keterangan" class="form-control"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Edit Purchase -->
+            <div class="modal fade" id="modalEditPembelian" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="formEditPembelian">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit Item Purchase</h5>
+                            </div>
+
+                            <div class="modal-body">
+                                <input type="hidden" id="edit_id_pembelian">
+                                <input type="hidden" id="edit_id_barang_purchase">
+
+                                <div class="mb-2">
+                                    <label>Purchase Date</label>
+                                    <input type="date" id="edit_tanggal_pembelian" class="form-control" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Vendor</label>
+                                    <input type="text" id="edit_vendor" class="form-control" readonly>
+                                    <input type="hidden" id="edit_vendor_id">
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Qty</label>
+                                    <input type="number" id="edit_jumlah" class="form-control" min="1" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Unit Price</label>
+                                    <input type="number" id="edit_harga_satuan" class="form-control" step="0.01"
+                                        min="0.01" required>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label>Notes</label>
+                                    <textarea id="edit_keterangan" class="form-control"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-primary">Update</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Edit Vendor -->
+            <div class="modal fade" id="modalEditVendor" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Manage Vendors</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Vendor list table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Vendor Name</th>
+                                            <th>Address</th>
+                                            <th>Contact</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="vendorTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">Loading...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+                            <!-- Edit/Add Vendor Form -->
+                            <div id="vendorEditSection">
+                                <h6 id="vendorFormTitle">Add New Vendor</h6>
+                                <form id="formVendorEdit">
+                                    <input type="hidden" id="vendorEditId" value="">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-2">
+                                            <label>Vendor Name</label>
+                                            <input type="text" id="vendorEditNama" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Address</label>
+                                            <input type="text" id="vendorEditAlamat" class="form-control">
+                                        </div>
+                                        <div class="col-md-4 mb-2">
+                                            <label>Contact</label>
+                                            <input type="text" id="vendorEditKontak" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button type="submit" class="btn btn-primary btn-sm" id="btnSaveVendor">
+                                            Save Vendor
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btnCancelEditVendor"
+                                            style="display:none;" onclick="cancelVendorEdit()">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- [ Main Content ] end -->
+        </div>
+        <!-- [ Footer ] start -->
+        <footer class="footer">
+            <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright">
+                <span>Copyright &copy;</span>
+                <script>
+                    document.write(new Date().getFullYear());
+                </script>
+            </p>
+            <div class="d-flex align-items-center gap-4">
+                <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Help</a>
+                <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Terms</a>
+                <a href="javascript:void(0);" class="fs-11 fw-semibold text-uppercase">Privacy</a>
+            </div>
+        </footer>
+        <!-- [ Footer ] end -->
+    </main>
+    <!--! [End] Main Content -->
+
+    <!--! BEGIN: Vendors JS -->
+    <script src="../../assets/vendors/js/vendors.min.js"></script>
+    <script src="../../assets/vendors/js/daterangepicker.min.js"></script>
+    <script src="../../assets/vendors/js/apexcharts.min.js"></script>
+    <script src="../../assets/vendors/js/circle-progress.min.js"></script>
+    <!--! END: Vendors JS -->
+    <!--! BEGIN: Apps Init -->
+    <script src="../../assets/js/auth/logout.js"></script>
+    <script src="../../assets/js/profile-header.js"></script>
+    <script src="../../assets/js/common-init.min.js"></script>
+    <script src="../../assets/js/dashboard-init.min.js"></script>
+    <!--! END: Apps Init -->
+    <!-- KONEKSI KE API.JS -->
+    <script src="../../assets/js/config/api.js"></script>
+    <script src="../../assets/js/utils/helper.js"></script>
+    <!-- DETAIL BARANG JS (shared with admin) -->
+    <script src="../../assets/js/barang/detail-barang.js"></script>
+
+</body>
+
+</html>

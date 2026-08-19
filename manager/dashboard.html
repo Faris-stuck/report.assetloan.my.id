@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<head>
+    <!--! SESSION VALIDATOR - Must run FIRST before page-guard -->
+    <script src="../assets/js/base-url.js"></script>
+    <script src="../assets/js/auth/session-validator.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+    <script src="../assets/js/auth/page-guard.js"></script>
+    <!--! PAGE GUARD - Security: must be first script in head -->
+
+
+
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="" />
+    <meta name="keyword" content="" />
+    <meta name="author" content="flexilecode" />
+    <!--! The above 6 meta tags *must* come first in the head; any other head content must come *after* these tags !-->
+    <!--! BEGIN: Apps Title-->
+    <title>KI || Dashboard Approver</title>
+    <!--! END:  Apps Title-->
+    <!--! BEGIN: Favicon-->
+    <link rel="shortcut icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <!--! END: Favicon-->
+    <!--! BEGIN: Bootstrap CSS-->
+    <link rel="stylesheet" type="text/css" href="../assets/css/bootstrap.min.css" />
+    <!--! END: Bootstrap CSS-->
+    <!--! BEGIN: Vendors CSS-->
+    <link rel="stylesheet" type="text/css" href="../assets/vendors/css/vendors.min.css" />
+    <link rel="stylesheet" type="text/css" href="../assets/vendors/css/daterangepicker.min.css" />
+    <!--! END: Vendors CSS-->
+    <!--! BEGIN: Custom CSS-->
+    <link rel="stylesheet" type="text/css" href="../assets/css/theme.min.css" />
+    <link rel="stylesheet" href="../assets/css/custom.css">
+    <!--! END: Custom CSS-->
+    <!--! HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries !-->
+    <!--! WARNING: Respond.js doesn"t work if you view the page via file: !-->
+    <!--[if lt IE 9]>
+			<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+			<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+		<![endif]-->
+</head>
+
+<body>
+    <!--! ================================================================ !-->
+    <!--! [Start] Navigation Manu !-->
+    <!--! ================================================================ !-->
+    <nav class="nxl-navigation">
+        <div class="navbar-wrapper">
+            <div class="m-header">
+                <a href="#" class="b-brand">
+                    <!-- ========   change your logo hear   ============ -->
+                    <img src="../assets/images/logo-komatsu-transparan-removebg-preview.png" height="auto" width="200px" alt=""
+                        class="logo logo-lg" />
+                    <img src="../assets/images/komatsu-indonesia-logo.png" alt="" class="logo logo-sm" />
+                </a>
+            </div>
+            <div class="navbar-content">
+                <ul class="nxl-navbar">
+                    <li class="nxl-item nxl-caption">
+                        <label>Navigation</label>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-airplay"></i></span>
+                            <span class="nxl-mtext">Dashboard</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="dashboard.html">Dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-check-circle"></i></span>
+                            <span class="nxl-mtext">Approvals</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="persetujuan/menunggu-approval.html">Pending
+                                    Approval</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="persetujuan/disetujui.html">Approved</a>
+                            </li>
+                            <li class="nxl-item"><a class="nxl-link" href="persetujuan/ditolak.html">Rejected</a></li>
+                        </ul>
+                    </li>
+                    <li class="nxl-item nxl-hasmenu">
+                        <a href="javascript:void(0);" class="nxl-link">
+                            <span class="nxl-micon"><i class="feather-bar-chart"></i></span>
+                            <span class="nxl-mtext">Reports</span><span class="nxl-arrow"><i
+                                    class="feather-chevron-right"></i></span>
+                        </a>
+                        <ul class="nxl-submenu">
+                            <li class="nxl-item"><a class="nxl-link" href="laporan/laporan-peminjaman.html">Borrowing
+                                    Report</a></li>
+                            <li class="nxl-item"><a class="nxl-link" href="laporan/laporan-stok.html">Stock Report</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <!--! ================================================================ !-->
+    <!--! [End]  Navigation Manu !-->
+    <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
+    <!--! [Start] Header !-->
+    <!--! ================================================================ !-->
+    <header class="nxl-header">
+        <div class="header-wrapper">
+            <!--! [Start] Header Left !-->
+            <div class="header-left d-flex align-items-center gap-4">
+                <!--! [Start] nxl-head-mobile-toggler !-->
+                <a href="javascript:void(0);" class="nxl-head-mobile-toggler" id="mobile-collapse">
+                    <div class="hamburger hamburger--arrowturn">
+                        <div class="hamburger-box">
+                            <div class="hamburger-inner"></div>
+                        </div>
+                    </div>
+                </a>
+                <!--! [Start] nxl-head-mobile-toggler !-->
+                <!--! [Start] nxl-navigation-toggle !-->
+                <div class="nxl-navigation-toggle">
+                    <a href="javascript:void(0);" id="menu-mini-button">
+                        <i class="feather-align-left"></i>
+                    </a>
+                    <a href="javascript:void(0);" id="menu-expend-button" style="display: none">
+                        <i class="feather-arrow-right"></i>
+                    </a>
+                </div>
+                <!--! [End] nxl-navigation-toggle !-->
+
+            </div>
+            <!--! [End] Header Left !-->
+            <!--! [Start] Header Right !-->
+            <div class="header-right ms-auto">
+                <div class="d-flex align-items-center">
+                    <div class="nxl-h-item d-none d-sm-flex">
+                        <div class="full-screen-switcher">
+                            <a href="javascript:void(0);" class="nxl-head-link me-0"
+                                onclick="$('body').fullScreenHelper('toggle');">
+                                <i class="feather-maximize maximize"></i>
+                                <i class="feather-minimize minimize"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="dropdown nxl-h-item user-profile-header" data-profile-header>
+                        <div class="user-profile-info" data-bs-toggle="dropdown" role="button">
+                            <div class="user-name" data-user-name>Loading...</div>
+                            <div class="user-email" data-user-email></div>
+                        </div>
+                        <div class="dropdown-menu dropdown-menu-end user-profile-dropdown">
+                            <a href="javascript:void(0);" data-logout class="dropdown-item">
+                                <i class="feather-log-out"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--! [End] Header Right !-->
+        </div>
+    </header>
+    <!--! ================================================================ !-->
+    <!--! [End] Header !-->
+    <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
+    <!--! [Start] Main Content !-->
+    <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
+    <!--! [Start] Main Content !-->
+    <!--! ================================================================ !-->
+    <main class="nxl-container">
+        <div class="nxl-content">
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <!-- [ page-header ] start -->
+            <div class="page-header">
+                <div class="page-header-left d-flex align-items-center">
+                    <div class="page-header-title">
+                        <h5 class="m-b-10">Dashboard Approver</h5>
+                    </div>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                        <li class="breadcrumb-item">Dashboard</li>
+                    </ul>
+                </div>
+                <div class="page-header-right ms-auto">
+                    <div class="page-header-right-items">
+                        <div class="d-flex d-md-none">
+                            <a href="javascript:void(0)" class="page-header-right-close-toggle">
+                                <i class="feather-arrow-left me-2"></i>
+                                <span>Back</span>
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- [ page-header ] end -->
+            <!-- [ Main Content ] start -->
+            <div class="main-content">
+
+
+ <!-- New Products This Month Carousel -->
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">New Products This Month (Per Item)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="newProductsCarousel" class="position-relative">
+                                    <div id="newProductsSlider" style="overflow: hidden;">
+                                        <div id="newProductsContainer" class="d-flex" style="transition: transform 0.3s ease; width: 100%;">
+                                            <!-- Cards will be generated here -->
+                                        </div>
+                                    </div>
+                                    <div id="newProductsEmpty" class="text-center text-muted py-5" style="display: none;">
+                                        No new products this month
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-center gap-3 mt-3">
+                                    <button id="prevNewProduct" class="btn btn-outline-primary" disabled>‹ Prev</button>
+                                    <button id="nextNewProduct" class="btn btn-outline-primary">Next ›</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End New Products Carousel -->
+
+
+
+
+                <div class="row">
+                    <!-- Chart: Status Peminjaman Keseluruhan -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
+                                    <h5 class="card-title mb-0">Borrowing Status (Per Transaction)</h5>
+                                    <!-- Report Range Picker and Reset Button for Status -->
+                                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                                        <div id="reportrangeStatus"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetStatus">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="statusChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart: Top 5 Most Frequently Borrowed Items -->
+                    <div class="col-xxl-6 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
+                                    <h5 class="card-title mb-0">Top 5 Most Frequently Borrowed Items This Month (Per Item)</h5>
+                                    <select id="topBarangMonthFilter" class="form-select form-select-sm"
+                                        style="width: auto; min-width: 160px;"></select>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="inventoryChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Row 1 -->
+
+               
+                <!-- Row 2: Loan vs Return Ratio -->
+                <div class="row">
+                    <div class="col-xxl-6 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
+                                    <h5 class="card-title mb-0">Loan vs Return Ratio (Per Transaction)</h5>
+                                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                                        <div id="reportrangeRatio" class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetDateRatio">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="loanReturnRatioChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-6 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
+                                    <h5 class="card-title mb-0">Approval Status (Per Transaction)</h5>
+                                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                                        <div id="reportrangeApproval"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetDateApproval">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="approvalStatusChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Row 2 -->
+
+                <!-- Row 3: Loan Status Trend -->
+                <div class="row">
+                    <div class="col-xxl-12 col-lg-12 mb-3">
+                        <div class="card stretch stretch-full">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0">Loan Status Trend (Per Transaction)</h5>
+                                <div class="d-flex align-items-center gap-2">
+                                    <select id="trendMonthFilter" class="form-select form-select-sm"
+                                        style="width: auto; min-width: 160px;"></select>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                                            data-bs-toggle="dropdown" data-bs-auto-close="outside">Filter
+                                            Status</button>
+                                        <ul class="dropdown-menu dropdown-menu-end p-2" id="trendStatusList"
+                                            style="min-width: 220px; max-height: 300px; overflow-y: auto;"></ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="loanStatusTrendChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- End Row 3 -->
+
+                <!-- Row 4: Top Borrowers -->
+                <div class="row">
+                    <!-- Chart: Top User Peminjam -->
+                    <div class="col-xxl-12 col-lg-12 mb-3">
+                        <div class="card stretched-card">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-center w-100 flex-nowrap gap-2">
+                                    <h5 class="card-title mb-0">Top 5 Borrowers (Per Transaction)</h5>
+                                    <!-- Report Range Picker and Reset Button for Top User (Independent) -->
+                                    <div class="d-flex align-items-center gap-2 flex-nowrap">
+                                        <div id="reportrangeTopUser"
+                                            class="reportrange-picker d-flex align-items-center">
+                                            <span class="reportrange-picker-field"></span>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                            id="btnResetDateTopUser">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div id="perUserChart" style="height: 350px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- [ Main Content ] end -->
+        </div>
+        <!-- [ Footer ] start -->
+        <footer class="footer">
+            <p class="fs-11 text-muted fw-medium text-uppercase mb-0 copyright text-center">
+                <span>Copyright ©</span>
+                <span id="year-display"></span>
+            </p>
+        </footer>
+        <!-- [ Footer ] end -->
+    </main>
+    <!--! ================================================================ !-->
+    <!--! [End] Main Content !-->
+    <!--! ================================================================ !-->
+    <!--! ================================================================ !-->
+    <!--! Footer Script !-->
+    <!--! ================================================================ !-->
+    <!--! BEGIN: Vendors JS !-->
+    <script src="../assets/vendors/js/vendors.min.js"></script>
+    <script src="../assets/vendors/js/daterangepicker.min.js"></script>
+    <script src="../assets/vendors/js/apexcharts.min.js"></script>
+    <!--! END: Vendors JS !-->
+    <!--! BEGIN: Apps Init !-->
+    <script src="../assets/js/auth/logout.js"></script>
+    <script src="../assets/js/profile-header.js"></script>
+    <script src="../assets/js/common-init.min.js"></script>
+    <script src="../assets/js/dashboard-init.min.js"></script>
+    <!--! END: Apps Init !-->
+
+    <script>
+        // Security: Escape HTML to prevent XSS
+        function escapeHtml(s) {
+            if (s == null) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
+        // Store chart instances globally
+        let statusChartInstance = null;
+        let inventoryChartInstance = null;
+        let perUserChartInstance = null;
+        let ratioChartInstance = null;
+
+        // Validasi role - hanya manager yang boleh akses manager dashboard
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        if (!userData.id) {
+            alert("Please login first");
+            window.location.href = "../index.html";
+        }
+        if (userData.role && userData.role !== "manager") {
+            if (userData.role === "user") {
+                window.location.href = "../user/dashboard.html";
+            } else if (userData.role === "admin") {
+                window.location.href = "../admin/dashboard.html";
+            }
+        }
+
+        // ===== FILTER STATE VARIABLES (SEPARATE & INDEPENDENT) =====
+
+        // Status Filter (Date Range)
+        let statusStartDate = null;
+        let statusEndDate = null;
+
+        // Top User Filter (Date Range - INDEPENDENT)
+        let startDateTopUser = null;
+        let endDateTopUser = null;
+        let topBarangMonth = '';
+
+        // Load Dashboard Chart Data
+        document.addEventListener('DOMContentLoaded', async () => {
+            populateTopBarangMonthFilter();
+            // Load initial data
+            await loadStatusChart();
+
+            // Load Top 5 Borrowed Items (current month by default)
+            try {
+                const topResponse = await fetch(BASE_URL + '/api/approver/dashboard-chart-data.php');
+                const topResult = await topResponse.json();
+                if (topResult.status && topResult.data) {
+                    const topBarang = topResult.data.top_barang || [];
+                    if (topBarang.length > 0) {
+                        renderInventoryChart(topBarang);
+                    } else {
+                        document.getElementById('inventoryChart').innerHTML =
+                            '<div class="text-center text-muted py-5">No borrowing data for selected month</div>';
+                    }
+
+                    // Initialize New Products Carousel
+                    const newProducts = topResult.data.new_products || [];
+                    initNewProductsCarousel(newProducts);
+                }
+            } catch (e) { console.error('Error loading top items:', e); }
+
+            await loadTopUserChart();
+
+            // Setup daterange pickers and filters
+            setTimeout(initStatusDateRangePicker, 500);
+            setTimeout(initDateRangePickerTopUser, 500);
+            setTimeout(initApprovalDateRangePicker, 700);
+            setTimeout(initRatioDateRangePicker, 750);
+        });
+
+        // ===== LOAD INITIAL DATA =====
+
+        async function loadStatusChart() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (statusStartDate) params.append('tanggal_awal', statusStartDate);
+                if (statusEndDate) params.append('tanggal_akhir', statusEndDate);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    const statusData = {};
+                    (result.data.per_status || []).forEach(row => {
+                        if (row.status) statusData[row.status] = row.total;
+                    });
+                    if (Object.keys(statusData).length === 0) {
+                        statusData['Waiting for Approval'] = result.data.menunggu_persetujuan || 0;
+                        statusData['Borrowed'] = result.data.sedang_dipinjam || 0;
+                        statusData['Returned'] = result.data.dikembalikan || 0;
+                        statusData['Rejected'] = result.data.ditolak || 0;
+                    }
+                    renderStatusChart(statusData);
+                }
+            } catch (error) {
+                console.error('Error loading status chart:', error);
+            }
+        }
+
+        async function loadTopUserChart() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (startDateTopUser) params.append('tanggal_awal_user', startDateTopUser);
+                if (endDateTopUser) params.append('tanggal_akhir_user', endDateTopUser);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (result.status && result.data) {
+                    const perUser = result.data.per_user || [];
+                    if (perUser.length > 0) {
+                        renderPerUserChart(perUser);
+                    } else {
+                        document.getElementById('perUserChart').innerHTML =
+                            '<div class="text-center text-muted py-5">No borrowing data per user yet</div>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading top user chart:', error);
+            }
+        }
+
+        // ===== CHART RENDERING FUNCTIONS =====
+
+        // Returns a consistent color for each known borrowing status
+        function getStatusColor(status) {
+            const colorMap = {
+                'Waiting for Approval': '#FFC107',
+                'Pending Approval': '#FFC107',
+                'Partial Approved': '#17A2B8',
+                'Approved': '#0D6EFD',
+                'Waiting for Admin': '#6C757D',
+                'Waiting for Approver': '#6C757D',
+                'Borrowed': '#3F83F8',
+                'Partially Returned': '#20C997',
+                'Return in Process': '#6F42C1',
+                'Returned': '#28A745',
+                'Partially Damaged': '#FD7E14',
+                'Fully Damaged': '#DC3545',
+                'Completed': '#198754',
+                'Rejected': '#DC3545',
+                'Cancelled': '#DC3545',
+                'Overdue': '#DC3545',
+                'Due Today': '#FF4444',
+                'Due Tomorrow': '#FD7E14',
+                'Due In 2 Days': '#FFB900',
+                'Due In 3 Days': '#FFC107',
+                'Due In 4 Days': '#CDDC39',
+                'Due In 5 Days': '#8BC34A',
+                'Due In 6 Days': '#4CAF50',
+                'Due In 7 Days': '#198754'
+            };
+            if (colorMap[status]) return colorMap[status];
+            return '#6C757D';
+        }
+
+        // Chart: Status Peminjaman
+        function renderStatusChart(statusData) {
+            if (statusChartInstance) {
+                statusChartInstance.destroy();
+                statusChartInstance = null;
+            }
+
+            const labels = Object.keys(statusData);
+            const values = Object.values(statusData);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3F83F8'],
+                series: [{
+                    name: '',
+                    data: values
+                }],
+                xaxis: {
+                    categories: labels,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Quantity' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '60%',
+                        distributed: false,
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val, { dataPointIndex, w }) => {
+                            const statusLabel = w.config.xaxis.categories[dataPointIndex];
+                            return statusLabel + ': ' + val;
+                        }
+                    }
+                }
+            };
+
+            if (window.ApexCharts) {
+                statusChartInstance = new ApexCharts(document.querySelector('#statusChart'), options);
+                statusChartInstance.render();
+            }
+        }
+
+        // Chart: Top 5 Most Frequently Borrowed Items
+        function renderInventoryChart(topBarang) {
+            if (inventoryChartInstance) {
+                inventoryChartInstance.destroy();
+                inventoryChartInstance = null;
+            }
+            const el = document.getElementById('inventoryChart');
+            if (!el) return;
+            if (!topBarang || topBarang.length === 0) {
+                el.innerHTML = '<div class="text-center text-muted py-5">No borrowing data for selected month</div>';
+                return;
+            }
+            el.innerHTML = '';
+            const options = {
+                chart: { type: 'bar', height: 350, fontFamily: 'inherit', toolbar: { show: true }, parentHeightOffset: 0 },
+                series: [{ name: 'Total Borrowed', data: topBarang.map(i => i.total_qty) }],
+                xaxis: { categories: topBarang.map(i => i.nama) },
+                plotOptions: { bar: { horizontal: true, dataLabels: { position: 'top' } } },
+                colors: ['#3F83F8'],
+                dataLabels: {
+                    enabled: true,
+                    textAnchor: 'start',
+                    offsetX: 15,
+                    style: {
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        colors: ['#444']
+                    },
+                    formatter: function (val) { return val; }
+                },
+                grid: {
+                    padding: {
+                        right: 30
+                    }
+                },
+                yaxis: { labels: { style: { fontSize: '12px' } } },
+                tooltip: { y: { formatter: val => val + ' unit' } },
+                legend: { show: false }
+            };
+            inventoryChartInstance = new ApexCharts(el, options);
+            inventoryChartInstance.render();
+        }
+
+        function populateTopBarangMonthFilter() {
+            const sel = document.getElementById('topBarangMonthFilter');
+            if (!sel || sel.options.length > 0) return;
+
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                const lbl = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = val;
+                opt.textContent = lbl;
+                if (i === 0) {
+                    opt.selected = true;
+                    topBarangMonth = val;
+                }
+                sel.appendChild(opt);
+            }
+
+            sel.addEventListener('change', () => {
+                topBarangMonth = sel.value;
+                loadInventoryChart();
+            });
+        }
+
+        async function loadInventoryChart() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (topBarangMonth) params.append('top_barang_month', topBarangMonth);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+                const inventoryEl = document.getElementById('inventoryChart');
+                if (!inventoryEl) return;
+
+                if (result.status && result.data) {
+                    const topBarang = result.data.top_barang || [];
+                    if (topBarang.length > 0) {
+                        renderInventoryChart(topBarang);
+                    } else {
+                        inventoryEl.innerHTML = '<div class="text-center text-muted py-5">No borrowing data for selected month</div>';
+                    }
+                } else {
+                    inventoryEl.innerHTML = '<div class="text-center text-danger py-5">Failed to load item data</div>';
+                }
+            } catch (error) {
+                console.error('Error loading top borrowed items chart:', error);
+                const inventoryEl = document.getElementById('inventoryChart');
+                if (inventoryEl) {
+                    inventoryEl.innerHTML = '<div class="text-center text-danger py-5">Error loading item data</div>';
+                }
+            }
+        }
+
+        // Chart: Top User Peminjam
+        function renderPerUserChart(perUser) {
+            if (perUserChartInstance) {
+                perUserChartInstance.destroy();
+                perUserChartInstance = null;
+            }
+
+            const names = perUser.map(item => item.nama);
+            const counts = perUser.map(item => parseInt(item.jumlah) || 0);
+
+            const options = {
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    fontFamily: 'inherit',
+                    toolbar: { show: true }
+                },
+                colors: ['#3B5998'],
+                series: [{
+                    name: 'Borrowings',
+                    data: counts
+                }],
+                xaxis: {
+                    categories: names,
+                    labels: { style: { fontSize: '12px' } }
+                },
+                yaxis: {
+                    title: { text: 'Quantity' },
+                    labels: { formatter: val => Math.floor(val) }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: val => Math.floor(val)
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        dataLabels: { position: 'top' }
+                    }
+                },
+                tooltip: {
+                    y: { formatter: val => val + ' borrowings' }
+                }
+            };
+
+            if (window.ApexCharts) {
+                perUserChartInstance = new ApexCharts(document.querySelector('#perUserChart'), options);
+                perUserChartInstance.render();
+            }
+        }
+
+        // ===== LOAN VS RETURN RATIO PIE CHART =====
+        function renderLoanReturnRatioChart(borrowed, returned) {
+            const total = borrowed + returned;
+            if (ratioChartInstance) {
+                ratioChartInstance.destroy();
+                ratioChartInstance = null;
+            }
+            const el = document.getElementById('loanReturnRatioChart');
+            if (!el) return;
+            if (total === 0) {
+                el.innerHTML = '<div class="text-center text-muted py-5">No loan activity data for selected period</div>';
+                return;
+            }
+            el.innerHTML = '';
+            const options = {
+                series: [borrowed, returned],
+                chart: { type: 'pie', height: 350 },
+                labels: ['Borrowed', 'Returned'],
+                colors: ['#FFC107', '#28A745'],
+                legend: { position: 'bottom' },
+                tooltip: {
+                    y: {
+                        formatter: function (val) {
+                            return val + ' (' + ((val / total) * 100).toFixed(1) + '%)';
+                        }
+                    }
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: { chart: { width: 300 }, legend: { position: 'bottom' } }
+                }]
+            };
+            ratioChartInstance = new ApexCharts(el, options);
+            ratioChartInstance.render();
+        }
+
+        // ===== FILTER 1: STATUS DATE RANGE (INDEPENDENT) =====
+
+        function initStatusDateRangePicker() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+
+            var start = moment().clone().subtract(29, 'days');
+            var end = moment();
+
+            $('#reportrangeStatus').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: { format: 'YYYY-MM-DD' },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'All Time': [moment('2020-01-01'), moment()]
+                }
+            });
+
+            document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML =
+                start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+
+            statusStartDate = start.format('YYYY-MM-DD');
+            statusEndDate = end.format('YYYY-MM-DD');
+
+            $('#reportrangeStatus').on('apply.daterangepicker', function (ev, picker) {
+                statusStartDate = picker.startDate.format('YYYY-MM-DD');
+                statusEndDate = picker.endDate.format('YYYY-MM-DD');
+                document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML =
+                    picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                loadStatusChart();
+            });
+
+            document.getElementById('btnResetStatus').addEventListener('click', function () {
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+                $('#reportrangeStatus').data('daterangepicker').setStartDate(newStart);
+                $('#reportrangeStatus').data('daterangepicker').setEndDate(newEnd);
+                document.querySelector('#reportrangeStatus .reportrange-picker-field').innerHTML =
+                    newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                statusStartDate = newStart.format('YYYY-MM-DD');
+                statusEndDate = newEnd.format('YYYY-MM-DD');
+                loadStatusChart();
+            });
+        }
+
+        // ===== FILTER 3: TOP USER DATE RANGE (INDEPENDENT) =====
+
+        function initDateRangePickerTopUser() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+
+            var start = moment().clone().subtract(29, 'days');
+            var end = moment();
+
+            $('#reportrangeTopUser').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: { format: 'YYYY-MM-DD' },
+                ranges: {
+                    'Today': [moment(), moment()],
+                    'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                    'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                    'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                    'This Month': [moment().startOf('month'), moment().endOf('month')],
+                    'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    'All Time': [moment('2020-01-01'), moment()]
+                }
+            });
+
+            document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+
+            startDateTopUser = start.format('YYYY-MM-DD');
+            endDateTopUser = end.format('YYYY-MM-DD');
+
+            $('#reportrangeTopUser').on('apply.daterangepicker', function (ev, picker) {
+                startDateTopUser = picker.startDate.format('YYYY-MM-DD');
+                endDateTopUser = picker.endDate.format('YYYY-MM-DD');
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                loadTopUserChart();
+            });
+
+            document.getElementById('btnResetDateTopUser').addEventListener('click', function () {
+                var newStart = moment().clone().subtract(29, 'days');
+                var newEnd = moment();
+                $('#reportrangeTopUser').data('daterangepicker').setStartDate(newStart);
+                $('#reportrangeTopUser').data('daterangepicker').setEndDate(newEnd);
+                document.querySelector('#reportrangeTopUser .reportrange-picker-field').innerHTML =
+                    newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                startDateTopUser = newStart.format('YYYY-MM-DD');
+                endDateTopUser = newEnd.format('YYYY-MM-DD');
+                loadTopUserChart();
+            });
+        }
+
+        // ===== LOAN STATUS TREND =====
+        var trendChartInstance = null;
+        window._trendData = null;
+        const TREND_STATUSES = ['Approved', 'Partial Approved', 'Rejected'];
+        const TREND_COLORS = { 'Approved': '#28A745', 'Partial Approved': '#17A2B8', 'Rejected': '#DC3545' };
+
+        function populateTrendMonthFilter() {
+            const sel = document.getElementById('trendMonthFilter');
+            if (!sel) return;
+            const now = new Date();
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const val = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                const lbl = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                const opt = document.createElement('option');
+                opt.value = val; opt.textContent = lbl;
+                if (i === 0) opt.selected = true;
+                sel.appendChild(opt);
+            }
+            sel.addEventListener('change', () => loadTrendChart());
+        }
+
+        function populateTrendStatusFilter() {
+            const ul = document.getElementById('trendStatusList');
+            if (!ul) return;
+            ul.innerHTML = '<li class="px-2 pb-1 border-bottom"><div class="form-check"><input class="form-check-input" type="checkbox" id="trendSelectAll" checked><label class="form-check-label fw-bold" for="trendSelectAll">Select All</label></div></li>';
+            TREND_STATUSES.forEach(s => {
+                const sid = 'trend_' + s.replace(/[^a-zA-Z0-9]/g, '_');
+                ul.innerHTML += '<li class="px-2"><div class="form-check"><input class="form-check-input trend-status-cb" type="checkbox" value="' + s + '" id="' + sid + '" checked><label class="form-check-label" for="' + sid + '">' + s + '</label></div></li>';
+            });
+            document.getElementById('trendSelectAll').addEventListener('change', function () {
+                document.querySelectorAll('.trend-status-cb').forEach(cb => cb.checked = this.checked);
+                updateTrendChart();
+            });
+            document.querySelectorAll('.trend-status-cb').forEach(cb => cb.addEventListener('change', updateTrendChart));
+        }
+
+        function getSelectedTrendStatuses() {
+            return [...document.querySelectorAll('.trend-status-cb:checked')].map(cb => cb.value);
+        }
+
+        function updateTrendChart() {
+            if (!window._trendData) return;
+            const sel = getSelectedTrendStatuses();
+            if (sel.length === 0) {
+                if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+                document.getElementById('loanStatusTrendChart').innerHTML = '<div class="text-center text-muted py-5">Select at least one status</div>';
+                return;
+            }
+            renderTrendChart(window._trendData, sel);
+        }
+
+        function renderTrendChart(td, selectedStatuses) {
+            const baseline = td.baseline || {};
+            const raw = td.raw || {};
+            const series = selectedStatuses.map(s => {
+                // Start from 0 for the selected month only (not cumulative)
+                const data = [1, 2, 3, 4].map(w => {
+                    return (raw[w] && raw[w][s]) ? parseInt(raw[w][s]) : 0;
+                });
+                return { name: s, data: data };
+            });
+            const opts = {
+                series: series,
+                chart: { type: 'line', height: 350, toolbar: { show: true }, zoom: { enabled: false } },
+                stroke: { curve: 'smooth', width: 2 },
+                xaxis: { categories: ['Week 1', 'Week 2', 'Week 3', 'Week 4'] },
+                yaxis: { title: { text: 'Total Loans' }, min: 0, forceNiceScale: true },
+                colors: selectedStatuses.map(s => TREND_COLORS[s] || '#6C757D'),
+                legend: { position: 'bottom' },
+                markers: { size: 4 },
+                dataLabels: { enabled: false },
+                tooltip: { shared: true, intersect: false }
+            };
+            if (trendChartInstance) { trendChartInstance.destroy(); trendChartInstance = null; }
+            trendChartInstance = new ApexCharts(document.getElementById('loanStatusTrendChart'), opts);
+            trendChartInstance.render();
+        }
+
+        async function loadTrendChart() {
+            try {
+                const month = document.getElementById('trendMonthFilter')?.value || '';
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                if (month) url += (url.includes('?') ? '&' : '?') + 'trend_month=' + month;
+                const resp = await fetch(url);
+                const result = await resp.json();
+                if (result.status && result.data && result.data.loan_status_trend) {
+                    window._trendData = result.data.loan_status_trend;
+                    renderTrendChart(window._trendData, getSelectedTrendStatuses());
+                }
+            } catch (err) {
+                console.error('Error loading trend chart:', err);
+                document.getElementById('loanStatusTrendChart').innerHTML = '<div class="text-center text-muted py-5">Error loading trend data</div>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTrendMonthFilter();
+            populateTrendStatusFilter();
+            loadTrendChart();
+        });
+
+        // ===== LOAN VS RETURN RATIO DATE RANGE =====
+        let startDateRatio = null;
+        let endDateRatio = null;
+
+        function initRatioDateRangePicker() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+            try {
+                var start = moment().clone().subtract(29, 'days');
+                var end = moment();
+
+                $('#reportrangeRatio').daterangepicker({
+                    startDate: start,
+                    endDate: end,
+                    locale: { format: 'YYYY-MM-DD' },
+                    ranges: {
+                        'Today': [moment(), moment()],
+                        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                        'This Month': [moment().startOf('month'), moment().endOf('month')],
+                        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                        'All Time': [moment('2020-01-01'), moment()]
+                    }
+                });
+
+                var displayText = start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+                document.querySelector('#reportrangeRatio .reportrange-picker-field').innerHTML = displayText;
+
+                startDateRatio = start.format('YYYY-MM-DD');
+                endDateRatio = end.format('YYYY-MM-DD');
+                updateRatioChartByDateRange();
+
+                $('#reportrangeRatio').on('apply.daterangepicker', function (ev, picker) {
+                    startDateRatio = picker.startDate.format('YYYY-MM-DD');
+                    endDateRatio = picker.endDate.format('YYYY-MM-DD');
+                    var dt = picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                    document.querySelector('#reportrangeRatio .reportrange-picker-field').innerHTML = dt;
+                    updateRatioChartByDateRange();
+                });
+
+                document.getElementById('btnResetDateRatio').addEventListener('click', function () {
+                    var newStart = moment().clone().subtract(29, 'days');
+                    var newEnd = moment();
+                    $('#reportrangeRatio').data('daterangepicker').setStartDate(newStart);
+                    $('#reportrangeRatio').data('daterangepicker').setEndDate(newEnd);
+                    var dt = newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                    document.querySelector('#reportrangeRatio .reportrange-picker-field').innerHTML = dt;
+                    startDateRatio = newStart.format('YYYY-MM-DD');
+                    endDateRatio = newEnd.format('YYYY-MM-DD');
+                    updateRatioChartByDateRange();
+                });
+            } catch (error) {
+                console.error('Error initializing Ratio date range picker:', error);
+            }
+        }
+
+        async function updateRatioChartByDateRange() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (startDateRatio) params.append('ratio_start', startDateRatio);
+                if (endDateRatio) params.append('ratio_end', endDateRatio);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+                if (result.status && result.data && result.data.loan_vs_return_ratio) {
+                    const r = result.data.loan_vs_return_ratio;
+                    renderLoanReturnRatioChart(r.borrowed || 0, r.returned || 0);
+                }
+            } catch (error) {
+                console.error('Error updating Ratio chart:', error);
+            }
+        }
+
+        // ===== APPROVAL STATUS PIE CHART =====
+        var approvalChartInstance = null;
+        let startDateApproval = null;
+        let endDateApproval = null;
+
+        function renderApprovalStatusChart(approve, partial, rejected) {
+            const total = approve + partial + rejected;
+            if (approvalChartInstance) {
+                approvalChartInstance.destroy();
+                approvalChartInstance = null;
+            }
+            const el = document.getElementById('approvalStatusChart');
+            if (!el) return;
+            if (total === 0) {
+                el.innerHTML = '<div class="text-center text-muted py-5">No approval data for selected period</div>';
+                return;
+            }
+            el.innerHTML = '';
+            const options = {
+                series: [approve, partial, rejected],
+                chart: { type: 'pie', height: 350 },
+                labels: ['Approved', 'Partial Approved', 'Rejected'],
+                colors: ['#28A745', '#17A2B8', '#DC3545'],
+                legend: { position: 'bottom' },
+                tooltip: {
+                    y: {
+                        formatter: function (val) {
+                            return val + ' (' + ((val / total) * 100).toFixed(1) + '%)';
+                        }
+                    }
+                },
+                responsive: [{
+                    breakpoint: 480,
+                    options: { chart: { width: 300 }, legend: { position: 'bottom' } }
+                }]
+            };
+            approvalChartInstance = new ApexCharts(el, options);
+            approvalChartInstance.render();
+        }
+
+        function initApprovalDateRangePicker() {
+            if (typeof jQuery === 'undefined' || typeof moment === 'undefined' ||
+                typeof $.fn.daterangepicker === 'undefined') {
+                return;
+            }
+            try {
+                var start = moment().clone().subtract(29, 'days');
+                var end = moment();
+
+                $('#reportrangeApproval').daterangepicker({
+                    startDate: start,
+                    endDate: end,
+                    locale: { format: 'YYYY-MM-DD' },
+                    ranges: {
+                        'Today': [moment(), moment()],
+                        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                        'This Month': [moment().startOf('month'), moment().endOf('month')],
+                        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                        'All Time': [moment('2020-01-01'), moment()]
+                    }
+                });
+
+                var displayText = start.format('MMM D, YY') + ' - ' + end.format('MMM D, YY');
+                document.querySelector('#reportrangeApproval .reportrange-picker-field').innerHTML = displayText;
+
+                startDateApproval = start.format('YYYY-MM-DD');
+                endDateApproval = end.format('YYYY-MM-DD');
+                updateApprovalChartByDateRange();
+
+                $('#reportrangeApproval').on('apply.daterangepicker', function (ev, picker) {
+                    startDateApproval = picker.startDate.format('YYYY-MM-DD');
+                    endDateApproval = picker.endDate.format('YYYY-MM-DD');
+                    var dt = picker.startDate.format('MMM D, YY') + ' - ' + picker.endDate.format('MMM D, YY');
+                    document.querySelector('#reportrangeApproval .reportrange-picker-field').innerHTML = dt;
+                    updateApprovalChartByDateRange();
+                });
+
+                document.getElementById('btnResetDateApproval').addEventListener('click', function () {
+                    var newStart = moment().clone().subtract(29, 'days');
+                    var newEnd = moment();
+                    $('#reportrangeApproval').data('daterangepicker').setStartDate(newStart);
+                    $('#reportrangeApproval').data('daterangepicker').setEndDate(newEnd);
+                    var dt = newStart.format('MMM D, YY') + ' - ' + newEnd.format('MMM D, YY');
+                    document.querySelector('#reportrangeApproval .reportrange-picker-field').innerHTML = dt;
+                    startDateApproval = newStart.format('YYYY-MM-DD');
+                    endDateApproval = newEnd.format('YYYY-MM-DD');
+                    updateApprovalChartByDateRange();
+                });
+            } catch (error) {
+                console.error('Error initializing Approval date range picker:', error);
+            }
+        }
+
+        async function updateApprovalChartByDateRange() {
+            try {
+                let url = BASE_URL + '/api/approver/dashboard-chart-data.php';
+                const params = new URLSearchParams();
+                if (startDateApproval) params.append('approval_start', startDateApproval);
+                if (endDateApproval) params.append('approval_end', endDateApproval);
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                const result = await response.json();
+                if (result.status && result.data && result.data.approval_status) {
+                    const as = result.data.approval_status;
+                    renderApprovalStatusChart(as.approve || 0, as.partial_approved || 0, as.rejected || 0);
+                }
+            } catch (error) {
+                console.error('Error updating Approval Status chart:', error);
+            }
+        }
+
+        // ===== NEW PRODUCTS CAROUSEL =====
+        let currentNewProductSlide = 0;
+        let newProductSlides = [];
+
+        function initNewProductsCarousel(products) {
+            if (!products || products.length === 0) {
+                document.getElementById('newProductsEmpty').style.display = 'block';
+                document.getElementById('newProductsSlider').style.display = 'none';
+                document.getElementById('prevNewProduct').disabled = true;
+                document.getElementById('nextNewProduct').disabled = true;
+                return;
+            }
+
+            document.getElementById('newProductsEmpty').style.display = 'none';
+            document.getElementById('newProductsSlider').style.display = 'block';
+
+            // Create slides - 3 items per slide
+            newProductSlides = [];
+            for (let i = 0; i < products.length; i += 3) {
+                newProductSlides.push(products.slice(i, i + 3));
+            }
+
+            currentNewProductSlide = 0;
+            renderNewProductSlide();
+
+            // Attach event listeners
+            document.getElementById('prevNewProduct').addEventListener('click', () => {
+                if (currentNewProductSlide > 0) {
+                    currentNewProductSlide--;
+                    renderNewProductSlide();
+                }
+            });
+
+            document.getElementById('nextNewProduct').addEventListener('click', () => {
+                if (currentNewProductSlide < newProductSlides.length - 1) {
+                    currentNewProductSlide++;
+                    renderNewProductSlide();
+                }
+            });
+        }
+
+        function renderNewProductSlide() {
+            const container = document.getElementById('newProductsContainer');
+            const slide = newProductSlides[currentNewProductSlide];
+
+            container.innerHTML = slide.map(product => `
+                <div style="flex: 0 0 calc(33.333% - 8px); min-height: 200px; margin-right: 12px;">
+                    <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 16px; height: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                        <h6 style="font-weight: 600; margin: 0 0 12px 0; font-size: 16px;">${product.nama_barang}</h6>
+                        <div style="margin: 8px 0;">
+                            <small style="color: #6c757d;">Location: ${product.lokasi || '-'}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update button states
+            document.getElementById('prevNewProduct').disabled = currentNewProductSlide === 0;
+            document.getElementById('nextNewProduct').disabled = currentNewProductSlide === newProductSlides.length - 1;
+        }
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var yearDisplay = document.getElementById('year-display');
+            if (yearDisplay) {
+                yearDisplay.textContent = new Date().getFullYear();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI || Dashboard Basis Perhitungan</title>
+    <style>
+        :root {
+            --bg: #f5efe6;
+            --paper: #fffdf9;
+            --panel: #fffaf3;
+            --panel-2: #f7efdf;
+            --text: #24303a;
+            --muted: #5e6871;
+            --line: #e4d7c4;
+            --line-strong: #ceb28a;
+            --brand: #8a5b2d;
+            --brand-deep: #603c1c;
+            --green: #2f7d4f;
+            --amber: #996100;
+            --blue: #2e6ab2;
+            --red: #c74646;
+            --shadow: 0 18px 40px rgba(98, 68, 34, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(243, 223, 195, 0.8), transparent 28%),
+                linear-gradient(180deg, #f8f4ed 0%, #f3ece3 100%);
+        }
+
+        .page {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 28px 18px 56px;
+        }
+
+        .hero {
+            padding: 28px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, rgba(96, 60, 28, 0.98), rgba(138, 91, 45, 0.94));
+            color: #fff7ef;
+            box-shadow: 0 24px 48px rgba(83, 55, 26, 0.18);
+        }
+
+        .hero small {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 247, 239, 0.2);
+            background: rgba(255, 247, 239, 0.08);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .hero h1 {
+            margin: 14px 0 10px;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(2rem, 3vw, 3.2rem);
+            line-height: 1.1;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 980px;
+            line-height: 1.7;
+            color: rgba(255, 247, 239, 0.92);
+        }
+
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .quick-links a {
+            color: #fffaf4;
+            text-decoration: none;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 247, 239, 0.18);
+            background: rgba(255, 247, 239, 0.08);
+            font-size: 0.92rem;
+        }
+
+        .section {
+            margin-top: 24px;
+            padding: 22px;
+            border-radius: 24px;
+            background: var(--paper);
+            border: 1px solid rgba(206, 178, 138, 0.5);
+            box-shadow: var(--shadow);
+        }
+
+        .section h2 {
+            margin: 0 0 8px;
+            color: var(--brand-deep);
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 1.9rem;
+        }
+
+        .section p.section-intro {
+            margin: 0 0 16px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .table-shell {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            background: #fff;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ebdfcf;
+            padding: 14px 16px;
+            vertical-align: top;
+            text-align: left;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: linear-gradient(180deg, #fdf7ef 0%, #f3e8d8 100%);
+            color: var(--brand-deep);
+            font-size: 0.83rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:nth-child(even) td {
+            background: #fffaf4;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+            white-space: nowrap;
+        }
+
+        .badge.transaksi {
+            color: var(--green);
+            background: rgba(47, 125, 79, 0.1);
+            border-color: rgba(47, 125, 79, 0.18);
+        }
+
+        .badge.barang {
+            color: var(--amber);
+            background: rgba(153, 97, 0, 0.1);
+            border-color: rgba(153, 97, 0, 0.16);
+        }
+
+        .code {
+            font-family: Consolas, monospace;
+            font-size: 0.9em;
+            background: #f5efe6;
+            border: 1px solid #eadbc6;
+            padding: 2px 6px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .stack {
+            display: grid;
+            gap: 6px;
+        }
+
+        .stack div {
+            color: var(--text);
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .layout-table td {
+            padding: 12px;
+            background: transparent !important;
+            border-bottom: 1px solid #eadfcc;
+        }
+
+        .layout-table .empty {
+            background: linear-gradient(180deg, #fcf8f1 0%, #faf2e6 100%) !important;
+        }
+
+        .dash-card {
+            min-height: 120px;
+            padding: 14px;
+            border-radius: 18px;
+            border: 1px solid #e7dac7;
+            background: linear-gradient(180deg, #fff 0%, #fffaf2 100%);
+            box-shadow: 0 10px 24px rgba(85, 60, 31, 0.08);
+        }
+
+        .dash-card small {
+            display: block;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.74rem;
+            margin-bottom: 6px;
+        }
+
+        .dash-card strong {
+            display: block;
+            font-size: 1rem;
+            line-height: 1.35;
+            margin-bottom: 10px;
+            color: var(--text);
+        }
+
+        .dash-card span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .inline-label {
+            color: var(--brand-deep);
+            font-weight: 700;
+        }
+
+        .role-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .role-head-tag {
+            flex-shrink: 0;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: var(--panel-2);
+            border: 1px solid rgba(138, 91, 45, 0.18);
+            color: var(--brand-deep);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .note {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        @media (max-width: 980px) {
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .role-head {
+                flex-direction: column;
+            }
+
+            .page {
+                padding: 16px 10px 40px;
+            }
+
+            .hero,
+            .section {
+                padding: 18px;
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <small>Audit Dashboard</small>
+            <h1>Dashboard Basis Perhitungan</h1>
+            <p>
+                Halaman ini merombak total dokumen basis perhitungan agar lebih dekat dengan dashboard aslinya.
+                Setiap role menampilkan susunan card yang benar-benar ada di dashboard, lalu di bawahnya ada tabel
+                yang menjelaskan basis hitung, sumber query, status atau kondisi yang masuk ke card tersebut, dan
+                alasan kenapa data itu terhitung di card yang bersangkutan.
+            </p>
+            <div class="quick-links">
+                <a href="#overview">Ringkasan</a>
+                <a href="#admin">Admin</a>
+                <a href="#manager">Manager</a>
+                <a href="#user">User</a>
+                <a href="#pic">PIC Barang</a>
+            </div>
+        </section>
+
+        <section class="section" id="overview">
+            <div class="role-head">
+                <div>
+                    <h2>Ringkasan Audit</h2>
+                    <p class="section-intro">
+                        Tabel berikut dipakai sebagai legenda cepat sebelum masuk ke detail tiap role.
+                    </p>
+                </div>
+                <div class="role-head-tag">Berbasis Query Dashboard Aktif</div>
+            </div>
+
+            <div class="legend-grid">
+                <div class="table-shell">
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Istilah</th>
+                                    <th>Makna</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge transaksi">Per transaksi</span></td>
+                                    <td>Basis utama hitungannya berasal dari tabel <span class="code">peminjaman</span>.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge barang">Per barang</span></td>
+                                    <td>Basis utama hitungannya berasal dari tabel <span class="code">barang</span> atau agregasi <span class="code">detail_peminjaman</span>.</td>
+                                </tr>
+                                <tr>
+                                    <td>Status dinamis</td>
+                                    <td>Status di chart bisa berubah nama karena dipetakan ulang oleh query, misalnya menjadi <span class="code">Pending Approval</span>, <span class="code">Due Today</span>, atau <span class="code">Overdue</span>.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="table-shell">
+                    <div class="table-scroll">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Komponen Dashboard</th>
+                                    <th>Pola Umum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Card ringkasan status</td>
+                                    <td>Mayoritas <span class="badge transaksi">Per transaksi</span> karena menghitung status pinjaman dari <span class="code">peminjaman</span>.</td>
+                                </tr>
+                                <tr>
+                                    <td>Card produk atau item</td>
+                                    <td>Mayoritas <span class="badge barang">Per barang</span> karena mengelompokkan data per barang.</td>
+                                </tr>
+                                <tr>
+                                    <td>Chart status berbasis jatuh tempo</td>
+                                    <td>Tetap <span class="badge transaksi">Per transaksi</span>, tetapi klasifikasinya dibantu <span class="code">peminjaman_units.expected_return</span>.</td>
+                                </tr>
+                                <tr>
+                                    <td>Card user dashboard</td>
+                                    <td>Sebagian besar user-scoped, tetapi ada beberapa card yang masih global sesuai query aktif saat ini.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="admin">
+            <div class="role-head">
+                <div>
+                    <h2>Admin</h2>
+                    <p class="section-intro">
+                        Berikut komposisi card yang tampil di <span class="code">admin/dashboard.html</span>, lalu tabel audit basis hitungnya.
+                    </p>
+                </div>
+                <div class="role-head-tag">Sumber: api/admin/dashboard-stats.php</div>
+            </div>
+
+            <div class="table-shell">
+                <div class="table-scroll">
+                    <table class="layout-table">
+                        <tbody>
+                            <tr>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Waiting for Approval</strong><span><span class="inline-label">Isi:</span> total transaksi pending approval.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Waiting for Approval'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Borrowed</strong><span><span class="inline-label">Isi:</span> total pinjaman aktif.</span><span><span class="inline-label">Masuk jika:</span> Borrowed, Partial Approved, Return in Process, Partially Returned, Due%, Overdue.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Returned</strong><span><span class="inline-label">Isi:</span> total transaksi returned.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Returned'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Rejected</strong><span><span class="inline-label">Isi:</span> total transaksi reject.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Rejected'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Highlight Card</small><strong>New Products This Month</strong><span><span class="inline-label">Isi:</span> daftar barang baru bulan ini.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">created_at</span> berada di bulan berjalan.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Item Chart</small><strong>Item Data</strong><span><span class="inline-label">Isi:</span> daftar barang + frekuensi pinjam.</span><span><span class="inline-label">Masuk jika:</span> semua barang di-join ke detail pinjam, hitung <span class="code">COUNT(dp.id)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Status Chart</small><strong>Borrowing Status</strong><span><span class="inline-label">Isi:</span> Pending Approval, Returned, Due, Overdue, dan lainnya.</span><span><span class="inline-label">Masuk jika:</span> semua transaksi dipetakan ulang berdasar status final dan due-date.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Top Items</small><strong>Top 5 Most Frequently Borrowed Items</strong><span><span class="inline-label">Isi:</span> 5 barang dengan quantity pinjam tertinggi.</span><span><span class="inline-label">Masuk jika:</span> hasil <span class="code">GROUP BY barang</span> lalu urut <span class="code">SUM(dp.jumlah)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Loan vs Return Ratio</strong><span><span class="inline-label">Isi:</span> rasio Borrowed vs Returned.</span><span><span class="inline-label">Masuk jika:</span> slice Borrowed = status aktif, slice Returned = status selesai.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Approval Status</strong><span><span class="inline-label">Isi:</span> Approved, Partial Approved, Rejected.</span><span><span class="inline-label">Masuk jika:</span> transaksi dikelompokkan berdasar hasil keputusan approval.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Trend Chart</small><strong>Loan Status Trend</strong><span><span class="inline-label">Isi:</span> tren Approved, Partial Approved, Rejected.</span><span><span class="inline-label">Masuk jika:</span> kelompok approval awal dipertahankan walau status akhir berubah.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Ranking Chart</small><strong>Top Borrowers</strong><span><span class="inline-label">Isi:</span> ranking borrower terbanyak.</span><span><span class="inline-label">Masuk jika:</span> user diurutkan dari <span class="code">COUNT(*)</span> transaksi pinjam.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-shell" style="margin-top:16px;">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Card</th>
+                                <th>Basis</th>
+                                <th>Sumber Query</th>
+                                <th>Kriteria / Status Yang Masuk</th>
+                                <th>Kenapa Masuk Ke Card Ini</th>
+                                <th>Catatan Penting</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Waiting for Approval</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman.status</span></td>
+                                <td><div class="stack"><div><span class="code">status = 'Waiting for Approval'</span></div></div></td>
+                                <td>Card ini khusus menghitung transaksi yang belum diputuskan approval-nya.</td>
+                                <td>Jika 1 user punya 3 transaksi yang masih menunggu, card tetap menghitung 3.</td>
+                            </tr>
+                            <tr>
+                                <td>Borrowed</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman.status</span></td>
+                                <td><div class="stack"><div><span class="code">Borrowed</span></div><div><span class="code">Partial Approved</span></div><div><span class="code">Return in Process</span></div><div><span class="code">Partially Returned</span></div><div><span class="code">LIKE 'Due%'</span> dan <span class="code">Overdue</span></div></div></td>
+                                <td>Semua status aktif masih dianggap pinjaman berjalan, jadi digabung ke card Borrowed.</td>
+                                <td>Due dan Overdue tidak punya card summary sendiri, sehingga tetap masuk Borrowed.</td>
+                            </tr>
+                            <tr>
+                                <td>Returned</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman.status</span></td>
+                                <td><div class="stack"><div><span class="code">status = 'Returned'</span></div></div></td>
+                                <td>Summary card ini hanya menghitung transaksi yang sudah benar-benar berstatus Returned.</td>
+                                <td>Berbeda dengan chart lain, status <span class="code">Partially Damaged</span>, <span class="code">Fully Damaged</span>, dan <span class="code">Completed</span> tidak ikut di summary ini.</td>
+                            </tr>
+                            <tr>
+                                <td>Rejected</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman.status</span></td>
+                                <td><div class="stack"><div><span class="code">status = 'Rejected'</span></div></div></td>
+                                <td>Hanya transaksi yang benar-benar ditolak yang masuk card ini.</td>
+                                <td>Status reject tidak digabung ke card lain.</td>
+                            </tr>
+                            <tr>
+                                <td>New Products This Month</td>
+                                <td><span class="badge barang">Per barang</span></td>
+                                <td><span class="code">barang.created_at</span></td>
+                                <td><div class="stack"><div>Barang yang <span class="code">created_at</span>-nya berada di bulan berjalan.</div></div></td>
+                                <td>Card ini memantau penambahan item baru, bukan aktivitas transaksi pinjam.</td>
+                                <td>Scope-nya global untuk seluruh sistem.</td>
+                            </tr>
+                            <tr>
+                                <td>Item Data</td>
+                                <td><span class="badge barang">Per barang</span></td>
+                                <td><span class="code">barang</span> + <span class="code">detail_peminjaman</span></td>
+                                <td><div class="stack"><div>Semua barang di-left join ke detail peminjaman.</div><div>Nilai pinjam dihitung dari <span class="code">COUNT(dp.id)</span>.</div></div></td>
+                                <td>Card ini mengelompokkan hasil per item, lalu menampilkan seberapa sering item muncul di detail transaksi.</td>
+                                <td>Bukan total unit dipinjam. Ini frekuensi kemunculan item, bukan <span class="code">SUM(dp.jumlah)</span>.</td>
+                            </tr>
+                            <tr>
+                                <td>Borrowing Status</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman</span> + <span class="code">peminjaman_units.expected_return</span></td>
+                                <td><div class="stack"><div><span class="code">Waiting for Approval</span> menjadi <span class="code">Pending Approval</span></div><div><span class="code">Rejected</span> tetap <span class="code">Rejected</span></div><div><span class="code">Returned / Partially Damaged / Fully Damaged / Completed</span> menjadi <span class="code">Returned</span></div><div>Selain itu dipetakan ke <span class="code">Overdue</span>, <span class="code">Due Today</span>, <span class="code">Due Tomorrow</span>, atau <span class="code">Due In X Days</span> berdasar due date terdekat</div><div>Jika tidak kena mapping, status asli dipakai</div></div></td>
+                                <td>Card ini ingin menunjukkan kondisi operasional pinjaman sekarang, bukan sekadar nama status mentah di tabel.</td>
+                                <td>Due date diambil dari unit yang paling dekat melalui <span class="code">MIN(expected_return)</span>; jika tidak ada data unit, fallback ke <span class="code">rencana_kembali</span>.</td>
+                            </tr>
+                            <tr>
+                                <td>Top 5 Most Frequently Borrowed Items</td>
+                                <td><span class="badge barang">Per barang</span></td>
+                                <td><span class="code">detail_peminjaman.jumlah</span></td>
+                                <td><div class="stack"><div>Data di-group per barang.</div><div>Total dihitung dengan <span class="code">SUM(dp.jumlah)</span>.</div></div></td>
+                                <td>Card ini mencari barang yang total unit pinjamnya paling tinggi, bukan transaksi terbanyak per se.</td>
+                                <td>Urutan kedua memakai <span class="code">MAX(p.created_at)</span> jika jumlahnya sama.</td>
+                            </tr>
+                            <tr>
+                                <td>Loan vs Return Ratio</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman.status</span> + filter tanggal pinjam</td>
+                                <td><div class="stack"><div>Borrowed slice: <span class="code">Borrowed</span>, <span class="code">Partial Approved</span>, <span class="code">Return in Process</span>, <span class="code">Partially Returned</span>, <span class="code">Due%</span>, <span class="code">Overdue</span></div><div>Returned slice: <span class="code">Returned</span>, <span class="code">Partially Damaged</span>, <span class="code">Fully Damaged</span>, <span class="code">Completed</span></div></div></td>
+                                <td>Pie chart ini membandingkan pinjaman yang masih berjalan versus yang sudah dianggap selesai dikembalikan.</td>
+                                <td>Backend juga menyiapkan <span class="code">partial_approved</span>, tetapi chart yang tampil di UI hanya dua irisan: Borrowed dan Returned.</td>
+                            </tr>
+                            <tr>
+                                <td>Approval Status</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman.status</span> + <span class="code">tanggal_disetujui</span></td>
+                                <td><div class="stack"><div>Approved: status selain <span class="code">Waiting for Approval</span>, <span class="code">Partial Approved</span>, <span class="code">Rejected</span> dan punya <span class="code">tanggal_disetujui</span></div><div>Partial Approved: <span class="code">status = 'Partial Approved'</span></div><div>Rejected: <span class="code">status = 'Rejected'</span> dan dihitung dari <span class="code">created_at</span></div></div></td>
+                                <td>Card ini menunjukkan hasil keputusan approval, bukan status operasional pinjaman setelah approval.</td>
+                                <td>Karena reject tidak punya <span class="code">tanggal_disetujui</span>, query reject memakai <span class="code">created_at</span>.</td>
+                            </tr>
+                            <tr>
+                                <td>Loan Status Trend</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">peminjaman</span> + <span class="code">peminjaman_units.approval_status</span></td>
+                                <td><div class="stack"><div>Jika ada unit approved dan rejected sekaligus, transaksi masuk <span class="code">Partial Approved</span></div><div>Jika hanya ada unit approved, masuk <span class="code">Approved</span></div><div>Jika hanya ada unit rejected, masuk <span class="code">Rejected</span></div><div>Fallback memakai <span class="code">status</span> dan <span class="code">tanggal_disetujui</span></div></div></td>
+                                <td>Trend ini mempertahankan kelompok approval awal transaksi, lalu menampilkannya kumulatif per minggu pada bulan yang dipilih.</td>
+                                <td>Status akhir seperti Due atau Returned tetap bisa terbaca sebagai Approved bila approval awalnya lolos.</td>
+                            </tr>
+                            <tr>
+                                <td>Top Borrowers</td>
+                                <td><span class="badge transaksi">Per transaksi</span></td>
+                                <td><span class="code">COUNT(*) GROUP BY user_id, nama_peminjam</span></td>
+                                <td><div class="stack"><div>Setiap transaksi pinjam menambah 1 hitungan ke borrower terkait.</div></div></td>
+                                <td>Card ini mencari user dengan jumlah transaksi pinjam tertinggi, bukan quantity barang terbanyak.</td>
+                                <td>Admin punya date filter independen khusus untuk chart ini.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="manager">
+            <div class="role-head">
+                <div>
+                    <h2>Manager</h2>
+                    <p class="section-intro">
+                        Dashboard manager memakai komposisi card yang mirip admin, tetapi tanpa <span class="code">Item Data</span>.
+                    </p>
+                </div>
+                <div class="role-head-tag">Sumber: api/approver/dashboard-chart-data.php</div>
+            </div>
+
+            <div class="table-shell">
+                <div class="table-scroll">
+                    <table class="layout-table">
+                        <tbody>
+                            <tr>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Waiting for Approval</strong><span><span class="inline-label">Isi:</span> total transaksi pending approval.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Waiting for Approval'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Borrowed</strong><span><span class="inline-label">Isi:</span> total pinjaman aktif.</span><span><span class="inline-label">Masuk jika:</span> Borrowed, Partial Approved, Return in Process, Partially Returned, Due%, Overdue.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Returned</strong><span><span class="inline-label">Isi:</span> total transaksi returned.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Returned'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Rejected</strong><span><span class="inline-label">Isi:</span> total transaksi reject.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Rejected'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Highlight Card</small><strong>New Products This Month</strong><span><span class="inline-label">Isi:</span> daftar barang baru bulan ini.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">created_at</span> bulan berjalan.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Status Chart</small><strong>Borrowing Status</strong><span><span class="inline-label">Isi:</span> Pending Approval, Returned, Due, Overdue, dan lainnya.</span><span><span class="inline-label">Masuk jika:</span> semua transaksi dipetakan berdasar due-date dan status akhir.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Top Items</small><strong>Top 5 Most Frequently Borrowed Items</strong><span><span class="inline-label">Isi:</span> 5 barang dengan quantity pinjam tertinggi.</span><span><span class="inline-label">Masuk jika:</span> hasil group per barang lalu urut <span class="code">SUM(dp.jumlah)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Loan vs Return Ratio</strong><span><span class="inline-label">Isi:</span> rasio Borrowed vs Returned.</span><span><span class="inline-label">Masuk jika:</span> status aktif vs status selesai.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Approval Status</strong><span><span class="inline-label">Isi:</span> Approved, Partial Approved, Rejected.</span><span><span class="inline-label">Masuk jika:</span> transaksi dikelompokkan berdasar keputusan approval.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Trend Chart</small><strong>Loan Status Trend</strong><span><span class="inline-label">Isi:</span> tren Approved, Partial Approved, Rejected.</span><span><span class="inline-label">Masuk jika:</span> kelompok approval awal tetap dipertahankan.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Ranking Chart</small><strong>Top Borrowers</strong><span><span class="inline-label">Isi:</span> ranking borrower terbanyak.</span><span><span class="inline-label">Masuk jika:</span> user diurutkan dari <span class="code">COUNT(*)</span> transaksi.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td class="empty"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-shell" style="margin-top:16px;">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Card</th>
+                                <th>Basis</th>
+                                <th>Sumber Query</th>
+                                <th>Kriteria / Status Yang Masuk</th>
+                                <th>Kenapa Masuk Ke Card Ini</th>
+                                <th>Catatan Penting</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Waiting for Approval</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">status = 'Waiting for Approval'</span></div></div></td><td>Sama seperti admin, card ini hanya menghitung transaksi yang belum diputuskan.</td><td>Basis hitungnya global, bukan per manager tertentu.</td></tr>
+                            <tr><td>Borrowed</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">Borrowed</span>, <span class="code">Partial Approved</span>, <span class="code">Return in Process</span>, <span class="code">Partially Returned</span>, <span class="code">Due%</span>, <span class="code">Overdue</span></div></div></td><td>Manager melihat seluruh pinjaman yang masih dianggap aktif atau belum benar-benar selesai.</td><td>Status due dan overdue tetap ditarik ke Borrowed di summary card.</td></tr>
+                            <tr><td>Returned</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">status = 'Returned'</span></div></div></td><td>Manager summary hanya memakai returned kanonik.</td><td>Tidak mengikutkan <span class="code">Completed</span> atau status damaged di card summary ini.</td></tr>
+                            <tr><td>Rejected</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">status = 'Rejected'</span></div></div></td><td>Menunjukkan pinjaman yang ditolak di level keputusan.</td><td>Card berdiri sendiri, tidak tercampur ke status lain.</td></tr>
+                            <tr><td>New Products This Month</td><td><span class="badge barang">Per barang</span></td><td><span class="code">barang.created_at</span></td><td><div class="stack"><div>Barang baru pada bulan berjalan.</div></div></td><td>Manager tetap melihat update inventaris terbaru di sistem.</td><td>Scope global.</td></tr>
+                            <tr><td>Borrowing Status</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman</span> + <span class="code">peminjaman_units</span></td><td><div class="stack"><div>Pending Approval, Rejected, Returned, Overdue, Due Today, Due Tomorrow, Due In X Days, atau status asli</div></div></td><td>Chart ini lebih operasional daripada summary card karena memetakan kondisi keterlambatan.</td><td>Klasifikasi sama dengan admin, tetapi manager tidak punya filter item di dashboard ini.</td></tr>
+                            <tr><td>Top 5 Most Frequently Borrowed Items</td><td><span class="badge barang">Per barang</span></td><td><span class="code">SUM(dp.jumlah)</span></td><td><div class="stack"><div>Barang dikelompokkan lalu diurutkan berdasarkan total quantity dipinjam.</div></div></td><td>Manager melihat item yang paling tinggi demand-nya.</td><td>Global dan lifetime.</td></tr>
+                            <tr><td>Loan vs Return Ratio</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div>Borrowed slice memakai status aktif.</div><div>Returned slice memakai Returned, Partially Damaged, Fully Damaged, Completed.</div></div></td><td>Meringkas arus pinjaman aktif vs selesai pada rentang tanggal yang dipilih.</td><td>UI pie tetap dua label: Borrowed dan Returned.</td></tr>
+                            <tr><td>Approval Status</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">status</span> + <span class="code">tanggal_disetujui</span></td><td><div class="stack"><div>Approved, Partial Approved, Rejected.</div></div></td><td>Manager memantau hasil keputusan approval, bukan due-status.</td><td>Reject dihitung dari <span class="code">created_at</span>.</td></tr>
+                            <tr><td>Loan Status Trend</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman_units.approval_status</span></td><td><div class="stack"><div>Grouped ke Approved, Partial Approved, Rejected memakai data unit lalu fallback ke status transaksi.</div></div></td><td>Tujuannya menjaga jejak status approval awal meskipun status akhir transaksi berubah.</td><td>Trend bersifat kumulatif per minggu dalam bulan terpilih.</td></tr>
+                            <tr><td>Top Borrowers</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">COUNT(*) GROUP BY user_id</span></td><td><div class="stack"><div>Setiap transaksi pinjam menambah skor borrower.</div></div></td><td>Manager bisa melihat user yang paling sering membuat transaksi pinjam.</td><td>Tidak ada card <span class="code">Item Data</span> di dashboard manager aktif.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="user">
+            <div class="role-head">
+                <div>
+                    <h2>User</h2>
+                    <p class="section-intro">
+                        Dashboard user memadukan card yang user-scoped dengan beberapa card yang masih global sesuai query aktif saat ini.
+                    </p>
+                </div>
+                <div class="role-head-tag">Sumber: api/user/dashboard-chart-data.php</div>
+            </div>
+
+            <div class="table-shell">
+                <div class="table-scroll">
+                    <table class="layout-table">
+                        <tbody>
+                            <tr>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Waiting for Approval</strong><span><span class="inline-label">Isi:</span> total transaksi pending milik user.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Waiting for Approval'</span> dan <span class="code">user_id</span> sesuai login.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Borrowed</strong><span><span class="inline-label">Isi:</span> pinjaman aktif milik user.</span><span><span class="inline-label">Masuk jika:</span> status aktif user: Borrowed, Partial Approved, Return in Process, Partially Returned, Due%, Overdue.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Returned</strong><span><span class="inline-label">Isi:</span> transaksi returned milik user.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Returned'</span> milik user.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Rejected</strong><span><span class="inline-label">Isi:</span> transaksi reject milik user.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Rejected'</span> milik user.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Highlight Card</small><strong>New Products This Month</strong><span><span class="inline-label">Isi:</span> daftar barang baru bulan ini.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">created_at</span> bulan berjalan.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Status Chart</small><strong>Borrowing Status</strong><span><span class="inline-label">Isi:</span> Pending Approval, Returned, Due, Overdue, dan lainnya milik user.</span><span><span class="inline-label">Masuk jika:</span> transaksi user dipetakan berdasar due-date dan status akhir.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Top Items</small><strong>Top 5 Most Frequently Borrowed Items</strong><span><span class="inline-label">Isi:</span> 5 barang teratas di query aktif.</span><span><span class="inline-label">Masuk jika:</span> group per barang lalu urut <span class="code">SUM(dp.jumlah)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Item Chart</small><strong>Item Data</strong><span><span class="inline-label">Isi:</span> daftar barang yang pernah dipinjam user.</span><span><span class="inline-label">Masuk jika:</span> item berasal dari transaksi user, hitung <span class="code">COUNT(dp.id)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Loan vs Return Ratio</strong><span><span class="inline-label">Isi:</span> rasio Borrowed vs Returned milik user.</span><span><span class="inline-label">Masuk jika:</span> status aktif vs status selesai milik user.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Approval Status</strong><span><span class="inline-label">Isi:</span> Approved, Partial Approved, Rejected milik user.</span><span><span class="inline-label">Masuk jika:</span> transaksi user dikelompokkan berdasar keputusan approval.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Trend Chart</small><strong>Loan Status Trend</strong><span><span class="inline-label">Isi:</span> tren Approved, Partial Approved, Rejected milik user.</span><span><span class="inline-label">Masuk jika:</span> kelompok approval awal transaksi user dipertahankan.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td class="empty"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-shell" style="margin-top:16px;">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Card</th>
+                                <th>Basis</th>
+                                <th>Sumber Query</th>
+                                <th>Kriteria / Status Yang Masuk</th>
+                                <th>Kenapa Masuk Ke Card Ini</th>
+                                <th>Catatan Penting</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Waiting for Approval</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span> + <span class="code">user_id</span></td><td><div class="stack"><div><span class="code">status = 'Waiting for Approval'</span> dan <span class="code">user_id = current user</span></div></div></td><td>Yang tampil hanya transaksi peminjaman milik user yang belum diputuskan.</td><td>User-scoped.</td></tr>
+                            <tr><td>Borrowed</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span> + <span class="code">user_id</span></td><td><div class="stack"><div>Status aktif yang sama seperti admin, tetapi difilter ke user login.</div></div></td><td>Card ini menandai semua pinjaman user yang masih berjalan, termasuk yang sudah due atau overdue.</td><td>User-scoped.</td></tr>
+                            <tr><td>Returned</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span> + <span class="code">user_id</span></td><td><div class="stack"><div><span class="code">status = 'Returned'</span></div></div></td><td>Hanya transaksi milik user yang sudah returned kanonik.</td><td>User-scoped.</td></tr>
+                            <tr><td>Rejected</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span> + <span class="code">user_id</span></td><td><div class="stack"><div><span class="code">status = 'Rejected'</span></div></div></td><td>Menunjukkan transaksi user yang ditolak.</td><td>User-scoped.</td></tr>
+                            <tr><td>New Products This Month</td><td><span class="badge barang">Per barang</span></td><td><span class="code">barang.created_at</span></td><td><div class="stack"><div>Barang baru pada bulan berjalan.</div></div></td><td>Card ini tidak melihat riwayat pinjam user, melainkan daftar barang baru di sistem.</td><td>Saat ini masih global, tidak difilter ke user login.</td></tr>
+                            <tr><td>Borrowing Status</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman</span> + <span class="code">peminjaman_units</span> + <span class="code">user_id</span></td><td><div class="stack"><div>Status dipetakan ke Pending Approval, Returned, Rejected, Overdue, Due Today, Due Tomorrow, Due In X Days, atau status asli.</div></div></td><td>User melihat kondisi pinjamannya sekarang, terutama yang mendekati jatuh tempo.</td><td>User-scoped dan due date memakai nearest expected_return bila ada.</td></tr>
+                            <tr><td>Top 5 Most Frequently Borrowed Items</td><td><span class="badge barang">Per barang</span></td><td><span class="code">SUM(dp.jumlah)</span></td><td><div class="stack"><div>Barang digrup lalu diurutkan berdasarkan total quantity dipinjam.</div></div></td><td>Chart ini menunjukkan item paling populer di data query aktif.</td><td>Pada implementasi sekarang masih global, belum difilter ke user login.</td></tr>
+                            <tr><td>Item Data</td><td><span class="badge barang">Per barang</span></td><td><span class="code">detail_peminjaman</span> + <span class="code">barang</span> + <span class="code">user_id</span></td><td><div class="stack"><div>Menampilkan item yang pernah dipinjam user.</div><div>Hitungan memakai <span class="code">COUNT(dp.id)</span>.</div></div></td><td>Card ini memang dibuat untuk memperlihatkan riwayat barang yang pernah disentuh user.</td><td>Jika user belum pernah meminjam, dashboard memakai <span class="code">available_barang</span> sebagai fallback visual.</td></tr>
+                            <tr><td>Loan vs Return Ratio</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">status</span> + <span class="code">user_id</span></td><td><div class="stack"><div>Borrowed slice memakai status aktif milik user.</div><div>Returned slice memakai status selesai milik user.</div></div></td><td>User dapat membandingkan pinjaman yang masih berjalan versus yang sudah selesai.</td><td>UI tetap dua slice: Borrowed dan Returned.</td></tr>
+                            <tr><td>Approval Status</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">status</span> + <span class="code">tanggal_disetujui</span> + <span class="code">user_id</span></td><td><div class="stack"><div>Approved, Partial Approved, Rejected milik user.</div></div></td><td>Memisahkan hasil keputusan approval yang diterima user atas transaksinya.</td><td>User-scoped.</td></tr>
+                            <tr><td>Loan Status Trend</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman_units.approval_status</span> + <span class="code">user_id</span></td><td><div class="stack"><div>Dikelompokkan ke Approved, Partial Approved, Rejected berdasar data unit lalu fallback transaksi.</div></div></td><td>Walau status pinjaman user berubah di kemudian hari, chart ini tetap melacak kelompok approval awalnya.</td><td>User tidak memiliki card <span class="code">Top Borrowers</span> di dashboard aktif.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="pic">
+            <div class="role-head">
+                <div>
+                    <h2>PIC Barang</h2>
+                    <p class="section-intro">
+                        Dashboard PIC Barang menggabungkan pengawasan transaksi dan performa item secara bersamaan.
+                    </p>
+                </div>
+                <div class="role-head-tag">Sumber: api/pic_barang/dashboard-chart-data.php</div>
+            </div>
+
+            <div class="table-shell">
+                <div class="table-scroll">
+                    <table class="layout-table">
+                        <tbody>
+                            <tr>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Waiting for Approval</strong><span><span class="inline-label">Isi:</span> total transaksi pending approval.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Waiting for Approval'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Borrowed</strong><span><span class="inline-label">Isi:</span> total pinjaman aktif.</span><span><span class="inline-label">Masuk jika:</span> Borrowed, Partial Approved, Return in Process, Partially Returned, Due%, Overdue.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Returned</strong><span><span class="inline-label">Isi:</span> total transaksi returned.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Returned'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Summary Card</small><strong>Rejected</strong><span><span class="inline-label">Isi:</span> total transaksi reject.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">status = 'Rejected'</span>.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Highlight Card</small><strong>New Products This Month</strong><span><span class="inline-label">Isi:</span> daftar barang baru bulan ini.</span><span><span class="inline-label">Masuk jika:</span> <span class="code">created_at</span> bulan berjalan.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Status Chart</small><strong>Borrowing Status</strong><span><span class="inline-label">Isi:</span> Pending Approval, Returned, Due, Overdue, dan lainnya.</span><span><span class="inline-label">Masuk jika:</span> semua transaksi dipetakan berdasar due-date dan status akhir.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Top Items</small><strong>Top 5 Most Frequently Borrowed Items</strong><span><span class="inline-label">Isi:</span> 5 barang dengan quantity pinjam tertinggi.</span><span><span class="inline-label">Masuk jika:</span> group per barang lalu urut <span class="code">SUM(dp.jumlah)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Loan vs Return Ratio</strong><span><span class="inline-label">Isi:</span> rasio Borrowed vs Returned.</span><span><span class="inline-label">Masuk jika:</span> status aktif vs status selesai.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                            </tr>
+                            <tr>
+                                <td><div class="dash-card"><small>Pie Chart</small><strong>Approval Status</strong><span><span class="inline-label">Isi:</span> Approved, Partial Approved, Rejected.</span><span><span class="inline-label">Masuk jika:</span> transaksi dikelompokkan berdasar keputusan approval.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Trend Chart</small><strong>Loan Status Trend</strong><span><span class="inline-label">Isi:</span> tren Approved, Partial Approved, Rejected.</span><span><span class="inline-label">Masuk jika:</span> kelompok approval awal tetap dipertahankan.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Ranking Chart</small><strong>Top Borrowers</strong><span><span class="inline-label">Isi:</span> ranking borrower terbanyak.</span><span><span class="inline-label">Masuk jika:</span> user diurutkan dari <span class="code">COUNT(*)</span> transaksi.</span><span class="badge transaksi">Per transaksi</span></div></td>
+                                <td><div class="dash-card"><small>Item Chart</small><strong>Item Data</strong><span><span class="inline-label">Isi:</span> daftar barang + frekuensi pinjam.</span><span><span class="inline-label">Masuk jika:</span> semua barang di-join, hitung <span class="code">COUNT(dp.id)</span>.</span><span class="badge barang">Per barang</span></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="table-shell" style="margin-top:16px;">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Card</th>
+                                <th>Basis</th>
+                                <th>Sumber Query</th>
+                                <th>Kriteria / Status Yang Masuk</th>
+                                <th>Kenapa Masuk Ke Card Ini</th>
+                                <th>Catatan Penting</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Waiting for Approval</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">status = 'Waiting for Approval'</span></div></div></td><td>PIC tetap memantau antrian transaksi yang belum selesai diproses.</td><td>Global.</td></tr>
+                            <tr><td>Borrowed</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div>Status aktif dan due-status sama seperti admin.</div></div></td><td>Karena PIC menangani operasional barang, semua pinjaman aktif tetap dihitung sebagai Borrowed.</td><td>Due dan Overdue masuk ke sini di summary.</td></tr>
+                            <tr><td>Returned</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">status = 'Returned'</span></div></div></td><td>Mewakili transaksi yang telah selesai dikembalikan.</td><td>Summary card ini tidak menggabungkan status damaged/completed.</td></tr>
+                            <tr><td>Rejected</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div><span class="code">status = 'Rejected'</span></div></div></td><td>Menunjukkan transaksi yang gagal lolos approval.</td><td>Global.</td></tr>
+                            <tr><td>New Products This Month</td><td><span class="badge barang">Per barang</span></td><td><span class="code">barang.created_at</span></td><td><div class="stack"><div>Barang baru bulan berjalan.</div></div></td><td>PIC perlu melihat item baru yang masuk inventaris.</td><td>Global.</td></tr>
+                            <tr><td>Borrowing Status</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman</span> + <span class="code">peminjaman_units</span></td><td><div class="stack"><div>Pending Approval, Rejected, Returned, Overdue, Due Today, Due Tomorrow, Due In X Days, atau status asli.</div></div></td><td>PIC memakai chart ini untuk membaca kondisi peminjaman yang paling dekat dengan operasional barang.</td><td>Nearest due date diambil dari unit yang belum returned/damaged/rejected.</td></tr>
+                            <tr><td>Top 5 Most Frequently Borrowed Items</td><td><span class="badge barang">Per barang</span></td><td><span class="code">SUM(dp.jumlah)</span></td><td><div class="stack"><div>Group per barang, urut berdasar total quantity.</div></div></td><td>Card ini membantu PIC melihat item dengan demand tertinggi.</td><td>Lifetime dan global.</td></tr>
+                            <tr><td>Loan vs Return Ratio</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman.status</span></td><td><div class="stack"><div>Borrowed slice memakai status aktif.</div><div>Returned slice memakai status selesai.</div></div></td><td>Perbandingan ini membantu PIC melihat beban barang yang masih keluar versus yang sudah balik.</td><td>UI tetap dua slice: Borrowed dan Returned.</td></tr>
+                            <tr><td>Approval Status</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">status</span> + <span class="code">tanggal_disetujui</span></td><td><div class="stack"><div>Approved, Partial Approved, Rejected.</div></div></td><td>Menggambarkan distribusi keputusan approval yang memengaruhi alur barang.</td><td>Reject dihitung dari <span class="code">created_at</span>.</td></tr>
+                            <tr><td>Loan Status Trend</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">peminjaman_units.approval_status</span></td><td><div class="stack"><div>Kelompok Approved, Partial Approved, Rejected berdasarkan approval awal unit/transaksi.</div></div></td><td>Walaupun status transaksi berubah jadi due, returned, atau lainnya, trend tetap membaca kelompok approval awalnya.</td><td>Kumulatif per minggu.</td></tr>
+                            <tr><td>Top Borrowers</td><td><span class="badge transaksi">Per transaksi</span></td><td><span class="code">COUNT(*) GROUP BY user_id</span></td><td><div class="stack"><div>Setiap transaksi pinjam menambah skor borrower.</div></div></td><td>Menunjukkan user yang paling sering memicu pergerakan barang.</td><td>Global.</td></tr>
+                            <tr><td>Item Data</td><td><span class="badge barang">Per barang</span></td><td><span class="code">barang</span> + <span class="code">detail_peminjaman</span></td><td><div class="stack"><div>Semua barang ditampilkan, nilai pinjam dari <span class="code">COUNT(dp.id)</span>.</div></div></td><td>PIC melihat frekuensi item tampil di transaksi untuk memahami rotasi barang.</td><td>Bukan total quantity, melainkan frekuensi detail transaksi.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="note">
+                Ringkasnya, card status dan chart approval/trend di semua role tetap berbasis
+                <span class="code">peminjaman</span> alias per transaksi. Card item seperti
+                <span class="code">New Products This Month</span>, <span class="code">Item Data</span>,
+                dan <span class="code">Top 5 Most Frequently Borrowed Items</span> berbasis barang,
+                tetapi metode hitungnya bisa berbeda: ada yang memakai <span class="code">COUNT(dp.id)</span>
+                dan ada yang memakai <span class="code">SUM(dp.jumlah)</span>.
+            </div>
+        </section>
+    </main>
+</body>
+</html>

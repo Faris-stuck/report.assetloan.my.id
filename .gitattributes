@@ -1,11 +1,42 @@
+# Normalize text files to LF for cross-platform consistency.
 * text=auto eol=lf
 
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
+# Keep Windows-native scripts in CRLF when needed.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
 
-/.github export-ignore
-CHANGELOG.md export-ignore
-.styleci.yml export-ignore
+# Explicit source/document text rules.
+*.php text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.sql text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary assets must never be line-normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.bmp binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.7z binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.woff binary
+*.woff2 binary
+*.mp4 binary
+*.pack binary
+*.idx binary
+*.rev binary

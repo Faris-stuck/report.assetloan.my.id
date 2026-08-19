@@ -1,0 +1,24 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "same-origin"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteRule "(^|/)\.(?!well-known/)" - [F,L]
+
+    RewriteRule ^api/koneksi\.php$ - [F,L,NC]
+    RewriteRule ^api/session-helper\.php$ - [F,L,NC]
+    RewriteRule ^api/.+helper\.php$ - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(?i)^(?:README\.md|STRUKTUR_PROJECT_DAN_DATABASE\.md|peminjaman\.sql|DASHBOARD_BASIS_PERHITUNGAN\.html|\.editorconfig|\.gitattributes|\.gitignore)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "(?i)\.(?:sql|md|log|ini|bak|dist|env|ya?ml|ps1|cmd|bat)$">
+    Require all denied
+</FilesMatch>

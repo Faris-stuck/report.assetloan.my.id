@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+	 <meta name="dicoding:email" content="azmiariffaris@gmail.com">
+    <meta charset="UTF-8">
+    <title>Komatsu Group Indonesia | Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Rubik:400,400i,500,500i,700,700i&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i,900&display=swap" rel="stylesheet">
+    <link rel="icon" href="https://webassets.komatsugroup.id/favicon.ico" type="image/x-icon">
+    <style>
+        :root {
+            --theme-default: #140a9a;
+            --theme-default-dark: #0c065c;
+            --input-bg: #f3f3ff;
+            --input-border: #efefef;
+            --text-muted: #898989;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Rubik', 'Roboto', sans-serif;
+        }
+
+        .login-card {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            padding: 30px 12px;
+            background: #000066;
+            background: linear-gradient(to top, #000066, #02001a);
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+        .login-main {
+            width: 450px;
+            max-width: 100%;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 37px rgba(8, 21, 66, 0.05);
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .mt-3 {
+            margin-top: 1rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+
+        .logo-big-img {
+            width: 35%;
+            min-width: 120px;
+            max-width: 170px;
+            height: auto;
+        }
+
+        .hidden-status {
+            display: none;
+        }
+
+        .theme-form h4 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 500;
+            color: #2c323f;
+            line-height: 1.35;
+        }
+
+        .theme-form .form-group {
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .theme-form .col-form-label {
+            display: block;
+            font-size: 15px;
+            letter-spacing: 0.4px;
+            color: #2c323f;
+            margin-bottom: 6px;
+        }
+
+        .theme-form .form-control {
+            width: 100%;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: #374151;
+            font-weight: 400;
+            font-size: 14px;
+            padding: 12px 10px;
+            border-radius: 4px;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: none;
+        }
+
+        .theme-form .form-control::placeholder {
+            color: #6b7280;
+            letter-spacing: normal;
+            font-weight: 400;
+        }
+
+        .theme-form .form-control:focus,
+        .theme-form .form-control:hover {
+            border-color: #b9c1cc;
+            background-color: #ffffff;
+            box-shadow: none;
+        }
+
+        .form-input {
+            position: relative;
+        }
+
+        .show-hide {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            line-height: 1;
+        }
+
+        .show-password {
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--theme-default);
+            user-select: none;
+        }
+
+        .form-group.mb-0 {
+            margin-top: 4px;
+            margin-bottom: 0;
+            position: relative;
+            min-height: 0;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--theme-default);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .login-btn:hover {
+            background-color: var(--theme-default-dark);
+        }
+
+        .forgot {
+            display: block;
+            position: static;
+            margin-top: 14px;
+            text-align: center;
+            color: var(--theme-default);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .forgot:hover {
+            text-decoration: underline;
+        }
+
+        .register-link {
+            display: block;
+            margin-top: 10px;
+            color: #2c323f;
+            text-decoration: none;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .register-link:hover {
+            color: var(--theme-default);
+            text-decoration: underline;
+        }
+
+        .footer {
+            margin-top: 10px;
+            text-align: center;
+            color: #898989;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 576px) {
+            .login-main {
+                width: 100%;
+                padding: 28px 22px;
+            }
+
+            .theme-form h4 {
+                font-size: 20px;
+            }
+
+            .forgot {
+                margin-top: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <div class="login-main">
+            <form id="loginForm" class="theme-form">
+                <div class="text-center">
+                    <div class="mb-3">
+                        <input id="StatusLogin" class="form-control hidden-status" type="hidden" readonly>
+                        <img class="logo-big-img" src="assets/images/Komatsu-Logo-removebg-preview.png" alt="loginpage">
+                    </div>
+                    <div class="mb-3">
+                        <h4>Komatsu Group Indonesia Business Partner Portal</h4>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label" for="email">Email</label>
+                    <input class="form-control" type="email" id="email" name="email" placeholder="email address" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-form-label" for="password">Password</label>
+                    <div class="form-input position-relative">
+                        <input class="form-control" type="password" id="password" name="password" placeholder="*********" required>
+                        <div class="show-hide"><span class="show-password" onclick="togglePassword()">show</span></div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-0">
+                    <div class="text-end mt-3">
+                        <button class="login-btn" type="submit">Log in</button>
+                    </div>
+                    <a class="forgot" href="forgot-password.html">Forgot password</a>
+                    <div class="footer">
+                        1.2.260112-04 © 2024 - ICT Komatsu Indonesia
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/base-url.js"></script>
+    <script>
+        /**
+         * ============================================
+         * SESSION CHECK: Auto-redirect jika sudah login
+         * Cek server session dulu, baru localStorage
+         * ============================================
+         */
+        (function checkExistingSession() {
+            var userStr = localStorage.getItem('user');
+            if (!userStr) return;
+
+            try {
+                var user = JSON.parse(userStr);
+                if (!user || !user.id || !user.role) {
+                    localStorage.removeItem('user');
+                    return;
+                }
+
+                // Verifikasi session di server secara SINKRON
+                // agar halaman login tidak sempat muncul jika sudah login
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', BASE_URL + '/api/auth/verify-session.php', false); // synchronous
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.withCredentials = true;
+                xhr.send(JSON.stringify({ user_id: user.id, user_role: user.role }));
+
+                if (xhr.status === 200) {
+                    // Session server valid, redirect ke dashboard sesuai role
+                    redirectToDashboard(user.role);
+                } else {
+                    // Session server tidak valid, hapus localStorage
+                    localStorage.removeItem('user');
+                    sessionStorage.clear();
+                }
+            } catch (e) {
+                // Error parsing atau network, biarkan tetap di halaman login
+                localStorage.removeItem('user');
+            }
+        })();
+
+        /**
+         * Redirect ke dashboard berdasarkan role
+         */
+        function redirectToDashboard(role) {
+            switch (role) {
+                case 'admin':
+                    window.location.replace(BASE_URL + '/admin/dashboard.html');
+                    break;
+                case 'manager':
+                    window.location.replace(BASE_URL + '/manager/dashboard.html');
+                    break;
+                case 'pic_barang':
+                    window.location.replace(BASE_URL + '/pic-barang/dashboard.html');
+                    break;
+                case 'user':
+                default:
+                    window.location.replace(BASE_URL + '/user/dashboard.html');
+                    break;
+            }
+        }
+
+        function togglePassword() {
+            const input = document.getElementById("password");
+            const text = event.target;
+
+            if (input.type === "password") {
+                input.type = "text";
+                text.innerText = "hide";
+            } else {
+                input.type = "password";
+                text.innerText = "show";
+            }
+        }
+
+        // Login handler
+        document.getElementById("loginForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+            const loginBtn = document.querySelector('.login-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+
+            if (!email || !password) {
+                alert("Email and password are required.");
+                return;
+            }
+
+            // Disable button saat proses login
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+
+            const formData = new FormData();
+            formData.append("email", email);
+            formData.append("password", password);
+
+            try {
+                const res = await fetch(BASE_URL + "/api/auth/login.php", {
+                    method: "POST",
+                    credentials: "include", // PENTING: kirim session cookie
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    let message = '';
+                    const contentType = res.headers.get('content-type') || '';
+
+                    if (contentType.includes('application/json')) {
+                        const err = await res.json().catch(() => ({}));
+                        message = err.error || err.message || '';
+                    } else {
+                        const text = await res.text().catch(() => '');
+                        message = text.trim();
+                    }
+
+                    if (message) {
+                        const normalized = message.toLowerCase();
+                        if (normalized.includes('login failed')) {
+                            message = 'Login failed. Please check your email and password.';
+                        }
+                    }
+
+                    if (!message) {
+                        if (res.status === 404) {
+                            message = 'Email is not registered.';
+                        } else if (res.status === 401) {
+                            message = 'The password you entered is incorrect.';
+                        } else if (res.status === 400) {
+                            message = 'Email and password are required.';
+                        } else {
+                            message = 'Login failed. Please check your email and password.';
+                        }
+                    }
+
+                    alert(message);
+                    if (res.status === 404) {
+                        emailInput.focus();
+                    } else if (res.status === 401) {
+                        passwordInput.focus();
+                    }
+
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Log in';
+                    return;
+                }
+
+                const data = await res.json();
+
+                // Simpan user info ke localStorage (sebagai cache, session server = sumber kebenaran)
+                localStorage.setItem("user", JSON.stringify(data));
+
+                // Redirect berdasarkan role dari SERVER (bukan dari input user)
+                redirectToDashboard(data.role);
+
+            } catch (error) {
+                alert("Server connection issue. Please try again in a moment.");
+                console.error(error);
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Log in';
+            }
+        });
+    </script>
+
+</body>
+
+</html>
