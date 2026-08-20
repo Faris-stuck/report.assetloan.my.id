@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Cleanup Temporary Markdown Files",
+      "trigger": "PostFileCreate",
+      "description": "Mendeteksi dan memperingatkan tentang temporary markdown files yang harus dihapus setelah digunakan",
+      "matcher": "\\.(md)$",
+      "action": {
+        "type": "command",
+        "command": "powershell -Command \"\n\\$input = [Console]::In.ReadToEnd() | ConvertFrom-Json\n\\$filePath = \\$input.file.path\n\n# Check if file is temporary markdown (contains 'test', 'temp', 'example', 'draft' in name)\nif (\\$filePath -match '\\.(md)$' -and \\$filePath -match '(test|temp|example|draft|scratch|poc|spike)') {\n    Write-Host \\\"⚠️ Temporary markdown file detected: \\$filePath\\\"\n    Write-Host \\\"This file will be marked for cleanup after use.\\\"\n}\n\nexit 0\n\""
+      }
+    }
+  ]
+}

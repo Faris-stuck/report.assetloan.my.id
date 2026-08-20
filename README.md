@@ -1,56 +1,62 @@
-# PROJECT - Windows/Linux Workflow
+# report.assetloan.my.id - LAPORIN
 
-This repository is developed on Windows and deployed on Linux.
-Use Git as the single source of truth to keep both environments in sync.
+LAPORIN adalah aplikasi pelaporan untuk SMK Taruna Bangsa Bekasi. Aplikasi ini menerima laporan perundungan, pelanggaran siswa, dan kerusakan fasilitas, lalu mengarahkan tindak lanjut ke role sekolah yang tepat.
 
-## Standard Workflow
+## Fitur Utama
 
-1. Develop on Windows.
-2. Commit and push changes to remote.
-3. Deploy on Linux with fast-forward pull only.
-4. If a Linux hotfix is made, commit + push from Linux, then pull on Windows.
+- Form laporan publik tanpa login dengan CAPTCHA, nomor laporan, dan kode akses.
+- Tracking laporan publik memakai nomor laporan dan kode akses.
+- Dashboard berbasis role untuk `superadmin`, `kesiswaan`, `sarpras`, dan `wali_kelas`.
+- Manajemen master data, QR Code, lampiran aman, audit log, dan histori status.
+- SEO publik untuk halaman panduan lapor dan FAQ.
 
-## Rules
-
-- Do not use manual folder copy between OS.
-- Keep line ending policy from `.gitattributes` (LF for source files).
-- Keep runtime artifacts out of Git (`assets/uploads`, logs, temp files).
-- Keep file permissions normalized in Git (non-executable for regular web/source files).
-
-## Suggested Local Git Settings
-
-Run once per clone:
+## Quick Start Lokal
 
 ```bash
-git config core.autocrlf false
-git config core.filemode false
+cp .env.example .env
+composer install
+npm install
+php artisan key:generate
+php artisan migrate --seed
+npm run build
+php artisan serve
 ```
 
-## Presentation Material
-
-Presentation-ready project notes and slide content are available in:
-
-- `PRESENTASI_PROJECT_PEMINJAMAN.md`
-- `STRUKTUR_PROJECT_DAN_DATABASE.md`
-
-## Hermes-Style PHP Engine
-
-AI chat web sekarang dijalankan langsung oleh engine PHP internal di `PROJECT/hermes`. Engine ini meniru pola Hermes seperti memory, skills, tools, dan self-improvement terbatas tanpa gateway atau process agent terpisah.
-
-- Web chat endpoint: `hermes/chat.php`
-- Admin status endpoint: `hermes/status.php`
-- Maintenance signal endpoint: `hermes/reindex.php`
-- Runtime home: `PROJECT/hermes/home`
-- Workspace instructions: `PROJECT/hermes/AGENTS.md`
-
-Tool `tools/ai-project-index.php` tetap dipertahankan sebagai wrapper maintenance untuk project index lokal di `PROJECT/hermes/runtime/`.
-
-Examples:
+Jika host PHP tidak punya `pdo_sqlite`, jalankan pengujian melalui Docker:
 
 ```bash
-php tools/ai-project-index.php status
-php tools/ai-project-index.php signal --reason=deploy_update
-php tools/ai-project-index.php rebuild --reason=deploy_update
+npm run test:docker
 ```
 
-Optional non-session deploy access can be enabled with `AI_AGENT_PROJECT_INDEX_REINDEX_TOKEN`, then send it as `X-AI-Agent-Reindex-Token` to `hermes/reindex.php`.
+## Perintah
+
+| Perintah               | Fungsi                                |
+| ---------------------- | ------------------------------------- |
+| `php artisan test`     | Jalankan test Laravel                 |
+| `npm run test:docker`  | Jalankan test dengan image Docker LAPORIN |
+| `npm run build`        | Bangun asset Vite produksi            |
+| `npm run lint`         | Lint JS/TS dan konfigurasi frontend   |
+| `npm run format:check` | Cek format Prettier                   |
+
+## Struktur Penting
+
+```text
+app/Http/Controllers/      Controller Laravel
+app/Http/Middleware/       Role, active-user, dan security header middleware
+app/Models/                Model domain LAPORIN
+database/migrations/       Skema database
+database/seeders/          Seed role, kelas, master data, dan demo user
+resources/views/           Blade UI publik dan dashboard
+public/css/laporin.css     Token desain dan gaya utama
+docs/                      Dokumentasi produk, arsitektur, database, dan penempatan
+```
+
+## Keamanan Secret
+
+- Nilai `.env` produksi tidak boleh dipush.
+- Dokumen dan contoh environment memakai `[REDACTED]` untuk password/token.
+- Backup produksi disimpan di server, bukan di repository.
+
+## Dokumentasi
+
+Mulai dari `docs/PRODUCT.md`, lalu lanjut ke `docs/ARCHITECTURE.md`, `docs/DATABASE.md`, dan `docs/DEPLOYMENT.md`.

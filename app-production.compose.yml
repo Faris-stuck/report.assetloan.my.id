@@ -1,0 +1,77 @@
+services:
+  app:
+    image: lapapp:20260818-2033-seo-index
+    container_name: app
+    ports:
+      - "127.0.0.1:18080:8080"
+    env_file:
+      - /etc/laporin/laporin-production.env
+    volumes:
+      - laporin-prod-storage:/var/www/html/storage/app
+    networks:
+      cf-network:
+        aliases:
+          - app
+    restart: unless-stopped
+
+  worker-notifications:
+    image: lapapp:20260818-2033-seo-index
+    container_name: laporin-worker-notifications
+    env_file:
+      - /etc/laporin/laporin-production.env
+    command: ["php", "artisan", "queue:work", "redis", "--queue=notifications", "--sleep=1", "--tries=1", "--timeout=60", "--max-time=3600"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    volumes:
+      - laporin-prod-storage:/var/www/html/storage/app
+    networks:
+      - cf-network
+    restart: unless-stopped
+
+  worker-email:
+    image: lapapp:20260818-2033-seo-index
+    container_name: laporin-worker-email
+    env_file:
+      - /etc/laporin/laporin-production.env
+    command: ["php", "artisan", "queue:work", "redis", "--queue=email", "--sleep=1", "--tries=3", "--backoff=30", "--timeout=120", "--max-time=3600"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    volumes:
+      - laporin-prod-storage:/var/www/html/storage/app
+    networks:
+      - cf-network
+    restart: unless-stopped
+
+  worker-whatsapp:
+    image: lapapp:20260818-2033-seo-index
+    container_name: laporin-worker-whatsapp
+    env_file:
+      - /etc/laporin/laporin-production.env
+    command: ["php", "artisan", "queue:work", "redis", "--queue=whatsapp", "--sleep=1", "--tries=3", "--backoff=30", "--timeout=120", "--max-time=3600"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'php artisan queue:work' >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    volumes:
+      - laporin-prod-storage:/var/www/html/storage/app
+    networks:
+      - cf-network
+    restart: unless-stopped
+
+volumes:
+  laporin-prod-storage:
+    external: true
+
+networks:
+  cf-network:
+    external: true

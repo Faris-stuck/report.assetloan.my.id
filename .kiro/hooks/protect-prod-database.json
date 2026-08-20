@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Protect Production Database",
+      "trigger": "PreToolUse",
+      "description": "Mencegah operasi database berbahaya yang bisa menghapus data production (drop, truncate, seed, rollback, fresh, dll)",
+      "matcher": "execute_pwsh|control_pwsh_process",
+      "action": {
+        "type": "command",
+        "command": "powershell -Command \"\n\\$input = [Console]::In.ReadToEnd() | ConvertFrom-Json\n\\$command = \\$input.tool.arguments.command -join ' '\n\n# Dangerous database operations that could drop production data\n\\$blockedPatterns = @(\n    'migrate',\n    'seed',\n    'rollback',\n    'fresh',\n    'drop',\n    'truncate',\n    'artisan db:wipe',\n    'artisan tinker',\n    'DELETE FROM',\n    'DROP TABLE',\n    'TRUNCATE TABLE'\n)\n\nforeach (\\$pattern in \\$blockedPatterns) {\n    if (\\$command -match [regex]::Escape(\\$pattern)) {\n        Write-Error \\\"BLOCKED: Database operation '\\$pattern' is not allowed on production. This is a production database.\\\"\n        exit 2\n    }\n}\n\nexit 0\n\""
+      }
+    }
+  ]
+}

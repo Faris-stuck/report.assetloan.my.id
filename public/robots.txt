@@ -1,0 +1,15 @@
+# LAPORIN crawler policy — public discovery is allowed; private/report-token surfaces are not.
+
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /kesiswaan
+Disallow: /sarpras
+Disallow: /siswa
+Disallow: /reports
+Disallow: /download-attachment
+Disallow: /lapor-sukses
+Disallow: /ai/
+
+Sitemap: https://report.assetloan.my.id/sitemap.xml

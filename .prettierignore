@@ -1,0 +1,11 @@
+vendor/
+node_modules/
+public/build/
+public/storage/
+storage/
+bootstrap/cache/
+.phpunit.cache/
+*.log
+.env
+.env.*
+.env.example

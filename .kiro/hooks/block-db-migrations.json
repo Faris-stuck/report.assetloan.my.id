@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Block Database Migrations",
+      "trigger": "PreToolUse",
+      "description": "Mencegah saya menjalankan perintah migrasi database apapun (migrate, seed, rollback, fresh)",
+      "matcher": "execute_pwsh|control_pwsh_process",
+      "action": {
+        "type": "command",
+        "command": "powershell -Command \"\n\\$input = [Console]::In.ReadToEnd() | ConvertFrom-Json\n\\$command = \\$input.tool.arguments.command -join ' '\n\n# Check if command contains migration keywords\nif (\\$command -match '(migrate|seed|rollback|fresh)' -and \\$command -match 'artisan') {\n    Write-Error 'Database migrations are blocked. This task cannot perform database operations.'\n    exit 2\n}\n\nexit 0\n\""
+      }
+    }
+  ]
+}
