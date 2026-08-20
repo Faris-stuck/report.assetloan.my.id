@@ -1,7 +1,0 @@
-<FilesMatch "^(?:codebase-helper|config-helper|context-helper|conversation-helper|index-helper|memory-helper|runtime-helper|self-improve-helper|skills-helper|tool-helper)\.php$">
-    Require all denied
-</FilesMatch>
-
-<FilesMatch "^(?:AGENTS\.md|README\.md|SOUL\.md|\.env|\.env\.example|\.gitkeep|.*\.signal\.json)$">
-    Require all denied
-</FilesMatch>
