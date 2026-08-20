@@ -84,14 +84,16 @@
                 name="qr_name"
                 type="text"
                 value="{{ old('qr_name') }}"
-                class="form-control"
+                class="form-control @error('qr_name') is-invalid @enderror"
                 placeholder="Contoh: QR LAPORIN Utama"
                 required
                 maxlength="150"
                 pattern="[A-Za-z0-9 ._\-()]+"
                 autocomplete="off"
             >
-
+            @error('qr_name')
+                <div class="invalid-feedback d-block">{{ $message }}</div>
+            @enderror
             <div class="form-text">
                 Gunakan nama yang mudah dikenali.
             </div>

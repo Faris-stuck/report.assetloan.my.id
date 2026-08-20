@@ -48,7 +48,7 @@
         @endforelse
     </ul>
     @if(in_array($report->status, ['memerlukan_informasi','dibuka_kembali','menunggu_konfirmasi']))
-        <form method="POST" action="{{ route('track.info', $report) }}" class="detail-box mb-3">@csrf<label class="form-label required" for="note">Tambahkan Informasi</label><textarea id="note" name="note" class="form-control mb-3" required maxlength="3000" rows="4" placeholder="Tulis informasi tambahan atau alasan jika laporan belum selesai."></textarea><button class="btn btn-outline-laporin">Kirim Informasi</button></form>
+        <form method="POST" action="{{ route('track.info', $report) }}" class="detail-box mb-3">@csrf<label class="form-label required" for="note">Tambahkan Informasi</label><textarea id="note" name="note" class="form-control @error('note') is-invalid @enderror mb-3" required maxlength="3000" rows="4" placeholder="Tulis informasi tambahan atau alasan jika laporan belum selesai.">{{ old('note') }}</textarea>@error('note')<div class="invalid-feedback d-block mb-2">{{ $message }}</div>@enderror<button class="btn btn-outline-laporin">Kirim Informasi</button></form>
     @endif
     @if($report->status === 'menunggu_konfirmasi')
         <form method="POST" action="{{ route('track.confirm', $report) }}" onsubmit="return confirm('Konfirmasi bahwa laporan ini sudah selesai?')">@csrf<button class="btn btn-laporin">Konfirmasi Selesai</button></form>

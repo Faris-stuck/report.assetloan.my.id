@@ -25,11 +25,17 @@
                     @csrf
                     <div class="mb-3">
                         <label class="form-label required" for="login">Surel / NIS</label>
-                        <input id="login" name="login" value="{{ old('login') }}" class="form-control" required autofocus autocomplete="username" placeholder="surel@sekolah.sch.id atau NIS">
+                        <input id="login" name="login" value="{{ old('login') }}" class="form-control @error('login') is-invalid @enderror" required autofocus autocomplete="username" placeholder="surel@sekolah.sch.id atau NIS">
+                        @error('login')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="mb-3">
                         <label class="form-label required" for="password">Kata Sandi / PIN</label>
-                        <input id="password" type="password" name="password" class="form-control" required autocomplete="current-password" placeholder="Masukkan kata sandi/PIN">
+                        <input id="password" type="password" name="password" class="form-control @error('password') is-invalid @enderror" required autocomplete="current-password" placeholder="Masukkan kata sandi/PIN">
+                        @error('password')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="form-check mb-4">
                         <input class="form-check-input" type="checkbox" name="remember" id="remember">

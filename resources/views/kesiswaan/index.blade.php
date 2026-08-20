@@ -96,9 +96,9 @@
                     <div id="process-{{ $r->id }}" class="accordion-collapse collapse show" data-bs-parent="#accordion-kesiswaan-{{ $r->id }}">
                         <div class="accordion-body">
                             <form method="POST" action="{{ route('kesiswaan.process',$r) }}" class="row g-3 align-items-end">@csrf
-                                <div class="col-lg-6"><label class="form-label required">Siswa yang terbukti</label><select name="student_id" class="form-select" required><option value="">Pilih siswa</option>@foreach($students as $s)<option value="{{ $s->id }}">{{ $s->name }} - {{ $s->class?->class_name }}</option>@endforeach</select></div>
-                                <div class="col-lg-6"><label class="form-label required">Jenis pelanggaran</label><select name="violation_type_id" class="form-select" required><option value="">Pilih jenis</option>@foreach($types as $t)<option value="{{ $t->id }}">{{ $t->violation_name }} (-{{ $t->point_reduction }} poin)</option>@endforeach</select></div>
-                                <div class="col-12"><label class="form-label">Catatan pembinaan</label><textarea name="note" class="form-control" placeholder="Opsional" maxlength="2000" rows="3"></textarea></div>
+                                <div class="col-lg-6"><label class="form-label required">Siswa yang terbukti</label><select name="student_id" class="form-select @error('student_id') is-invalid @enderror" required><option value="">Pilih siswa</option>@foreach($students as $s)<option value="{{ $s->id }}" @selected(old('student_id') == $s->id)>{{ $s->name }} - {{ $s->class?->class_name }}</option>@endforeach</select>@error('student_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                                <div class="col-lg-6"><label class="form-label required">Jenis pelanggaran</label><select name="violation_type_id" class="form-select @error('violation_type_id') is-invalid @enderror" required><option value="">Pilih jenis</option>@foreach($types as $t)<option value="{{ $t->id }}" @selected(old('violation_type_id') == $t->id)>{{ $t->violation_name }} (-{{ $t->point_reduction }} poin)</option>@endforeach</select>@error('violation_type_id')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
+                                <div class="col-12"><label class="form-label">Catatan pembinaan</label><textarea name="note" class="form-control @error('note') is-invalid @enderror" placeholder="Opsional" maxlength="2000" rows="3">{{ old('note') }}</textarea>@error('note')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                                 <div class="col-12"><button class="btn btn-laporin" aria-label="Proses laporan #{{ $r->report_number }}">Proses Laporan</button></div>
                             </form>
                         </div>
@@ -115,7 +115,7 @@
                     <div id="reject-{{ $r->id }}" class="accordion-collapse collapse" data-bs-parent="#accordion-kesiswaan-{{ $r->id }}">
                         <div class="accordion-body">
                             <form method="POST" action="{{ route('kesiswaan.reject',$r) }}" class="row g-3" @submit="if(!confirm('Tolak laporan ini? Alur laporan akan berhenti.')) $event.preventDefault()">@csrf
-                                <div class="col-12"><label class="form-label required">Alasan penolakan</label><textarea name="reason" class="form-control" placeholder="Wajib diisi jika laporan ditolak" required maxlength="2000" rows="3"></textarea></div>
+                                <div class="col-12"><label class="form-label required">Alasan penolakan</label><textarea name="reason" class="form-control @error('reason') is-invalid @enderror" placeholder="Wajib diisi jika laporan ditolak" required maxlength="2000" rows="3">{{ old('reason') }}</textarea>@error('reason')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror</div>
                                 <div class="col-12"><button class="btn btn-outline-danger" aria-label="Tolak laporan #{{ $r->report_number }}">Tolak Laporan</button></div>
                             </form>
                         </div>
@@ -127,7 +127,7 @@
                 @csrf
                 <div class="col-12">
                     <label class="form-label" for="completion_note_{{ $r->id }}">Catatan penyelesaian Kesiswaan</label>
-                    <textarea id="completion_note_{{ $r->id }}" name="note" class="form-control" maxlength="2000" placeholder="Ringkasan pembinaan atau tindak lanjut (opsional)" rows="3"></textarea>
+                    <textarea id="completion_note_{{ $r->id }}" name="note" class="form-control @error('note') is-invalid @enderror" maxlength="2000" placeholder="Ringkasan人民检察院 atau tindak lanjut (opsional)" rows="3">{{ old('note') }}</textarea>@error('note')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                 </div>
                 <div class="col-12"><button class="btn btn-laporin">Selesaikan Penanganan</button></div>
             </form>

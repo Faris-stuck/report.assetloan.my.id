@@ -179,7 +179,7 @@
                     <select
                         id="create_class_id"
                         name="class_id"
-                        class="form-select"
+                        class="form-select @error('class_id') is-invalid @enderror"
                     >
 
                         <option value="">
@@ -198,6 +198,9 @@
                         @endforeach
 
                     </select>
+                    @error('class_id')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
 
                 </div>
 
@@ -218,12 +221,15 @@
                         id="create_point_reduction"
                         type="number"
                         name="point_reduction"
-                        class="form-control"
+                        class="form-control @error('point_reduction') is-invalid @enderror"
                         required
                         min="1"
                         max="100"
                         value="{{ old('point_reduction') }}"
                     >
+                    @error('point_reduction')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
 
                 </div>
 
@@ -243,11 +249,14 @@
                     <textarea
                         id="create_description"
                         name="description"
-                        class="form-control"
+                        class="form-control @error('description') is-invalid @enderror"
                         maxlength="1000"
                         rows="2"
                         placeholder="Opsional"
                     >{{ old('description') }}</textarea>
+                    @error('description')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
 
                 </div>
 
@@ -272,12 +281,15 @@
                         id="create_{{ $f }}"
                         name="{{ $f }}"
                         type="text"
-                        class="form-control"
+                        class="form-control @error($f) is-invalid @enderror"
                         placeholder="{{ $labelFor($f) }}"
                         value="{{ old($f) }}"
                         maxlength="{{ $inputMax($f) }}"
                         @required($isRequired)
                     >
+                    @error($f)
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
 
                 </div>
 
@@ -877,7 +889,7 @@
                                         <select
                                             id="edit_{{ $it->id }}_class_id"
                                             name="class_id"
-                                            class="form-select"
+                                            class="form-select @error('class_id') is-invalid @enderror"
                                         >
 
                                             <option value="">
@@ -890,7 +902,7 @@
                                                 <option
                                                     value="{{ $c->id }}"
                                                     @selected(
-                                                        (string) $it->class_id
+                                                        (string) old('class_id', $it->class_id)
                                                         ===
                                                         (string) $c->id
                                                     )
@@ -901,6 +913,9 @@
                                             @endforeach
 
                                         </select>
+                                        @error('class_id')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
 
                                     </div>
 
@@ -921,12 +936,15 @@
                                             id="edit_{{ $it->id }}_point_reduction"
                                             type="number"
                                             name="point_reduction"
-                                            class="form-control"
-                                            value="{{ $it->point_reduction }}"
+                                            class="form-control @error('point_reduction') is-invalid @enderror"
+                                            value="{{ old('point_reduction', $it->point_reduction) }}"
                                             required
                                             min="1"
                                             max="100"
                                         >
+                                        @error('point_reduction')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
 
                                     </div>
 
@@ -946,11 +964,14 @@
                                         <textarea
                                             id="edit_{{ $it->id }}_description"
                                             name="description"
-                                            class="form-control"
+                                            class="form-control @error('description') is-invalid @enderror"
                                             maxlength="1000"
                                             rows="4"
                                             placeholder="Opsional"
-                                        >{{ $it->description }}</textarea>
+                                        >{{ old('description', $it->description) }}</textarea>
+                                        @error('description')
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
 
                                     </div>
 
@@ -980,11 +1001,14 @@
                                             id="edit_{{ $it->id }}_{{ $f }}"
                                             name="{{ $f }}"
                                             type="text"
-                                            class="form-control"
-                                            value="{{ $it->$f }}"
+                                            class="form-control @error($f) is-invalid @enderror"
+                                            value="{{ old($f, $it->$f) }}"
                                             maxlength="{{ $inputMax($f) }}"
                                             @required($isRequired)
                                         >
+                                        @error($f)
+                                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                                        @enderror
 
                                     </div>
 
