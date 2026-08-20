@@ -62,13 +62,13 @@ class SarprasProcessor
 
         try {
 
-            $notification = DB::transaction(
+            DB::transaction(
                 function () use (
                     $request,
                     $report,
                     $data,
                     &$storedPath
-                ): array {
+                ): void {
                     $lockedReport =
                         Report::whereKey(
                             $report->id
@@ -191,11 +191,6 @@ class SarprasProcessor
                             $data['note'] ?? null,
                     ]);
 
-                    return [
-                        $lockedReport->fresh(),
-                        $new,
-                        $publicNote,
-                    ];
                 }
             );
 
@@ -216,14 +211,10 @@ class SarprasProcessor
             throw $exception;
         }
 
-        [
-            $updatedReport,
-            $new,
-            $publicNote,
-        ] = $notification;
-
         /*
-         * Email sesudah transaction COMMIT.
+         * Notifikasi dikirim ReportObserver::updated() lewat
+         * SendReportNotifications::dispatch(...)->afterCommit() begitu kolom
+         * status berubah, jadi processor tidak mengirim apa pun sendiri.
          */
     }
 
@@ -237,12 +228,12 @@ class SarprasProcessor
             ],
         ]);
 
-        $notification = DB::transaction(
+        DB::transaction(
             function () use (
                 $request,
                 $report,
                 $data
-            ): array {
+            ): void {
                 $lockedReport =
                     Report::whereKey(
                         $report->id
@@ -298,17 +289,8 @@ class SarprasProcessor
                         $data['reason'],
                 ]);
 
-                return [
-                    $lockedReport->fresh(),
-                    $publicNote,
-                ];
             }
         );
-
-        [
-            $updatedReport,
-            $publicNote,
-        ] = $notification;
     }
 
     private function safeOriginalName(string $name): string

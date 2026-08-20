@@ -20,7 +20,6 @@ class SeoController extends Controller
     {
         return view('public.seo.topic', ['page' => $this->topicPage(
             'Lapor Pelanggaran Siswa | LAPORIN SMK Taruna Bangsa Bekasi',
-            'Lapor Pelanggaran Siswa | LAPORIN SMK Taruna Bangsa Bekasi',
             'Panduan menggunakan LAPORIN untuk melaporkan pelanggaran siswa, kedisiplinan, tata tertib, perundungan, dan kejadian tidak aman di SMK Taruna Bangsa Bekasi.',
             'Lapor Pelanggaran Siswa di SMK Taruna Bangsa Bekasi',
             'Panduan singkat untuk membuat laporan pelanggaran siswa dan kejadian tidak aman dengan kronologi yang jelas serta dapat dilacak.',
@@ -37,7 +36,6 @@ class SeoController extends Controller
     {
         return view('public.seo.topic', ['page' => $this->topicPage(
             'Lapor Kerusakan Fasilitas | LAPORIN SMK Taruna Bangsa Bekasi',
-            'Lapor Kerusakan Fasilitas | LAPORIN SMK Taruna Bangsa Bekasi',
             'Panduan melaporkan kerusakan fasilitas sekolah seperti kelas, laboratorium, toilet, listrik, AC, proyektor, meja, kursi, pintu, dan sarana lain melalui LAPORIN.',
             'Lapor Kerusakan Fasilitas Sekolah di SMK Taruna Bangsa Bekasi',
             'Gunakan LAPORIN untuk mencatat kerusakan fasilitas secara jelas agar petugas Sarpras dapat menilai dan menindaklanjuti laporan.',
@@ -50,19 +48,25 @@ class SeoController extends Controller
         )]);
     }
 
-    private function topicPage(string $title, string $metaTitle, string $description, string $heading, string $intro, array $sections): array
+    /**
+     * Satu judul dipakai untuk <title> maupun meta_title. Sebelumnya string
+     * yang sama dikirim dua kali sebagai argumen terpisah, jadi keduanya bisa
+     * berbeda tanpa disadari padahal layout hanya memakai meta_title.
+     */
+    private function topicPage(string $title, string $description, string $heading, string $intro, array $sections): array
     {
         $url = url()->current();
         $updated = '2026-08-18';
         return [
             'title' => $title,
-            'meta_title' => $metaTitle,
+            'meta_title' => $title,
             'description' => $description,
             'heading' => $heading,
             'intro' => $intro,
             'updated' => $updated,
             'url' => $url,
             'sections' => $sections,
+            'related' => $this->relatedLinks($url),
             'jsonld' => [
                 '@context' => 'https://schema.org',
                 '@graph' => [
@@ -88,5 +92,32 @@ class SeoController extends Controller
                 ],
             ],
         ];
+    }
+
+    /**
+     * Tautan silang ke halaman panduan lain dan ke pelacakan laporan. Halaman
+     * yang sedang dibuka disaring lewat perbandingan URL supaya kedua halaman
+     * topik tidak pernah menaut ke dirinya sendiri.
+     */
+    private function relatedLinks(string $currentUrl): array
+    {
+        $targets = [
+            'seo.bullying-guide' => 'Panduan lapor pembullyan dan perundungan',
+            'seo.student-violation' => 'Panduan lapor pelanggaran siswa',
+            'seo.facility-damage' => 'Panduan lapor kerusakan fasilitas sekolah',
+            'seo.faq' => 'Pertanyaan umum LAPORIN',
+            'track.form' => 'Lacak status laporan',
+        ];
+
+        $links = [];
+        foreach ($targets as $routeName => $label) {
+            $target = route($routeName);
+            if ($target === $currentUrl) {
+                continue;
+            }
+            $links[] = ['url' => $target, 'label' => $label];
+        }
+
+        return $links;
     }
 }

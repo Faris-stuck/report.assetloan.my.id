@@ -25,10 +25,14 @@
             }
         });
 
-        form.addEventListener('submit', function () {
-            var selectedType = form.querySelector('input[name="report_type"]:checked');
-            if (selectedType) syncReportTypeFields(selectedType.value);
-        }, true);
+        form.addEventListener(
+            'submit',
+            function () {
+                var selectedType = form.querySelector('input[name="report_type"]:checked');
+                if (selectedType) syncReportTypeFields(selectedType.value);
+            },
+            true,
+        );
     }
 
     if (document.readyState === 'loading') {
@@ -36,5 +40,4 @@
     } else {
         init();
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
 })();

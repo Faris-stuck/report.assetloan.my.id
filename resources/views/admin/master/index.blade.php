@@ -86,6 +86,31 @@
         return $fieldLabels[$field]
             ?? ucwords(str_replace('_', ' ', $field));
     };
+
+    // Nama manusiawi sebuah baris. Field penamaan berbeda tiap resource
+    // (class_name, subject_name, unit_name, ...), jadi ambil field non-meta
+    // pertama yang terisi. Dipakai judul kartu mobile dan aria-label aksi
+    // supaya pembaca layar tidak hanya mendengar nomor id.
+    $displayName = function ($item) use ($fields): string {
+        foreach ($fields as $field) {
+            if (
+                !in_array(
+                    $field,
+                    [
+                        'description',
+                        'is_active',
+                        'class_id',
+                    ],
+                    true
+                )
+                && !empty($item->$field)
+            ) {
+                return (string) $item->$field;
+            }
+        }
+
+        return 'Data #'.$item->id;
+    };
 @endphp
 
 
@@ -536,7 +561,7 @@
                                 class="btn btn-sm btn-outline-laporin"
                                 data-bs-toggle="modal"
                                 data-bs-target="#edit-master-{{ $it->id }}"
-                                aria-label="Edit data {{ $it->id }}"
+                                aria-label="Edit data {{ $displayName($it) }}"
                             >
                                 Edit
                             </button>
@@ -556,7 +581,7 @@
                                 <button
                                     type="submit"
                                     class="btn btn-sm btn-outline-danger"
-                                    aria-label="Hapus data {{ $it->id }}"
+                                    aria-label="Hapus data {{ $displayName($it) }}"
                                 >
                                     Hapus
                                 </button>
@@ -605,29 +630,7 @@
                     {{-- TITLE --}}
                     <h6 class="card-title fw-bold">
 
-                        @php
-                            $mobileTitle = null;
-
-                            foreach ($fields as $field) {
-                                if (
-                                    !in_array(
-                                        $field,
-                                        [
-                                            'description',
-                                            'is_active',
-                                            'class_id',
-                                        ],
-                                        true
-                                    )
-                                    && !empty($it->$field)
-                                ) {
-                                    $mobileTitle = $it->$field;
-                                    break;
-                                }
-                            }
-                        @endphp
-
-                        {{ $mobileTitle ?? 'Data #'.$it->id }}
+                        {{ $displayName($it) }}
 
                     </h6>
 
@@ -711,6 +714,7 @@
                             class="btn btn-sm btn-outline-laporin flex-grow-1"
                             data-bs-toggle="modal"
                             data-bs-target="#edit-master-{{ $it->id }}"
+                            aria-label="Edit data {{ $displayName($it) }}"
                         >
                             Edit
                         </button>
@@ -729,6 +733,7 @@
                             <button
                                 type="submit"
                                 class="btn btn-sm btn-outline-danger w-100"
+                                aria-label="Hapus data {{ $displayName($it) }}"
                             >
                                 Hapus
                             </button>
@@ -772,6 +777,20 @@
 
 @foreach($items as $it)
 
+    @php
+        // Hanya baris yang benar-benar disubmit boleh memakai old(). Tanpa
+        // penanda ini, gagal validasi pada form Tambah Data akan membuat
+        // semua modal edit menampilkan nilai form Tambah Data.
+        $isEditingThis = $errors->any()
+            && old('__editing_id') == $it->id;
+
+        // Nilai yang ditampilkan: hasil input terakhir bila baris inilah yang
+        // gagal validasi, selain itu ambil apa adanya dari database.
+        $editValue = fn (string $field) => $isEditingThis
+            ? old($field, $it->$field)
+            : $it->$field;
+    @endphp
+
     <div
         class="modal fade"
         id="edit-master-{{ $it->id }}"
@@ -794,6 +813,15 @@
 
                     @csrf
                     @method('PUT')
+
+                    {{-- Penanda baris yang sedang diedit, dipakai untuk
+                         mengembalikan input dan membuka ulang modal ini
+                         setelah gagal validasi. --}}
+                    <input
+                        type="hidden"
+                        name="__editing_id"
+                        value="{{ $it->id }}"
+                    >
 
 
                     {{-- HEADER --}}
@@ -828,6 +856,28 @@
                     {{-- BODY --}}
                     <div class="modal-body">
 
+                        {{-- Alert error milik layout berada di belakang
+                             backdrop modal, jadi ulang pesannya di sini. --}}
+                        @if($isEditingThis)
+
+                            <div class="alert alert-danger" role="alert">
+
+                                <strong>Periksa input berikut:</strong>
+
+                                <ul class="mb-0 mt-2">
+
+                                    @foreach($errors->all() as $e)
+
+                                        <li>{{ $e }}</li>
+
+                                    @endforeach
+
+                                </ul>
+
+                            </div>
+
+                        @endif
+
                         <div class="row g-3">
 
 
@@ -847,7 +897,7 @@
                                                 type="checkbox"
                                                 name="is_active"
                                                 value="1"
-                                                @checked($it->is_active)
+                                                @checked($isEditingThis ? old('is_active') : $it->is_active)
                                             >
 
                                             <label
@@ -890,7 +940,7 @@
                                                 <option
                                                     value="{{ $c->id }}"
                                                     @selected(
-                                                        (string) $it->class_id
+                                                        (string) $editValue('class_id')
                                                         ===
                                                         (string) $c->id
                                                     )
@@ -922,7 +972,7 @@
                                             type="number"
                                             name="point_reduction"
                                             class="form-control"
-                                            value="{{ $it->point_reduction }}"
+                                            value="{{ $editValue('point_reduction') }}"
                                             required
                                             min="1"
                                             max="100"
@@ -950,7 +1000,7 @@
                                             maxlength="1000"
                                             rows="4"
                                             placeholder="Opsional"
-                                        >{{ $it->description }}</textarea>
+                                        >{{ $editValue('description') }}</textarea>
 
                                     </div>
 
@@ -981,7 +1031,7 @@
                                             name="{{ $f }}"
                                             type="text"
                                             class="form-control"
-                                            value="{{ $it->$f }}"
+                                            value="{{ $editValue($f) }}"
                                             maxlength="{{ $inputMax($f) }}"
                                             @required($isRequired)
                                         >
@@ -1025,6 +1075,26 @@
         </div>
 
     </div>
+
+
+    {{-- Gagal validasi PUT hanya mengembalikan halaman index, modalnya
+         tertutup. Buka ulang modal baris ini supaya admin melihat pesan
+         error dan input yang sudah diisi tidak terasa hilang. --}}
+    @if($isEditingThis)
+
+        @push('scripts')
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const el = document.getElementById('edit-master-{{ $it->id }}');
+
+            if (el && window.bootstrap?.Modal) {
+                bootstrap.Modal.getOrCreateInstance(el).show();
+            }
+        });
+        </script>
+        @endpush
+
+    @endif
 
 @endforeach
 

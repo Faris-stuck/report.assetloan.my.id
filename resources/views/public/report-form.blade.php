@@ -2,7 +2,11 @@
 @section('title','Buat Laporan - LAPORIN')
 @section('meta_title','LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan')
 @section('meta_description','LAPORIN SMK Taruna Bangsa Bekasi untuk melaporkan perundungan, pelanggaran siswa, dan kerusakan fasilitas. Buat laporan tanpa login dan lacak status.')
-@section('canonical'){{ url('/') }}@endsection
+{{-- Halaman wizard (/lapor, /lapor/{qr}, /lapor/langkah/{step}) mengirim
+     noindex, jadi tidak boleh mengarahkan canonical ke '/'. Pasangan
+     noindex + canonical lintas-URL membuat Google berisiko meneruskan
+     noindex ke target canonical, yaitu homepage. Self-canonical. --}}
+@section('canonical'){{ request()->routeIs('public.report') ? url('/') : url()->current() }}@endsection
 @section('robots', request()->routeIs('public.report') ? 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' : 'noindex, follow, noarchive')
 @section('content')
 @php
@@ -24,6 +28,15 @@
     // oleh middleware throttle berdasarkan IP + device (5 laporan / 120 menit).
     $reportSubmitToken = $reportSubmitToken ?? session('report_submit_token');
 @endphp
+
+{{-- Satu-satunya <h1> halaman ini sebelumnya berada di dalam <details>
+     yang tertutup di bawah form, sehingga outline heading bagian yang
+     terlihat langsung dimulai dari <h2>. Judul utama harus ada di awal
+     konten, bukan di dalam disclosure. --}}
+<header class="mb-3">
+    <h1 class="h4 fw-bold mb-1">Lapor Perundungan, Pelanggaran Siswa, dan Kerusakan Fasilitas</h1>
+    <p class="small-muted mb-0">Kanal laporan resmi SMK Taruna Bangsa Bekasi. Tanpa login, dan status laporan dapat dilacak dengan nomor laporan serta kode akses.</p>
+</header>
 
 {{-- ============================================================ --}}
 {{-- FORM UTAMA --}}
@@ -106,7 +119,6 @@
 
 {{-- ============================================================ --}}
 {{-- LANGKAH 2: JENIS LAPORAN                                      --}}
-{{-- LANGKAH 2: JENIS LAPORAN                                      --}}
 {{-- ============================================================ --}}
 @if($wizardStep === 2)
 <section data-step="2" class="wizard-step laporin-card p-3 p-md-4 p-lg-5{{ $initialStep === 2 ? ' is-active' : '' }}">
@@ -163,10 +175,12 @@
 
         {{-- Judul tetap digunakan untuk laporan pelanggaran; laporan kerusakan
              membentuk judul secara otomatis dari nama barang/fasilitas. --}}
-        <div class="col-12{{ $reportType === 'violation' ? '' : ' d-none' }}" data-report-type-content="violation-title">
+        <div class="col-12{{ $reportType === 'violation' ? '' : ' d-none' }}" data-report-type-content="violation">
+            <fieldset class="border-0 p-0 m-0" {{ $reportType === 'violation' ? '' : 'disabled' }}>
             <label class="form-label required" for="title">Judul singkat</label>
             <input id="title" name="title" value="{{ old('title') }}" class="form-control required" required maxlength="200"
                 placeholder="Contoh: Perundungan di Lab Komputer">
+            </fieldset>
         </div>
 
         {{-- ======================================================== --}}
@@ -246,7 +260,7 @@
             <div class="detail-box">
                 <h3 class="h6 fw-bold mb-3">Bukti Foto / Dokumen (Opsional)</h3>
                 <label class="form-label" for="attachments">Unggah Bukti</label>
-                <input id="attachments" type="file" name="attachments[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" @change="validateAttachments($event)">
+                <input id="attachments" type="file" name="attachments[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf">
                 <small class="text-muted">Maksimal 3 file; JPG, PNG, WEBP, atau PDF; maksimal 4MB per file.</small>
             </div>
         </div>
@@ -297,15 +311,14 @@
         </div>
     </div>
 </div>
-<div class="bottom-action mt-4"><div class="row g-2 align-items-center w-100"><div class="col-12 col-sm"><span class="small-muted">@if($wizardStep === 4)Periksa kembali seluruh isian, lalu kirim laporan.@else Isi lengkap, lalu lanjut ke langkah berikutnya.@endif</span></div><div class="col-12 col-sm-auto"><div class="d-flex gap-2 flex-wrap">@if($wizardStep > 1)<a href="{{ route('public.report.step',$wizardStep-1) }}" class="btn btn-outline-laporin" style="min-height:44px;">Kembali</a>@endif<button type="submit" class="btn btn-laporin" style="min-height:44px;">{{ $wizardStep < 4 ? 'Lanjut' : 'Kirim Laporan' }}</button></div></div></div></div>
 </form>
 
-<details class="laporin-card mt-4 seo-disclosure">
+<details id="alur-validasi" class="laporin-card mt-4 seo-disclosure">
     <summary class="fw-semibold">Tentang LAPORIN dan panduan pelaporan</summary>
     <div class="pt-3 seo-prose">
-        <h1>LAPORIN SMK Taruna Bangsa Bekasi — Lapor Perundungan, Pelanggaran Siswa, dan Kerusakan Fasilitas</h1>
+        <h2>LAPORIN SMK Taruna Bangsa Bekasi — Lapor Perundungan, Pelanggaran Siswa, dan Kerusakan Fasilitas</h2>
         <p>LAPORIN membantu warga SMK Taruna Bangsa Bekasi membuat laporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas secara terstruktur, aman, dan dapat dilacak menggunakan nomor laporan serta kode akses.</p>
-        <h2>Layanan LAPORIN untuk warga SMK Taruna Bangsa Bekasi</h2>
+        <h3>Layanan LAPORIN untuk warga SMK Taruna Bangsa Bekasi</h3>
         <p>LAPORIN adalah kanal pelaporan publik sekolah untuk mencatat kejadian yang memerlukan tindak lanjut. Topik utama yang dapat dilaporkan adalah perundungan atau pembullyan, pelanggaran siswa, dan kerusakan fasilitas sekolah. Setelah laporan masuk, pelapor dapat memantau status melalui halaman Lacak Laporan.</p>
         <div class="row g-3">
             <div class="col-md-4"><a href="{{ route('seo.bullying-guide') }}"><strong>Lapor pembullyan &amp; perundungan</strong></a><br><span class="small-muted">Panduan kronologi, bukti, dan alur tindak lanjut.</span></div>
@@ -331,12 +344,6 @@
                 'serviceType' => 'Pelaporan perundungan, pembullyan, pelanggaran siswa, dan kerusakan fasilitas sekolah',
                 'provider' => ['@id' => url('/').'#organization'],
             ],
-            [
-                '@type' => 'School',
-                '@id' => url('/').'#school',
-                'name' => 'SMK Taruna Bangsa Bekasi',
-                'url' => url('/'),
-            ],
         ],
     ];
 @endphp
@@ -344,5 +351,5 @@
 @endpush
 
 @push('scripts')
-<script src="{{ asset('js/laporin-report-fix.js') }}?v={{ filemtime(public_path('js/laporin-report-fix.js')) }}" defer></script>
+<script src="{{ asset('js/laporin-report-fix.js') }}?v={{ @filemtime(public_path('js/laporin-report-fix.js')) ?: time() }}" defer></script>
 @endpush

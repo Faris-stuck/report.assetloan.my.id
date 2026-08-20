@@ -34,10 +34,9 @@
         <aside class="laporin-card p-4 sticky-lg-top seo-aside">
             <h2 class="h5 fw-bold">Halaman terkait</h2>
             <div class="d-grid gap-2">
-                <a class="btn btn-outline-laporin" href="{{ route('seo.bullying-guide') }}">Panduan Pembullyan/Perundungan</a>
-                <a class="btn btn-outline-laporin" href="{{ route('seo.student-violation') }}">Pelanggaran Siswa</a>
-                <a class="btn btn-outline-laporin" href="{{ route('seo.facility-damage') }}">Kerusakan Fasilitas</a>
-                <a class="btn btn-outline-laporin" href="{{ route('seo.faq') }}">FAQ LAPORIN</a>
+                @foreach($page['related'] as $link)
+                    <a class="btn btn-outline-laporin" href="{{ $link['url'] }}">{{ $link['label'] }}</a>
+                @endforeach
             </div>
         </aside>
     </div>

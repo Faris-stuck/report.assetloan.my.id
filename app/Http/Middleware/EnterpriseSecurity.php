@@ -14,18 +14,12 @@ class EnterpriseSecurity
     public function handle(Request $request, Closure $next): Response
     {
         $clientIp = $request->ip() ?? 'unknown';
-        $deviceId = $request->cookie('laporin_device_id');
-        $hadDeviceCookie = is_string($deviceId) && $deviceId !== '';
-        if (! is_string($deviceId) || ! preg_match('/^[A-Fa-f0-9-]{32,80}$/', $deviceId)) {
-            $deviceId = (string) Str::uuid();
-            $request->cookies->set('laporin_device_id', $deviceId);
-        }
 
         // Browsers cannot reliably expose private/LAN IPs to the server.
         // Use a server-issued device identifier for per-device controls.
         $deviceId = $request->cookie('laporin_device_id');
-        $hadDeviceCookie = is_string($deviceId) && $deviceId !== '';
-        if (! is_string($deviceId) || ! preg_match('/^[A-Fa-f0-9-]{32,80}$/', $deviceId)) {
+        $hadDeviceCookie = is_string($deviceId) && preg_match('/^[A-Fa-f0-9-]{32,80}$/', $deviceId) === 1;
+        if (! $hadDeviceCookie) {
             $deviceId = (string) Str::uuid();
             $request->cookies->set('laporin_device_id', $deviceId);
         }
@@ -40,12 +34,10 @@ class EnterpriseSecurity
         }
 
         RateLimiter::hit($key, $decay);
-        $response = $next($request);
 
         // Do not reject arbitrary report text using SQL keyword matching.
         // Eloquent/query-builder parameterization is the application SQL boundary;
         // Cloudflare/WAF and route-specific throttles handle abusive traffic.
-
         $response = $next($request);
 
         if (! $hadDeviceCookie) {

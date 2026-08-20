@@ -68,12 +68,12 @@ class KesiswaanProcessor
             ],
         ]);
 
-        $notification = DB::transaction(
+        DB::transaction(
             function () use (
                 $request,
                 $report,
                 $data
-            ): array {
+            ): void {
                 $lockedReport = Report::whereKey(
                     $report->id
                 )
@@ -175,20 +175,13 @@ class KesiswaanProcessor
                         $data['note'] ?? null,
                 ]);
 
-                return [
-                    $lockedReport->fresh(),
-                    $publicNote,
-                ];
             }
         );
 
-        [
-            $updatedReport,
-            $publicNote,
-        ] = $notification;
-
         /*
-         * Email setelah DB COMMIT.
+         * Notifikasi dikirim ReportObserver::updated() lewat
+         * SendReportNotifications::dispatch(...)->afterCommit() begitu kolom
+         * status berubah, jadi processor tidak mengirim apa pun sendiri.
          */
     }
 
@@ -202,12 +195,12 @@ class KesiswaanProcessor
             ],
         ]);
 
-        $notification = DB::transaction(
+        DB::transaction(
             function () use (
                 $request,
                 $report,
                 $data
-            ): array {
+            ): void {
                 $lockedReport = Report::whereKey(
                     $report->id
                 )
@@ -258,17 +251,8 @@ class KesiswaanProcessor
                         $data['reason'],
                 ]);
 
-                return [
-                    $lockedReport->fresh(),
-                    $publicNote,
-                ];
             }
         );
-
-        [
-            $updatedReport,
-            $publicNote,
-        ] = $notification;
     }
 
     public function complete(Request $request, Report $report): void
@@ -281,12 +265,12 @@ class KesiswaanProcessor
             ],
         ]);
 
-        $notification = DB::transaction(
+        DB::transaction(
             function () use (
                 $request,
                 $report,
                 $data
-            ): array {
+            ): void {
                 $lockedReport = Report::whereKey(
                     $report->id
                 )
@@ -336,17 +320,8 @@ class KesiswaanProcessor
                         $data['note'] ?? null,
                 ]);
 
-                return [
-                    $lockedReport->fresh(),
-                    $publicNote,
-                ];
             }
         );
-
-        [
-            $updatedReport,
-            $publicNote,
-        ] = $notification;
     }
 
 }

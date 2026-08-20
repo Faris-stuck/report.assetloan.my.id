@@ -2,18 +2,23 @@
 
 namespace App\Jobs;
 
+use App\Jobs\Concerns\LabelsReportStatus;
 use App\Models\Report;
 use App\Services\WahaService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use RuntimeException;
+use Throwable;
 
-class SendReportWhatsAppNotification implements ShouldQueue
+// ShouldBeEncrypted: payload job membawa kode akses laporan, jadi seluruh payload
+// (termasuk yang tersimpan di failed_jobs) harus terenkripsi dengan APP_KEY.
+class SendReportWhatsAppNotification implements ShouldBeEncrypted, ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, LabelsReportStatus, Queueable, SerializesModels;
 
     public int $tries = 3;
     public array $backoff = [30, 120, 300];
@@ -49,7 +54,13 @@ class SendReportWhatsAppNotification implements ShouldQueue
         // not registered on WhatsApp.
         $exists = $waha->checkNumberExists($phone, $session);
         if (($exists['numberExists'] ?? false) !== true) {
-            throw new RuntimeException('The reporter WhatsApp number is not registered: '.$phone);
+            // Jangan pernah menulis nomor pelapor ke log atau failed_jobs.exception.
+            // Pakai handle HMAC yang tidak bisa dibalik, sama seperti
+            // submitted_ip_hash / submitted_device_hash pada tabel reports.
+            throw new RuntimeException(
+                'The reporter WhatsApp number is not registered. Report: '.$this->reportId
+                .', phone handle: '.$this->phoneHandle($phone)
+            );
         }
         $chatId = (string) ($exists['chatId'] ?? ($phone.'@c.us'));
         if ($chatId === '') {
@@ -89,6 +100,15 @@ class SendReportWhatsAppNotification implements ShouldQueue
         }
     }
 
+    /**
+     * Buang kode akses saat job gagal supaya nilainya tidak ikut dipertahankan
+     * bersama job yang sudah mati.
+     */
+    public function failed(?Throwable $exception): void
+    {
+        $this->accessCode = null;
+    }
+
     private function normalizePhone(?string $phone): ?string
     {
         if (! is_string($phone) || trim($phone) === '') return null;
@@ -98,17 +118,11 @@ class SendReportWhatsAppNotification implements ShouldQueue
         return str_starts_with($digits, '62') && strlen($digits) >= 10 && strlen($digits) <= 15 ? $digits : null;
     }
 
-    private function statusLabel(string $status): string
+    /**
+     * Handle korelasi non-reversible untuk nomor pelapor, aman untuk log.
+     */
+    private function phoneHandle(string $phone): string
     {
-        return match ($status) {
-            'menunggu_verifikasi' => 'Menunggu Verifikasi',
-            'memerlukan_informasi' => 'Perlu Informasi Tambahan',
-            'dibuka_kembali' => 'Dibuka Kembali',
-            'sedang_ditangani' => 'Sedang Ditangani',
-            'menunggu_konfirmasi' => 'Menunggu Konfirmasi Pelapor',
-            'selesai' => 'Selesai',
-            'ditolak' => 'Ditolak',
-            default => ucwords(str_replace('_', ' ', $status)),
-        };
+        return substr(hash_hmac('sha256', $phone, (string) config('app.key')), 0, 12);
     }
 }

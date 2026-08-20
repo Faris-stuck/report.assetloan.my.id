@@ -13,6 +13,7 @@ use App\Services\PublicReport\PublicReportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -145,35 +146,25 @@ class PublicReportController extends Controller
                 'math_captcha_answer' => $captchaAnswer,
             ]);
         } catch (Throwable $exception) {
+            /*
+             * Form tetap dirender agar pelapor tidak kehilangan halaman, tapi
+             * kegagalan di sini berarti 'math_captcha_answer' tidak tersimpan,
+             * sehingga setiap submit berikutnya ditolak validasi CAPTCHA.
+             * Jangan telan tanpa jejak: tanpa log, gejala di produksi hanya
+             * "CAPTCHA selalu salah" tanpa penyebab yang bisa dilacak.
+             */
+            Log::error('Gagal menyiapkan state wizard laporan publik.', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+            ]);
         }
-
-        $majorOrder = array_flip(array_keys(self::CLASS_MAJOR_LABELS));
-        $classes = SchoolClass::where('is_active', true)->get()->sort(function (SchoolClass $left, SchoolClass $right) use ($majorOrder): int {
-            $leftMajor = strtoupper(trim((string) ($left->major ?: 'LAINNYA')));
-            $rightMajor = strtoupper(trim((string) ($right->major ?: 'LAINNYA')));
-            $leftRank = $majorOrder[$leftMajor] ?? PHP_INT_MAX;
-            $rightRank = $majorOrder[$rightMajor] ?? PHP_INT_MAX;
-
-            return ($leftRank <=> $rightRank)
-                ?: strnatcasecmp($leftMajor, $rightMajor)
-                ?: strnatcasecmp((string) $left->grade_level, (string) $right->grade_level)
-                ?: strnatcasecmp($left->class_name, $right->class_name);
-        });
-
-        $classesByMajor = $classes->groupBy(
-            fn (SchoolClass $class): string => strtoupper(trim((string) ($class->major ?: 'LAINNYA')))
-        );
 
         return view('public.report-form', [
             'wizardStep' => 1,
             'qrCode' => $qrCode,
             'reportSubmitToken' => $submitToken,
             'captchaQuestion' => "$a + $b",
-            'classesByMajor' => $classesByMajor,
-            'classMajorLabels' => self::CLASS_MAJOR_LABELS,
-            'subjects' => Subject::where('is_active', true)->orderBy('subject_name')->get(),
-            'staffUnits' => StaffUnit::where('is_active', true)->orderBy('unit_name')->get(),
-            'damageCategories' => DamageCategory::where('is_active', true)->orderBy('category_name')->get(),
+            ...$this->wizardMasterData(),
         ]);
     }
 
@@ -363,19 +354,6 @@ class PublicReportController extends Controller
 
     private function renderReportWizard(int $step): View
     {
-        $majorOrder = array_flip(array_keys(self::CLASS_MAJOR_LABELS));
-        $classes = SchoolClass::where('is_active', true)->get()->sort(function (SchoolClass $left, SchoolClass $right) use ($majorOrder): int {
-            $leftMajor = strtoupper(trim((string) ($left->major ?: 'LAINNYA')));
-            $rightMajor = strtoupper(trim((string) ($right->major ?: 'LAINNYA')));
-            $leftRank = $majorOrder[$leftMajor] ?? PHP_INT_MAX;
-            $rightRank = $majorOrder[$rightMajor] ?? PHP_INT_MAX;
-            return ($leftRank <=> $rightRank)
-                ?: strnatcasecmp($leftMajor, $rightMajor)
-                ?: strnatcasecmp((string) $left->grade_level, (string) $right->grade_level)
-                ?: strnatcasecmp($left->class_name, $right->class_name);
-        });
-
-        $classesByMajor = $classes->groupBy(fn (SchoolClass $class): string => strtoupper(trim((string) ($class->major ?: 'LAINNYA'))));
         $token = (string) session('report_submit_token', '');
         $forms = session('report_submit_forms', []);
         $state = is_array($forms) ? ($forms[$token] ?? []) : [];
@@ -385,12 +363,40 @@ class PublicReportController extends Controller
             'qrCode' => null,
             'reportSubmitToken' => $token,
             'captchaQuestion' => $this->captchaQuestion($state),
-            'classesByMajor' => $classesByMajor,
+            ...$this->wizardMasterData(),
+        ]);
+    }
+
+    /**
+     * Data master yang dipakai identik oleh dua entry point wizard, create()
+     * dan renderReportWizard(). Blok pengurutan jurusan plus tiga query
+     * master-data ini sebelumnya ditulis dua kali, sehingga urutan kelas bisa
+     * menyimpang antar langkah begitu salah satu sisi saja diubah.
+     */
+    private function wizardMasterData(): array
+    {
+        $majorOrder = array_flip(array_keys(self::CLASS_MAJOR_LABELS));
+        $classes = SchoolClass::where('is_active', true)->get()->sort(function (SchoolClass $left, SchoolClass $right) use ($majorOrder): int {
+            $leftMajor = strtoupper(trim((string) ($left->major ?: 'LAINNYA')));
+            $rightMajor = strtoupper(trim((string) ($right->major ?: 'LAINNYA')));
+            $leftRank = $majorOrder[$leftMajor] ?? PHP_INT_MAX;
+            $rightRank = $majorOrder[$rightMajor] ?? PHP_INT_MAX;
+
+            return ($leftRank <=> $rightRank)
+                ?: strnatcasecmp($leftMajor, $rightMajor)
+                ?: strnatcasecmp((string) $left->grade_level, (string) $right->grade_level)
+                ?: strnatcasecmp($left->class_name, $right->class_name);
+        });
+
+        return [
+            'classesByMajor' => $classes->groupBy(
+                fn (SchoolClass $class): string => strtoupper(trim((string) ($class->major ?: 'LAINNYA')))
+            ),
             'classMajorLabels' => self::CLASS_MAJOR_LABELS,
             'subjects' => Subject::where('is_active', true)->orderBy('subject_name')->get(),
             'staffUnits' => StaffUnit::where('is_active', true)->orderBy('unit_name')->get(),
             'damageCategories' => DamageCategory::where('is_active', true)->orderBy('category_name')->get(),
-        ]);
+        ];
     }
 
     private function captchaQuestion(array $state): string
@@ -431,14 +437,6 @@ class PublicReportController extends Controller
         }
 
         $validated = $request->validated();
-        $deviceRateKey = $this->deviceRateKey($request);
-        $deviceAttempt = RateLimiter::increment($deviceRateKey, 7200);
-        if ($deviceAttempt > 5) {
-            RateLimiter::decrement($deviceRateKey, 7200);
-            throw ValidationException::withMessages([
-                'form' => 'Batas pengiriman tercapai: maksimal 5 laporan per perangkat dalam 2 jam. Coba lagi setelah batas waktu berakhir.',
-            ]);
-        }
 
         // Five successfully validated report submissions per browser/device
         // identifier in a rolling two-hour window. This is independent of the
@@ -463,7 +461,15 @@ class PublicReportController extends Controller
             ? (int) $formState['qr_code_id']
             : null;
 
-        if (! is_numeric($expectedCaptcha) || (int) $validated['captcha'] !== (int) $expectedCaptcha) {
+        /*
+         * Jawaban CAPTCHA hanya boleh dibaca dari state form yang dibuat
+         * server. Fallback ke session legacy dipakai hanya bila token yang
+         * dikirim cocok dengan token session lama.
+         */
+        $expectedCaptcha = $formState['captcha_answer']
+            ?? ($legacyMatches ? session('math_captcha_answer') : null);
+
+        if (! is_numeric($expectedCaptcha) || (int) ($validated['captcha'] ?? -1) !== (int) $expectedCaptcha) {
             throw ValidationException::withMessages([
                 'captcha' => 'CAPTCHA salah. Hitung ulang pertanyaan yang tampil lalu isi dengan angka yang benar.',
             ]);
@@ -489,6 +495,9 @@ class PublicReportController extends Controller
         try {
             session(['report_submit_forms' => $formStates]);
         } catch (Throwable $exception) {
+            // Aman untuk ditelan: laporan sudah tersimpan, dan idempotency
+            // dijaga oleh consume key di Cache, bukan oleh session ini.
+            // Sisa state form paling lama ikut terbuang oleh cutoff 30 menit.
         }
 
         if ($legacyMatches) {

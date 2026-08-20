@@ -21,7 +21,7 @@ class SeoTechnicalTest extends TestCase
             ->assertOk()
             ->assertSee('LAPORIN SMK Taruna Bangsa Bekasi | Lapor Perundungan', false)
             ->assertSee('name="description"', false)
-            ->assertSee('Buat laporan perundungan, pembullyan, pelanggaran siswa, atau kerusakan fasilitas SMK Taruna Bangsa Bekasi', false)
+            ->assertSee('LAPORIN SMK Taruna Bangsa Bekasi untuk melaporkan perundungan, pelanggaran siswa, dan kerusakan fasilitas', false)
             ->assertSee('rel="canonical"', false)
             ->assertSee('rel="sitemap"', false)
             ->assertSee('rel="alternate" type="text/plain" title="Konteks LLM"', false)
@@ -29,7 +29,7 @@ class SeoTechnicalTest extends TestCase
             ->assertSee('content="summary_large_image"', false)
             ->assertSee('name="twitter:image"', false)
             ->assertSee('application/ld+json', false)
-            ->assertSee('Kanal laporan untuk sekolah')
+            ->assertSee('Kanal laporan resmi SMK Taruna Bangsa Bekasi')
             ->assertSee(route('seo.bullying-guide'), false)
             ->assertSee(route('seo.faq'), false);
     }
@@ -73,10 +73,13 @@ class SeoTechnicalTest extends TestCase
         $this->assertStringContainsString('Disallow: /reports', $robots);
         $this->assertStringContainsString('Disallow: /download-attachment', $robots);
 
-        $sitemap = file_get_contents(public_path('sitemap.xml'));
-        $this->assertStringContainsString('https://report.assetloan.my.id/', $sitemap);
-        $this->assertStringContainsString('https://report.assetloan.my.id/lapor-pembullyan-smk-taruna-bangsa-bekasi', $sitemap);
-        $this->assertStringContainsString('https://report.assetloan.my.id/faq-laporin-smk-taruna-bangsa-bekasi', $sitemap);
+        // Sitemap kini dihasilkan SitemapController, bukan berkas statis di
+        // public/, jadi harus diambil lewat HTTP. Loc dibandingkan dengan
+        // route() agar tes tidak terikat pada APP_URL tertentu.
+        $sitemap = $this->get('/sitemap.xml')->assertOk()->getContent();
+        $this->assertStringContainsString('<loc>'.route('public.report').'</loc>', $sitemap);
+        $this->assertStringContainsString('<loc>'.route('seo.bullying-guide').'</loc>', $sitemap);
+        $this->assertStringContainsString('<loc>'.route('seo.faq').'</loc>', $sitemap);
         $this->assertStringNotContainsString('/admin', $sitemap);
         $this->assertStringNotContainsString('/reports', $sitemap);
 

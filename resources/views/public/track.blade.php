@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title','Lacak Laporan LAPORIN')
 @section('meta_title','Lacak Laporan SMK Taruna Bangsa Bekasi | Cek Status LAPORIN')
-@section('meta_description','Cek status laporan LAPORIN SMK Taruna Bangsa Bekasi dengan nomor laporan dan kode akses. Lacak laporan perundungan, pelanggaran siswa, dan kerusakan fasilitas secara aman.')
+@section('meta_description','Lacak status laporan LAPORIN SMK Taruna Bangsa Bekasi memakai nomor laporan dan kode akses 6 digit. Pantau tindak lanjut laporan siswa dan fasilitas sekolah.')
 @section('canonical'){{ route('track.form') }}@endsection
 @section('content')
 <div class="tracking-shell">
@@ -43,7 +43,7 @@
     <section class="laporin-card p-4 p-lg-5 mt-4 seo-prose" aria-labelledby="tracking-help-title">
         <h2 id="tracking-help-title">Cara melacak laporan LAPORIN</h2>
         <p>Masukkan nomor laporan dan kode akses yang Anda terima setelah laporan dikirim. Nomor laporan membantu menemukan laporan, sedangkan kode akses digunakan untuk menjaga agar status hanya dapat dibuka oleh pihak yang memiliki akses.</p>
-        <p>Untuk panduan membuat laporan, baca <a href="{{ route('seo.bullying-guide') }}">panduan lapor pembullyan/perundungan</a> atau <a href="{{ route('seo.faq') }}">FAQ LAPORIN</a>.</p>
+        <p>Untuk panduan membuat laporan, baca <a href="{{ route('seo.bullying-guide') }}">panduan lapor pembullyan dan perundungan</a>, <a href="{{ route('seo.student-violation') }}">panduan lapor pelanggaran siswa</a>, atau <a href="{{ route('seo.facility-damage') }}">panduan lapor kerusakan fasilitas sekolah</a>. Pertanyaan lain dijawab di <a href="{{ route('seo.faq') }}">FAQ LAPORIN</a>.</p>
     </section>
 </div>
 @endsection

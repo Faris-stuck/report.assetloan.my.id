@@ -14,6 +14,10 @@ class Report extends Model
 {
     use HasFactory, SoftDeletes, CacheableQuery;
 
+    // 'public_token' and 'access_code_hash' remain mass-assignable only because the whole
+    // test suite creates reports through Report::create() with both keys supplied. Never
+    // pass unvalidated request input into Report::create(): PublicReportService builds the
+    // insert array explicitly and generates both values server-side.
     protected $fillable = [
         'report_number',
         'public_token',
@@ -48,6 +52,17 @@ class Report extends Model
         'submitted_user_agent',
         'violation_type_id',
         'damage_category_id',
+    ];
+
+    // Credentials and audit fingerprints must never reach toArray()/toJson() output.
+    protected $hidden = [
+        'public_token',
+        'access_code_hash',
+        'reporter_phone',
+        'reporter_email',
+        'submitted_ip_hash',
+        'submitted_device_hash',
+        'submitted_user_agent',
     ];
 
     protected $casts = [

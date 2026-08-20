@@ -102,18 +102,21 @@
         <div class="laporin-card h-100">
             <h2 class="h5 fw-bold">Untuk laporan pelanggaran siswa</h2>
             <p class="small-muted">Gunakan jika ada perundungan, pembullyan, kedisiplinan, atau pelanggaran tata tertib. Laporan diarahkan ke Kesiswaan.</p>
+            <a class="small fw-semibold" href="{{ route('seo.student-violation') }}">Baca panduan lapor pelanggaran siswa</a>
         </div>
     </div>
     <div class="col-md-4">
         <div class="laporin-card h-100">
             <h2 class="h5 fw-bold">Untuk laporan fasilitas sekolah</h2>
             <p class="small-muted">Gunakan jika ada fasilitas rusak seperti lampu, meja, kursi, toilet, AC, proyektor, pintu, atau listrik. Laporan diarahkan ke Sarpras.</p>
+            <a class="small fw-semibold" href="{{ route('seo.facility-damage') }}">Baca panduan lapor kerusakan fasilitas</a>
         </div>
     </div>
     <div class="col-md-4">
         <div class="laporin-card h-100">
             <h2 class="h5 fw-bold">Untuk tracking laporan</h2>
             <p class="small-muted">Gunakan nomor laporan dan kode akses untuk melihat status. Jangan membagikan kode akses kepada orang yang tidak berkepentingan.</p>
+            <a class="small fw-semibold" href="{{ route('track.form') }}">Buka halaman lacak status laporan</a>
         </div>
     </div>
 </div>

@@ -25,10 +25,27 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
 
+        <!--
+            Kunci khusus test, bukan rahasia produksi. Tanpa APP_KEY,
+            resolusi encrypter (EncryptCookies berada di grup middleware web)
+            melempar MissingAppKeyException sehingga SEMUA feature test gagal.
+            PHPUnit tidak menimpa APP_KEY yang sudah ada di environment,
+            jadi nilai ini hanya dipakai bila environment belum menyediakannya.
+        -->
+        <env name="APP_KEY" value="base64:AckfSECXAvnyAJI1n4gjSp0z6oXvpuxbi7v7iBpNJXA="/>
+
         <env name="CACHE_STORE" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="MAIL_MAILER" value="array"/>
+
+        <!--
+            config/cache.php mendefaultkan 'limiter' ke redis. Middleware global
+            EnterpriseSecurity memanggil RateLimiter pada SETIAP request web,
+            jadi tanpa override ini seluruh feature test menuntut Redis hidup
+            dan hitungan rate limit bocor antar test.
+        -->
+        <env name="CACHE_LIMITER" value="array"/>
 
         <!--
             WAJIB terisolasi dari database production / SSH tunnel.

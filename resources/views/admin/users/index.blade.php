@@ -64,8 +64,8 @@
         </div>
 
         <div class="col-md-6 col-lg-2">
-            <label class="form-label" for="role">Peran</label>
-            <select id="role" name="role" class="form-select">
+            <label class="form-label" for="filter_role">Peran</label>
+            <select id="filter_role" name="role" class="form-select">
                 <option value="">Semua</option>
                 @foreach($roles as $role)
                     <option value="{{ $role }}" @selected(request('role') === $role)>{{ str_replace('_', ' ', $role) }}</option>
@@ -142,41 +142,11 @@
                             <td>{{ str_replace('_',' ', $u->role) }}</td>
                             <td><span class="badge {{ $u->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $u->is_active ? 'Aktif' : 'Nonaktif' }}</span></td>
                             <td class="d-flex gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-laporin"
-                                    x-on:click="openEdit(@js([ 'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'phone' => $u->phone, 'is_active' => $u->is_active ]))"
-                                    aria-label="Edit pengguna {{ $u->name }}"
-                                >Edit</button>
-
-                               <form
-    method="POST"
-    action="{{ route('admin.users.destroy', $u) }}"
-    onsubmit="
-        @if(auth()->id() === $u->id)
-            alert('Anda tidak dapat menghapus akun yang sedang digunakan.');
-            return false;
-        @elseif(
-            $u->role === 'superadmin'
-            && $u->is_active
-            && $activeSuperadminCount <= 1
-        )
-            alert('SuperAdmin aktif terakhir tidak dapat dihapus.');
-            return false;
-        @else
-            return confirm('Yakin ingin menghapus pengguna {{ addslashes($u->name) }}?');
-        @endif
-    "
->
-    @csrf
-    @method('DELETE')
-
-    <button
-        type="submit"
-        class="btn btn-sm btn-outline-danger"
-        aria-label="Hapus pengguna {{ $u->name }}"
-    >
-        Hapus
-    </button>
-</form>
+                                @include('admin.users.partials.row-actions', [
+                                    'u' => $u,
+                                    'activeSuperadminCount' => $activeSuperadminCount,
+                                    'stretch' => false,
+                                ])
                             </td>
                         </tr>
                     @empty
@@ -202,42 +172,11 @@
                             <span class="text-muted small">{{ str_replace('_', ' ', $u->role) }}</span>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-laporin flex-grow-1"
-                                x-on:click="openEdit(@js([ 'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'phone' => $u->phone, 'is_active' => $u->is_active ]))"
-                                aria-label="Edit pengguna {{ $u->name }}"
-                            >Edit</button>
-
-                         <form
-    method="POST"
-    action="{{ route('admin.users.destroy', $u) }}"
-    class="flex-grow-1"
-    onsubmit="
-        @if(auth()->id() === $u->id)
-            alert('Anda tidak dapat menghapus akun yang sedang digunakan.');
-            return false;
-        @elseif(
-            $u->role === 'superadmin'
-            && $u->is_active
-            && $activeSuperadminCount <= 1
-        )
-            alert('SuperAdmin aktif terakhir tidak dapat dihapus.');
-            return false;
-        @else
-            return confirm('Yakin ingin menghapus pengguna {{ addslashes($u->name) }}?');
-        @endif
-    "
->
-    @csrf
-    @method('DELETE')
-
-    <button
-        type="submit"
-        class="btn btn-sm btn-outline-danger w-100"
-        aria-label="Hapus pengguna {{ $u->name }}"
-    >
-        Hapus
-    </button>
-</form>
+                            @include('admin.users.partials.row-actions', [
+                                'u' => $u,
+                                'activeSuperadminCount' => $activeSuperadminCount,
+                                'stretch' => true,
+                            ])
                         </div>
                     </div>
                 </div>

@@ -27,6 +27,13 @@
     <link rel="canonical" href="{{ $canonicalUrl }}">
     <link rel="alternate" hreflang="id-ID" href="{{ $canonicalUrl }}">
     <link rel="alternate" hreflang="x-default" href="{{ $canonicalUrl }}">
+    {{-- Penemuan crawler: sitemap sudah diumumkan lewat robots.txt, tapi tautan
+         eksplisit di <head> membantu perayap yang masuk lewat deep link tanpa
+         pernah membaca robots.txt. llms.txt adalah ringkasan teks-polos untuk
+         perayap AI, dan tanpa tautan ini satu-satunya cara menemukannya adalah
+         menebak URL-nya. --}}
+    <link rel="sitemap" type="application/xml" title="Peta situs" href="{{ url('/sitemap.xml') }}">
+    <link rel="alternate" type="text/plain" title="Konteks LLM" href="{{ url('/llms.txt') }}">
     <meta property="og:locale" content="id_ID">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:site_name" content="{{ $siteName }}">
@@ -44,19 +51,31 @@
     <meta name="twitter:description" content="{{ $metaDescription }}">
     <meta name="twitter:image" content="{{ $ogImage }}">
     <meta name="twitter:image:alt" content="{{ $ogImageAlt }}">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ asset('css/laporin.css') }}?v={{ filemtime(public_path('css/laporin.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/laporin.css') }}?v={{ @filemtime(public_path('css/laporin.css')) ?: time() }}" rel="stylesheet">
+    {{-- Alpine hanya dibutuhkan panel admin (mis. admin/users). Halaman publik
+         tidak memakai direktif Alpine, jadi jangan bebani mereka dengan
+         unduhan CDN tambahan yang memperlambat LCP. --}}
+    @auth
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    @endauth
     <script type="application/ld+json">
     {!! json_encode([
         '@'.'context' => 'https://schema.org',
         '@graph' => [
             [
-                '@type' => 'Organization',
+                // Satu entitas sekolah untuk seluruh situs. Sebelumnya ada node
+                // 'School' terpisah di report-form yang menduplikasi entitas ini
+                // pada URL yang sama tanpa pernah direferensikan node lain.
+                '@type' => 'EducationalOrganization',
                 '@id' => url('/').'#organization',
-                'name' => 'LAPORIN SMK Taruna Bangsa Bekasi',
+                'name' => 'SMK Taruna Bangsa Bekasi',
+                'alternateName' => 'LAPORIN SMK Taruna Bangsa Bekasi',
                 'url' => url('/'),
-                'logo' => ['@type' => 'ImageObject', 'url' => asset('images/branding/logo tb.png')],
+                // Nama file memuat spasi. URL di JSON-LD harus ter-encode,
+                // spasi mentah membuat nilainya bukan URL yang valid.
+                'logo' => ['@type' => 'ImageObject', 'url' => asset('images/branding/'.rawurlencode('logo tb.png'))],
             ],
             [
                 '@type' => 'WebSite',
@@ -115,7 +134,7 @@
     @if($errors->any())<div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive"><strong>Periksa input berikut:</strong><ul class="mb-0 mt-2">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div><script id="validation-errors-json" type="application/json">@json($errors->getBag('default')->messages())</script>@endif
     @yield('content')
 </div></main>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
 <script>
 document.addEventListener('DOMContentLoaded',()=>{const source=document.getElementById('validation-errors-json');const nav=document.getElementById('mainNav');const navDropdowns=nav?.querySelectorAll('.dropdown-toggle');if(nav){nav.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{if(window.bootstrap?.Collapse){const collapse=bootstrap.Collapse.getOrCreateInstance(nav,{toggle:false});if(nav.classList.contains('show'))collapse.hide();}}));}if(navDropdowns){navDropdowns.forEach(toggle=>{toggle.addEventListener('show.bs.dropdown',()=>toggle.setAttribute('aria-expanded','true'));toggle.addEventListener('hide.bs.dropdown',()=>toggle.setAttribute('aria-expanded','false'));});}if(!source||!window.CSS||!CSS.escape)return;let errors={};try{errors=JSON.parse(source.textContent||'{}');}catch(_){return;}let firstInvalid=null;Object.entries(errors).forEach(([name,messages])=>{const names=[name];if(/\.\d+$/.test(name))names.push(name.replace(/\.\d+$/,'[]'));if(name.includes('.'))names.push(`${name.split('.')[0]}[]`);const field=[...new Set(names)].map(candidate=>document.querySelector(`[name="${CSS.escape(candidate)}"]`)).find(Boolean);if(!field)return;field.classList.add('is-invalid');field.setAttribute('aria-invalid','true');if(!firstInvalid&&field.offsetParent!==null)firstInvalid=field;const feedback=document.createElement('div');feedback.className='invalid-feedback d-block server-validation-feedback';feedback.textContent=Array.isArray(messages)?messages[0]:String(messages);const target=field.closest('.form-check')||field;target.insertAdjacentElement('afterend',feedback);});if(firstInvalid){firstInvalid.scrollIntoView({behavior:'smooth',block:'center'});firstInvalid.focus({preventScroll:true});}});
 </script>

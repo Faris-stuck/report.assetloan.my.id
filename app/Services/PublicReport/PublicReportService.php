@@ -11,7 +11,6 @@ use App\Models\ReportStatusHistory;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -103,13 +102,9 @@ class PublicReportService
 
                 return [$report, $accessCode, true];
             } catch (QueryException $exception) {
-                foreach ($storedPaths as $storedPath) {
-                    try {
-                        Storage::disk('private')->delete($storedPath);
-                    } catch (Throwable) {
-                        // Keep the original database exception.
-                    }
-                }
+                // Both catch blocks clean up the same paths on purpose: PHP enters only the
+                // first matching block, so exactly one of them runs per failure.
+                $this->discardStoredAttachments($storedPaths);
 
                 if ($this->isReportIdentifierCollision($exception) && $attempt < self::REPORT_NUMBER_RETRY_LIMIT - 1) {
                     continue;
@@ -117,13 +112,7 @@ class PublicReportService
 
                 throw $this->convertQueryExceptionToValidationException($exception);
             } catch (Throwable $exception) {
-                foreach ($storedPaths as $storedPath) {
-                    try {
-                        Storage::disk('private')->delete($storedPath);
-                    } catch (Throwable) {
-                        // Keep the original exception.
-                    }
-                }
+                $this->discardStoredAttachments($storedPaths);
                 throw $exception;
             }
         }
@@ -131,6 +120,18 @@ class PublicReportService
         throw ValidationException::withMessages([
             'report_number' => 'Nomor laporan belum berhasil dibuat. Silakan coba kembali.',
         ]);
+    }
+
+    // Best-effort cleanup of files written before the failure; never masks the original exception.
+    private function discardStoredAttachments(array $storedPaths): void
+    {
+        foreach ($storedPaths as $storedPath) {
+            try {
+                Storage::disk('private')->delete($storedPath);
+            } catch (Throwable) {
+                // Keep the original exception.
+            }
+        }
     }
 
     private function reportData(Request $request, array $validated, string $accessCode, string $reportNumber): array

@@ -141,13 +141,9 @@
                 <a class="btn btn-outline-laporin" href="{{ route('seo.faq') }}">Baca FAQ</a>
             </div>
             <hr>
-            <h3 class="h6 fw-bold">Kata kunci relevan</h3>
-            <ul class="small-muted mb-0 ps-3">
-                <li>lapor pembullyan SMK Taruna Bangsa Bekasi</li>
-                <li>lapor perundungan siswa</li>
-                <li>lapor pelanggaran siswa</li>
-                <li>lapor kerusakan fasilitas sekolah</li>
-            </ul>
+            <h3 class="h6 fw-bold">Pilih jenis laporan yang tepat</h3>
+            <p class="small-muted">Perundungan, ejekan berulang, intimidasi, ancaman, dan pelanggaran tata tertib masuk ke jenis <strong>Pelanggaran Siswa</strong> dan ditangani Kesiswaan. Fasilitas rusak seperti lampu, meja, kursi, toilet, AC, atau proyektor masuk ke jenis <strong>Kerusakan Fasilitas</strong> dan ditangani Sarpras.</p>
+            <p class="small-muted mb-0">Masih ragu memilih? Baca <a href="{{ route('seo.student-violation') }}">panduan lapor pelanggaran siswa</a> atau <a href="{{ route('seo.facility-damage') }}">panduan lapor kerusakan fasilitas sekolah</a>.</p>
             <hr>
             <p class="small-muted mb-0">Gunakan bahasa yang jelas dan tidak melebih-lebihkan. Laporan palsu dapat menghambat penanganan kejadian nyata.</p>
         </aside>

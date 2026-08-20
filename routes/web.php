@@ -7,6 +7,7 @@ use App\Http\Controllers\PublicReportController;
 use App\Http\Controllers\QRCodeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\Role\Kesiswaan\KesiswaanController as KesiswaanRoleController;
 use App\Http\Controllers\Role\Sarpras\SarprasController as SarprasRoleController;
@@ -27,6 +28,7 @@ Route::get('/lacak', [TrackingController::class, 'form'])->name('track.form');
 Route::post('/lacak', [TrackingController::class, 'search'])->middleware('throttle:public-tracking')->name('track.search');
 Route::post('/lacak/{report}/info', [TrackingController::class, 'addInfo'])->middleware('throttle:public-tracking')->name('track.info');
 Route::post('/lacak/{report}/confirm', [TrackingController::class, 'confirmComplete'])->middleware('throttle:public-tracking')->name('track.confirm');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::post('/ai/chat', [AiChatController::class, 'chat'])->middleware('throttle:ai-chat')->name('ai.chat');
 

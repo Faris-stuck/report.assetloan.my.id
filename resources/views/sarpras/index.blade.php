@@ -161,20 +161,20 @@
                                         <div class="invalid-feedback">{{ $errors->first('scheduled_repair_at') }}</div>
                                     @endif
                                 </div>
-                                <div class="col-12 col-md-6">
+                                <div class="col-12 col-md-6" data-file-field>
                                     <label class="form-label" for="repair_photo_{{ $r->id }}">Foto setelah diperbaiki</label>
-                                    <input id="repair_photo_{{ $r->id }}" type="file" name="repair_photo" class="form-control @if($errorsForThisForm && $errors->has('repair_photo')) is-invalid @endif" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-file-input="repair_photo_{{ $r->id }}">
+                                    <input id="repair_photo_{{ $r->id }}" type="file" name="repair_photo" class="form-control @if($errorsForThisForm && $errors->has('repair_photo')) is-invalid @endif" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-file-input>
                                     <small class="text-muted d-block mt-2">Format: JPG, PNG, atau WEBP. Ukuran maksimal: 5MB.</small>
-                                    
-                                    {{-- Preview container --}}
-                                    <div id="preview-container_{{ $r->id }}" class="mt-3" style="display: none;">
+
+                                    {{-- Preview container: dicari relatif dari [data-file-field], bukan lewat id --}}
+                                    <div class="mt-3" style="display: none;" data-preview-container>
                                         <div class="d-flex align-items-start gap-3">
-                                            <img id="preview-image_{{ $r->id }}" src="" alt="Pratinjau foto" 
+                                            <img src="" alt="Pratinjau foto" data-preview-image
                                                  style="max-width: 100px; max-height: 100px; border: 1px solid #ddd; padding: 4px; border-radius: 4px;">
                                             <div>
-                                                <small id="filename_{{ $r->id }}" class="text-muted d-block"></small>
-                                                <small id="filesize_{{ $r->id }}" class="text-muted d-block mb-2"></small>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFilePreview('repair_photo_{{ $r->id }}')">
+                                                <small class="text-muted d-block" data-preview-filename></small>
+                                                <small class="text-muted d-block mb-2" data-preview-filesize></small>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearFileField(this)">
                                                     Hapus
                                                 </button>
                                             </div>
@@ -209,7 +209,7 @@
                     </h2>
                     <div id="reject-{{ $r->id }}" class="accordion-collapse collapse" data-bs-parent="#accordion-sarpras-{{ $r->id }}">
                         <div class="accordion-body">
-                            <form method="POST" action="{{ route('sarpras.reject', $r) }}" class="row g-3" @submit="if(!confirm('Tolak laporan kerusakan ini? Alur laporan akan berhenti.')) $event.preventDefault()">
+                            <form method="POST" action="{{ route('sarpras.reject', $r) }}" class="row g-3" onsubmit="return confirm('Tolak laporan kerusakan ini? Alur laporan akan berhenti.')">
                                 @csrf
                                 <div class="col-12"><label class="form-label required" for="reject_reason_{{ $r->id }}">Alasan penolakan</label><textarea id="reject_reason_{{ $r->id }}" name="reason" class="form-control" required maxlength="2000" placeholder="Jelaskan mengapa laporan tidak dapat diproses" rows="3"></textarea></div>
                                 <div class="col-12"><button type="submit" class="btn btn-outline-danger" aria-label="Tolak laporan kerusakan #{{ $r->report_number }}">Tolak Laporan</button></div>
@@ -236,114 +236,123 @@
 <script>
 /**
  * File Upload Validation & Preview
- * Handles file type, size validation, and preview display
+ * Handles file type, size validation, and preview display.
+ * Semua elemen dicari relatif terhadap wadah [data-file-field] agar id tidak pernah meleset.
  */
-function setupFileInput(inputId) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    
+const FILE_VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const FILE_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+function getFileField(el) {
+    return el.closest('[data-file-field]');
+}
+
+function setupFileInput(input) {
     input.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) {
-            clearFilePreview(inputId);
+            clearFilePreview(input);
             return;
         }
-        
+
         // Validate file type
-        if (!validTypes.includes(file.type)) {
-            showFileError(inputId, 'Format tidak didukung. Gunakan JPG, PNG, atau WEBP.');
+        if (!FILE_VALID_TYPES.includes(file.type)) {
+            showFileError(input, 'Format tidak didukung. Gunakan JPG, PNG, atau WEBP.');
             input.value = '';
             return;
         }
-        
+
         // Validate file size
-        if (file.size > maxSize) {
+        if (file.size > FILE_MAX_SIZE) {
             const sizeMB = Math.round(file.size / 1024 / 1024);
-            showFileError(inputId, `File terlalu besar (${sizeMB}MB). Maks 5MB.`);
+            showFileError(input, `File terlalu besar (${sizeMB}MB). Maks 5MB.`);
             input.value = '';
             return;
         }
-        
+
         // Show preview
         const reader = new FileReader();
         reader.onload = function(event) {
-            showFilePreview(inputId, event.target.result, file.name, file.size);
+            showFilePreview(input, event.target.result, file.name, file.size);
         };
         reader.readAsDataURL(file);
     });
 }
 
-function showFilePreview(inputId, imageSrc, fileName, fileSize) {
-    const previewContainer = document.getElementById(`preview-container_${inputId}`);
-    const previewImage = document.getElementById(`preview-image_${inputId}`);
-    const filenameEl = document.getElementById(`filename_${inputId}`);
-    const filesizeEl = document.getElementById(`filesize_${inputId}`);
-    
-    if (!previewContainer) return;
-    
+function showFilePreview(input, imageSrc, fileName, fileSize) {
+    const field = getFileField(input);
+    const previewContainer = field?.querySelector('[data-preview-container]');
+    const previewImage = field?.querySelector('[data-preview-image]');
+    const filenameEl = field?.querySelector('[data-preview-filename]');
+    const filesizeEl = field?.querySelector('[data-preview-filesize]');
+
+    if (!previewContainer || !previewImage || !filenameEl || !filesizeEl) {
+        console.error('Elemen pratinjau foto tidak lengkap untuk input', input.id);
+        return;
+    }
+
     previewImage.src = imageSrc;
-    
+
     // Truncate filename if too long
     const displayName = fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
     filenameEl.textContent = `File: ${displayName}`;
-    
+
     filesizeEl.textContent = `Ukuran: ${(fileSize / 1024).toFixed(1)}KB`;
-    
+
     previewContainer.style.display = 'block';
-    
+
     // Clear any error messages
-    const errorMsg = document.querySelector(`#${inputId} + .small.text-muted + .invalid-feedback`);
-    if (errorMsg) errorMsg.remove();
+    removeFileError(input);
 }
 
-function showFileError(inputId, message) {
-    const input = document.getElementById(inputId);
-    const previewContainer = document.getElementById(`preview-container_${inputId}`);
-    
+function showFileError(input, message) {
+    const field = getFileField(input) ?? input.parentElement;
+    const previewContainer = field.querySelector('[data-preview-container]');
+
     // Hide preview
     if (previewContainer) previewContainer.style.display = 'none';
-    
+
+    // Remove existing error message
+    removeFileError(input);
+
     // Show error message
     input.classList.add('is-invalid');
-    
-    // Remove existing error message
-    const existingError = input.parentElement.querySelector('.invalid-feedback');
-    if (existingError) existingError.remove();
-    
+
     // Add new error message
     const errorEl = document.createElement('div');
     errorEl.className = 'invalid-feedback d-block mt-2';
     errorEl.textContent = message;
-    input.parentElement.appendChild(errorEl);
+    field.appendChild(errorEl);
 }
 
-function clearFilePreview(inputId) {
-    const input = document.getElementById(inputId);
-    const previewContainer = document.getElementById(`preview-container_${inputId}`);
-    
-    if (input) {
-        input.value = '';
-        input.classList.remove('is-invalid');
-    }
-    
+function removeFileError(input) {
+    const field = getFileField(input) ?? input.parentElement;
+
+    input.classList.remove('is-invalid');
+    field.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+}
+
+function clearFilePreview(input) {
+    const field = getFileField(input);
+    const previewContainer = field?.querySelector('[data-preview-container]');
+
+    input.value = '';
+    removeFileError(input);
+
     if (previewContainer) {
         previewContainer.style.display = 'none';
     }
-    
-    // Remove error message if exists
-    if (input) {
-        const errorMsg = input.parentElement.querySelector('.invalid-feedback');
-        if (errorMsg) errorMsg.remove();
-    }
+}
+
+// Dipanggil tombol "Hapus": cari input file dari wadah tombol itu sendiri
+function clearFileField(button) {
+    const input = getFileField(button)?.querySelector('[data-file-input]');
+    if (input) clearFilePreview(input);
 }
 
 // Initialize all file inputs on page load
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('[data-file-input]').forEach(input => {
-        setupFileInput(input.getAttribute('data-file-input'));
+        setupFileInput(input);
     });
 });
 </script>
