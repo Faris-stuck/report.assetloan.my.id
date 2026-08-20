@@ -15,7 +15,19 @@ $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     ? 'https'
     : 'http';
 
-$base_url = $protocol . "://" . $_SERVER['HTTP_HOST'];
+// CLI commands (e.g. artisan config:cache) do not provide HTTP_HOST.
+// Prefer the production/app URL when available, and only use the request
+// host during an actual HTTP request.
+$requestHost = $_SERVER['HTTP_HOST'] ?? null;
+$configuredUrl = getenv('APP_URL') ?: null;
+
+if ($requestHost !== null && $requestHost !== '') {
+    $base_url = $protocol . '://' . $requestHost;
+} elseif ($configuredUrl !== null && $configuredUrl !== '') {
+    $base_url = rtrim($configuredUrl, '/');
+} else {
+    $base_url = $protocol . '://report.assetloan.my.id';
+}
 
 // Detect subfolder from SCRIPT_NAME
 // e.g. /PROJECT/api/auth/login.php → folder = "PROJECT"
