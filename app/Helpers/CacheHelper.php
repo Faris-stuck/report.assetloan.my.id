@@ -5,6 +5,7 @@ namespace App\Helpers;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 class CacheHelper
 {
@@ -65,6 +66,15 @@ class CacheHelper
      * Tidak menggunakan Redis KEYS karena dapat memblokir Redis
      * ketika jumlah key besar. Bila rantai cache aktif tidak memuat Redis,
      * penghapusan dialihkan ke store database supaya invalidasi tetap nyata.
+     *
+     * Kegagalan koneksi Redis TIDAK boleh dilempar keluar. Pemanggil utama
+     * metode ini adalah observer model (ReportObserver, DamageDetailObserver,
+     * BullyingDetailObserver) yang berjalan di dalam transaksi penyimpanan
+     * laporan. Sebelumnya satu Redis mati membuat Redis::connection()->scan()
+     * melempar ConnectionException, exception itu keluar dari observer, dan
+     * SELURUH pembuatan laporan publik serta setiap perubahan status petugas
+     * gagal dengan 500 -- padahal cache.default sengaja memakai rantai
+     * 'failover' justru supaya Redis mati hanya menurunkan performa.
      */
     public static function invalidate(string $pattern): void
     {
@@ -76,6 +86,23 @@ class CacheHelper
             return;
         }
 
+        try {
+            static::invalidateWithRedis($connectionName, $pattern);
+        } catch (Throwable $exception) {
+            report($exception);
+
+            // Redis tidak bisa dipakai sekarang; tetap usahakan invalidasi
+            // pada store cadangan (database) agar data basi tidak dibiarkan.
+            try {
+                static::invalidateWithoutRedis($pattern);
+            } catch (Throwable $fallbackException) {
+                report($fallbackException);
+            }
+        }
+    }
+
+    private static function invalidateWithRedis(string $connectionName, string $pattern): void
+    {
         $redis = Redis::connection($connectionName);
 
         $prefix = (string) config('cache.prefix', '');
@@ -181,6 +208,14 @@ class CacheHelper
      *
      * Tidak menggunakan Cache::flush() agar Redis production
      * tidak ikut dikosongkan secara global.
+     *
+     * Nilai balik menandakan apakah penghapusan benar-benar dijalankan, bukan
+     * sekadar bahwa metodenya dipanggil. Penghapusan berpola hanya mungkin
+     * lewat SCAN Redis atau DELETE tabel cache database; bila rantai store
+     * aktif tidak memuat keduanya (mis. store 'array'), invalidate('*')
+     * berakhir tanpa melakukan apa pun. Sebelumnya metode ini tetap
+     * mengembalikan true di situasi itu, sehingga pemanggil diberi tahu cache
+     * sudah bersih padahal seluruh isinya masih utuh.
      */
     public static function flush(): bool
     {
@@ -190,10 +225,18 @@ class CacheHelper
             return false;
         }
 
+        if (
+            static::redisConnectionName() === null
+            && static::databaseCacheTable() === null
+        ) {
+            return false;
+        }
+
         static::invalidate('*');
 
         return true;
     }
+
     /**
      * Nama koneksi Redis yang benar-benar melayani cache, atau null bila tidak
      * ada Redis pada rantai store yang aktif.

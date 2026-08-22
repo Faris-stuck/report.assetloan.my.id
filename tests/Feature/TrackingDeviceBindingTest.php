@@ -44,14 +44,35 @@ class TrackingDeviceBindingTest extends TestCase
     {
         $report = $this->report();
 
+        // Hasil pencarian dialihkan ke GET track.result, bukan dirender dari
+        // POST. Halaman hasil butuh URL GET nyata supaya back() setelah aksi
+        // pelapor tidak mendarat di formulir /lacak yang kosong.
         $response = $this->withCookie('laporin_device_id', self::DEVICE_ID)
             ->post(route('track.search'), [
                 'report_number' => self::REPORT_NUMBER,
                 'access_code' => self::ACCESS_CODE,
             ]);
 
-        $response->assertOk()->assertSee($report->report_number);
+        $response->assertRedirect(route('track.result'));
         $response->assertCookie('laporin_tracking_proof', $this->trackingProof($report));
+
+        $this->withCookies([
+            'laporin_device_id' => self::DEVICE_ID,
+            'laporin_tracking_proof' => $this->trackingProof($report),
+        ])
+            ->get(route('track.result'))
+            ->assertOk()
+            ->assertSee($report->report_number);
+    }
+
+    public function test_tracking_result_page_without_proof_cookie_sends_the_reporter_back_to_the_form(): void
+    {
+        $this->report();
+
+        $this->withCookie('laporin_device_id', self::DEVICE_ID)
+            ->get(route('track.result'))
+            ->assertRedirect(route('track.form'))
+            ->assertSessionHasErrors(['report_number', 'access_code']);
     }
 
     public function test_tracking_search_rejects_a_wrong_access_code(): void
@@ -111,7 +132,10 @@ class TrackingDeviceBindingTest extends TestCase
         ])
             ->from(route('track.form'))
             ->post(route('track.info', $report), ['note' => 'Kronologi tambahan dari pelapor.'])
-            ->assertRedirect(route('track.form'))
+            // Kembali ke halaman hasil, bukan ke formulir kosong: pelapor harus
+            // melihat catatannya masuk ke riwayat, bukan disuruh mengetik ulang
+            // nomor laporan dan kode akses.
+            ->assertRedirect(route('track.result'))
             ->assertSessionHas('status');
 
         $this->assertDatabaseHas('report_notes', [

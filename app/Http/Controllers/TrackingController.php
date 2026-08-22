@@ -19,7 +19,7 @@ class TrackingController extends Controller
         return view('public.track');
     }
 
-    public function search(Request $request): Response|RedirectResponse
+    public function search(Request $request): RedirectResponse
     {
         $request->merge([
             'report_number' => $this->normalizeReportNumber((string) $request->input('report_number', '')),
@@ -31,7 +31,7 @@ class TrackingController extends Controller
             'access_code' => ['required', 'digits:6'],
         ]);
 
-        $report = Report::with(['histories' => fn ($query) => $query->oldest()])
+        $report = Report::query()
             ->where('report_number', trim($data['report_number']))
             ->first();
 
@@ -44,30 +44,86 @@ class TrackingController extends Controller
         $invalid = 'Nomor laporan, kode akses, atau perangkat tidak cocok. Laporan hanya dapat dilacak dari perangkat/jaringan yang digunakan saat laporan dibuat.';
 
         if (! $report || ! Hash::check($data['access_code'], $report->access_code_hash)) {
-            return back()->withErrors(['report_number' => $invalid])->withInput($request->except('access_code'));
+            return $this->rejectSearch($request, $invalid);
         }
 
         // Tracking access is bound to the current client IP instead of a Laravel session.
         // The report stores only an HMAC hash of the submission IP, never the raw IP.
         if (! $this->deviceMatchesReport($request, $report)) {
-            return back()->withErrors(['report_number' => $invalid])->withInput($request->except('access_code'));
+            return $this->rejectSearch($request, $invalid);
         }
 
-        $trackingProof = $report->id.'|'.hash_hmac('sha256', (string) $report->access_code_hash, config('app.key'));
+        /*
+         * Hasil pencarian TIDAK dirender langsung dari POST ini, melainkan
+         * dialihkan ke GET `track.result`.
+         *
+         * Laravel hanya memanggil setPreviousUrl() untuk permintaan GET
+         * non-ajax, jadi halaman hasil yang dirender dari POST tidak pernah
+         * menjadi "previous URL". Akibatnya `back()` di akhir addInfo() dan
+         * confirmComplete() mendarat di GET /lacak yang KOSONG: pelapor membaca
+         * "Informasi tambahan dikirim." di atas formulir blanko, lalu harus
+         * mengetik ulang nomor laporan dan kode akses hanya untuk melihat
+         * laporannya sendiri. Setiap aksi yang berhasil terasa seperti
+         * dikeluarkan dari halaman.
+         *
+         * Dengan pola redirect ini halaman hasil punya URL GET nyata, sehingga
+         * `back()` kembali ke tempat yang benar dan menekan muat-ulang tidak
+         * lagi mengirim ulang nomor + kode akses.
+         */
+        return redirect()
+            ->route('track.result')
+            ->withCookie($this->trackingProofCookie($request, $report));
+    }
+
+    /**
+     * Halaman hasil pelacakan, dibuka lewat GET.
+     *
+     * Laporan diambil dari cookie bukti pelacakan, bukan dari URL, supaya nomor
+     * laporan tidak pernah tertinggal di riwayat peramban atau header Referer
+     * pada perangkat yang dipakai bersama.
+     */
+    public function result(Request $request): Response|RedirectResponse
+    {
+        $report = $this->reportFromTrackingProof($request);
+
+        if ($report === null || ! $this->deviceMatchesReport($request, $report)) {
+            return redirect()
+                ->route('track.form')
+                ->withErrors([
+                    'report_number' => 'Sesi pelacakan sudah berakhir. Masukkan lagi nomor laporan dan kode akses untuk melihat status laporan.',
+                    'access_code' => 'Sesi pelacakan sudah berakhir. Masukkan lagi nomor laporan dan kode akses untuk melihat status laporan.',
+                ]);
+        }
+
+        $report->load(['histories' => fn ($query) => $query->oldest()]);
 
         return response()
-            ->view('public.track-result', ['report' => $report])
-            ->withCookie(cookie(
-                'laporin_tracking_proof',
-                $trackingProof,
-                15,
-                '/',
-                null,
-                $request->isSecure(),
-                true,
-                false,
-                'lax'
-            ));
+            ->view('public.track-result', [
+                'report' => $report,
+                'noteDraft' => $this->pullNoteDraft($report),
+            ])
+            // Halaman ini memuat isi laporan milik satu pelapor. Tanpa no-store,
+            // perangkat yang dipakai bersama bisa menampilkannya kembali lewat
+            // tombol Kembali setelah cookie buktinya sudah hangus.
+            ->withCookie($this->trackingProofCookie($request, $report))
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+            ->header('Pragma', 'no-cache');
+    }
+
+    /**
+     * Kembalikan pelapor ke formulir dengan pesan yang sama pada KEDUA field.
+     *
+     * Pesannya memang tidak menyebut mana yang salah (lihat $invalid di
+     * search()), jadi menempelkannya hanya pada `report_number` membuat pelapor
+     * yang salah mengetik kode akses melihat penanda merah di field nomor
+     * laporan dan mengedit field yang keliru. Nilai stringnya identik di kedua
+     * field, sehingga tidak ada informasi baru yang bocor ke penebak kode.
+     */
+    private function rejectSearch(Request $request, string $message): RedirectResponse
+    {
+        return back()
+            ->withErrors(['report_number' => $message, 'access_code' => $message])
+            ->withInput($request->except('access_code'));
     }
 
     public function addInfo(Request $request, Report $report): RedirectResponse
@@ -77,7 +133,9 @@ class TrackingController extends Controller
         }
 
         if (! in_array($report->status, ['memerlukan_informasi', 'dibuka_kembali', 'menunggu_konfirmasi'], true)) {
-            return back()->withErrors(['report' => 'Aksi tambah informasi tidak tersedia untuk status laporan saat ini.']);
+            return redirect()
+                ->route('track.result')
+                ->withErrors(['report' => 'Aksi tambah informasi tidak tersedia untuk status laporan saat ini.']);
         }
 
         $data = $request->validate(['note' => ['required', 'string', 'max:3000']]);
@@ -105,7 +163,9 @@ class TrackingController extends Controller
 
         }
 
-        return back()->with('status', 'Informasi tambahan dikirim.');
+        return redirect()
+            ->route('track.result')
+            ->with('status', 'Informasi tambahan dikirim.');
     }
 
     public function confirmComplete(Request $request, Report $report): RedirectResponse
@@ -115,7 +175,9 @@ class TrackingController extends Controller
         }
 
         if ($report->status !== 'menunggu_konfirmasi') {
-            return back()->withErrors(['report' => 'Laporan belum berada pada tahap menunggu konfirmasi.']);
+            return redirect()
+                ->route('track.result')
+                ->withErrors(['report' => 'Laporan belum berada pada tahap menunggu konfirmasi.']);
         }
 
         $old = $report->status;
@@ -129,7 +191,9 @@ class TrackingController extends Controller
         ]);
 
 
-        return back()->with('status', 'Laporan dikonfirmasi selesai.');
+        return redirect()
+            ->route('track.result')
+            ->with('status', 'Laporan dikonfirmasi selesai.');
     }
 
     /**
@@ -142,18 +206,132 @@ class TrackingController extends Controller
     private function denyReporterAction(Request $request, Report $report): ?RedirectResponse
     {
         if (! $this->deviceMatchesReport($request, $report)) {
+            /*
+             * Tulisan pelapor juga harus diselamatkan di jalur ini. Pelapor yang
+             * membuka laporannya di perangkat lain baru mengetahui pembatasannya
+             * setelah menekan Kirim, jadi kalau tidak disimpan, catatannya hilang
+             * di sini persis seperti pada jalur bukti yang hangus.
+             */
+            $this->rememberNoteDraft($request, $report);
+
+            /*
+             * Jalan keluar WAJIB disebutkan. EnterpriseSecurity menerbitkan
+             * laporin_device_id baru untuk setiap permintaan tanpa cookie yang
+             * sah, sehingga pelapor yang sekadar menghapus data peramban — hal
+             * yang sangat biasa — mendapat identitas perangkat baru yang tidak
+             * akan pernah cocok lagi dengan laporannya. Sebelumnya pesan di sini
+             * berhenti pada "hanya dapat dilacak dari perangkat yang digunakan
+             * saat laporan dibuat": buntu total, tanpa memberi tahu bahwa
+             * laporannya tetap diproses dan masih bisa ditanyakan langsung.
+             */
             return redirect()
                 ->route('track.form')
-                ->withErrors(['report_number' => 'Laporan hanya dapat dilacak dan diperbarui dari perangkat/jaringan yang digunakan saat laporan dibuat.']);
+                ->withErrors(['report_number' => 'Laporan hanya dapat dilacak dan diperbarui dari perangkat serta peramban yang digunakan saat laporan dibuat. Coba buka lagi dari perangkat itu. Jika perangkatnya sudah tidak ada atau data peramban-nya sudah dihapus, laporan Anda tetap diproses — bawa nomor laporan Anda ke ruang Kesiswaan (laporan pelanggaran) atau Sarpras (laporan kerusakan) untuk menanyakan tindak lanjutnya.']);
         }
 
         if (! $this->trackingProofMatchesReport($request, $report)) {
+            /*
+             * Simpan dulu tulisan pelapor sebelum memulangkannya ke formulir.
+             *
+             * Inilah penyebab penolakan yang paling sering terjadi, dan
+             * korbannya adalah orang yang justru paling banyak menulis: batas
+             * textarea-nya 3000 karakter, dan sebelumnya SELURUH tulisan itu
+             * hilang tanpa sisa hanya karena bukti pelacakan 15 menit hangus
+             * saat tombol Kirim ditekan. Draf ditaruh di session (bukan flash
+             * biasa) karena harus melewati dua permintaan: pencarian ulang,
+             * baru kemudian halaman hasil.
+             */
+            $this->rememberNoteDraft($request, $report);
+
+            // Penanda dipasang di KEDUA field karena pemulihannya memang
+            // menuntut pelapor mengisi ulang keduanya, bukan salah satu.
+            $expired = 'Sesi pelacakan sudah berakhir setelah 15 menit. Masukkan lagi nomor laporan dan kode akses — tulisan Anda kami simpan dan akan muncul kembali di formulirnya.';
+
             return redirect()
                 ->route('track.form')
-                ->withErrors(['report_number' => 'Sesi pelacakan sudah berakhir setelah 15 menit. Masukkan lagi nomor laporan dan kode akses, lalu ulangi aksi Anda.']);
+                ->withErrors(['report_number' => $expired, 'access_code' => $expired]);
         }
 
         return null;
+    }
+
+    /**
+     * Cookie bukti pelacakan, berlaku 15 menit sejak permintaan terakhir.
+     *
+     * Diterbitkan ulang pada setiap kunjungan halaman hasil supaya jendelanya
+     * bergeser selama pelapor masih aktif. Sebelumnya masa berlakunya dihitung
+     * sekali dari waktu pencarian, sehingga pelapor yang membaca riwayat
+     * laporannya lebih dari 15 menit lalu menekan Kirim ditolak justru saat
+     * sedang memakai halamannya.
+     */
+    private function trackingProofCookie(Request $request, Report $report): \Symfony\Component\HttpFoundation\Cookie
+    {
+        return cookie(
+            'laporin_tracking_proof',
+            $report->id.'|'.$this->trackingProofHash($report),
+            15,
+            '/',
+            null,
+            $request->isSecure(),
+            true,
+            false,
+            'lax'
+        );
+    }
+
+    private function trackingProofHash(Report $report): string
+    {
+        return hash_hmac('sha256', (string) $report->access_code_hash, config('app.key'));
+    }
+
+    /**
+     * Laporan yang ditunjuk cookie bukti pelacakan, atau null bila buktinya
+     * tidak ada, rusak, atau tidak cocok dengan laporannya.
+     */
+    private function reportFromTrackingProof(Request $request): ?Report
+    {
+        $proof = $request->cookie('laporin_tracking_proof');
+        if (! is_string($proof) || ! str_contains($proof, '|')) {
+            return null;
+        }
+
+        [$reportId, $proofHash] = explode('|', $proof, 2);
+        if (! ctype_digit($reportId) || preg_match('/^[a-f0-9]{64}$/', $proofHash) !== 1) {
+            return null;
+        }
+
+        $report = Report::query()->find((int) $reportId);
+        if (! $report || ! hash_equals($this->trackingProofHash($report), $proofHash)) {
+            return null;
+        }
+
+        return $report;
+    }
+
+    private function noteDraftKey(Report $report): string
+    {
+        return 'tracking_note_draft.'.$report->id;
+    }
+
+    private function rememberNoteDraft(Request $request, Report $report): void
+    {
+        $note = $request->input('note');
+        if (! is_string($note) || trim($note) === '') {
+            return;
+        }
+
+        session()->put($this->noteDraftKey($report), mb_substr($note, 0, 3000));
+    }
+
+    /**
+     * Ambil draf catatan sekali pakai. Dihapus setelah dibaca supaya tulisan
+     * lama tidak muncul lagi di kunjungan berikutnya.
+     */
+    private function pullNoteDraft(Report $report): string
+    {
+        $draft = session()->pull($this->noteDraftKey($report));
+
+        return is_string($draft) ? $draft : '';
     }
 
     private function trackingProofMatchesReport(Request $request, Report $report): bool

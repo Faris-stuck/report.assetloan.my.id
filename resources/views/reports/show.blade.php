@@ -40,6 +40,15 @@
         'internal' => 'Catatan internal petugas',
         'reporter_visible' => 'Bisa dilihat pelapor',
     ];
+
+    // $flow hanya memuat 6 dari 10 status yang mungkin. Untuk status di luar
+    // daftar itu (diverifikasi, ditugaskan, ditolak, diarsipkan) SEMUA simpul
+    // tampil kelabu tanpa satu pun yang aktif, jadi petugas melihat diagram
+    // mati dan menyimpulkan laporan tidak diproses. Berbeda dari halaman
+    // pelapor, di sini diagramnya tetap ditampilkan karena petugas perlu
+    // melihat alur lengkapnya; yang ditambahkan adalah keterangan mengapa tidak
+    // ada tahap yang ditandai.
+    $flowHasActiveStep = array_key_exists($report->status, $flow);
 @endphp
 
 <div class="laporin-card p-4 p-lg-5">
@@ -76,6 +85,12 @@
             </div>
         @endforeach
     </div>
+    @if(! $flowHasActiveStep)
+        <div class="status-note mb-4">
+            Status <strong>{{ $statusLabels[$report->status] ?? ucwords(str_replace('_', ' ', $report->status)) }}</strong>
+            berada di luar alur enam tahap di atas, jadi tidak ada tahap yang ditandai aktif.
+        </div>
+    @endif
 
 
     {{-- ========================================================= --}}
@@ -170,7 +185,7 @@
                             Deskripsi Kerusakan / Dampak
                         </div>
 
-                        <div>
+                        <div class="preserve-lines">
                             {{ $report->damageDetail?->damage_condition ?? '-' }}
                         </div>
                     </div>
@@ -199,7 +214,7 @@
                                 Dugaan Penyebab
                             </div>
 
-                            <div>
+                            <div class="preserve-lines">
                                 {{ $report->damageDetail->suspected_cause }}
                             </div>
                         </div>
@@ -377,7 +392,7 @@
                                 Dampak
                             </div>
 
-                            <div>
+                            <div class="preserve-lines">
                                 {{ $report->bullyingDetail->impact_description }}
                             </div>
                         </div>
@@ -399,7 +414,7 @@
             Kronologi / Deskripsi
         </div>
 
-        <p class="mb-0">
+        <p class="mb-0 preserve-lines">
             {{ $report->description }}
         </p>
 
@@ -466,7 +481,7 @@
                     </span>
                 </div>
 
-                <div>
+                <div class="preserve-lines">
                     {{ $note->note }}
                 </div>
 

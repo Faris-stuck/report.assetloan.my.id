@@ -17,11 +17,23 @@ class SessionLifecycleTest extends TestCase
 
     /**
      * Test session driver is redis in production config
+     *
+     * .env di-gitignore. Sebelumnya file_get_contents() dipanggil tanpa
+     * penjagaan, jadi pada checkout bersih test ini meledak dengan ErrorException
+     * "Failed to open stream" — bukan kegagalan yang mengatakan apa pun tentang
+     * kode. Lewati dengan instruksi konkret, dan tetap periksa isinya bila ada.
      */
     public function test_session_driver_is_redis_in_config()
     {
-        // Read .env to verify SESSION_DRIVER=redis
         $envPath = base_path('.env');
+
+        if (! file_exists($envPath)) {
+            $this->markTestSkipped(
+                'Tidak ada file .env di '.$envPath.'. Buat file itu dan isi SESSION_DRIVER=redis '
+                .'bila ingin memverifikasi konfigurasi deployment lewat test ini.'
+            );
+        }
+
         $envContent = file_get_contents($envPath);
         $this->assertStringContainsString('SESSION_DRIVER=redis', $envContent, 'Production config should use redis driver');
     }
@@ -37,16 +49,30 @@ class SessionLifecycleTest extends TestCase
 
     /**
      * Test session security attributes are configured
+     *
+     * $secure sengaja tidak dipaksa true: di test/lokal aplikasi berjalan di
+     * HTTP, dan config/session.php menurunkannya dari SESSION_SECURE_COOKIE.
+     * Yang bisa dan harus dijamin di mana pun: cookie tidak bisa dibaca
+     * JavaScript (http_only) dan punya kebijakan SameSite yang eksplisit.
+     * Sebelumnya $secure dan $sameSite hanya diambil lalu tidak pernah di-assert
+     * sehingga test ini bicara soal keamanan tanpa benar-benar mengujinya.
      */
     public function test_session_security_attributes_configured()
     {
         $secure = config('session.secure');
         $httpOnly = config('session.http_only');
         $sameSite = config('session.same_site');
-        
-        // In production, these should be set to secure values
-        // In testing, they might be different, but config should support them
+
         $this->assertTrue($httpOnly !== false, 'HTTP_ONLY should be true for security');
+        $this->assertContains(
+            $sameSite,
+            ['lax', 'strict', 'none'],
+            'SESSION_SAME_SITE harus salah satu dari lax/strict/none supaya perilaku cookie lintas situs pasti.'
+        );
+        $this->assertTrue(
+            $secure === null || is_bool($secure),
+            'SESSION_SECURE_COOKIE harus bool atau null (null = ikuti skema request), bukan string.'
+        );
     }
 
     /**

@@ -5,7 +5,9 @@ namespace App\Services\Role\Sarpras;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -39,11 +41,7 @@ class SarprasProcessor
                 'required',
                 'in:rendah,sedang,tinggi,darurat',
             ],
-            'scheduled_repair_at' => [
-                'nullable',
-                'date',
-                'after_or_equal:now',
-            ],
+            'scheduled_repair_at' => $this->scheduleRules($request, $report),
             'note' => [
                 'nullable',
                 'string',
@@ -111,14 +109,27 @@ class SarprasProcessor
                         'repair_photo'
                     );
 
+                    /*
+                     * Field yang tidak dikirim tidak boleh menghapus data yang
+                     * sudah ada. Sebelumnya `?? null` menulis null setiap kali
+                     * form disubmit, sehingga memproses ulang laporan yang
+                     * sedang ditangani diam-diam menghapus jadwal
+                     * perbaikannya. Pengosongan tetap bisa dilakukan secara
+                     * sadar: input dikirim kosong -> aturan `nullable`
+                     * mengubahnya menjadi null.
+                     */
                     $detail->update([
                         'priority' =>
                             $data['priority'],
                         'scheduled_repair_at' =>
-                            $data['scheduled_repair_at']
-                            ?? null,
+                            $request->has('scheduled_repair_at')
+                                ? ($data['scheduled_repair_at'] ?? null)
+                                : $detail->scheduled_repair_at,
+                        // Tanggal selesai hanya diisi saat foto perbaikan
+                        // diunggah, dan tidak pernah dikosongkan ulang oleh
+                        // submit berikutnya.
                         'repaired_at' =>
-                            $done ? now() : null,
+                            $done ? now() : $detail->repaired_at,
                     ]);
 
                     if ($done) {
@@ -291,6 +302,46 @@ class SarprasProcessor
 
             }
         );
+    }
+
+    /**
+     * Aturan validasi kolom jadwal perbaikan.
+     *
+     * `after_or_equal:now` hanya dipasang untuk jadwal yang benar-benar baru.
+     * Sebelumnya aturan itu selalu aktif, padahal view mengisi ulang input
+     * dengan jadwal yang sudah tersimpan — begitu jadwal itu terlewat waktu,
+     * tombol "Simpan Perbaikan" selalu menolak submit petugas dan laporan
+     * tidak bisa diproses maupun diselesaikan lagi.
+     *
+     * @return list<string>
+     */
+    private function scheduleRules(Request $request, Report $report): array
+    {
+        $rules = ['nullable', 'date'];
+
+        if (! $this->scheduleIsUnchanged(
+            $request->input('scheduled_repair_at'),
+            $report->damageDetail?->scheduled_repair_at
+        )) {
+            $rules[] = 'after_or_equal:now';
+        }
+
+        return $rules;
+    }
+
+    private function scheduleIsUnchanged(mixed $submitted, ?CarbonInterface $stored): bool
+    {
+        if ($stored === null || ! is_string($submitted) || trim($submitted) === '') {
+            return false;
+        }
+
+        try {
+            // Input `datetime-local` tidak mengirim detik, jadi perbandingan
+            // dilakukan pada presisi menit.
+            return Carbon::parse($submitted)->format('Y-m-d H:i') === $stored->format('Y-m-d H:i');
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private function safeOriginalName(string $name): string

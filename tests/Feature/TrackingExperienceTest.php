@@ -13,6 +13,8 @@ class TrackingExperienceTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const DEVICE_ID = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,11 +30,24 @@ class TrackingExperienceTest extends TestCase
             ["lap-abc234-xyz789\n", '123-456'],
             ['LAP ABC234 XYZ789', '123 456'],
         ] as [$reportNumber, $accessCode]) {
-            $this->post(route('track.search'), [
-                'report_number' => $reportNumber,
-                'access_code' => $accessCode,
-            ])->assertOk()->assertSee($report->report_number);
+            // Cookie perangkat wajib dikirim: pelacakan terikat perangkat, jadi
+            // tanpa cookie ini permintaan berhenti di gerbang perangkat dan yang
+            // diuji bukan lagi normalisasi salin-tempel.
+            $this->withCookie('laporin_device_id', self::DEVICE_ID)
+                ->post(route('track.search'), [
+                    'report_number' => $reportNumber,
+                    'access_code' => $accessCode,
+                ])
+                ->assertRedirect(route('track.result'));
         }
+
+        $this->withCookies([
+            'laporin_device_id' => self::DEVICE_ID,
+            'laporin_tracking_proof' => $report->id.'|'.hash_hmac('sha256', (string) $report->access_code_hash, config('app.key')),
+        ])
+            ->get(route('track.result'))
+            ->assertOk()
+            ->assertSee($report->report_number);
     }
 
     public function test_tracking_form_is_copy_paste_friendly_and_explains_the_canonical_format_without_plus_signs(): void
@@ -40,10 +55,30 @@ class TrackingExperienceTest extends TestCase
         $this->get(route('track.form'))->assertOk()
             ->assertSee('data-normalize-report-number', false)
             ->assertSee('data-normalize-access-code', false)
-            ->assertSee('maxlength="24"', false)
-            ->assertSee('maxlength="16"', false)
+            /*
+             * Batas panjang HARUS ditegakkan normalizer, bukan atribut
+             * maxlength. maxlength memotong hasil paste sebelum label/spasi
+             * dibuang: dengan maxlength="16", menempel "Kode Akses: 123456"
+             * (18 karakter) tersisa "Kode Akses: 1234" lalu menjadi "1234",
+             * dan server menolak kode yang sebenarnya benar. Test ini dulu
+             * justru mengunci batas yang merusak salin-tempel itu.
+             */
+            ->assertSee("replace(/[^0-9]/g, '').slice(0, 6)", false)
+            ->assertSee("replace(/[^A-Z0-9-]/g, '').slice(0, 24)", false)
+            ->assertDontSee('maxlength="16"', false)
             ->assertSee('LAP-ABC234-XYZ789')
             ->assertDontSee('LPR + tahun/bulan + 4 digit');
+    }
+
+    public function test_tracking_form_discloses_the_same_device_restriction_before_the_reporter_fails(): void
+    {
+        // Pesan penolakannya sengaja tidak menyebut penyebab pastinya agar kode
+        // akses 6 digit tidak bisa ditebak dari perbedaan pesan. Konsekuensinya
+        // pembatasan perangkat WAJIB diberitahukan lebih dulu, kalau tidak
+        // pelapor yang mencoba dari ponsel lain hanya melihat "tidak cocok" dan
+        // menyimpulkan laporannya hilang.
+        $this->get(route('track.form'))->assertOk()
+            ->assertSee('perangkat dan peramban yang sama');
     }
 
     public function test_success_page_has_accessible_copy_buttons_beside_both_tracking_credentials(): void
@@ -108,6 +143,9 @@ class TrackingExperienceTest extends TestCase
             'status' => 'menunggu_verifikasi',
             'assigned_to_role' => 'kesiswaan',
             'consent_accepted_at' => now(),
+            // Nilai yang sama dihitung PublicReportService saat laporan dibuat.
+            // Tanpa ini pelacakan berhenti di gerbang perangkat.
+            'submitted_device_hash' => hash_hmac('sha256', self::DEVICE_ID, config('app.key')),
         ]);
     }
 }

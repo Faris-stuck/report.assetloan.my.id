@@ -382,6 +382,12 @@ textarea.form-control { min-height: 8rem; }
 .choice-card.is-selected { background: linear-gradient(180deg, #fcfffd, #eefcf4); }
 .choice-card input { accent-color: var(--laporin-green); }
 .detail-box { border: 1px solid var(--laporin-line); border-radius: 1rem; background: #fbfffd; padding: 1rem; }
+/* Teks bebas yang diketik pengguna (kronologi laporan, catatan petugas) ditulis
+   berbaris-baris, tetapi HTML meruntuhkan semua baris baru menjadi satu blok
+   sehingga urutan kejadian hilang saat dibaca petugas. pre-line mempertahankan
+   baris baru dan tetap meruntuhkan spasi ganda, jadi salin-tempel yang berantakan
+   tidak merusak tata letak. */
+.preserve-lines { white-space: pre-line; }
 .bottom-action {
     position: sticky;
     bottom: .75rem;

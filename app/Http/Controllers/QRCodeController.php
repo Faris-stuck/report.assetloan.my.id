@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\QrCode;
 use App\Services\QRCodePosterService;
+use App\Support\RequestFilters;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,7 +17,7 @@ class QRCodeController extends Controller
     {
         $query = QrCode::query();
 
-        if ($search = request('search')) {
+        if ($search = RequestFilters::searchTerm(request('search'))) {
             $query->where('qr_name', 'like', "%{$search}%");
         }
 

@@ -249,7 +249,10 @@ class PublicReportController extends Controller
         if ($step < 4) {
             $data = array_merge($draft, $incoming);
             $rules = $this->wizardRules($step, $data);
-            $validator = Validator::make($data, $rules);
+            // Pesan kustom PublicReportRequest sebelumnya hanya dipakai di
+            // langkah 4, sehingga pelapor yang tersandung di langkah 1-3
+            // mendapat pesan generik untuk aturan yang sama.
+            $validator = Validator::make($data, $rules, (new PublicReportRequest())->messages());
 
             if ($validator->fails()) {
                 return redirect()->route('public.report.step', $step)
@@ -366,6 +369,15 @@ class PublicReportController extends Controller
         return $redirect;
     }
 
+    /**
+     * Aturan validasi untuk satu langkah wizard.
+     *
+     * @param  array<string, mixed>  $data  Draft gabungan sampai langkah ini;
+     *                                      dipakai untuk memilih field yang
+     *                                      benar-benar dirender pada jenis
+     *                                      laporan yang sedang diisi.
+     * @return array<string, mixed>
+     */
     private function wizardRules(int $step, array $data): array
     {
         $request = new PublicReportRequest();
@@ -391,7 +403,24 @@ class PublicReportController extends Controller
             'damage_condition', 'suspected_cause', 'priority', 'incident_time',
         ];
 
-        return array_intersect_key($all, array_flip($keys));
+        $rules = array_intersect_key($all, array_flip($keys));
+
+        /*
+         * `title` hanya field nyata pada laporan pelanggaran. Untuk laporan
+         * kerusakan judul diturunkan server dari `item_name` (lihat
+         * wizardStoreStep), jadi menuntutnya sebagai field mandiri membuat
+         * pelapor menerima "Judul laporan wajib diisi." untuk kolom yang tidak
+         * pernah ada di formnya — sementara penyebab sebenarnya, item_name
+         * yang kosong, tenggelam di antara dua pesan. Kuncinya tetap
+         * divalidasi (bukan dibuang) supaya nilai turunannya ikut masuk
+         * validated() dan tersimpan ke draft untuk langkah 4; `item_name`
+         * yang sudah wajib adalah yang menjaga judul tidak pernah kosong.
+         */
+        if (($data['report_type'] ?? null) === 'damage') {
+            $rules['title'] = ['nullable', 'string', 'max:200'];
+        }
+
+        return $rules;
     }
 
     private function renderReportWizard(int $step): View

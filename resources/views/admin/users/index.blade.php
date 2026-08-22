@@ -1,6 +1,15 @@
 @extends('layouts.app')
 @section('title','Pengguna')
 @section('content')
+@php
+    // Satu request hanya punya satu bag old()/$errors. Modal edit sudah memakai
+    // penanda edit_user_id untuk memilih nilainya (lihat x-data di bawah), tapi
+    // form "Tambah pengguna" belum: gagal validasi saat MENGUBAH pengguna
+    // membuat form tambah ikut terisi data orang lain dan bertanda merah,
+    // seolah-olah operator sedang menambah akun yang salah.
+    $isEditing = (bool) old('edit_user_id');
+    $isCreating = ! $isEditing;
+@endphp
 <div class="page-header">
     <div>
         <span class="page-kicker">SuperAdmin</span>
@@ -11,45 +20,50 @@
 
 <div class="laporin-card mb-4">
     <h2 class="h5 fw-bold mb-3">Tambah pengguna tervalidasi</h2>
-    <form method="POST" action="{{ route('admin.users.store') }}" class="row g-3 align-items-end">
+    <form id="create-user-form" method="POST" action="{{ route('admin.users.store') }}" class="row g-3 align-items-end">
         @csrf
         <div class="col-md-6 col-lg-3">
             <label class="form-label required" for="name">Nama</label>
-            <input id="name" name="name" value="{{ old('name') }}" class="form-control @error('name') is-invalid @enderror" placeholder="Nama lengkap" required maxlength="150">
-            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <input id="name" name="name" value="{{ $isCreating ? old('name') : '' }}" class="form-control @if($isCreating)@error('name') is-invalid @enderror @endif" placeholder="Nama lengkap" required maxlength="150">
+            @if($isCreating)@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
         </div>
         <div class="col-md-6 col-lg-3">
             <label class="form-label required" for="email">Surel</label>
-            <input id="email" name="email" value="{{ old('email') }}" type="email" class="form-control @error('email') is-invalid @enderror" placeholder="Contoh: nama@sekolah.sch.id" required maxlength="150" autocomplete="email">
-            @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <input id="email" name="email" value="{{ $isCreating ? old('email') : '' }}" type="email" class="form-control @if($isCreating)@error('email') is-invalid @enderror @endif" placeholder="Contoh: nama@sekolah.sch.id" required maxlength="150" autocomplete="email">
+            @if($isCreating)@error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
         </div>
         <div class="col-md-6 col-lg-2">
             <label class="form-label required" for="password">Kata Sandi</label>
-            <input id="password" name="password" type="password" class="form-control @error('password') is-invalid @enderror" placeholder="Min 8 huruf+angka" required minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" autocomplete="new-password">
-            @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <input id="password" name="password" type="password" class="form-control @if($isCreating)@error('password') is-invalid @enderror @endif" placeholder="Min 8 huruf+angka" required minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Minimal 8 karakter dan harus memuat huruf serta angka." autocomplete="new-password">
+            @if($isCreating)@error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
         </div>
         <div class="col-md-6 col-lg-2">
             <label class="form-label required" for="role">Peran</label>
-            <select id="role" name="role" class="form-select @error('role') is-invalid @enderror" required>
+            <select id="role" name="role" class="form-select @if($isCreating)@error('role') is-invalid @enderror @endif" required>
                 @foreach($roles as $role)
-                    <option value="{{ $role }}" @selected(old('role') === $role)>{{ str_replace('_',' ', $role) }}</option>
+                    <option value="{{ $role }}" @selected($isCreating && old('role') === $role)>{{ str_replace('_',' ', $role) }}</option>
                 @endforeach
             </select>
-            @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            @if($isCreating)@error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
         </div>
         <div class="col-md-6 col-lg-2">
             <label class="form-label" for="phone">HP</label>
-            <input id="phone" name="phone" value="{{ old('phone') }}" class="form-control @error('phone') is-invalid @enderror" placeholder="Opsional" maxlength="30" pattern="[0-9+() .-]+" inputmode="tel">
-            @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <input id="phone" name="phone" value="{{ $isCreating ? old('phone') : '' }}" class="form-control @if($isCreating)@error('phone') is-invalid @enderror @endif" placeholder="Opsional" maxlength="30" pattern="[0-9+() .\-]+" title="Hanya angka dan karakter + ( ) spasi titik atau tanda hubung." inputmode="tel">
+            @if($isCreating)@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
         </div>
         <div class="col-md-6 col-lg-1">
             <div class="form-check mt-3 pt-1">
-                <input id="is_active" class="form-check-input" type="checkbox" name="is_active" value="1" @checked(old('is_active', true))>
+                {{-- Checkbox tak tercentang tidak ikut terkirim, jadi tanpa hidden 0
+                     old('is_active') selalu kosong dan default akan mencentang ulang
+                     kotak yang sengaja dimatikan operator. storeUser() memakai
+                     $request->boolean(), yang mengambil nilai terakhir. --}}
+                <input type="hidden" name="is_active" value="0">
+                <input id="is_active" class="form-check-input" type="checkbox" name="is_active" value="1" @checked($isCreating ? old('is_active', '1') : '1')>
                 <label for="is_active" class="form-check-label">Aktif</label>
             </div>
         </div>
         <div class="col-md-6 col-lg-2">
-            <button class="btn btn-laporin w-100">Tambah</button>
+            <button type="submit" class="btn btn-laporin w-100">Tambah</button>
         </div>
     </form>
 </div>
@@ -189,8 +203,11 @@
         <div class="mt-3">{{ $users->appends(request()->query())->links() }}</div>
     </div>
 
-    <x-modal name="edit-user" :show="old('edit_user_id') ? true : false" focusable>
-        <form method="POST" x-bind:action="baseUrl + '/' + editingUserId" class="p-3 p-lg-5">
+    {{-- Prop 'focusable' tidak dideklarasikan components/modal.blade.php dan
+         komponennya tidak merender $attributes, jadi atribut itu tidak pernah
+         berefek — jebakan tab sudah selalu aktif di dalam komponen. --}}
+    <x-modal name="edit-user" label="Ubah pengguna" :show="$isEditing">
+        <form id="edit-user-form" method="POST" x-bind:action="baseUrl + '/' + editingUserId" class="p-3 p-lg-5">
             @csrf
             @method('PUT')
             <input type="hidden" name="edit_user_id" x-bind:value="editingUserId">
@@ -200,47 +217,50 @@
                 <p class="mb-0 text-muted">Perbarui data pengguna atau nonaktifkan akun jika perlu.</p>
             </div>
 
-            @if(old('edit_user_id') && $errors->any())
+            @if($isEditing && $errors->any())
                 <div class="alert alert-danger mb-3">Periksa kembali field yang wajib diisi.</div>
             @endif
 
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label required" for="edit_name">Nama</label>
-                    <input id="edit_name" name="name" x-model="name" class="form-control @error('name') is-invalid @enderror" placeholder="Nama lengkap" required maxlength="150">
-                    @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input id="edit_name" name="name" x-model="name" class="form-control @if($isEditing)@error('name') is-invalid @enderror @endif" placeholder="Nama lengkap" required maxlength="150">
+                    @if($isEditing)@error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label required" for="edit_email">Surel</label>
-                    <input id="edit_email" name="email" x-model="email" type="email" class="form-control @error('email') is-invalid @enderror" placeholder="Contoh: nama@sekolah.sch.id" required maxlength="150" autocomplete="email">
-                    @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input id="edit_email" name="email" x-model="email" type="email" class="form-control @if($isEditing)@error('email') is-invalid @enderror @endif" placeholder="Contoh: nama@sekolah.sch.id" required maxlength="150" autocomplete="email">
+                    @if($isEditing)@error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label" for="edit_password">Kata Sandi</label>
-                    <input id="edit_password" name="password" x-model="password" type="password" class="form-control @error('password') is-invalid @enderror" placeholder="Biarkan kosong untuk simpan" minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" autocomplete="new-password">
-                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input id="edit_password" name="password" x-model="password" type="password" class="form-control @if($isEditing)@error('password') is-invalid @enderror @endif" placeholder="Biarkan kosong untuk simpan" minlength="8" pattern="(?=.*[A-Za-z])(?=.*\d).{8,}" title="Minimal 8 karakter dan harus memuat huruf serta angka. Kosongkan bila tidak ingin mengganti." autocomplete="new-password">
+                    @if($isEditing)@error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label required" for="edit_role">Peran</label>
-                    <select id="edit_role" name="role" x-model="role" class="form-select @error('role') is-invalid @enderror" required>
+                    <select id="edit_role" name="role" x-model="role" class="form-select @if($isEditing)@error('role') is-invalid @enderror @endif" required>
                         @foreach($roles as $role)
                             <option value="{{ $role }}">{{ str_replace('_',' ', $role) }}</option>
                         @endforeach
                     </select>
-                    @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    @if($isEditing)@error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
                 </div>
 
                 <div class="col-md-6">
                     <label class="form-label" for="edit_phone">HP</label>
-                    <input id="edit_phone" name="phone" x-model="phone" class="form-control @error('phone') is-invalid @enderror" placeholder="Opsional" maxlength="30" pattern="[0-9+() .-]+" inputmode="tel">
-                    @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <input id="edit_phone" name="phone" x-model="phone" class="form-control @if($isEditing)@error('phone') is-invalid @enderror @endif" placeholder="Opsional" maxlength="30" pattern="[0-9+() .\-]+" title="Hanya angka dan karakter + ( ) spasi titik atau tanda hubung." inputmode="tel">
+                    @if($isEditing)@error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror @endif
                 </div>
 
                 <div class="col-md-6 d-flex align-items-center">
                     <div class="form-check mt-4 pt-1">
+                        {{-- Sama seperti form tambah: hidden 0 memastikan status
+                             nonaktif benar-benar terkirim, bukan hilang. --}}
+                        <input type="hidden" name="is_active" value="0">
                         <input id="edit_is_active" class="form-check-input" type="checkbox" name="is_active" value="1" x-model="is_active">
                         <label for="edit_is_active" class="form-check-label">Aktif</label>
                     </div>
@@ -255,3 +275,35 @@
     </x-modal>
 </div>
 @endsection
+
+@if($errors->any())
+@push('scripts')
+<script>
+    // Skrip di layouts/app.blade.php menempelkan is-invalid plus satu
+    // .server-validation-feedback ke [name="..."] PERTAMA di dokumen. Halaman ini
+    // punya DUA form dengan nama field yang sama (tambah pengguna dan modal ubah
+    // pengguna), dan form tambah selalu lebih dulu di DOM. Akibatnya:
+    //   - gagal validasi saat MENGUBAH pengguna menandai merah form TAMBAH, jadi
+    //     operator diarahkan memperbaiki form yang salah;
+    //   - pada form yang benar pesannya tampil dua kali, karena blok error
+    //     server-side di atas sudah merender pesan yang sama.
+    // Field yang ditandai layout selalu punya aria-invalid="true", sedangkan yang
+    // dirender server-side tidak — itu yang dipakai untuk membedakannya.
+    //
+    // Catatan: jangan menulis nama direktif Blade berawalan @ di komentar JS ini.
+    // Blade mengompilasi direktif di seluruh berkas, termasuk di dalam tag script.
+    document.addEventListener('DOMContentLoaded', () => {
+        const scope = document.getElementById(@js($isEditing ? 'edit-user-form' : 'create-user-form'));
+
+        document.querySelectorAll('.server-validation-feedback').forEach((el) => el.remove());
+
+        document.querySelectorAll('[aria-invalid="true"]').forEach((el) => {
+            if (! scope || ! scope.contains(el)) {
+                el.classList.remove('is-invalid');
+                el.removeAttribute('aria-invalid');
+            }
+        });
+    });
+</script>
+@endpush
+@endif

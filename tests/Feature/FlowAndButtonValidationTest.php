@@ -36,9 +36,14 @@ class FlowAndButtonValidationTest extends TestCase
 
     public function test_public_and_auth_navigation_pages_render_expected_menus(): void
     {
+        // Wizard-nya server-driven: satu langkah per request. Langkah 1 hanya
+        // punya tombol "Lanjut"; "Kirim Laporan" baru muncul di langkah 4.
+        // Menuntut "Kirim Laporan" di halaman depan berarti menuntut tombol
+        // kirim di layar yang belum punya isian apa pun untuk dikirim.
         $this->get('/')->assertOk()
             ->assertDontSee('Mulai Laporan')
-            ->assertSee('Kirim Laporan');
+            ->assertSee('Lanjut')
+            ->assertDontSee('Kirim Laporan');
 
         $this->get(route('track.form'))->assertOk()
             ->assertSee('Formulir Pelacakan')
@@ -76,8 +81,17 @@ class FlowAndButtonValidationTest extends TestCase
     {
         $this->get(route('track.form'))->assertOk()
             ->assertSee('placeholder="LAP-ABC234-XYZ789"', false)
-            ->assertSee('maxlength="24"', false)
-            ->assertSee('maxlength="16"', false)
+            /*
+             * Batas panjang ditegakkan normalizer, BUKAN atribut maxlength.
+             * maxlength memotong hasil tempel sebelum label dan spasi dibuang,
+             * jadi menempel "Kode Akses: 123456" dengan maxlength="16" tersisa
+             * "Kode Akses: 1234" lalu menjadi "1234" — server menolak kode yang
+             * sebenarnya benar. Test ini bernama "accepts copy pasted" tetapi
+             * dulu justru mengunci kedua atribut yang merusak salin-tempel itu.
+             */
+            ->assertSee("replace(/[^A-Z0-9-]/g, '').slice(0, 24)", false)
+            ->assertSee("replace(/[^0-9]/g, '').slice(0, 6)", false)
+            ->assertDontSee('maxlength="16"', false)
             ->assertSee('data-normalize-report-number', false)
             ->assertSee('data-normalize-access-code', false)
             ->assertDontSee('LAP-XXXXXX-XXXXXX');
@@ -176,7 +190,15 @@ class FlowAndButtonValidationTest extends TestCase
                 'urgency' => 'sedang',
                 'consent' => '1',
                 'captcha' => '9',
-            ])->assertRedirect('/')->assertSessionHasErrors(['item_name', 'damage_condition']);
+            ])->assertRedirect('/')
+            // Hanya `item_name` yang boleh error di sini. `damage_condition`
+            // dan `title` adalah nilai TURUNAN dari `item_name`/`description`
+            // dan tidak pernah dirender sebagai field di langkah 3, jadi
+            // menuntutnya menghasilkan pesan untuk kolom yang tidak ada di
+            // layar pelapor — tanpa input untuk ditandai, pesannya menggantung
+            // di spanduk atas sebagai tuntutan yang mustahil dipenuhi.
+            ->assertSessionHasErrors(['item_name'])
+            ->assertSessionDoesntHaveErrors(['damage_condition', 'title']);
 
         $this->assertDatabaseCount('reports', 0);
 
@@ -273,7 +295,11 @@ class FlowAndButtonValidationTest extends TestCase
                 ->assertRedirect(route('admin.master.index', $resource))
                 ->assertSessionHasNoErrors();
             $this->actingAs($admin)->get(route('admin.master.index', $resource))->assertOk()
-                ->assertSee('Update')
+                // Panel admin seluruhnya berbahasa Indonesia. Tombol simpan di
+                // modal ubah dulu berlabel "Update" — satu-satunya kata Inggris
+                // di antara "Tambah"/"Hapus"/"Batal", jadi operator harus
+                // menebak apakah itu aksi yang sama. Kini "Simpan Perubahan".
+                ->assertSee('Simpan Perubahan')
                 ->assertSee('Hapus');
         }
     }

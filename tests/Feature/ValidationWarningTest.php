@@ -19,6 +19,8 @@ class ValidationWarningTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const DEVICE_ID = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+
     public function test_wrong_public_captcha_returns_to_form_with_warning_instead_of_error_page(): void
     {
         $this->seed();
@@ -54,11 +56,21 @@ class ValidationWarningTest extends TestCase
 
         $report = $this->report(['status' => 'memerlukan_informasi']);
 
-        $response = $this->from(route('track.form'))
+        // Cookie perangkat wajib dikirim. Gerbang perangkat diperiksa LEBIH DULU
+        // daripada bukti pelacakan, jadi tanpa cookie ini permintaan berhenti di
+        // gerbang perangkat dan yang diuji bukan lagi "bukti pelacakan hangus"
+        // seperti nama test ini, melainkan penolakan perangkat berbeda.
+        $response = $this->withCookie('laporin_device_id', self::DEVICE_ID)
+            ->from(route('track.form'))
             ->post(route('track.info', $report), ['note' => 'Tambahan info']);
 
         $response->assertRedirect(route('track.form'));
-        $response->assertSessionHasErrors(['access_code']);
+        // Pesannya ditempelkan ke KEDUA field karena pemulihannya menuntut
+        // pelapor mengisi ulang nomor laporan dan kode akses sekaligus.
+        $response->assertSessionHasErrors(['report_number', 'access_code']);
+
+        // Tulisan pelapor harus tersimpan, bukan hilang bersama sesinya.
+        $this->assertSame('Tambahan info', session('tracking_note_draft.'.$report->id));
     }
 
     public function test_kesiswaan_stale_report_action_returns_warning_instead_of_conflict_page(): void
@@ -176,6 +188,10 @@ class ValidationWarningTest extends TestCase
             'status' => 'menunggu_verifikasi',
             'assigned_to_role' => 'kesiswaan',
             'consent_accepted_at' => now(),
+            // Nilai yang sama dihitung PublicReportService saat laporan dibuat.
+            // Tanpa ini setiap aksi pelapor berhenti di gerbang perangkat, jadi
+            // jalur yang sebenarnya ingin diuji tidak pernah tercapai.
+            'submitted_device_hash' => hash_hmac('sha256', self::DEVICE_ID, config('app.key')),
         ], $overrides));
     }
 }

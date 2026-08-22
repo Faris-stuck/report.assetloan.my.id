@@ -73,6 +73,10 @@ return [
         'point' => 'poin',
         'point_reduction' => 'pengurangan poin',
         'priority' => 'prioritas',
+        // qr_code_id adalah field tersembunyi yang terisi saat pelapor memindai QR.
+        // Tanpa entri ini pesannya berbunyi "Qr code id yang dipilih tidak valid",
+        // menyebut nama kolom database yang tidak ada di formulir.
+        'qr_code_id' => 'kode QR',
         'qr_name' => 'nama QR',
         'qr_type' => 'tipe QR',
         'reason' => 'alasan',

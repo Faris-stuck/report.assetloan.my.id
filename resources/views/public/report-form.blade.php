@@ -157,21 +157,30 @@
             <small class="text-muted">Tanggal saat kejadian berlangsung (tidak boleh di masa depan).</small>
         </div>
 
+        {{-- Hanya cabang yang sesuai jenis laporan yang dirender.
+             Sebelumnya kedua cabang selalu ada di DOM (yang tidak aktif hanya
+             diberi .d-none + <fieldset disabled>), sehingga ada DUA field
+             bernama "description" dalam satu halaman. Skrip penanda error di
+             layouts.app mencari [name="description"] dan selalu mengenai yang
+             pertama, jadi pesan error kronologi pada laporan kerusakan
+             menempel di textarea yang tersembunyi — pelapor melihat form
+             ditolak tanpa tahu field mana yang salah. Langkah wizard
+             ditentukan server, jadi tidak ada peralihan jenis di sisi klien
+             yang perlu dilayani markup ganda. --}}
+        @if($reportType === 'violation')
+
         {{-- Judul tetap digunakan untuk laporan pelanggaran; laporan kerusakan
              membentuk judul secara otomatis dari nama barang/fasilitas. --}}
-        <div class="col-12{{ $reportType === 'violation' ? '' : ' d-none' }}" data-report-type-content="violation">
-            <fieldset class="border-0 p-0 m-0" {{ $reportType === 'violation' ? '' : 'disabled' }}>
+        <div class="col-12">
             <label class="form-label required" for="title">Judul singkat</label>
             <input id="title" name="title" value="{{ old('title') }}" class="form-control required" required maxlength="200"
                 placeholder="Contoh: Perundungan di Lab Komputer">
-            </fieldset>
         </div>
 
         {{-- ======================================================== --}}
         {{-- VIOLATION: 4 FIELD RINGKAS                                --}}
         {{-- ======================================================== --}}
-        <div class="col-12{{ $reportType === 'violation' ? '' : ' d-none' }}" data-report-type-content="violation">
-            <fieldset class="border-0 p-0 m-0" {{ $reportType === 'violation' ? '' : 'disabled' }}>
+        <div class="col-12">
             <div class="detail-box">
                 <h3 class="h6 fw-bold mb-3">Detail pelanggaran</h3>
                 <div class="row g-3">
@@ -201,29 +210,31 @@
                     </div>
                 </div>
             </div>
-            </fieldset>
         </div>
+
+        @else
 
         {{-- ======================================================== --}}
         {{-- DAMAGE: FIELD LENGKAP                                    --}}
         {{-- ======================================================== --}}
-        <div class="col-12{{ $reportType === 'damage' ? '' : ' d-none' }}" data-report-type-content="damage">
-            <fieldset class="border-0 p-0 m-0" {{ $reportType === 'damage' ? '' : 'disabled' }}>
+        <div class="col-12">
             <div class="detail-box">
                 <h3 class="h6 fw-bold mb-3">Detail kerusakan</h3>
                 <div class="row g-3">
                     <div class="col-12 col-md-6">
                         <label class="form-label required" for="item_name">Nama barang / fasilitas</label>
                         <input id="item_name" name="item_name" value="{{ old('item_name') }}" class="form-control required" placeholder="Contoh: Proyektor, AC, Pintu" maxlength="150" required>
+                        <small class="text-muted">Dipakai juga sebagai judul laporan.</small>
                     </div>
                     <div class="col-12">
-                        <label class="form-label required" for="description_damage">Deskripsi kerusakan / dampak</label>
-                        <textarea id="description_damage" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Jelaskan kerusakan dan dampaknya secara singkat.">{{ old('description') }}</textarea>
+                        <label class="form-label required" for="description">Deskripsi kerusakan / dampak</label>
+                        <textarea id="description" name="description" class="form-control required" rows="4" required maxlength="5000" placeholder="Jelaskan kerusakan dan dampaknya secara singkat.">{{ old('description') }}</textarea>
                     </div>
                 </div>
             </div>
-            </fieldset>
         </div>
+
+        @endif
 
     </div>
 </section>
@@ -332,8 +343,4 @@
     ];
 @endphp
 <script type="application/ld+json">{!! json_encode($homeJsonLd, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) !!}</script>
-@endpush
-
-@push('scripts')
-<script src="{{ asset('js/laporin-report-fix.js') }}?v={{ @filemtime(public_path('js/laporin-report-fix.js')) ?: time() }}" defer></script>
 @endpush

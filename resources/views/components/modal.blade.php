@@ -1,5 +1,6 @@
 @props([
     'name',
+    'label' => null,
     'show' => false,
     'maxWidth' => 'modal-lg'
 ])
@@ -133,6 +134,13 @@
 
     role="dialog"
     aria-modal="true"
+
+    {{-- role="dialog" + aria-modal tanpa nama membuat pembaca layar hanya
+         mengumumkan "dialog" tanpa menjelaskan dialog apa, padahal fokus baru
+         saja dipindahkan ke dalamnya oleh x-init. Prop label memberi nama yang
+         dapat dibaca; $name dipakai sebagai jaring pengaman agar tidak pernah
+         kosong. --}}
+    aria-label="{{ $label ?? $name }}"
 
     style="display: none;"
 >

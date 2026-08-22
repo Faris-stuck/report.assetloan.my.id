@@ -65,24 +65,44 @@
         ],
     ][$resource] ?? [];
 
-    $inputMax = function (string $field): int {
-        if (
-            in_array(
-                $field,
-                [
-                    'class_name',
-                    'grade_level',
-                    'major',
-                    'academic_year',
-                    'room_name',
-                ],
-                true
-            )
-        ) {
-            return 80;
-        }
+    // Hanya enam tabel master yang punya kolom is_active; students tidak.
+    // AdminService::resourceHasActiveFlag() melewati filter status untuk
+    // students, jadi menampilkan dropdown Status di sana berarti menawarkan
+    // kontrol yang dijamin tidak berefek apa pun.
+    $hasActiveFlag = in_array('is_active', $fields, true);
 
-        return 150;
+    // Satu request hanya punya satu bag old(). Kalau yang gagal validasi adalah
+    // modal edit (ditandai hidden __editing_id), form "Tambah Data" tidak boleh
+    // ikut terisi nilai baris yang sedang diedit — operator akan mengira dirinya
+    // sedang menambah data padahal isinya milik baris lain.
+    $isCreating = ! old('__editing_id');
+
+    $createOld = function (string $field, $default = null) use ($isCreating) {
+        return $isCreating ? old($field, $default) : $default;
+    };
+
+    // Batas panjang HARUS mengikuti ResourceValidator::rulesFor(). Sebelumnya
+    // helper ini hanya mengenal dua angka (80 dan 150), sehingga browser
+    // membiarkan operator mengetik 150 karakter untuk nis (server max:30) atau
+    // 80 karakter untuk grade_level (server max:20) — form baru gagal setelah
+    // dikirim. Peta eksplisit per field supaya keduanya tidak bisa melenceng.
+    $maxLengths = [
+        'class_name' => 80,
+        'grade_level' => 20,
+        'major' => 80,
+        'academic_year' => 20,
+        'room_name' => 80,
+        'subject_name' => 100,
+        'unit_name' => 100,
+        'violation_name' => 150,
+        'category_name' => 120,
+        'nis' => 30,
+        'name' => 150,
+        'parent_phone' => 30,
+    ];
+
+    $inputMax = function (string $field) use ($maxLengths): int {
+        return $maxLengths[$field] ?? 150;
     };
 
     $labelFor = function (string $field) use ($fieldLabels): string {
@@ -171,13 +191,20 @@
 
                     <div class="form-check form-switch mt-4">
 
+                        {{-- Checkbox yang tidak dicentang tidak ikut terkirim,
+                             sehingga old('is_active') hilang dan default akan
+                             mencentang ulang kotak yang sengaja dimatikan
+                             operator. Hidden 0 membuat kuncinya selalu ada;
+                             $request->boolean() memakai nilai terakhir. --}}
+                        <input type="hidden" name="is_active" value="0">
+
                         <input
                             id="create_is_active"
                             class="form-check-input"
                             type="checkbox"
                             name="is_active"
                             value="1"
-                            checked
+                            @checked($createOld('is_active', '1'))
                         >
 
                         <label
@@ -195,10 +222,19 @@
             {{-- CLASS ID --}}
             @elseif($f === 'class_id')
 
+                @php
+                    // Cabang ini dulu melewati logika $isRequired, padahal
+                    // ResourceValidator::rulesFor('students') mewajibkan
+                    // class_id. Akibatnya submit ditolak server tanpa satu pun
+                    // petunjuk di form. Pakai sumber kebenaran yang sama
+                    // dengan field biasa: daftar $required di atas.
+                    $isRequired = in_array($f, $required, true);
+                @endphp
+
                 <div class="col-md-4">
 
                     <label
-                        class="form-label"
+                        class="form-label {{ $isRequired ? 'required' : '' }}"
                         for="create_class_id"
                     >
                         Kelas
@@ -208,17 +244,26 @@
                         id="create_class_id"
                         name="class_id"
                         class="form-select"
+                        @required($isRequired)
+                        @if($isRequired) aria-describedby="create_class_id_help" @endif
                     >
 
-                        <option value="">
-                            Tidak terkait kelas
+                        {{-- Opsi kosong tetap ada supaya select punya
+                             placeholder, tapi teksnya tidak boleh berbohong:
+                             saat wajib, "Tidak terkait kelas" itu pilihan
+                             yang pasti ditolak server. --}}
+                        <option
+                            value=""
+                            @selected(! $createOld('class_id'))
+                        >
+                            {{ $isRequired ? 'Pilih kelas' : 'Tidak terkait kelas' }}
                         </option>
 
                         @foreach($classes as $c)
 
                             <option
                                 value="{{ $c->id }}"
-                                @selected(old('class_id') == $c->id)
+                                @selected($createOld('class_id') == $c->id)
                             >
                                 {{ $c->class_name }}
                             </option>
@@ -226,6 +271,82 @@
                         @endforeach
 
                     </select>
+
+                    {{-- Tanpa kelas aktif, field wajib ini tidak mungkin
+                         diisi. Beri tahu jalan keluarnya, jangan biarkan
+                         operator menebak kenapa dropdown-nya kosong. --}}
+                    @if($isRequired && $classes->isEmpty())
+                        <div id="create_class_id_help" class="helper-text text-danger">
+                            Belum ada kelas aktif. Tambahkan dulu di
+                            <a href="{{ route('admin.master.index', 'classes') }}">Data Master &rsaquo; Kelas</a>.
+                        </div>
+                    @elseif($isRequired)
+                        <div id="create_class_id_help" class="helper-text">
+                            Wajib dipilih. Hanya kelas berstatus aktif yang tampil.
+                        </div>
+                    @endif
+
+                </div>
+
+
+            {{-- POINT --}}
+            @elseif($f === 'point')
+
+                {{-- Server memvalidasi integer 0..100. Dulu field ini jatuh ke
+                     cabang generic dan dirender type="text" maxlength="150",
+                     jadi teks bebas seperti "seratus" baru ditolak setelah
+                     submit. Default 100 mengikuti default kolom di migrasi. --}}
+                <div class="col-md-2">
+
+                    <label
+                        class="form-label"
+                        for="create_point"
+                    >
+                        Poin
+                    </label>
+
+                    <input
+                        id="create_point"
+                        type="number"
+                        name="point"
+                        class="form-control"
+                        min="0"
+                        max="100"
+                        step="1"
+                        inputmode="numeric"
+                        value="{{ $createOld('point', 100) }}"
+                    >
+
+                </div>
+
+
+            {{-- PARENT PHONE --}}
+            @elseif($f === 'parent_phone')
+
+                {{-- Server menolak karakter di luar [0-9+() .-]. Tanpa pattern,
+                     nomor bertuliskan huruf lolos di browser dan baru gagal
+                     di server tanpa penjelasan karakter mana yang salah. --}}
+                <div class="col-md-3">
+
+                    <label
+                        class="form-label"
+                        for="create_parent_phone"
+                    >
+                        {{ $labelFor($f) }}
+                    </label>
+
+                    <input
+                        id="create_parent_phone"
+                        type="tel"
+                        name="parent_phone"
+                        class="form-control"
+                        inputmode="tel"
+                        maxlength="{{ $inputMax($f) }}"
+                        pattern="[0-9+() .\-]+"
+                        title="Hanya angka dan karakter + ( ) spasi titik atau tanda hubung."
+                        placeholder="08xxxxxxxxxx"
+                        value="{{ $createOld('parent_phone') }}"
+                    >
 
                 </div>
 
@@ -250,7 +371,7 @@
                         required
                         min="1"
                         max="100"
-                        value="{{ old('point_reduction') }}"
+                        value="{{ $createOld('point_reduction') }}"
                     >
 
                 </div>
@@ -275,7 +396,7 @@
                         maxlength="1000"
                         rows="2"
                         placeholder="Opsional"
-                    >{{ old('description') }}</textarea>
+                    >{{ $createOld('description') }}</textarea>
 
                 </div>
 
@@ -302,7 +423,7 @@
                         type="text"
                         class="form-control"
                         placeholder="{{ $labelFor($f) }}"
-                        value="{{ old($f) }}"
+                        value="{{ $createOld($f) }}"
                         maxlength="{{ $inputMax($f) }}"
                         @required($isRequired)
                     >
@@ -364,6 +485,8 @@
         </div>
 
 
+        @if($hasActiveFlag)
+
         <div class="col-md-6 col-lg-3">
 
             <label
@@ -401,6 +524,8 @@
 
         </div>
 
+        @endif
+
 
         <div class="col-md-6 col-lg-4 d-flex gap-2">
 
@@ -436,7 +561,9 @@
          RESULT INFO
          ======================================================== --}}
 
-    @if(request('search') || request('status'))
+    {{-- Filter status diabaikan server untuk resource tanpa is_active, jadi
+         jangan mengaku "hasil terfilter" hanya karena ?status= nyangkut di URL. --}}
+    @if(request('search') || ($hasActiveFlag && request('status')))
 
         <div class="mb-3 pb-3 border-bottom">
 
@@ -918,10 +1045,17 @@
                                 {{-- CLASS ID --}}
                                 @elseif($f === 'class_id')
 
+                                    @php
+                                        // Sama dengan create form: cabang ini melewati
+                                        // logika $isRequired, padahal server mewajibkan
+                                        // class_id untuk students. Pakai sumber yang sama.
+                                        $isRequired = in_array($f, $required, true);
+                                    @endphp
+
                                     <div class="col-md-6">
 
                                         <label
-                                            class="form-label"
+                                            class="form-label {{ $isRequired ? 'required' : '' }}"
                                             for="edit_{{ $it->id }}_class_id"
                                         >
                                             Kelas
@@ -931,10 +1065,15 @@
                                             id="edit_{{ $it->id }}_class_id"
                                             name="class_id"
                                             class="form-select"
+                                            @required($isRequired)
+                                            @if($isRequired) aria-describedby="edit_{{ $it->id }}_class_id_help" @endif
                                         >
 
-                                            <option value="">
-                                                Tidak terkait kelas
+                                            <option
+                                                value=""
+                                                @selected(! $editValue('class_id'))
+                                            >
+                                                {{ $isRequired ? 'Pilih kelas' : 'Tidak terkait kelas' }}
                                             </option>
 
 
@@ -954,6 +1093,71 @@
                                             @endforeach
 
                                         </select>
+
+                                        @if($isRequired && $classes->isEmpty())
+                                            <div id="edit_{{ $it->id }}_class_id_help" class="helper-text text-danger">
+                                                Belum ada kelas aktif. Tambahkan dulu di
+                                                <a href="{{ route('admin.master.index', 'classes') }}">Data Master &rsaquo; Kelas</a>.
+                                            </div>
+                                        @elseif($isRequired)
+                                            <div id="edit_{{ $it->id }}_class_id_help" class="helper-text">
+                                                Wajib dipilih. Hanya kelas berstatus aktif yang tampil.
+                                            </div>
+                                        @endif
+
+                                    </div>
+
+
+                                {{-- POINT --}}
+                                @elseif($f === 'point')
+
+                                    <div class="col-md-6">
+
+                                        <label
+                                            class="form-label"
+                                            for="edit_{{ $it->id }}_point"
+                                        >
+                                            Poin
+                                        </label>
+
+                                        <input
+                                            id="edit_{{ $it->id }}_point"
+                                            type="number"
+                                            name="point"
+                                            class="form-control"
+                                            min="0"
+                                            max="100"
+                                            step="1"
+                                            inputmode="numeric"
+                                            value="{{ $editValue('point') }}"
+                                        >
+
+                                    </div>
+
+
+                                {{-- PARENT PHONE --}}
+                                @elseif($f === 'parent_phone')
+
+                                    <div class="col-md-6">
+
+                                        <label
+                                            class="form-label"
+                                            for="edit_{{ $it->id }}_parent_phone"
+                                        >
+                                            {{ $labelFor($f) }}
+                                        </label>
+
+                                        <input
+                                            id="edit_{{ $it->id }}_parent_phone"
+                                            type="tel"
+                                            name="parent_phone"
+                                            class="form-control"
+                                            inputmode="tel"
+                                            maxlength="{{ $inputMax($f) }}"
+                                            pattern="[0-9+() .\-]+"
+                                            title="Hanya angka dan karakter + ( ) spasi titik atau tanda hubung."
+                                            value="{{ $editValue('parent_phone') }}"
+                                        >
 
                                     </div>
 
@@ -1090,7 +1294,44 @@
         document.addEventListener('DOMContentLoaded', function () {
             const el = document.getElementById('edit-master-{{ $it->id }}');
 
-            if (el && window.bootstrap?.Modal) {
+            if (! el) {
+                return;
+            }
+
+            // Script global di layout menandai [name="..."] PERTAMA di halaman,
+            // yaitu field form "Tambah Data" — bukan field di modal ini. Tanpa
+            // pemindahan ini, border merah muncul di form yang tidak disubmit
+            // sementara field yang benar-benar ditolak terlihat normal.
+            const errors = @js($errors->getBag('default')->messages());
+
+            document
+                .querySelectorAll('.server-validation-feedback')
+                .forEach(function (node) { node.remove(); });
+
+            Object.keys(errors).forEach(function (name) {
+                const selector = '[name="' + (window.CSS && CSS.escape ? CSS.escape(name) : name) + '"]';
+
+                document.querySelectorAll(selector).forEach(function (stale) {
+                    stale.classList.remove('is-invalid');
+                    stale.removeAttribute('aria-invalid');
+                });
+
+                const field = el.querySelector(selector);
+
+                if (! field) {
+                    return;
+                }
+
+                field.classList.add('is-invalid');
+                field.setAttribute('aria-invalid', 'true');
+
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback d-block server-validation-feedback';
+                feedback.textContent = Array.isArray(errors[name]) ? errors[name][0] : String(errors[name]);
+                (field.closest('.form-check') || field).insertAdjacentElement('afterend', feedback);
+            });
+
+            if (window.bootstrap?.Modal) {
                 bootstrap.Modal.getOrCreateInstance(el).show();
             }
         });

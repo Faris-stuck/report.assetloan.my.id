@@ -9,6 +9,7 @@ use App\Services\Role\Superadmin\AdminServiceInterface;
 use App\Services\Role\Superadmin\ResourceRegistry;
 use App\Services\Role\Superadmin\ResourceValidator;
 use App\Services\Role\Superadmin\UserManager;
+use App\Support\RequestFilters;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -43,7 +44,7 @@ class AdminService implements AdminServiceInterface
         }
         
         // Search across relevant fields
-        if ($search = request('search')) {
+        if ($search = RequestFilters::searchTerm(request('search'))) {
             $searchTerm = "%{$search}%";
             $query->where(function ($q) use ($resource, $searchTerm) {
                 // Search logic per resource type
@@ -136,47 +137,49 @@ class AdminService implements AdminServiceInterface
         $this->audited(request(), 'MASTER_DELETED', $record, $before);
         $this->forgetReferenceCaches();
 
-        return back()->with('status', 'Data dihapus/nonaktif.');
+        // Baris master benar-benar dihapus di sini; penonaktifan adalah aksi lain
+        // (checkbox "Aktif" pada form edit). Pesan lama menyebut dua-duanya
+        // sehingga operator tidak yakin datanya masih ada atau tidak.
+        return back()->with('status', 'Data dihapus.');
     }
 
     public function users(): View
-{
-    $query = User::query();
+    {
+        $query = User::query();
 
-    if ($search = request('search')) {
-        $searchTerm = "%{$search}%";
+        if ($search = RequestFilters::searchTerm(request('search'))) {
+            $searchTerm = "%{$search}%";
 
-        $query->where(function ($q) use ($searchTerm) {
-            $q->where('name', 'like', $searchTerm)
-                ->orWhere('email', 'like', $searchTerm);
-        });
-    }
-
-    if ($role = request('role')) {
-        $query->where('role', $role);
-    }
-
-    if ($status = request('status')) {
-        if ($status === 'active') {
-            $query->where('is_active', true);
-        } elseif ($status === 'inactive') {
-            $query->where('is_active', false);
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('name', 'like', $searchTerm)
+                    ->orWhere('email', 'like', $searchTerm);
+            });
         }
+
+        if ($role = request('role')) {
+            $query->where('role', $role);
+        }
+
+        if ($status = request('status')) {
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        return view('admin.users.index', [
+            'users' => $query->latest()->paginate(20),
+            'roles' => User::ROLES,
+            'activeSuperadminCount' => CacheHelper::remember(
+                'laporin:admin:active_superadmin_count',
+                60,
+                fn () => User::where('role', 'superadmin')
+                    ->where('is_active', true)
+                    ->count()
+            ),
+        ]);
     }
-
-    return view('admin.users.index', [
-        'users' => $query->latest()->paginate(20),
-        'roles' => User::ROLES,
-
-        'activeSuperadminCount' => \App\Helpers\CacheHelper::remember(
-            'laporin:admin:active_superadmin_count',
-            60,
-            fn () => User::where('role', 'superadmin')
-                ->where('is_active', true)
-                ->count()
-        ),
-    ]);
-}
 
     public function storeUser(Request $request): RedirectResponse
     {
@@ -220,45 +223,42 @@ class AdminService implements AdminServiceInterface
     }
 
     public function destroyUser(User $user): RedirectResponse
-{
-    $currentUser = request()->user();
+    {
+        $currentUser = request()->user();
 
-    if ($currentUser && $currentUser->id === $user->id) {
-        throw ValidationException::withMessages([
-            'user' => 'Anda tidak dapat menghapus akun yang sedang digunakan.',
-        ]);
+        if ($currentUser && $currentUser->id === $user->id) {
+            throw ValidationException::withMessages([
+                'user' => 'Anda tidak dapat menghapus akun yang sedang digunakan.',
+            ]);
+        }
+
+        if (
+            $user->role === 'superadmin'
+            && $user->is_active
+            && ! User::where('role', 'superadmin')
+                ->where('is_active', true)
+                ->whereKeyNot($user->id)
+                ->exists()
+        ) {
+            throw ValidationException::withMessages([
+                'user' => 'SuperAdmin aktif terakhir tidak dapat dihapus.',
+            ]);
+        }
+
+        $before = $user->getOriginal();
+        $user->delete();
+        $this->audited(request(), 'USER_DELETED', $user, $before);
+        $this->forgetUserCaches();
+
+        return back()->with('status', 'Pengguna berhasil dihapus.');
     }
-
-    if (
-        $user->role === 'superadmin'
-        && $user->is_active
-        && ! User::where('role', 'superadmin')
-            ->where('is_active', true)
-            ->whereKeyNot($user->id)
-            ->exists()
-    ) {
-        throw ValidationException::withMessages([
-            'user' => 'SuperAdmin aktif terakhir tidak dapat dihapus.',
-        ]);
-    }
-
-    $before = $user->getOriginal();
-    $user->delete();
-    $this->audited(request(), 'USER_DELETED', $user, $before);
-    $this->forgetUserCaches();
-
-    return back()->with(
-        'status',
-        'Pengguna berhasil dihapus.'
-    );
-}
 
     public function audit(): View
     {
         $query = AuditLog::query();
         
         // Search by user identity, actor type, or action.
-        if ($search = trim((string) request('search'))) {
+        if ($search = RequestFilters::searchTerm(request('search'))) {
             $searchTerm = "%{$search}%";
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('actor_type', 'like', $searchTerm)
@@ -269,23 +269,24 @@ class AdminService implements AdminServiceInterface
                     });
             });
         }
-        
+
         // Filter by action type
         if ($action = request('action')) {
             $query->where('action', $action);
         }
-        
-        // Filter by date range
-        if ($from_date = request('from_date')) {
-            $query->whereDate('created_at', '>=', $from_date);
+
+        // Filter by date range. Nilai yang bukan tanggal Y-m-d diabaikan supaya
+        // audit trail tidak tampil kosong tanpa alasan yang bisa dilihat.
+        if ($fromDate = RequestFilters::isoDate(request('from_date'))) {
+            $query->whereDate('created_at', '>=', $fromDate);
         }
-        if ($to_date = request('to_date')) {
-            $query->whereDate('created_at', '<=', $to_date);
+        if ($toDate = RequestFilters::isoDate(request('to_date'))) {
+            $query->whereDate('created_at', '<=', $toDate);
         }
 
         return view('admin.audit', [
             'logs' => $query->with('user')->latest()->paginate(30),
-            'actions' => \App\Helpers\CacheHelper::remember(
+            'actions' => CacheHelper::remember(
                 'laporin:admin:audit_actions',
                 300,
                 fn () => AuditLog::distinct()->pluck('action')

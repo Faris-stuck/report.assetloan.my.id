@@ -124,6 +124,16 @@
                     $scheduledRepairAt = $detail?->scheduled_repair_at?->format('Y-m-d\TH:i') ?? '';
                     $priorityValue = $detail?->priority ?? 'sedang';
                 }
+
+                /*
+                 * `min` tidak boleh melebihi nilai yang sudah terisi. Jadwal
+                 * tersimpan yang sudah terlewat waktu membuat browser menolak
+                 * submit lewat constraint validation, sehingga tombol "Simpan
+                 * Perbaikan" tampak mati tanpa pesan apa pun di halaman.
+                 */
+                $minScheduleForForm = $scheduledRepairAt !== '' && $scheduledRepairAt < $minSchedule
+                    ? $scheduledRepairAt
+                    : $minSchedule;
             @endphp
             <div class="accordion" id="accordion-sarpras-{{ $r->id }}">
                 <!-- Process Tab -->
@@ -156,7 +166,7 @@
                                 </div>
                                 <div class="col-12 col-md-6">
                                     <label class="form-label" for="scheduled_repair_at_{{ $r->id }}">Waktu Perbaikan</label>
-                                    <input id="scheduled_repair_at_{{ $r->id }}" type="datetime-local" name="scheduled_repair_at" min="{{ $minSchedule }}" class="form-control @if($errorsForThisForm && $errors->has('scheduled_repair_at')) is-invalid @endif" value="{{ $scheduledRepairAt }}">
+                                    <input id="scheduled_repair_at_{{ $r->id }}" type="datetime-local" name="scheduled_repair_at" min="{{ $minScheduleForForm }}" class="form-control @if($errorsForThisForm && $errors->has('scheduled_repair_at')) is-invalid @endif" value="{{ $scheduledRepairAt }}">
                                     @if($errorsForThisForm && $errors->has('scheduled_repair_at'))
                                         <div class="invalid-feedback">{{ $errors->first('scheduled_repair_at') }}</div>
                                     @endif
@@ -164,7 +174,7 @@
                                 <div class="col-12 col-md-6" data-file-field>
                                     <label class="form-label" for="repair_photo_{{ $r->id }}">Foto setelah diperbaiki</label>
                                     <input id="repair_photo_{{ $r->id }}" type="file" name="repair_photo" class="form-control @if($errorsForThisForm && $errors->has('repair_photo')) is-invalid @endif" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" data-file-input>
-                                    <small class="text-muted d-block mt-2">Format: JPG, PNG, atau WEBP. Ukuran maksimal: 5MB.</small>
+                                    <small class="text-muted d-block mt-2">Format: JPG, PNG, atau WEBP. Ukuran maksimal: 4MB.</small>
 
                                     {{-- Preview container: dicari relatif dari [data-file-field], bukan lewat id --}}
                                     <div class="mt-3" style="display: none;" data-preview-container>
@@ -240,7 +250,9 @@
  * Semua elemen dicari relatif terhadap wadah [data-file-field] agar id tidak pernah meleset.
  */
 const FILE_VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const FILE_MAX_SIZE = 5 * 1024 * 1024; // 5MB
+// Harus sama dengan aturan server `max:4096` di SarprasProcessor. Sebelumnya
+// batas di sini 5MB, sehingga file 4-5MB lolos pratinjau lalu ditolak server.
+const FILE_MAX_SIZE = 4 * 1024 * 1024; // 4MB
 
 function getFileField(el) {
     return el.closest('[data-file-field]');
@@ -263,8 +275,8 @@ function setupFileInput(input) {
 
         // Validate file size
         if (file.size > FILE_MAX_SIZE) {
-            const sizeMB = Math.round(file.size / 1024 / 1024);
-            showFileError(input, `File terlalu besar (${sizeMB}MB). Maks 5MB.`);
+            const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+            showFileError(input, `File terlalu besar (${sizeMB}MB). Maks 4MB.`);
             input.value = '';
             return;
         }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class QueryCachingPerformanceTest extends TestCase
@@ -93,12 +94,29 @@ class QueryCachingPerformanceTest extends TestCase
 
     /**
      * Test cache prefix is configured
+     *
+     * Literal 'laporin' hanya ada bila CACHE_PREFIX/APP_NAME diisi lewat .env
+     * (config/cache.php:118 menurunkan prefix dari APP_NAME) dan .env tidak
+     * di-commit. Yang bisa diuji di mana pun: prefix terisi dan mengikuti nama
+     * aplikasi, sehingga key tidak bertabrakan dengan aplikasi lain di Redis
+     * yang sama. Lihat juga RedisSessionStorageTest::test_cache_prefix_set.
      */
     public function test_cache_prefix_configured()
     {
-        $prefix = config('cache.prefix');
+        $prefix = (string) config('cache.prefix');
         $this->assertNotEmpty($prefix, 'Cache prefix should be configured');
-        $this->assertStringContainsString('laporin', $prefix, 'Cache prefix should contain "laporin"');
+
+        if (env('CACHE_PREFIX') !== null) {
+            $this->assertSame(env('CACHE_PREFIX'), $prefix, 'CACHE_PREFIX di environment harus dipakai apa adanya.');
+
+            return;
+        }
+
+        $this->assertStringContainsString(
+            Str::slug((string) config('app.name'), '_'),
+            $prefix,
+            'Prefix cache harus memuat slug APP_NAME supaya key tidak bertabrakan dengan aplikasi lain di Redis yang sama.'
+        );
     }
 
     /**

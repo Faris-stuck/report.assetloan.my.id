@@ -54,7 +54,23 @@ class PublicReportRequest extends FormRequest
             }],
             'reporter_email'=>['nullable','email:rfc','max:150'],
             'report_type'=>['required',Rule::in(['violation','damage'])],
-            'title'=>['required','string','max:200'],
+            /*
+             * Judul laporan kerusakan DITURUNKAN dari `item_name` di
+             * prepareForValidation(), dan langkah 3 memang tidak merender field
+             * judul untuk jenis ini. Menuntutnya sebagai field mandiri membuat
+             * pelapor yang belum mengisi nama barang menerima DUA pesan
+             * sekaligus: "Nama barang atau fasilitas wajib diisi." dan "Judul
+             * laporan wajib diisi." Pesan kedua menyebut kolom yang tidak
+             * pernah ada di formnya, dan karena tidak ada input bernama `title`
+             * di halaman, skrip penanda error di layouts.app tidak punya field
+             * untuk ditempeli — pesannya hanya menggantung di spanduk atas
+             * sebagai tuntutan yang mustahil dipenuhi pelapor.
+             *
+             * Kuncinya tetap divalidasi (bukan dibuang) supaya nilai turunannya
+             * ikut masuk validated() dan tersimpan; `item_name` yang wajib
+             * itulah yang menjaga judul tidak pernah kosong.
+             */
+            'title'=>$this->isDamageReport() ? ['nullable','string','max:200'] : ['required','string','max:200'],
             'related_class_id'=>['nullable','required_if:report_type,violation',Rule::exists('classes','id')->where('is_active',true)],
             'incident_date'=>['required','date','before_or_equal:today','after_or_equal:'.now()->subYears(2)->toDateString()],
             'incident_time'=>['nullable','date_format:H:i'],
@@ -70,7 +86,26 @@ class PublicReportRequest extends FormRequest
             'impact_description'=>['exclude_unless:report_type,violation','nullable','string','max:2000'],
             'item_name'=>['exclude_unless:report_type,damage','required','string','max:150'],
             'item_category'=>['exclude_unless:report_type,damage','nullable','string','max:100'],
-            'damage_condition'=>['exclude_unless:report_type,damage','required','string','max:2000'],
+            /*
+             * `damage_condition` juga DITURUNKAN, dari `description`, dan tidak
+             * pernah dirender sebagai field sendiri. Dua akibatnya bagi pelapor:
+             *
+             * 1. Saat deskripsi dikosongkan, dulu `required` di sini menyalakan
+             *    pesan KEDUA untuk textarea yang sama, dan pesan itu tidak bisa
+             *    ditandai inline karena tidak ada input bernama
+             *    `damage_condition` di halaman.
+             * 2. Batas `max:2000` lebih ketat daripada `description` (max:5000)
+             *    dan daripada maxlength="5000" pada textarea-nya. Pelapor yang
+             *    menulis 2001-5000 karakter diizinkan browser, lolos aturan
+             *    `description`, lalu ditolak di sini oleh pesan default Laravel
+             *    berbahasa Inggris tentang kolom yang tidak ada di formnya —
+             *    jalan buntu tanpa petunjuk apa yang harus diperbaiki.
+             *
+             * Kolomnya bertipe `text` di migrasi, jadi batas dinaikkan agar sama
+             * dengan field yang benar-benar diisi pelapor. Aturan panjang tetap
+             * ada untuk melindungi kasus nilai dikirim langsung.
+             */
+            'damage_condition'=>['exclude_unless:report_type,damage','nullable','string','max:5000'],
             'suspected_cause'=>['exclude_unless:report_type,damage','nullable','string','max:1000'],
             'priority'=>['exclude_unless:report_type,damage','nullable',Rule::in(['rendah','sedang','tinggi','darurat'])],
             'attachments'=>['nullable','array','max:3'],
@@ -79,5 +114,47 @@ class PublicReportRequest extends FormRequest
             'captcha'=>['required','integer'],
         ];
     }
-    public function messages(): array { return ['report_submit_token.required'=>'Sesi form sudah kedaluwarsa atau Anda sudah mengirim laporan. Muat ulang halaman lalu coba lagi.','reporter_phone.required'=>'Nomor HP wajib diisi agar sekolah dapat menghubungi pelapor.','reporter_phone.regex'=>'Format nomor HP tidak valid.','reporter_email.email'=>'Format alamat email tidak valid.','related_class_id.required_if'=>'Kelas kejadian wajib dipilih untuk laporan perundungan atau pelanggaran.','title.required'=>'Judul laporan wajib diisi.','description.required'=>'Kronologi wajib diisi.','alleged_actor_name.required'=>'Nama pelaku wajib diisi untuk laporan perundungan.','item_name.required'=>'Nama barang atau fasilitas wajib diisi.','damage_condition.required'=>'Deskripsi kerusakan / dampak wajib diisi.','incident_date.before_or_equal'=>'Tanggal kejadian tidak boleh melewati hari ini.','incident_date.after_or_equal'=>'Tanggal kejadian terlalu jauh ke belakang. Laporan hanya menerima kejadian dalam 2 tahun terakhir.']; }
+    public function messages(): array
+    {
+        return [
+            'report_submit_token.required'=>'Sesi form sudah kedaluwarsa atau Anda sudah mengirim laporan. Muat ulang halaman lalu coba lagi.',
+            'reporter_phone.required'=>'Nomor HP wajib diisi agar sekolah dapat menghubungi pelapor.',
+            'reporter_phone.regex'=>'Format nomor HP tidak valid.',
+            'reporter_email.email'=>'Format alamat email tidak valid.',
+            'related_class_id.required_if'=>'Kelas kejadian wajib dipilih untuk laporan perundungan atau pelanggaran.',
+            'title.required'=>'Judul laporan wajib diisi.',
+            /*
+             * Satu textarea `description` dipakai dua jenis laporan dengan label
+             * berbeda: "Kronologi singkat" untuk perundungan dan "Deskripsi
+             * kerusakan / dampak" untuk kerusakan (lihat langkah 3 pada
+             * public/report-form.blade.php). Pesan tunggal "Kronologi wajib
+             * diisi." memakai istilah yang tidak pernah muncul di formulir
+             * kerusakan, jadi pelapor disuruh mengisi sesuatu yang tidak ada di
+             * layarnya. Pesannya kini mengikuti label yang benar-benar dibaca
+             * pelapor.
+             */
+            'description.required'=>$this->isDamageReport()
+                ? 'Deskripsi kerusakan / dampak wajib diisi.'
+                : 'Kronologi wajib diisi.',
+            'description.max'=>$this->isDamageReport()
+                ? 'Deskripsi kerusakan / dampak maksimal 5000 karakter.'
+                : 'Kronologi maksimal 5000 karakter.',
+            'alleged_actor_name.required'=>'Nama pelaku wajib diisi untuk laporan perundungan.',
+            'item_name.required'=>'Nama barang atau fasilitas wajib diisi.',
+            'incident_date.before_or_equal'=>'Tanggal kejadian tidak boleh melewati hari ini.',
+            'incident_date.after_or_equal'=>'Tanggal kejadian terlalu jauh ke belakang. Laporan hanya menerima kejadian dalam 2 tahun terakhir.',
+        ];
+    }
+
+    /**
+     * Apakah permintaan ini laporan kerusakan fasilitas.
+     *
+     * Dipakai rules() dan messages() untuk membedakan field yang benar-benar
+     * dirender di langkah 3 dari field turunan yang tidak pernah dilihat
+     * pelapor.
+     */
+    private function isDamageReport(): bool
+    {
+        return $this->input('report_type') === 'damage';
+    }
 }

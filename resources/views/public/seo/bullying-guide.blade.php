@@ -7,7 +7,7 @@
 @php
     $updatedAt = '2026-08-18';
     $faqs = [
-        ['q' => 'Bagaimana cara lapor pembullyan di SMK Taruna Bangsa Bekasi?', 'a' => 'Buka LAPORIN, pilih jenis laporan Pelanggaran Siswa, isi identitas pelapor, detail kejadian, lalu tulis kronologinya lengkap dengan tempat dan waktu kejadian, kemudian kirim laporan. Sistem memberi nomor laporan dan kode akses untuk pelacakan status.'],
+        ['q' => 'Bagaimana cara lapor pembullyan di SMK Taruna Bangsa Bekasi?', 'a' => 'Buka LAPORIN, pilih jenis laporan Perundungan / Pelanggaran, isi identitas pelapor, detail kejadian, lalu tulis kronologinya lengkap dengan tempat dan waktu kejadian, kemudian kirim laporan. Sistem memberi nomor laporan dan kode akses untuk pelacakan status.'],
         ['q' => 'Apakah laporan perundungan bisa dilacak?', 'a' => 'Bisa. Setelah laporan terkirim, pelapor mendapat nomor laporan dan kode akses 6 digit untuk melihat perkembangan laporan di halaman Lacak Laporan.'],
         ['q' => 'Apa saja yang bisa dilaporkan lewat LAPORIN?', 'a' => 'LAPORIN dapat digunakan untuk laporan perundungan, pembullyan, bullying, pelanggaran tata tertib, kedisiplinan siswa, kejadian tidak aman, dan kerusakan fasilitas sekolah.'],
         ['q' => 'Apakah harus login untuk membuat laporan?', 'a' => 'Pelapor publik tidak perlu login. Pengelola sekolah seperti Kesiswaan, Sarpras, Wali Kelas, Guru, Siswa, dan SuperAdmin menggunakan login sesuai peran.'],
@@ -75,7 +75,7 @@
         <div class="col-lg-4">
             <div class="laporin-card bg-white h-100">
                 <h2 class="h5 fw-bold">Jawaban cepat</h2>
-                <p class="small-muted mb-0">Untuk melaporkan pembullyan atau perundungan di SMK Taruna Bangsa Bekasi, buka LAPORIN, pilih <strong>Pelanggaran Siswa</strong>, lalu tulis kronologinya — sebutkan tempat, waktu kejadian, pihak terdampak, dan lampirkan bukti bila ada. Setelah laporan dikirim, simpan nomor laporan dan kode akses untuk memantau status melalui halaman Lacak Laporan.</p>
+                <p class="small-muted mb-0">Untuk melaporkan pembullyan atau perundungan di SMK Taruna Bangsa Bekasi, buka LAPORIN, pilih <strong>Perundungan / Pelanggaran</strong>, lalu tulis kronologinya — sebutkan tempat, waktu kejadian, pihak terdampak, dan lampirkan bukti bila ada. Setelah laporan dikirim, simpan nomor laporan dan kode akses untuk memantau status melalui halaman Lacak Laporan.</p>
             </div>
         </div>
     </div>
@@ -100,7 +100,7 @@
             <h2>Cara membuat laporan pembullyan/perundungan</h2>
             <ol>
                 <li>Buka halaman <a href="{{ route('public.report') }}#form-laporan">Buat Laporan</a>.</li>
-                <li>Pilih jenis laporan <strong>Pelanggaran Siswa</strong>.</li>
+                <li>Pilih jenis laporan <strong>Perundungan / Pelanggaran</strong>.</li>
                 <li>Isi identitas pelapor dan data kelas sesuai formulir.</li>
                 <li>Isi tanggal kejadian, lalu tulis kronologinya — sebutkan tempat, waktu, dan urutan kejadian dengan bahasa yang jelas.</li>
                 <li>Tambahkan bukti bila ada, seperti foto atau PDF. Jangan mengunggah data yang tidak relevan.</li>
@@ -142,7 +142,7 @@
             </div>
             <hr>
             <h3 class="h6 fw-bold">Pilih jenis laporan yang tepat</h3>
-            <p class="small-muted">Perundungan, ejekan berulang, intimidasi, ancaman, dan pelanggaran tata tertib masuk ke jenis <strong>Pelanggaran Siswa</strong> dan ditangani Kesiswaan. Fasilitas rusak seperti lampu, meja, kursi, toilet, AC, atau proyektor masuk ke jenis <strong>Kerusakan Fasilitas</strong> dan ditangani Sarpras.</p>
+            <p class="small-muted">Perundungan, ejekan berulang, intimidasi, ancaman, dan pelanggaran tata tertib masuk ke jenis <strong>Perundungan / Pelanggaran</strong> dan ditangani Kesiswaan. Fasilitas rusak seperti lampu, meja, kursi, toilet, AC, atau proyektor masuk ke jenis <strong>Kerusakan Fasilitas</strong> dan ditangani Sarpras.</p>
             <p class="small-muted mb-0">Masih ragu memilih? Baca <a href="{{ route('seo.student-violation') }}">panduan lapor pelanggaran siswa</a> atau <a href="{{ route('seo.facility-damage') }}">panduan lapor kerusakan fasilitas sekolah</a>.</p>
             <hr>
             <p class="small-muted mb-0">Gunakan bahasa yang jelas dan tidak melebih-lebihkan. Laporan palsu dapat menghambat penanganan kejadian nyata.</p>

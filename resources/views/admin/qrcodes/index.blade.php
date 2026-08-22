@@ -20,23 +20,9 @@
     </div>
 </div>
 
-@if(session('status'))
-    <div class="alert alert-success">
-        {{ session('status') }}
-    </div>
-@endif
-
-@if($errors->any())
-    <div class="alert alert-danger">
-        <strong>Terjadi kesalahan.</strong>
-
-        <ul class="mb-0 mt-2">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
+{{-- Blok flash "status" dan daftar $errors sudah dirender layouts/app.blade.php
+     tepat di atas @yield('content'). Mengulangnya di sini membuat setiap pesan
+     sukses/error tampil dua kali dan mendorong form turun dua kali lipat. --}}
 
 {{-- ====================================================== --}}
 {{-- CREATE QR --}}
@@ -79,6 +65,13 @@
                 Nama QR
             </label>
 
+            {{-- Pattern harus mengikuti QRCodeController: /^[\pL\pN ._\-()]+$/u.
+                 Versi lama memakai [A-Za-z0-9 ...] sehingga nama ber-aksen
+                 (misalnya "QR Kantin Sekolah Ibu Ratmi Ë") ditolak browser
+                 padahal server menerimanya — dan tanpa title, pesannya cuma
+                 "Please match the requested format" tanpa menyebut aturannya.
+                 Tanda kurung diescape agar pola tetap sah saat browser
+                 mengompilasi pattern dengan flag v maupun u. --}}
             <input
                 id="qr_name"
                 name="qr_name"
@@ -88,23 +81,27 @@
                 placeholder="Contoh: QR LAPORIN Utama"
                 required
                 maxlength="150"
-                pattern="[A-Za-z0-9 ._\-()]+"
+                pattern="[\p{L}\p{N} ._\-\(\)]+"
+                title="Boleh huruf, angka, spasi, dan karakter . _ - ( ) saja."
                 autocomplete="off"
             >
 
             <div class="form-text">
-                Gunakan nama yang mudah dikenali.
+                Gunakan nama yang mudah dikenali. Maksimal 150 karakter.
             </div>
 
         </div>
 
         <div class="col-md-2">
 
-            <label class="form-label">
+            {{-- Label wajib menunjuk id yang benar-benar ada, kalau tidak
+                 pembaca layar dan klik-label tidak menemukan kontrolnya. --}}
+            <label class="form-label" for="qr_type_display">
                 Tipe
             </label>
 
             <input
+                id="qr_type_display"
                 type="text"
                 class="form-control"
                 value="Umum"
@@ -399,6 +396,7 @@
                                 @csrf
 
                                 <button
+                                    type="submit"
                                     class="btn btn-sm btn-outline-danger"
                                     @disabled(! $q->is_active)
                                 >
@@ -553,6 +551,7 @@
                             @csrf
 
                             <button
+                                type="submit"
                                 class="btn btn-sm btn-outline-danger w-100"
                                 @disabled(! $q->is_active)
                             >

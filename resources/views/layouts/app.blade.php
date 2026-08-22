@@ -115,7 +115,34 @@
                     @if($currentUser->canAccessMenuFor('kesiswaan'))<li class="nav-item"><a class="nav-link {{ request()->routeIs('kesiswaan.*') ? 'active' : '' }}" href="{{ route('kesiswaan.index') }}">Kesiswaan</a></li>@endif
                     @if($currentUser->canAccessMenuFor('sarpras'))<li class="nav-item"><a class="nav-link {{ request()->routeIs('sarpras.*') ? 'active' : '' }}" href="{{ route('sarpras.index') }}">Sarpras</a></li>@endif
                     @if($currentUser->isSuperadmin())
-                        <li class="nav-item dropdown"><a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-label="Panel Admin menu" aria-expanded="false">Panel Admin</a><ul class="dropdown-menu shadow border-0 rounded-4 p-2" role="menu"><li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}" role="menuitem">Pengguna</a></li><li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}" role="menuitem">Kode QR</a></li><li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}" role="menuitem">Catatan Audit</a></li></ul></li>
+                        {{-- Slug harus sama dengan yang diterima
+                             ResourceRegistry (lihat juga kartu Data Master di
+                             dashboard/index.blade.php). Sebelumnya menu ini
+                             tidak punya jalan ke Data Master sama sekali,
+                             padahal halaman Kesiswaan menyuruh operator
+                             "melengkapinya lewat menu Data Master".
+
+                             Wajib memakai bentuk kurung satu baris, bukan blok
+                             dengan penutup terpisah: Blade mencari pasangan
+                             blok PHP dengan regex non-greedy dari penanda
+                             pertama, sehingga penanda kurung di baris
+                             $currentUser di atas akan dipasangkan dengan
+                             penutup blok di sini dan seluruh markup navbar di
+                             antaranya ikut ditelan sebagai kode PHP. --}}
+                        @php($masterResources = ['classes' => 'Kelas', 'subjects' => 'Mata Pelajaran', 'staff-units' => 'Unit Staf', 'violation-types' => 'Jenis Pelanggaran', 'damage-categories' => 'Kategori Kerusakan', 'students' => 'Siswa'])
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->is('admin*') ? 'active' : '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-label="Panel Admin menu" aria-expanded="false">Panel Admin</a>
+                            <ul class="dropdown-menu shadow border-0 rounded-4 p-2" role="menu">
+                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.users.index') }}" role="menuitem">Pengguna</a></li>
+                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.qrcodes.index') }}" role="menuitem">Kode QR</a></li>
+                                <li role="none"><a class="dropdown-item rounded-3" href="{{ route('admin.audit') }}" role="menuitem">Catatan Audit</a></li>
+                                <li role="none"><hr class="dropdown-divider"></li>
+                                <li role="none"><h6 class="dropdown-header">Data Master</h6></li>
+                                @foreach($masterResources as $masterResource => $masterLabel)
+                                    <li role="none"><a class="dropdown-item rounded-3 {{ request()->is('admin/master/'.$masterResource.'*') ? 'active' : '' }}" href="{{ route('admin.master.index', $masterResource) }}" role="menuitem">{{ $masterLabel }}</a></li>
+                                @endforeach
+                            </ul>
+                        </li>
                     @endif
                 @endguest
             </ul>
@@ -131,7 +158,12 @@
 </nav>
 <main id="main-content" class="main-shell"><div class="container mobile-shell">
     @if(session('status'))<div class="alert alert-success shadow-sm" role="status" aria-live="polite">{{ session('status') }}</div>@endif
-    @if($errors->any())<div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive"><strong>Periksa input berikut:</strong><ul class="mb-0 mt-2">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div><script id="validation-errors-json" type="application/json">@json($errors->getBag('default')->messages())</script>@endif
+    {{-- array_unique: satu pesan yang sengaja ditempelkan ke beberapa field
+         (mis. "nomor laporan ATAU kode akses salah" yang harus muncul di kedua
+         input agar pelapor tidak mengedit field yang keliru) akan terdaftar
+         berulang di spanduk. Baris kembar identik terlihat seperti halaman
+         rusak, padahal masalahnya cuma satu. --}}
+    @if($errors->any())<div class="alert alert-danger shadow-sm" role="alert" aria-live="assertive"><strong>Periksa input berikut:</strong><ul class="mb-0 mt-2">@foreach(array_unique($errors->all()) as $e)<li>{{ $e }}</li>@endforeach</ul></div><script id="validation-errors-json" type="application/json">@json($errors->getBag('default')->messages())</script>@endif
     @yield('content')
 </div></main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>

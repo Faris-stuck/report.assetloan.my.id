@@ -39,7 +39,32 @@
                     </div>
                 </div>
 
+                {{-- Wadah ini punya dua peran. Saat penyalinan berhasil, label
+                     tombol sudah berubah menjadi "Tersalin" sehingga pengguna
+                     awas cukup diberi pengumuman untuk pembaca layar dan wadah
+                     tetap visually-hidden. Saat penyalinan GAGAL, tidak ada satu
+                     pun petunjuk visual — dulu pesan kegagalan ikut tertelan di
+                     sini, jadi pengguna mengira kode akses sudah tersalin,
+                     menutup halaman, lalu kehilangan satu-satunya kesempatan
+                     mencatat kodenya. Karena itu skrip di bawah membuka wadah
+                     ini khusus untuk kegagalan. --}}
                 <p id="copy-status" class="visually-hidden" role="status" aria-live="polite"></p>
+
+                @if(empty($accessCode))
+                    {{-- Kode akses hanya disimpan sebagai hash, jadi kalau nilainya
+                         tidak ikut terkirim ke halaman ini tidak ada cara
+                         menampilkannya ulang. Tanpa penjelasan, pelapor hanya
+                         melihat titik-titik dan tombol Salin yang mati. --}}
+                    <div class="alert alert-warning mt-4 text-start" role="alert">
+                        <strong>Kode akses tidak dapat ditampilkan.</strong><br>
+                        <span class="small">
+                            Laporan Anda sudah tersimpan dengan nomor di atas, tetapi kode aksesnya tidak bisa
+                            ditampilkan ulang karena hanya disimpan dalam bentuk teracak. Catat nomor laporan Anda,
+                            lalu hubungi petugas Kesiswaan atau Sarpras sekolah dengan menyebutkan nomor tersebut
+                            untuk menanyakan status laporan.
+                        </span>
+                    </div>
+                @endif
 
                 @if(session('notification_message'))
                     <div class="alert alert-info mt-4 text-start" role="alert">
@@ -65,6 +90,40 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const status = document.getElementById('copy-status');
+    const STATUS_ERROR_CLASSES = ['alert', 'alert-warning', 'mt-3', 'text-start'];
+
+    // Sukses: cukup diumumkan ke pembaca layar, karena label tombol sudah
+    // berubah menjadi "Tersalin" untuk pengguna awas.
+    const announceSuccess = (message) => {
+        if (!status) return;
+        status.classList.remove(...STATUS_ERROR_CLASSES);
+        status.classList.add('visually-hidden');
+        status.textContent = message;
+    };
+
+    // Gagal: WAJIB terlihat. Clipboard API hanya tersedia di secure context dan
+    // execCommand('copy') sudah diblokir di banyak browser, jadi kegagalan itu
+    // kejadian nyata — bukan kasus tepi. Kode akses hanya ditampilkan sekali,
+    // jadi kegagalan yang senyap sama artinya dengan pelapor kehilangan akses
+    // ke laporannya sendiri.
+    const announceFailure = (message, target) => {
+        if (status) {
+            status.classList.remove('visually-hidden');
+            status.classList.add(...STATUS_ERROR_CLASSES);
+            status.textContent = message;
+        }
+
+        // Sekalian sorot teksnya supaya saran "salin manual" bisa langsung
+        // dilakukan dengan satu Ctrl+C, bukan menyeret kursor sendiri.
+        if (target && window.getSelection && document.createRange) {
+            const range = document.createRange();
+            range.selectNodeContents(target);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    };
+
     const fallbackCopy = (value) => {
         const textarea = document.createElement('textarea');
         textarea.value = value;
@@ -93,13 +152,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const original = label?.textContent || 'Salin';
                 if (label) label.textContent = 'Tersalin';
                 button.classList.add('is-copied');
-                if (status) status.textContent = `${button.dataset.copyName} berhasil disalin.`;
+                announceSuccess(`${button.dataset.copyName} berhasil disalin.`);
                 window.setTimeout(() => {
                     if (label) label.textContent = original;
                     button.classList.remove('is-copied');
                 }, 1800);
             } catch (_) {
-                if (status) status.textContent = `${button.dataset.copyName} gagal disalin. Pilih kode lalu salin secara manual.`;
+                announceFailure(
+                    `${button.dataset.copyName} gagal disalin otomatis. Teksnya sudah disorot — tekan Ctrl+C (atau Cmd+C) sekarang, atau catat manual sebelum menutup halaman ini.`,
+                    target
+                );
             }
         });
     });

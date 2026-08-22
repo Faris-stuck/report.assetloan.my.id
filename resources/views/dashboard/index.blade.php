@@ -16,6 +16,21 @@
         'ditolak' => 'Ditolak',
         'diarsipkan' => 'Diarsipkan',
     ];
+
+    // Kunci $stats dari DashboardController (total, violation, damage, pending,
+    // done) TIDAK ada di $statusLabels, jadi kartu statistik selalu jatuh ke
+    // fallback ucfirst() dan menampilkan "Violation", "Damage", "Pending",
+    // "Done" dalam bahasa Inggris di dasbor berbahasa Indonesia. Label khusus
+    // ini juga menjelaskan cakupan angkanya: "pending" hanya menghitung status
+    // menunggu_verifikasi, bukan semua laporan yang belum selesai.
+    $statLabels = [
+        'total' => 'Total Laporan',
+        'violation' => 'Laporan Pelanggaran',
+        'damage' => 'Laporan Kerusakan',
+        'pending' => 'Menunggu Verifikasi',
+        'done' => 'Selesai',
+    ];
+
     $quickMenus = [
         ['label' => 'Kesiswaan', 'desc' => 'Tangani pelanggaran siswa', 'icon' => '⚑', 'route' => route('kesiswaan.index'), 'allowed' => $user->canAccessMenuFor('kesiswaan')],
         ['label' => 'Sarpras', 'desc' => 'Tangani kerusakan fasilitas', 'icon' => '⚒', 'route' => route('sarpras.index'), 'allowed' => $user->canAccessMenuFor('sarpras')],
@@ -42,7 +57,7 @@
     @foreach($stats as $k=>$v)
         <div class="col-6 col-lg">
             <div class="laporin-card stat-card h-100">
-                <div class="stat-label">{{ $statusLabels[$k] ?? str_replace('_',' ', ucfirst($k)) }}</div>
+                <div class="stat-label">{{ $statLabels[$k] ?? str_replace('_',' ', ucfirst($k)) }}</div>
                 <div class="stat-value">{{ $v }}</div>
             </div>
         </div>

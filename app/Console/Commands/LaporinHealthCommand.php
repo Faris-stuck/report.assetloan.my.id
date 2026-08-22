@@ -214,28 +214,37 @@ class LaporinHealthCommand extends Command
     {
         $this->section('SERVICES');
 
-        $this->assert(
-            config('session.driver') === 'redis',
-            'SESSION_DRIVER',
-            'redis'
+        /*
+         * Nilai yang diterima harus mengikuti config, bukan sebaliknya.
+         * Sebelumnya perintah ini menuntut session.driver dan cache.default
+         * tepat 'redis', padahal config/session.php mendefault ke 'database'
+         * dan config/cache.php sengaja memakai rantai 'failover'
+         * (redis -> database). Akibatnya `php artisan laporin:health`
+         * melaporkan "SYSTEM NOT READY" pada konfigurasi yang justru benar,
+         * dan sinyalnya jadi tidak bisa dipercaya.
+         */
+        $this->assertOneOf(
+            config('session.driver'),
+            ['redis', 'database'],
+            'SESSION_DRIVER'
         );
 
-        $this->assert(
-            config('cache.default') === 'redis',
-            'CACHE_STORE',
-            'redis'
+        $this->assertOneOf(
+            config('cache.default'),
+            ['failover', 'redis', 'database'],
+            'CACHE_STORE'
         );
 
-        $this->assert(
-            config('queue.default') === 'database',
-            'QUEUE_CONNECTION',
-            'database'
+        $this->assertOneOf(
+            config('queue.default'),
+            ['database', 'redis'],
+            'QUEUE_CONNECTION'
         );
 
-        $this->assert(
-            config('mail.default') === 'smtp',
-            'MAIL_MAILER',
-            'smtp'
+        $this->assertOneOf(
+            config('mail.default'),
+            ['smtp', 'resend', 'log'],
+            'MAIL_MAILER'
         );
 
         $mailFrom = (string) config('mail.from.address');
@@ -409,6 +418,32 @@ class LaporinHealthCommand extends Command
         $this->recordFailure(
             $name,
             'expected: '.$expected
+        );
+    }
+
+    /**
+     * Terima salah satu nilai yang sah, dan selalu tampilkan nilai aktifnya
+     * supaya output perintah ini bisa dipakai untuk diagnosis, bukan hanya
+     * lolos/gagal.
+     *
+     * @param  list<string>  $allowed
+     */
+    private function assertOneOf(
+        mixed $actual,
+        array $allowed,
+        string $name
+    ): void {
+        $actual = is_scalar($actual) ? (string) $actual : '';
+
+        if (in_array($actual, $allowed, true)) {
+            $this->ok($name.' = '.$actual);
+
+            return;
+        }
+
+        $this->recordFailure(
+            $name,
+            'nilai "'.($actual === '' ? '(kosong)' : $actual).'", expected salah satu dari: '.implode(', ', $allowed)
         );
     }
 

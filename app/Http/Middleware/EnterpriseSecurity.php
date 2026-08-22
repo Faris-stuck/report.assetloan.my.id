@@ -24,7 +24,7 @@ class EnterpriseSecurity
             $request->cookies->set('laporin_device_id', $deviceId);
         }
 
-        $key = 'enterprise:device:'.hash_hmac('sha256', $deviceId, config('app.key'));
+        $key = 'enterprise:client:'.hash_hmac('sha256', $this->rateLimitSubject($clientIp, (string) $deviceId, $hadDeviceCookie), config('app.key'));
         $maxAttempts = 300;
         $decay = 60;
 
@@ -45,5 +45,18 @@ class EnterpriseSecurity
         }
 
         return $response;
+    }
+
+    /**
+     * Permintaan tanpa cookie perangkat yang sah selalu mendapat UUID baru di
+     * atas. Kalau kunci pembatas ikut memakai UUID itu, klien yang membuang
+     * cookie mendapat jatah 300 permintaan yang benar-benar baru setiap kali,
+     * sehingga pembatas ini tidak pernah menahan siapa pun. Untuk permintaan
+     * seperti itu kuncinya dijatuhkan ke IP; pengunjung wajar hanya melewati
+     * jalur ini sekali sebelum cookie-nya tersimpan.
+     */
+    private function rateLimitSubject(string $clientIp, string $deviceId, bool $hadDeviceCookie): string
+    {
+        return $hadDeviceCookie ? 'device:'.$deviceId : 'ip:'.$clientIp;
     }
 }

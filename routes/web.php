@@ -25,6 +25,11 @@ Route::post('/lapor', [PublicReportController::class, 'store'])->middleware('thr
 Route::get('/lapor-sukses/{report:public_token}', [PublicReportController::class, 'success'])->name('public.report.success');
 Route::get('/lacak', [TrackingController::class, 'form'])->name('track.form');
 Route::post('/lacak', [TrackingController::class, 'search'])->middleware('throttle:public-tracking')->name('track.search');
+// Halaman hasil pelacakan sengaja punya URL GET tanpa parameter: laporannya
+// ditentukan cookie bukti pelacakan, bukan URL, supaya nomor laporan tidak
+// tertinggal di riwayat peramban perangkat bersama. Tanpa URL GET ini, back()
+// setelah aksi pelapor mendarat di formulir /lacak yang kosong.
+Route::get('/lacak/hasil', [TrackingController::class, 'result'])->middleware('throttle:public-tracking')->name('track.result');
 Route::post('/lacak/{report}/info', [TrackingController::class, 'addInfo'])->middleware('throttle:public-tracking')->name('track.info');
 Route::post('/lacak/{report}/confirm', [TrackingController::class, 'confirmComplete'])->middleware('throttle:public-tracking')->name('track.confirm');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
