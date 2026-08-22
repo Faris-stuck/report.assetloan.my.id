@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Report;
-use App\Models\Location;
+use App\Models\Subject;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -58,7 +58,7 @@ class QueryPerformanceBugExplorationTest extends TestCase
 
         // Measure query response time for first access (cache miss)
         $start = microtime(true);
-        $reports = Report::with('location', 'violationType')->get();
+        $reports = Report::with('relatedClass', 'violationType')->get();
         $elapsed_ms = (microtime(true) - $start) * 1000;
 
         // Bug Condition: Report query should return <100ms (target is <50ms with cache)
@@ -204,7 +204,7 @@ class QueryPerformanceBugExplorationTest extends TestCase
             Cache::flush();  // Flush to ensure cache miss each time
             
             $start = microtime(true);
-            $reports = Report::with('location', 'violationType')->get();
+            $reports = Report::with('relatedClass', 'violationType')->get();
             $elapsed_ms = (microtime(true) - $start) * 1000;
             
             $times[] = $elapsed_ms;
@@ -233,7 +233,7 @@ class QueryPerformanceBugExplorationTest extends TestCase
      * 
      * Validates: Requirements 1.3
      * 
-     * This test specifically checks master data queries (locations, damage categories)
+     * This test specifically checks master data queries (subjects, damage categories)
      * which should be cached but are slow on unfixed code.
      * 
      */
@@ -241,9 +241,8 @@ class QueryPerformanceBugExplorationTest extends TestCase
     {
         // Create master data
         for ($i = 0; $i < 20; $i++) {
-            Location::create([
-                'location_name' => 'Location ' . $i,
-                'location_type' => 'classroom',
+            Subject::create([
+                'subject_name' => 'Mata Pelajaran ' . $i,
                 'is_active' => true
             ]);
         }
@@ -251,9 +250,9 @@ class QueryPerformanceBugExplorationTest extends TestCase
         // Flush cache to simulate unfixed code
         Cache::flush();
 
-        // Measure location query time
+        // Measure master data query time
         $start = microtime(true);
-        $locations = Location::all();
+        $subjects = Subject::all();
         $elapsed_ms = (microtime(true) - $start) * 1000;
 
         // Bug Condition: Master data queries should be <50ms (cached)
@@ -263,7 +262,7 @@ class QueryPerformanceBugExplorationTest extends TestCase
             "Bug Condition: Master data should be cached to improve performance"
         );
 
-        $this->assertGreaterThan(0, $locations->count());
+        $this->assertGreaterThan(0, $subjects->count());
     }
 
     /**

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Report;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -31,10 +30,9 @@ class TrackingDeviceBindingTest extends TestCase
     {
         parent::setUp();
 
-        // Rute /lacak memakai throttle:public-tracking, dan bootstrap/app.php
-        // memanggil throttleWithRedis() sehingga alias 'throttle' me-resolve ke
-        // varian Redis. Dua-duanya dimatikan agar test tidak menuntut Redis.
-        $this->withoutMiddleware([ThrottleRequests::class, ThrottleRequestsWithRedis::class]);
+        // Rute /lacak memakai throttle:public-tracking. Middleware-nya dimatikan
+        // supaya kuota tidak menumpuk antar test di kelas ini.
+        $this->withoutMiddleware([ThrottleRequests::class]);
 
         // ReportObserver mengirim SendReportNotifications setiap kali status
         // berubah. QUEUE_CONNECTION=sync akan menjalankannya inline dan job

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\BullyingDetail;
 use App\Models\HomeroomClass;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\User;
@@ -186,7 +185,6 @@ class FourRoleWorkflowTest extends TestCase
     public function test_public_report_requires_phone_and_violation_related_class(): void
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $payload = [
             'reporter_type' => 'siswa',
             'reporter_name' => 'Pelapor Validasi HP',
@@ -194,7 +192,6 @@ class FourRoleWorkflowTest extends TestCase
             'report_type' => 'violation',
             'alleged_actor_name' => 'Pelaku Validasi HP',
             'title' => 'Laporan validasi nomor HP',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi lengkap untuk validasi nomor HP wajib.',
             'urgency' => 'sedang',
@@ -310,7 +307,6 @@ class FourRoleWorkflowTest extends TestCase
             'reporter_phone' => '081234567890',
             'report_type' => 'violation',
             'title' => 'Laporan workflow empat role',
-            'location_id' => Location::firstOrFail()->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan workflow empat role.',
             'urgency' => 'sedang',

@@ -22,16 +22,6 @@ class BullyingDetailObserver
         $this->clearCache();
     }
 
-    public function restored(BullyingDetail $bullyingDetail): void
-    {
-        $this->clearCache();
-    }
-
-    public function forceDeleted(BullyingDetail $bullyingDetail): void
-    {
-        $this->clearCache();
-    }
-
     private function clearCache(): void
     {
         CacheHelper::invalidateTags([

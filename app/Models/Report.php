@@ -34,8 +34,6 @@ class Report extends Model
         'report_type',
         'title',
         'related_class_id',
-        'location_id',
-        'custom_location',
         'incident_date',
         'incident_time',
         'description',
@@ -86,11 +84,6 @@ class Report extends Model
         return $this->belongsTo(SchoolClass::class, 'related_class_id');
     }
 
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(Location::class);
-    }
-
     public function violationType(): BelongsTo
     {
         return $this->belongsTo(ViolationType::class);
@@ -99,11 +92,6 @@ class Report extends Model
     public function damageCategory(): BelongsTo
     {
         return $this->belongsTo(DamageCategory::class);
-    }
-
-    public function assignedUser(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'assigned_to_user_id');
     }
 
     public function bullyingDetail(): HasOne

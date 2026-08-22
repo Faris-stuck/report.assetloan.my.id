@@ -6,10 +6,10 @@ use App\Models\AuditLog;
 use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\StaffUnit;
+use App\Models\Student;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\ViolationType;
@@ -42,7 +42,6 @@ class Tier1_FeatureCoverageTest extends TestCase
     private function createViolationReport(array $overrides = []): Report
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $report = Report::create(array_merge([
             'report_number' => 'LAP-V-'.Str::random(6),
@@ -53,7 +52,6 @@ class Tier1_FeatureCoverageTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'violation',
             'title' => 'Laporan Perundungan E2E',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan perundungan untuk pengujian E2E.',
             'urgency' => 'sedang',
@@ -78,7 +76,6 @@ class Tier1_FeatureCoverageTest extends TestCase
 
     private function createDamageReport(array $overrides = []): Report
     {
-        $location = Location::firstOrFail();
         $category = DamageCategory::firstOrFail();
 
         $report = Report::create(array_merge([
@@ -89,7 +86,6 @@ class Tier1_FeatureCoverageTest extends TestCase
             'reporter_name' => 'Pelapor Damage',
             'report_type' => 'damage',
             'title' => 'Kerusakan Proyektor E2E',
-            'location_id' => $location->id,
             'damage_category_id' => $category->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Proyektor mati total di lab komputer.',
@@ -111,13 +107,13 @@ class Tier1_FeatureCoverageTest extends TestCase
     }
 
     // ==========================================
-    // Feature 1: Admin Master Locations Eager Loading
+    // Feature 1: Master Data Superadmin
     // ==========================================
 
-    public function test_1_admin_master_locations_index_returns_200_ok(): void
+    public function test_1_admin_master_classes_index_returns_200_ok(): void
     {
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations']));
+            ->get(route('admin.master.index', ['resource' => 'classes']));
 
         $response->assertOk();
         $response->assertViewIs('admin.master.index');
@@ -126,84 +122,45 @@ class Tier1_FeatureCoverageTest extends TestCase
         $this->assertNotNull($response->viewData('items'));
     }
 
-    public function test_1_admin_master_locations_displays_location_data(): void
+    public function test_1_admin_master_students_eager_loads_class_relationship(): void
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::create([
-            'location_name' => 'Lab Multimedia Tier1',
-            'location_type' => 'Ruang Praktik',
+        $student = Student::create([
+            'nis' => '99900123',
+            'name' => 'Siswa Tier1',
             'class_id' => $class->id,
-            'is_active' => true,
+            'point' => 0,
         ]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations']));
+            ->get(route('admin.master.index', ['resource' => 'students']));
 
         $response->assertOk();
-        $response->assertSee('Lab Multimedia Tier1');
-        $response->assertSee($location->location_type);
-        $this->assertTrue($response->viewData('items')->contains('id', $location->id));
-    }
-
-    public function test_1_admin_master_locations_eager_loads_class_relationship(): void
-    {
-        $class = SchoolClass::firstOrFail();
-        $location = Location::create([
-            'location_name' => 'Ruang Teori Tier1',
-            'location_type' => 'Kelas',
-            'class_id' => $class->id,
-            'is_active' => true,
-        ]);
-
-        $response = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations']));
-
-        $response->assertOk();
-        $items = $response->viewData('items');
-        $found = $items->firstWhere('id', $location->id);
+        $found = $response->viewData('items')->firstWhere('id', $student->id);
         $this->assertNotNull($found);
         $this->assertTrue($found->relationLoaded('class'));
         $this->assertEquals($class->id, $found->class->id);
     }
 
-    public function test_1_admin_master_locations_search_filter_by_location_name(): void
+    public function test_1_admin_master_search_filter_menyaring_baris(): void
     {
-        Location::create([
-            'location_name' => 'Bengkel TKR Khusus Search',
-            'location_type' => 'Bengkel',
-            'is_active' => true,
-        ]);
-
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations', 'search' => 'Bengkel TKR Khusus']));
+            ->get(route('admin.master.index', ['resource' => 'classes', 'search' => 'TIDAK-ADA-KELAS-INI']));
 
         $response->assertOk();
-        $items = $response->viewData('items');
-        $this->assertGreaterThanOrEqual(1, $items->count());
-        $this->assertEquals('Bengkel TKR Khusus Search', $items->first()->location_name);
+        $this->assertSame(0, $response->viewData('items')->count());
     }
 
-    public function test_1_admin_master_locations_status_filter_active_locations(): void
+    /**
+     * Fitur lokasi dihapus menyeluruh. Resource master 'locations' sudah tidak
+     * terdaftar, jadi ResourceRegistry harus abort(404) — bukan menampilkan
+     * halaman kosong yang menyesatkan superadmin.
+     */
+    public function test_1_admin_master_locations_sudah_tidak_ada(): void
     {
-        Location::create([
-            'location_name' => 'Gudang Nonaktif Tier1',
-            'location_type' => 'Gudang',
-            'is_active' => false,
-        ]);
-
-        $responseActive = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations', 'status' => 'active']));
-
-        $responseActive->assertOk();
-        $activeItems = $responseActive->viewData('items');
-        $this->assertFalse($activeItems->contains('location_name', 'Gudang Nonaktif Tier1'));
-
-        $responseInactive = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations', 'status' => 'inactive']));
-
-        $responseInactive->assertOk();
-        $inactiveItems = $responseInactive->viewData('items');
-        $this->assertTrue($inactiveItems->contains('location_name', 'Gudang Nonaktif Tier1'));
+        $this->actingAs($this->admin)
+            ->get(route('admin.master.index', ['resource' => 'locations']))
+            ->assertNotFound();
     }
 
     // ==========================================
@@ -236,7 +193,7 @@ class Tier1_FeatureCoverageTest extends TestCase
         $this->assertTrue($reports->contains('id', $report->id));
     }
 
-    public function test_2_kesiswaan_violation_index_eager_loads_bullying_and_location_relations(): void
+    public function test_2_kesiswaan_violation_index_eager_loads_bullying_relations(): void
     {
         $report = $this->createViolationReport();
 
@@ -249,7 +206,6 @@ class Tier1_FeatureCoverageTest extends TestCase
 
         $this->assertNotNull($item);
         $this->assertTrue($item->relationLoaded('bullyingDetail'));
-        $this->assertTrue($item->relationLoaded('location'));
         $this->assertTrue($item->relationLoaded('attachments'));
     }
 
@@ -322,7 +278,6 @@ class Tier1_FeatureCoverageTest extends TestCase
 
         $this->assertNotNull($item);
         $this->assertTrue($item->relationLoaded('damageDetail'));
-        $this->assertTrue($item->relationLoaded('location'));
         $this->assertTrue($item->relationLoaded('damageCategory'));
         $this->assertTrue($item->relationLoaded('attachments'));
     }
@@ -420,7 +375,7 @@ class Tier1_FeatureCoverageTest extends TestCase
         }
     }
 
-    public function test_4_report_detail_displays_location_and_timeline(): void
+    public function test_4_report_detail_displays_reporter_and_timeline(): void
     {
         $report = $this->createViolationReport();
 
@@ -428,7 +383,7 @@ class Tier1_FeatureCoverageTest extends TestCase
             ->get(route('reports.show', $report));
 
         $response->assertOk();
-        $response->assertSee($report->location->location_name);
+        $response->assertSee($report->report_number);
         $response->assertSee('menunggu_verifikasi');
     }
 
@@ -490,7 +445,6 @@ class Tier1_FeatureCoverageTest extends TestCase
         $reports = $response->viewData('reports');
         if ($reports->count() > 0) {
             $first = $reports->first();
-            $this->assertTrue($first->relationLoaded('location'));
             $this->assertTrue($first->relationLoaded('bullyingDetail'));
             $this->assertTrue($first->relationLoaded('damageDetail'));
         }
@@ -667,14 +621,16 @@ class Tier1_FeatureCoverageTest extends TestCase
         $this->assertGreaterThan(0, count($classes));
     }
 
-    public function test_8_public_reference_data_passes_locations_to_view(): void
+    /**
+     * Fitur lokasi dihapus menyeluruh, jadi view formulir publik tidak boleh
+     * lagi menerima variabel $locations dari controller.
+     */
+    public function test_8_public_reference_data_tidak_lagi_mengirim_locations(): void
     {
         $response = $this->get(route('public.report'));
 
         $response->assertOk();
-        $response->assertViewHas('locations');
-        $locations = $response->viewData('locations');
-        $this->assertGreaterThan(0, count($locations));
+        $response->assertViewMissing('locations');
     }
 
     public function test_8_public_reference_data_passes_subjects_and_staff_units(): void
@@ -787,7 +743,7 @@ class Tier1_FeatureCoverageTest extends TestCase
     public function test_10_security_role_isolation_superadmin_can_access_all_routes(): void
     {
         $this->actingAs($this->admin)->get(route('admin.users.index'))->assertOk();
-        $this->actingAs($this->admin)->get(route('admin.master.index', ['resource' => 'locations']))->assertOk();
+        $this->actingAs($this->admin)->get(route('admin.master.index', ['resource' => 'classes']))->assertOk();
         $this->actingAs($this->admin)->get(route('kesiswaan.index'))->assertOk();
         $this->actingAs($this->admin)->get(route('sarpras.index'))->assertOk();
         $this->actingAs($this->admin)->get(route('dashboard'))->assertOk();
@@ -796,7 +752,7 @@ class Tier1_FeatureCoverageTest extends TestCase
     public function test_10_security_role_isolation_kesiswaan_blocked_from_admin_and_sarpras(): void
     {
         $this->actingAs($this->kesiswaan)->get(route('admin.users.index'))->assertStatus(403);
-        $this->actingAs($this->kesiswaan)->get(route('admin.master.index', ['resource' => 'locations']))->assertStatus(403);
+        $this->actingAs($this->kesiswaan)->get(route('admin.master.index', ['resource' => 'classes']))->assertStatus(403);
         $this->actingAs($this->kesiswaan)->get(route('sarpras.index'))->assertStatus(403);
         $this->actingAs($this->kesiswaan)->get(route('kesiswaan.index'))->assertOk();
     }
@@ -804,7 +760,7 @@ class Tier1_FeatureCoverageTest extends TestCase
     public function test_10_security_role_isolation_sarpras_blocked_from_admin_and_kesiswaan(): void
     {
         $this->actingAs($this->sarpras)->get(route('admin.users.index'))->assertStatus(403);
-        $this->actingAs($this->sarpras)->get(route('admin.master.index', ['resource' => 'locations']))->assertStatus(403);
+        $this->actingAs($this->sarpras)->get(route('admin.master.index', ['resource' => 'classes']))->assertStatus(403);
         $this->actingAs($this->sarpras)->get(route('kesiswaan.index'))->assertStatus(403);
         $this->actingAs($this->sarpras)->get(route('sarpras.index'))->assertOk();
     }
@@ -812,7 +768,7 @@ class Tier1_FeatureCoverageTest extends TestCase
     public function test_10_security_role_isolation_wali_kelas_blocked_from_admin_kesiswaan_sarpras(): void
     {
         $this->actingAs($this->waliKelas)->get(route('admin.users.index'))->assertStatus(403);
-        $this->actingAs($this->waliKelas)->get(route('admin.master.index', ['resource' => 'locations']))->assertStatus(403);
+        $this->actingAs($this->waliKelas)->get(route('admin.master.index', ['resource' => 'classes']))->assertStatus(403);
         $this->actingAs($this->waliKelas)->get(route('kesiswaan.index'))->assertStatus(403);
         $this->actingAs($this->waliKelas)->get(route('sarpras.index'))->assertStatus(403);
         $this->actingAs($this->waliKelas)->get(route('dashboard'))->assertOk();

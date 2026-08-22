@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\User;
@@ -35,7 +34,6 @@ class ReportDetailTest extends TestCase
     private function report(array $overrides = []): Report
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         return Report::create(array_merge([
             'report_number' => 'LPR'.now()->format('Ym').str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
@@ -46,7 +44,6 @@ class ReportDetailTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'violation',
             'title' => 'Detail laporan test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan untuk regression test halaman detail.',
             'urgency' => 'sedang',

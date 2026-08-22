@@ -45,7 +45,7 @@ $kernel->bootstrap();
 '''
 
 CLEANUP_PHP_BODY = r'''
-use App\Models\{BullyingDetail,DamageCategory,DamageDetail,HomeroomClass,Location,QrCode,Report,ReportAttachment,ReportNote,ReportStatusHistory,SchoolClass,StaffUnit,Student,StudentViolation,Subject,TeacherAssignment,User,ViolationType};
+use App\Models\{BullyingDetail,DamageCategory,DamageDetail,HomeroomClass,QrCode,Report,ReportAttachment,ReportNote,ReportStatusHistory,SchoolClass,StaffUnit,Student,StudentViolation,Subject,TeacherAssignment,User,ViolationType};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -85,7 +85,6 @@ DB::transaction(function () {
     }
 
     QrCode::where('qr_name', 'like', 'QA_E2E_%')->delete();
-    Location::where('location_name', 'like', 'QA_E2E_%')->delete();
     Subject::where('subject_name', 'like', 'QA_E2E_%')->delete();
     StaffUnit::where('unit_name', 'like', 'QA_E2E_%')->delete();
     ViolationType::where('violation_name', 'like', 'QA_E2E_%')->delete();
@@ -128,7 +127,6 @@ $result = DB::transaction(function () {
     ]);
     $subject = Subject::create(['subject_name' => 'QA_E2E_Subject', 'is_active' => true]);
     $staffUnit = StaffUnit::create(['unit_name' => 'QA_E2E_Staff_Unit', 'is_active' => true]);
-    $location = Location::create(['location_name' => 'QA_E2E_Location', 'location_type' => 'ruang', 'class_id' => $class->id, 'is_active' => true]);
     $violationType = ViolationType::create(['violation_name' => 'QA_E2E_Violation_Type', 'point_reduction' => 9, 'description' => 'QA E2E', 'created_by' => $users['superadmin']->id, 'is_active' => true]);
     $damageCategory = DamageCategory::create(['category_name' => 'QA_E2E_Damage_Category', 'is_active' => true]);
     $student = Student::create(['user_id' => $users['siswa']->id, 'nis' => 'QA_E2E_NIS_'.Str::upper(Str::random(6)), 'name' => 'QA_E2E Student', 'class_id' => $class->id, 'parent_phone' => '+6281234500000', 'point' => 100]);
@@ -139,8 +137,7 @@ $result = DB::transaction(function () {
     $qr = QrCode::create([
         'qr_identifier' => $qrIdentifier,
         'qr_name' => 'QA_E2E_QR_SETUP',
-        'qr_type' => 'location',
-        'location_id' => $location->id,
+        'qr_type' => 'general',
         'target_url' => route('public.report.qr', $qrIdentifier),
         'created_by' => $users['superadmin']->id,
         'is_active' => true,
@@ -152,7 +149,7 @@ $result = DB::transaction(function () {
         } while (Report::where('report_number', $candidate)->exists());
         return $candidate;
     };
-    $makeReport = function (string $suffix, string $type, string $status = 'menunggu_verifikasi') use ($nextNumber, $class, $location) {
+    $makeReport = function (string $suffix, string $type, string $status = 'menunggu_verifikasi') use ($nextNumber, $class) {
         $report = Report::create([
             'report_number' => $nextNumber(),
             'public_token' => (string) Str::uuid(),
@@ -163,7 +160,6 @@ $result = DB::transaction(function () {
             'report_type' => $type,
             'title' => 'QA_E2E_'.$suffix,
             'related_class_id' => $class->id,
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'QA_E2E live flow report '.$suffix,
             'urgency' => 'sedang',
@@ -201,7 +197,6 @@ $result = DB::transaction(function () {
         'class_id' => $class->id,
         'subject_id' => $subject->id,
         'staff_unit_id' => $staffUnit->id,
-        'location_id' => $location->id,
         'violation_type_id' => $violationType->id,
         'damage_category_id' => $damageCategory->id,
         'student_id' => $student->id,
@@ -628,7 +623,7 @@ echo json_encode(['ok'=>true]);
         'siswa': login(users['siswa']['email']),
     }
 
-    master_paths = ['/admin/master/classes','/admin/master/subjects','/admin/master/staff-units','/admin/master/locations','/admin/master/violation-types','/admin/master/damage-categories']
+    master_paths = ['/admin/master/classes','/admin/master/subjects','/admin/master/staff-units','/admin/master/violation-types','/admin/master/damage-categories']
     crawl_pages('superadmin', sessions['superadmin'], ['/dashboard','/admin/users','/admin/qrcodes','/admin/audit','/kesiswaan','/sarpras', f"/reports/{setup['detail_report_id']}", f"/download-attachment/{setup['attachment_id']}"] + master_paths)
     crawl_pages('kesiswaan', sessions['kesiswaan'], ['/dashboard','/kesiswaan', f"/reports/{setup['detail_report_id']}"])
     crawl_pages('sarpras', sessions['sarpras'], ['/dashboard','/sarpras'])
@@ -655,7 +650,7 @@ echo json_encode(['ok'=>true]);
     check_response('admin user create button works', r, must_contain=['User dibuat'])
 
     # QR management currently supports only a general QR name. The previous
-    # E2E assumed the old class/location QR API, so it was testing fields that
+    # E2E assumed the old class QR API, so it was testing fields that
     # production no longer accepts. Validate the current contract instead.
     r = get(admin, '/admin/qrcodes')
     token = csrf_from(r.text)
@@ -683,12 +678,11 @@ echo json_encode(['ok'=>true]);
         'classes': ({}, {'class_name':'QA_E2E_MASTER_CLASS','grade_level':'XII','major':'QA','academic_year':'2026/2027','room_name':'QA-M','is_active':'1'}),
         'subjects': ({}, {'subject_name':'QA_E2E_MASTER_SUBJECT','is_active':'1'}),
         'staff-units': ({}, {'unit_name':'QA_E2E_MASTER_STAFF','is_active':'1'}),
-        'locations': ({}, {'location_name':'QA_E2E_MASTER_LOCATION','location_type':'ruang','class_id':setup['class_id'],'is_active':'1'}),
         'violation-types': ({}, {'violation_name':'QA_E2E_MASTER_VIOLATION','point_reduction':'5','description':'QA','is_active':'1'}),
         'damage-categories': ({}, {'category_name':'QA_E2E_MASTER_DAMAGE','is_active':'1'}),
     }
     required_markers = {
-        'classes': 'class name', 'subjects': 'subject name', 'staff-units': 'unit name', 'locations': 'location name', 'violation-types': 'violation name', 'damage-categories': 'category name'
+        'classes': 'class name', 'subjects': 'subject name', 'staff-units': 'unit name', 'violation-types': 'violation name', 'damage-categories': 'category name'
     }
     for resource, (_, payload) in master_payloads.items():
         r = get(admin, f'/admin/master/{resource}')

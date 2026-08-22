@@ -7,7 +7,6 @@ use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
 use App\Models\HomeroomClass;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\User;
@@ -38,7 +37,6 @@ class Tier4_RealWorldScenarioTest extends TestCase
         $wali = User::where('email', 'wali@laporin.local')->firstOrFail();
 
         $waliClass = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $category = DamageCategory::firstOrFail();
 
         // Assign homeroom class to wali
@@ -59,7 +57,6 @@ class Tier4_RealWorldScenarioTest extends TestCase
             'alleged_actor_name' => 'Siswa Terduga Lifecycle',
             'related_class_id' => $waliClass->id,
             'title' => 'Laporan Perundungan End to End Lifecycle',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan perundungan untuk lifecycle pengujian Tier 4.',
             'urgency' => 'sedang',
@@ -88,7 +85,6 @@ class Tier4_RealWorldScenarioTest extends TestCase
             'damage_category_id' => $category->id,
             'damage_condition' => 'Proyektor mati total tidak bisa dinyalakan.',
             'title' => 'Laporan Kerusakan Proyektor Lifecycle',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan kerusakan proyektor untuk lifecycle pengujian Tier 4.',
             'urgency' => 'tinggi',
@@ -183,7 +179,6 @@ class Tier4_RealWorldScenarioTest extends TestCase
         $sarpras = User::where('email', 'sarpras@laporin.local')->firstOrFail();
 
         $classes = SchoolClass::take(3)->get();
-        $locations = Location::take(2)->get();
         $category = DamageCategory::firstOrFail();
 
         $statuses = ['menunggu_verifikasi', 'sedang_ditangani', 'menunggu_konfirmasi', 'selesai', 'ditolak'];
@@ -194,7 +189,6 @@ class Tier4_RealWorldScenarioTest extends TestCase
             $type = $isViolation ? 'violation' : 'damage';
             $assignedRole = $isViolation ? 'kesiswaan' : 'sarpras';
             $class = $classes[$i % count($classes)];
-            $loc = $locations[$i % count($locations)];
             $status = $statuses[$i % count($statuses)];
 
             $createdDate = now()->subDays($i % 150);
@@ -209,7 +203,6 @@ class Tier4_RealWorldScenarioTest extends TestCase
                 'reporter_phone' => '08123456' . sprintf('%04d', $i),
                 'report_type' => $type,
                 'title' => "Batch Report Workload Item {$i}",
-                'location_id' => $loc->id,
                 'incident_date' => $createdDate->toDateString(),
                 'description' => "Deskripsi laporan batch workload item {$i}.",
                 'urgency' => ($i % 2 === 0) ? 'tinggi' : 'sedang',
@@ -274,9 +267,9 @@ class Tier4_RealWorldScenarioTest extends TestCase
             ->get(route('sarpras.index', ['page' => 2]))
             ->assertOk();
 
-        // 4. Verify Admin Master locations pagination
+        // 4. Verify Admin Master students pagination
         $this->actingAs($superadmin)
-            ->get(route('admin.master.index', ['resource' => 'locations']))
+            ->get(route('admin.master.index', ['resource' => 'students']))
             ->assertOk();
     }
 }

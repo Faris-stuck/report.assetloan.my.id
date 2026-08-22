@@ -44,15 +44,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('locations', function (Blueprint $table): void {
-            $table->id();
-            $table->string('location_name');
-            $table->string('location_type')->nullable();
-            $table->foreignId('class_id')->nullable()->constrained('classes')->nullOnDelete();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
-
         Schema::create('homeroom_classes', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('homeroom_user_id')->constrained('users')->cascadeOnDelete();
@@ -92,9 +83,8 @@ return new class extends Migration
             $table->id();
             $table->string('qr_identifier')->unique();
             $table->string('qr_name');
-            $table->enum('qr_type', ['general', 'class', 'location'])->default('general');
+            $table->enum('qr_type', ['general', 'class'])->default('general');
             $table->foreignId('class_id')->nullable()->constrained('classes')->nullOnDelete();
-            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
             $table->text('target_url');
             $table->boolean('is_active')->default(true);
             $table->unsignedInteger('scan_count')->default(0);
@@ -119,8 +109,6 @@ return new class extends Migration
             $table->enum('report_type', ['violation', 'damage'])->index();
             $table->string('title');
             $table->foreignId('related_class_id')->nullable()->constrained('classes')->nullOnDelete();
-            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
-            $table->string('custom_location')->nullable();
             $table->date('incident_date');
             $table->time('incident_time')->nullable();
             $table->text('description');
@@ -231,7 +219,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        foreach (['audit_logs', 'report_status_histories', 'report_notes', 'report_attachments', 'student_violations', 'damage_details', 'bullying_details', 'reports', 'qr_codes', 'damage_categories', 'violation_types', 'teacher_assignments', 'homeroom_classes', 'locations', 'students', 'staff_units', 'subjects', 'classes'] as $table) {
+        foreach (['audit_logs', 'report_status_histories', 'report_notes', 'report_attachments', 'student_violations', 'damage_details', 'bullying_details', 'reports', 'qr_codes', 'damage_categories', 'violation_types', 'teacher_assignments', 'homeroom_classes', 'students', 'staff_units', 'subjects', 'classes'] as $table) {
             Schema::dropIfExists($table);
         }
     }

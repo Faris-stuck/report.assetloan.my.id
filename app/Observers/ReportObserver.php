@@ -23,7 +23,7 @@ class ReportObserver
     public function forceDeleted(Report $report): void { $this->clearCache(); }
     private function clearCache(): void
     {
-        CacheHelper::invalidateTags(['report','location']);
+        CacheHelper::invalidateTags(['report']);
         CacheHelper::invalidate('laporin:report:*');
         CacheHelper::invalidate('laporin:dashboard:stats:*');
         CacheHelper::invalidate('laporin:dashboard:chart:*');

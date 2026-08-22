@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -38,7 +37,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -50,7 +48,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Complete Valid Damage Report',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'A complete and valid damage report.',
             'urgency' => 'darurat',
@@ -88,7 +85,9 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Should Be Rolled Back',
-            'location_id' => 999999,
+            // FK tidak valid: kelas terkait yang tidak ada. Divalidasi lewat aturan
+            // exists, jadi tidak ada satu pun baris yang boleh tertulis.
+            'related_class_id' => 999999,
             'incident_date' => now()->toDateString(),
             'description' => 'This report should rollback.',
             'urgency' => 'tinggi',
@@ -109,7 +108,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -121,7 +119,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Report for Sarpras Update',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'This report will be updated by Sarpras.',
             'urgency' => 'sedang',
@@ -154,7 +151,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -166,7 +162,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Form Regression Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Testing form regression.',
             'urgency' => 'darurat',
@@ -195,7 +190,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $urgencyValues = ['rendah', 'sedang', 'tinggi', 'darurat'];
 
         foreach ($urgencyValues as $urgency) {
@@ -209,7 +203,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => "Damage Report {$urgency}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Test report with urgency {$urgency}.",
                 'urgency' => $urgency,
@@ -276,7 +269,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -288,7 +280,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Persistence Test Report',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Testing persistence.',
             'urgency' => 'tinggi',
@@ -314,7 +305,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -326,7 +316,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Urgency Update Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Testing urgency update.',
             'urgency' => 'sedang',
@@ -358,7 +347,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         for ($i = 1; $i <= 5; $i++) {
             $this->withSession([
@@ -371,7 +359,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => "Bulk Report {$i}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Bulk test {$i}.",
                 'urgency' => ['rendah', 'sedang', 'tinggi', 'darurat', 'sedang'][$i - 1],
@@ -392,7 +379,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -404,7 +390,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Admin Update Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Testing admin priority update.',
             'urgency' => 'sedang',
@@ -432,7 +417,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     public function test_database_migration_supports_nullable_priority(): void
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $report = Report::create([
             'report_number' => 'LAP-TEST-' . uniqid(),
@@ -443,7 +427,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Migration Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Testing nullable priority.',
             'urgency' => 'tinggi',
@@ -475,7 +458,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession([
             'math_captcha_answer' => 8,
@@ -487,7 +469,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Concurrent Update Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Testing concurrent updates.',
             'urgency' => 'darurat',
@@ -515,7 +496,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
     {
         Storage::fake('private');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $staffUnit = \App\Models\StaffUnit::firstOrFail();
         $subject = \App\Models\Subject::where('is_active', true)->firstOrFail();
 
@@ -532,7 +512,6 @@ class PriorityPersistenceErrorScenariosTest extends TestCase
                 'reporter_phone' => $config['phone'],
                 'report_type' => 'damage',
                 'title' => "Damage from {$config['type']}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Report from {$config['type']}.",
                 'urgency' => 'tinggi',

@@ -69,7 +69,6 @@ class QRCodeController extends Controller
             'qr_name' => $data['qr_name'],
             'qr_type' => 'general',
             'class_id' => null,
-            'location_id' => null,
             'target_url' => $target,
             'created_by' => $request->user()->id,
             'is_active' => true,

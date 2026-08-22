@@ -22,16 +22,6 @@ class DamageDetailObserver
         $this->clearCache();
     }
 
-    public function restored(DamageDetail $damageDetail): void
-    {
-        $this->clearCache();
-    }
-
-    public function forceDeleted(DamageDetail $damageDetail): void
-    {
-        $this->clearCache();
-    }
-
     private function clearCache(): void
     {
         CacheHelper::invalidateTags([

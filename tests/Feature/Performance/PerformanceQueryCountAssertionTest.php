@@ -6,9 +6,9 @@ use App\Helpers\CacheHelper;
 use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\StaffUnit;
 use App\Models\Subject;
 use App\Models\User;
@@ -35,10 +35,9 @@ class PerformanceQueryCountAssertionTest extends TestCase
     {
         $kesiswaan = User::where('email', 'kesiswaan@laporin.local')->firstOrFail();
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         // 1. Measure query count with 5 reports
-        $this->createBatchViolationReports(5, $class, $location);
+        $this->createBatchViolationReports(5, $class);
 
         DB::enableQueryLog();
         DB::flushQueryLog();
@@ -49,7 +48,7 @@ class PerformanceQueryCountAssertionTest extends TestCase
         $count5 = count($queries5);
 
         // 2. Measure query count with 50 reports
-        $this->createBatchViolationReports(45, $class, $location);
+        $this->createBatchViolationReports(45, $class);
 
         DB::flushQueryLog();
 
@@ -78,11 +77,10 @@ class PerformanceQueryCountAssertionTest extends TestCase
     {
         $sarpras = User::where('email', 'sarpras@laporin.local')->firstOrFail();
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $category = DamageCategory::firstOrFail();
 
         // 1. Measure query count with 5 damage reports
-        $this->createBatchDamageReports(5, $class, $location, $category);
+        $this->createBatchDamageReports(5, $class, $category);
 
         DB::enableQueryLog();
         DB::flushQueryLog();
@@ -92,7 +90,7 @@ class PerformanceQueryCountAssertionTest extends TestCase
         $count5 = count(DB::getQueryLog());
 
         // 2. Measure query count with 50 damage reports
-        $this->createBatchDamageReports(45, $class, $location, $category);
+        $this->createBatchDamageReports(45, $class, $category);
 
         DB::flushQueryLog();
 
@@ -120,9 +118,8 @@ class PerformanceQueryCountAssertionTest extends TestCase
     {
         $superadmin = User::where('email', 'admin@laporin.local')->firstOrFail();
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
-        $this->createBatchViolationReports(5, $class, $location);
+        $this->createBatchViolationReports(5, $class);
 
         DB::enableQueryLog();
         DB::flushQueryLog();
@@ -130,7 +127,7 @@ class PerformanceQueryCountAssertionTest extends TestCase
         $this->actingAs($superadmin)->get(route('dashboard'))->assertOk();
         $count5 = count(DB::getQueryLog());
 
-        $this->createBatchViolationReports(45, $class, $location);
+        $this->createBatchViolationReports(45, $class);
 
         DB::flushQueryLog();
 
@@ -150,27 +147,27 @@ class PerformanceQueryCountAssertionTest extends TestCase
     }
 
     /**
-     * Test 4: Constant O(1) query count for Admin master locations list view.
+     * Test 4: Constant O(1) query count for Admin master students list view.
      */
-    public function test_admin_master_locations_has_constant_O1_query_count(): void
+    public function test_admin_master_students_has_constant_O1_query_count(): void
     {
         $superadmin = User::where('email', 'admin@laporin.local')->firstOrFail();
         $class = SchoolClass::firstOrFail();
 
-        // Create 20 locations attached to class
+        // Create 20 students attached to class
         for ($i = 1; $i <= 20; $i++) {
-            Location::create([
-                'location_name' => "Location Perf Test {$i}",
-                'location_type' => 'kelas',
+            Student::create([
+                'nis' => sprintf('880%05d', $i),
+                'name' => "Siswa Perf Test {$i}",
                 'class_id' => $class->id,
-                'is_active' => true,
+                'point' => 0,
             ]);
         }
 
         DB::enableQueryLog();
         DB::flushQueryLog();
 
-        $this->actingAs($superadmin)->get(route('admin.master.index', ['resource' => 'locations']))->assertOk();
+        $this->actingAs($superadmin)->get(route('admin.master.index', ['resource' => 'students']))->assertOk();
 
         $queries = DB::getQueryLog();
         $queryCount = count($queries);
@@ -178,7 +175,7 @@ class PerformanceQueryCountAssertionTest extends TestCase
         $this->assertLessThanOrEqual(
             20,
             $queryCount,
-            "Admin master locations query count ({$queryCount}) exceeded threshold. Check eager loading of class relation."
+            "Admin master students query count ({$queryCount}) exceeded threshold. Check eager loading of class relation."
         );
     }
 
@@ -238,14 +235,12 @@ class PerformanceQueryCountAssertionTest extends TestCase
     public function test_warm_cache_hit_executes_zero_database_queries_for_public_reference_data(): void
     {
         $classesKey = 'laporin:reference:classes';
-        $locationsKey = 'laporin:reference:locations';
         $subjectsKey = 'laporin:reference:subjects';
         $staffUnitsKey = 'laporin:reference:staff_units';
         $damageCategoriesKey = 'laporin:reference:damage_categories';
 
         // Warm up cache
         CacheHelper::remember($classesKey, 3600, fn () => SchoolClass::where('is_active', true)->get());
-        CacheHelper::remember($locationsKey, 3600, fn () => Location::where('is_active', true)->get());
         CacheHelper::remember($subjectsKey, 3600, fn () => Subject::where('is_active', true)->get());
         CacheHelper::remember($staffUnitsKey, 3600, fn () => StaffUnit::where('is_active', true)->get());
         CacheHelper::remember($damageCategoriesKey, 3600, fn () => DamageCategory::where('is_active', true)->get());
@@ -255,7 +250,6 @@ class PerformanceQueryCountAssertionTest extends TestCase
         DB::flushQueryLog();
 
         $cachedClasses = CacheHelper::remember($classesKey, 3600, fn () => SchoolClass::all());
-        $cachedLocations = CacheHelper::remember($locationsKey, 3600, fn () => Location::all());
         $cachedSubjects = CacheHelper::remember($subjectsKey, 3600, fn () => Subject::all());
         $cachedStaffUnits = CacheHelper::remember($staffUnitsKey, 3600, fn () => StaffUnit::all());
         $cachedCategories = CacheHelper::remember($damageCategoriesKey, 3600, fn () => DamageCategory::all());
@@ -268,13 +262,12 @@ class PerformanceQueryCountAssertionTest extends TestCase
             'Warm cache hit for public reference data MUST execute 0 database queries!'
         );
         $this->assertNotEmpty($cachedClasses);
-        $this->assertNotEmpty($cachedLocations);
         $this->assertNotEmpty($cachedSubjects);
         $this->assertNotEmpty($cachedStaffUnits);
         $this->assertNotEmpty($cachedCategories);
     }
 
-    private function createBatchViolationReports(int $count, SchoolClass $class, Location $location): void
+    private function createBatchViolationReports(int $count, SchoolClass $class): void
     {
         for ($i = 1; $i <= $count; $i++) {
             $report = Report::create([
@@ -287,7 +280,6 @@ class PerformanceQueryCountAssertionTest extends TestCase
                 'reporter_phone' => '081234567890',
                 'report_type' => 'violation',
                 'title' => "Title Perf Violation {$i}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Deskripsi perf violation {$i}.",
                 'urgency' => 'sedang',
@@ -306,7 +298,7 @@ class PerformanceQueryCountAssertionTest extends TestCase
         }
     }
 
-    private function createBatchDamageReports(int $count, SchoolClass $class, Location $location, DamageCategory $category): void
+    private function createBatchDamageReports(int $count, SchoolClass $class, DamageCategory $category): void
     {
         for ($i = 1; $i <= $count; $i++) {
             $report = Report::create([
@@ -319,7 +311,6 @@ class PerformanceQueryCountAssertionTest extends TestCase
                 'reporter_phone' => '081234567890',
                 'report_type' => 'damage',
                 'title' => "Title Perf Damage {$i}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Deskripsi perf damage {$i}.",
                 'urgency' => 'tinggi',

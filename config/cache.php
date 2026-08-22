@@ -5,8 +5,11 @@ use Illuminate\Support\Str;
 return [
     'default' => env('CACHE_STORE', 'failover'),
 
-    // Keep rate-limit counters in Redis so quotas are shared across workers.
-    'limiter' => env('CACHE_LIMITER', 'redis'),
+    // Counter rate limit mengikuti rantai 'failover' di bawah: Redis lebih
+    // dahulu supaya kuota berlaku sama untuk semua worker, dengan database
+    // sebagai cadangan agar pembatasan tetap berjalan ketika Redis mati --
+    // bukan malah menjatuhkan setiap route ber-throttle ke error 500.
+    'limiter' => env('CACHE_LIMITER', 'failover'),
 
     /*
     |--------------------------------------------------------------------------
@@ -68,6 +71,24 @@ return [
             'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
         ],
 
+        /*
+         * Rantai cache produksi (dipakai oleh 'default' di atas).
+         *
+         * Tanpa definisi ini Laravel memakai bawaan framework, yaitu
+         * ['database', 'array'] -- artinya SETIAP pembacaan cache menjadi
+         * query SQL ke MariaDB, komponen yang paling sulit diskalakan di
+         * sistem ini. Redis didahulukan supaya cache dilayani dari memori,
+         * dengan database sebagai jaring pengaman kalau Redis mati sehingga
+         * aplikasi menurun perlahan alih-alih menjawab 500.
+         */
+        'failover' => [
+            'driver' => 'failover',
+            'stores' => [
+                'redis',
+                'database',
+            ],
+        ],
+
         'dynamodb' => [
             'driver' => 'dynamodb',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -105,7 +126,7 @@ return [
     | Master data has longer TTL (rarely changes), while frequently-accessed 
     | data has shorter TTL to maintain freshness.
     |
-    | Master Data (24 hours): Damage categories, locations, violation types
+    | Master Data (24 hours): Damage categories, violation types
     | User Data (30 min - 1 hour): User profiles, user lists
     | Report Data (30 min - 1 hour): Reports, statistics
     | Short-lived (1-5 min): Rate limiting, sessions
@@ -115,7 +136,6 @@ return [
     'ttl' => [
         // Master data - rarely changes, longer TTL
         'damage_categories' => 86400,      // 24 hours
-        'locations' => 86400,              // 24 hours
         'violation_types' => 86400,        // 24 hours
         'school_classes' => 43200,         // 12 hours
         'subjects' => 43200,               // 12 hours
@@ -131,7 +151,6 @@ return [
         'report_list' => 3600,             // 1 hour
         'report_detail' => 1800,           // 30 minutes
         'report_by_student' => 1800,       // 30 minutes
-        'report_by_location' => 3600,      // 1 hour
         'report_statistics' => 1800,       // 30 minutes
         'report_status_history' => 1800,   // 30 minutes
 

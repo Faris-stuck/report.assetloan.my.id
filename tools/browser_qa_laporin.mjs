@@ -66,10 +66,8 @@ try {
   await page.locator('.step-panel:visible button', { hasText: 'Berikutnya' }).click();
   check('step 3 opens and violation detail is visible', await page.locator('.step-panel:visible h3', { hasText: 'Detail Pelanggaran' }).count() === 1);
 
-  const location = await page.locator('#location_id option[value]:not([value=""])').first().getAttribute('value');
   const incidentDate = await page.locator('#incident_date').getAttribute('max');
   await page.fill('#title', 'QA_E2E_BROWSER_PUBLIC');
-  await page.selectOption('#location_id', location);
   await page.fill('#incident_date', incidentDate);
   await page.fill('#description', 'Laporan QA browser lokal untuk memverifikasi alur formulir tanpa memengaruhi data produksi.');
   await page.fill('#victim_name', 'QA Browser Korban');

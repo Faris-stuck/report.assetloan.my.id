@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 
 class CacheHelper
@@ -62,22 +63,18 @@ class CacheHelper
      * Menghapus cache berdasarkan pattern menggunakan Redis SCAN.
      *
      * Tidak menggunakan Redis KEYS karena dapat memblokir Redis
-     * ketika jumlah key besar.
+     * ketika jumlah key besar. Bila rantai cache aktif tidak memuat Redis,
+     * penghapusan dialihkan ke store database supaya invalidasi tetap nyata.
      */
     public static function invalidate(string $pattern): void
     {
-        if (config('cache.default') !== 'redis') {
-            if (! str_contains($pattern, '*')) {
-                Cache::forget($pattern);
-            }
+        $connectionName = static::redisConnectionName();
+
+        if ($connectionName === null) {
+            static::invalidateWithoutRedis($pattern);
 
             return;
         }
-
-        $connectionName = (string) config(
-            'cache.stores.redis.connection',
-            'cache'
-        );
 
         $redis = Redis::connection($connectionName);
 
@@ -187,10 +184,6 @@ class CacheHelper
      */
     public static function flush(): bool
     {
-        if (config('cache.default') !== 'redis') {
-            return false;
-        }
-
         $prefix = config('cache.prefix');
 
         if (! $prefix) {
@@ -200,5 +193,84 @@ class CacheHelper
         static::invalidate('*');
 
         return true;
+    }
+    /**
+     * Nama koneksi Redis yang benar-benar melayani cache, atau null bila tidak
+     * ada Redis pada rantai store yang aktif.
+     *
+     * cache.default tidak selalu bernilai 'redis': produksi memakai rantai
+     * 'failover'. Perbandingan string lama membuat SELURUH invalidasi berpola
+     * berhenti diam-diam, sehingga statistik dasbor dan data referensi formulir
+     * publik tetap basi sampai TTL-nya habis.
+     */
+    private static function redisConnectionName(): ?string
+    {
+        foreach (static::activeStoreNames() as $name) {
+            $store = (array) config("cache.stores.{$name}", []);
+
+            if (($store['driver'] ?? null) === 'redis') {
+                return (string) ($store['connection'] ?? 'cache');
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Store yang benar-benar dipakai, termasuk anggota rantai failover.
+     *
+     * @return array<int, string>
+     */
+    private static function activeStoreNames(): array
+    {
+        $default = (string) config('cache.default');
+        $store = (array) config("cache.stores.{$default}", []);
+
+        if (($store['driver'] ?? null) === 'failover') {
+            return array_values(
+                array_map('strval', (array) ($store['stores'] ?? []))
+            );
+        }
+
+        return [$default];
+    }
+
+    /**
+     * Tanpa Redis, pola berbintang tidak bisa dipindai. Kalau rantai cache
+     * memakai store database, hapus lewat LIKE supaya invalidasi tetap nyata
+     * dan bukan operasi kosong yang meninggalkan data basi.
+     */
+    private static function invalidateWithoutRedis(string $pattern): void
+    {
+        if (! str_contains($pattern, '*')) {
+            Cache::forget($pattern);
+
+            return;
+        }
+
+        $table = static::databaseCacheTable();
+
+        if ($table === null) {
+            return;
+        }
+
+        $prefix = (string) config('cache.prefix', '');
+
+        DB::table($table)
+            ->where('key', 'like', str_replace('*', '%', $prefix.$pattern))
+            ->delete();
+    }
+
+    private static function databaseCacheTable(): ?string
+    {
+        foreach (static::activeStoreNames() as $name) {
+            $store = (array) config("cache.stores.{$name}", []);
+
+            if (($store['driver'] ?? null) === 'database') {
+                return (string) ($store['table'] ?? 'cache');
+            }
+        }
+
+        return null;
     }
 }

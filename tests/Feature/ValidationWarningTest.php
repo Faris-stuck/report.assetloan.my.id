@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -25,7 +24,6 @@ class ValidationWarningTest extends TestCase
         $this->seed();
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession(['math_captcha_answer' => 12, 'report_submit_token' => 'test-submit-token'])
             ->from('/')
@@ -37,7 +35,6 @@ class ValidationWarningTest extends TestCase
                 'related_class_id' => $class->id,
                 'report_type' => 'violation',
                 'title' => 'Laporan test validasi',
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Deskripsi laporan minimal untuk test validasi.',
                 'urgency' => 'sedang',
@@ -163,7 +160,6 @@ class ValidationWarningTest extends TestCase
     private function report(array $overrides = []): Report
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         return Report::create(array_merge([
             'report_number' => 'LPR'.now()->format('Ym').str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT),
@@ -174,7 +170,6 @@ class ValidationWarningTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'violation',
             'title' => 'Judul laporan test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan test.',
             'urgency' => 'sedang',

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -49,7 +48,6 @@ class PriorityPersistenceBugExplorationTest extends TestCase
 
         foreach ($urgencyValues as $urgencyValue) {
             $class = SchoolClass::firstOrFail();
-            $location = Location::firstOrFail();
 
             // Submit damage report with specific urgency value
             $response = $this->withSession([
@@ -63,7 +61,6 @@ class PriorityPersistenceBugExplorationTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => "Kerusakan - Urgency {$urgencyValue}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Test damage report dengan urgency {$urgencyValue}.",
                 'urgency' => $urgencyValue,
@@ -116,7 +113,6 @@ class PriorityPersistenceBugExplorationTest extends TestCase
         Storage::fake('private');
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $urgencyValue = 'darurat';
 
         $response = $this->withSession([
@@ -130,7 +126,6 @@ class PriorityPersistenceBugExplorationTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Kerusakan - Urgency Darurat Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Test damage report dengan urgency darurat.',
             'urgency' => $urgencyValue,
@@ -171,7 +166,6 @@ class PriorityPersistenceBugExplorationTest extends TestCase
         Storage::fake('private');
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $testScenarios = [
             ['urgency' => 'rendah', 'reporter' => 'siswa'],
             ['urgency' => 'sedang', 'reporter' => 'guru'],
@@ -195,7 +189,6 @@ class PriorityPersistenceBugExplorationTest extends TestCase
                 'reporter_phone' => '+62812345678' . random_int(1000, 9999),
                 'report_type' => 'damage',
                 'title' => "Kerusakan - {$scenario['urgency']}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Test damage report.',
                 'urgency' => $scenario['urgency'],

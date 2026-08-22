@@ -8,6 +8,7 @@ use App\Models\DamageDetail;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
+use App\Support\PhoneNumber;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -147,13 +148,21 @@ class PublicReportService
             'reporter_absence_number' => $validated['reporter_absence_number'] ?? null,
             'reporter_subject_id' => $validated['reporter_subject_id'] ?? null,
             'reporter_staff_unit_id' => $validated['reporter_staff_unit_id'] ?? null,
-            'reporter_phone' => $validated['reporter_phone'] ?? null,
+            // Simpan dalam bentuk kanonik 628xxxxxxxxx. Sebelumnya nilainya
+            // masuk apa adanya, sehingga satu kolom berisi "0812...",
+            // "+62 812...", dan "62812..." untuk nomor yang sama dan setiap
+            // konsumen harus menormalkan ulang. Ini titik tulis satu-satunya
+            // untuk kedua jalur (wizard bertahap dan POST sekali jalan), jadi
+            // normalisasinya diletakkan di sini, bukan di FormRequest yang
+            // dilewati jalur wizard. Fallback ke nilai asli hanya berlaku untuk
+            // baris lama/pemanggil internal; validasi publik sudah menjamin
+            // nomornya bisa dinormalkan.
+            'reporter_phone' => PhoneNumber::normalize($validated['reporter_phone'] ?? null)
+                ?? ($validated['reporter_phone'] ?? null),
             'reporter_email' => $validated['reporter_email'] ?? null,
             'report_type' => $validated['report_type'],
             'title' => $validated['title'],
             'related_class_id' => $validated['related_class_id'] ?? null,
-            'location_id' => $validated['location_id'] ?? null,
-            'custom_location' => $validated['custom_location'] ?? null,
             'incident_date' => $validated['incident_date'],
             'incident_time' => $validated['incident_time'] ?? null,
             'description' => $validated['description'],
@@ -212,7 +221,7 @@ class PublicReportService
     private function convertQueryExceptionToValidationException(QueryException $exception): ValidationException
     {
         if ($this->isForeignKeyViolation($exception)) {
-            return ValidationException::withMessages(['report_number' => 'Pilihan kelas, lokasi, kategori, atau unit tidak lagi tersedia. Muat ulang halaman dan pilih kembali.']);
+            return ValidationException::withMessages(['report_number' => 'Pilihan kelas, kategori, atau unit tidak lagi tersedia. Muat ulang halaman dan pilih kembali.']);
         }
         if ($this->isDeadlockOrTimeout($exception) || $this->isConnectionIssue($exception)) {
             return ValidationException::withMessages(['report_number' => 'Sistem sedang mengalami gangguan koneksi. Silakan coba kembali beberapa saat lagi.']);

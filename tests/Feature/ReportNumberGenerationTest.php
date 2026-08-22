@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,7 +17,6 @@ class ReportNumberGenerationTest extends TestCase
         $this->seed();
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $submitToken = (string) Str::uuid();
 
         $this->withSession([
@@ -32,7 +30,6 @@ class ReportNumberGenerationTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Test nomor laporan random',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan untuk menguji nomor laporan acak.',
             'urgency' => 'sedang',

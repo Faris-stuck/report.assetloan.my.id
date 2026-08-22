@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\StaffUnit;
@@ -27,7 +26,6 @@ class ReportCreationTest extends TestCase
         Storage::fake('private');
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
         $staffUnit = StaffUnit::firstOrFail();
 
         $response = $this->withSession(['math_captcha_answer' => 8, 'report_submit_token' => Str::uuid()->toString()])
@@ -38,7 +36,6 @@ class ReportCreationTest extends TestCase
                 'reporter_staff_unit_id' => $staffUnit->id,
                 'report_type' => 'damage',
                 'title' => 'Kerusakan AC Lab',
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'AC tidak dingin pada ruang lab.',
                 'urgency' => 'tinggi',
@@ -85,7 +82,6 @@ class ReportCreationTest extends TestCase
                 'reporter_class_id' => SchoolClass::firstOrFail()->id,
                 'report_type' => 'damage',
                 'title' => 'Kerusakan Baru',
-                'location_id' => Location::firstOrFail()->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Kerusakan baru terdeteksi.',
                 'urgency' => 'darurat',

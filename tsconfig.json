@@ -21,7 +21,6 @@
         "resources/js/**/*.js",
         "resources/js/**/*.ts",
         "vite.config.js",
-        "tailwind.config.ts",
         "eslint.config.js",
         "prettier.config.js"
     ],

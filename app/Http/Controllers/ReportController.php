@@ -14,7 +14,7 @@ class ReportController extends Controller
     {
         $this->authorize('view', $report);
 
-        return view('reports.show', ['report' => $report->load(['reporterClass', 'relatedClass', 'location', 'bullyingDetail.allegedActorClass', 'damageDetail', 'attachments', 'notes.user', 'histories'])]);
+        return view('reports.show', ['report' => $report->load(['reporterClass', 'relatedClass', 'bullyingDetail.allegedActorClass', 'damageDetail', 'attachments', 'notes.user', 'histories'])]);
     }
 
     public function note(Request $request, Report $report): RedirectResponse

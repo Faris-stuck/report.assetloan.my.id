@@ -23,7 +23,7 @@
 </div>
 <div class="laporin-card card-soft mb-4">
     <h2 class="h5 fw-bold mb-3">Alur Sarpras</h2>
-    <div class="flowchart compact"><div class="flow-node">Laporan Masuk</div><div class="flow-node">Lokasi Dicek</div><div class="flow-node">Waktu Perbaikan</div><div class="flow-node">Perbaikan</div><div class="flow-node">Foto Selesai</div><div class="flow-node">Selesai</div></div>
+    <div class="flowchart compact"><div class="flow-node">Laporan Masuk</div><div class="flow-node">Laporan Ditinjau</div><div class="flow-node">Waktu Perbaikan</div><div class="flow-node">Perbaikan</div><div class="flow-node">Foto Selesai</div><div class="flow-node">Selesai</div></div>
 </div>
 
 <!-- Search & Filter Card -->

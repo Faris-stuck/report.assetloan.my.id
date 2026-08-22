@@ -13,9 +13,4 @@ class ReportAttachment extends Model
     {
         return $this->belongsTo(Report::class);
     }
-
-    public function uploader(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'uploaded_by_user_id');
-    }
 }

@@ -11,14 +11,10 @@
 @section('content')
 @php
     $today = date('Y-m-d');
-    $errorKeys = $errors->getBag('default')->keys();
-    // Step 4 fields (Konfirmasi & Kirim)
-    $step4Fields = ['attachments','attachments.0','attachments.1','attachments.2','consent','captcha','form','report_number'];
-    // Step 3 fields (Detail) — ringkasan pelanggaran
-    $step3Fields = ['title','urgency','related_class_id','location_id','custom_location','incident_date','incident_time','description','reporter_position','bullying_type','victim_name','victim_class_id','alleged_actor_name','alleged_actor_class_id','witness_name','impact_description','item_name','item_category','damage_condition','suspected_cause','priority'];
-    // Step 2 fields (Jenis)
-    $step2Fields = ['report_type'];
-    // Determine which step to start on based on errors
+    // Langkah aktif ditentukan server lewat route /lapor/langkah/{step},
+    // bukan lagi dihitung dari daftar field per-langkah di sisi klien.
+    // Peta $step2Fields/$step3Fields/$step4Fields dan $errorKeys ikut
+    // terhapus bersama implementasi Alpine yang sudah tidak dipakai.
     $initialStep = (int) ($wizardStep ?? 1);
     $wizardStep = $initialStep;
 
@@ -47,11 +43,12 @@
 
 {{-- Step tracker --}}
 <div class="laporin-card mb-3 step-track">
-    <div class="row g-2 text-center">
+    <div class="row g-2 text-center" role="group" aria-label="Langkah {{ $wizardStep }} dari 4">
         @foreach([1=>'Identitas',2=>'Jenis',3=>'Detail',4=>'Kirim'] as $n=>$label)
             <div class="col">
                 <div class="step-dot-wrapper">
-                    <button type="button" class="step-dot{{ $n <= $wizardStep ? ' active' : '' }}" data-step-dot="{{ $n }}" style="min-width:44px;min-height:44px;" aria-label="Langkah {{ $n }}" title="Langkah {{ $n }}">{{ $n }}</button>
+                    {{-- Indikator, bukan tombol: tidak ada navigasi antar-langkah. --}}
+                    <span class="step-dot{{ $n <= $wizardStep ? ' active' : '' }}" data-step-dot="{{ $n }}" style="min-width:44px;min-height:44px;" @if($n === $wizardStep) aria-current="step" @endif>{{ $n }}</span>
                 </div>
                 <div class="small mt-2 fw-semibold" style="max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 auto;">{{ $label }}</div>
             </div>
@@ -60,21 +57,8 @@
     <p class="mt-3 mb-0 text-center small" style="font-size:14px;" data-step-hint>Isi lengkap, lalu lanjut ke tahap berikutnya.</p>
 </div>
 
-@if($errors->any())
-<div class="alert alert-danger mt-3 mb-3" id="step-error-alert" role="alert">
-    <div class="d-flex align-items-start">
-        <i class="fas fa-exclamation-circle me-2 mt-1 flex-shrink-0"></i>
-        <div class="flex-grow-1">
-            <strong class="d-block mb-1">Lengkapi formulir dengan benar</strong>
-            <ul class="mb-0 ps-3">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    </div>
-</div>
-@endif
+{{-- Error validasi dirender sekali saja oleh layouts.app, yang juga memasok
+     #validation-errors-json untuk penanda is-invalid per field. --}}
 
 <div class="laporin-card wizard-panel p-3 p-md-4 p-lg-5">
 
@@ -106,7 +90,7 @@
         <div class="col-12 col-md-6">
             <label class="form-label required" for="reporter_phone">No. HP</label>
             <input id="reporter_phone" name="reporter_phone" value="{{ old('reporter_phone') }}" class="form-control required" required maxlength="30" pattern="[0-9+() .\-]+" inputmode="tel" autocomplete="tel" aria-describedby="reporter_phone_help" placeholder="Contoh: 0812 3456 7890">
-            <small id="reporter_phone_help" class="text-muted">Nomor HP wajib diisi. Gunakan 8-15 digit.</small>
+            <small id="reporter_phone_help" class="text-muted">Wajib, dipakai untuk mengabari status laporan Anda lewat WhatsApp. Contoh: 0812 3456 7890. Nomor luar negeri boleh, sertakan kode negaranya (+65 8123 4567).</small>
         </div>
         <div class="col-12 col-md-6">
             <label class="form-label" for="reporter_email">Email</label>

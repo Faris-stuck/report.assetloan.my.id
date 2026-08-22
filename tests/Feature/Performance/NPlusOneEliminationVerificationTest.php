@@ -5,9 +5,9 @@ namespace Tests\Feature\Performance;
 use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\Role\Kesiswaan\KesiswaanService;
 use App\Services\Role\Sarpras\SarprasService;
@@ -28,22 +28,22 @@ class NPlusOneEliminationVerificationTest extends TestCase
     }
 
     /**
-     * Target 1: AdminService::master('locations') eager loads 'class'
+     * Target 1: AdminService::master('students') eager loads 'class'
      */
-    public function test_admin_service_locations_eager_loads_class(): void
+    public function test_admin_service_students_eager_loads_class(): void
     {
         $class = SchoolClass::first();
         for ($i = 0; $i < 10; $i++) {
-            Location::create([
-                'location_name' => 'Ruang Test ' . $i,
-                'location_type' => 'classroom',
+            Student::create([
+                'nis' => sprintf('870%05d', $i),
+                'name' => 'Siswa Test ' . $i,
                 'class_id' => $class->id,
-                'is_active' => true,
+                'point' => 0,
             ]);
         }
 
         $adminService = app(AdminService::class);
-        $view = $adminService->master('locations');
+        $view = $adminService->master('students');
         $items = $view->getData()['items'];
 
         DB::flushQueryLog();
@@ -61,7 +61,7 @@ class NPlusOneEliminationVerificationTest extends TestCase
         $queriesAfterAccess = DB::getQueryLog();
         DB::disableQueryLog();
 
-        $this->assertCount(0, $queriesAfterAccess, 'Accessing location->class triggered N+1 queries instead of being preloaded!');
+        $this->assertCount(0, $queriesAfterAccess, 'Accessing student->class triggered N+1 queries instead of being preloaded!');
     }
 
     /**
@@ -70,7 +70,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
     public function test_kesiswaan_service_index_eager_loads_relations(): void
     {
         $class = SchoolClass::first();
-        $location = Location::first();
 
         for ($i = 0; $i < 10; $i++) {
             $report = Report::create([
@@ -82,7 +81,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
                 'report_type' => 'violation',
                 'title' => 'Laporan Perundungan ' . $i,
                 'related_class_id' => $class->id,
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Deskripsi perundungan',
                 'urgency' => 'sedang',
@@ -107,7 +105,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
         foreach ($reports as $r) {
             $actorClass = $r->bullyingDetail?->allegedActorClass?->class_name;
             $relatedClass = $r->relatedClass?->class_name;
-            $locName = $r->location?->location_name;
             $attachmentsCount = $r->attachments->count();
         }
 
@@ -122,7 +119,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
      */
     public function test_sarpras_service_index_eager_loads_relations(): void
     {
-        $location = Location::first();
         $category = DamageCategory::first();
 
         for ($i = 0; $i < 10; $i++) {
@@ -134,7 +130,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
                 'reporter_name' => 'Pelapor Sarpras ' . $i,
                 'report_type' => 'damage',
                 'title' => 'Kerusakan Sarpras ' . $i,
-                'location_id' => $location->id,
                 'damage_category_id' => $category->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Kerusakan sarpras deskripsi',
@@ -158,7 +153,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
 
         foreach ($reports as $r) {
             $detailItem = $r->damageDetail?->item_name;
-            $locName = $r->location?->location_name;
             $catName = $r->damageCategory?->category_name;
             $attachCount = $r->attachments->count();
         }
@@ -176,7 +170,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
     {
         $superadmin = User::where('role', 'superadmin')->first();
         $class = SchoolClass::first();
-        $location = Location::first();
 
         $report = Report::create([
             'report_number' => 'LPR-SHOW-' . Str::random(5),
@@ -186,7 +179,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
             'reporter_name' => 'Pelapor Show',
             'report_type' => 'violation',
             'title' => 'Violation Detail Test',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Description test',
             'urgency' => 'sedang',
@@ -227,7 +219,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
     {
         $superadmin = User::where('role', 'superadmin')->first();
         $class = SchoolClass::first();
-        $location = Location::first();
 
         for ($i = 0; $i < 5; $i++) {
             $r = Report::create([
@@ -239,7 +230,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
                 'report_type' => 'violation',
                 'title' => 'Dash Violation ' . $i,
                 'related_class_id' => $class->id,
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Description dash',
                 'urgency' => 'sedang',
@@ -263,7 +253,6 @@ class NPlusOneEliminationVerificationTest extends TestCase
 
         foreach ($reports as $r) {
             $relClass = $r->relatedClass?->class_name;
-            $loc = $r->location?->location_name;
             // Note: allegedActorClass is a nested relation only eager-loaded in report detail, not dashboard list
             $dmgItem = $r->damageDetail?->item_name;
         }

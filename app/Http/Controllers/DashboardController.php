@@ -17,7 +17,7 @@ class DashboardController extends Controller
         $scope = $this->scopedReports($user);
 
         $reports = (clone $scope)
-            ->with(['relatedClass', 'location', 'bullyingDetail', 'damageDetail'])
+            ->with(['relatedClass', 'bullyingDetail', 'damageDetail'])
             ->latest()
             ->paginate(12);
 

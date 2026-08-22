@@ -17,8 +17,6 @@ class User extends Authenticatable
 
     public const LEGACY_ROLES = ['guru', 'siswa'];
 
-    public const STORED_ROLES = [...self::ROLES, ...self::LEGACY_ROLES];
-
     // Keep privilege-bearing fields out of mass assignment. AdminController assigns them explicitly.
     protected $fillable = ['name', 'email', 'password', 'phone'];
 
@@ -71,10 +69,5 @@ class User extends Authenticatable
     public function homeroomClasses(): HasMany
     {
         return $this->hasMany(HomeroomClass::class, 'homeroom_user_id');
-    }
-
-    public function teacherAssignments(): HasMany
-    {
-        return $this->hasMany(TeacherAssignment::class, 'teacher_user_id');
     }
 }

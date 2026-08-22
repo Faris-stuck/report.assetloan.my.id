@@ -9,9 +9,9 @@
         'classes' => 'Kelas',
         'subjects' => 'Mata Pelajaran',
         'staff-units' => 'Unit Staf',
-        'locations' => 'Lokasi',
         'violation-types' => 'Jenis Pelanggaran',
         'damage-categories' => 'Kategori Kerusakan',
+        'students' => 'Siswa',
     ];
 
     $fieldLabels = [
@@ -20,8 +20,6 @@
         'major' => 'Jurusan',
         'academic_year' => 'Tahun Ajaran',
         'room_name' => 'Nama Ruangan',
-        'location_name' => 'Nama Lokasi',
-        'location_type' => 'Jenis Lokasi',
         'subject_name' => 'Nama Mata Pelajaran',
         'unit_name' => 'Nama Unit',
         'violation_name' => 'Jenis Pelanggaran',
@@ -30,6 +28,10 @@
         'is_active' => 'Status',
         'class_id' => 'Kelas',
         'point_reduction' => 'Pengurangan Poin',
+        'nis' => 'NIS',
+        'name' => 'Nama Siswa',
+        'parent_phone' => 'Nomor HP Orang Tua',
+        'point' => 'Poin',
     ];
 
     $required = [
@@ -47,10 +49,6 @@
             'unit_name',
         ],
 
-        'locations' => [
-            'location_name',
-        ],
-
         'violation-types' => [
             'violation_name',
             'point_reduction',
@@ -58,6 +56,12 @@
 
         'damage-categories' => [
             'category_name',
+        ],
+
+        'students' => [
+            'nis',
+            'name',
+            'class_id',
         ],
     ][$resource] ?? [];
 
@@ -71,7 +75,6 @@
                     'major',
                     'academic_year',
                     'room_name',
-                    'location_type',
                 ],
                 true
             )

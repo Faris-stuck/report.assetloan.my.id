@@ -7,7 +7,6 @@ use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
 use App\Models\HomeroomClass;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use App\Models\User;
@@ -43,7 +42,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
 
         // 2. Submit a public violation report
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $violationPayload = [
             'reporter_type' => 'siswa',
@@ -54,7 +52,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
             'alleged_actor_name' => 'Pelaku Cross Feature',
             'related_class_id' => $class->id,
             'title' => 'Cross Feature Violation Title',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan perundungan untuk pengujian Tier 3 cross-feature.',
             'urgency' => 'sedang',
@@ -81,7 +78,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
             'damage_category_id' => $category->id,
             'damage_condition' => 'berat',
             'title' => 'Cross Feature Damage Title',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan kerusakan fasilitas untuk pengujian Tier 3 cross-feature.',
             'urgency' => 'tinggi',
@@ -129,26 +125,28 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
         $this->get(route('public.report'))
             ->assertOk();
 
-        // Superadmin creates a new location via master endpoint
-        $locationName = 'Lab Komputer Baru Tier3 ' . Str::random(5);
+        // Superadmin creates a new class via master endpoint
+        $className = 'XII QA Tier3 ' . Str::random(5);
         $this->actingAs($superadmin)
-            ->post(route('admin.master.store', 'locations'), [
-                'location_name' => $locationName,
-                'location_type' => 'lab',
+            ->post(route('admin.master.store', 'classes'), [
+                'class_name' => $className,
+                'grade_level' => 'XII',
+                'major' => 'QA',
+                'academic_year' => '2026/2027',
                 'is_active' => '1',
             ])->assertRedirect();
 
-        $this->assertDatabaseHas('locations', [
-            'location_name' => $locationName,
+        $this->assertDatabaseHas('classes', [
+            'class_name' => $className,
         ]);
 
-        // Invalidate reference cache if present or verify public form renders new location
+        // Invalidate reference cache if present or verify public form renders the new class
         CacheHelper::invalidate('laporin:reference:*');
 
-        // Public form should now contain the new location
+        // Public form should now contain the new class
         $this->get(route('public.report'))
             ->assertOk()
-            ->assertSee($locationName);
+            ->assertSee($className);
 
         // Superadmin updates a damage category directly (isolate from route validation complexity)
         $category = DamageCategory::firstOrFail();
@@ -193,7 +191,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
             'reporter_phone' => '081234567890',
             'report_type' => 'violation',
             'title' => 'Violation Special For Wali Class',
-            'location_id' => Location::firstOrFail()->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan wali kelas.',
             'urgency' => 'sedang',
@@ -214,7 +211,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
             'reporter_phone' => '081234567890',
             'report_type' => 'violation',
             'title' => 'Violation Special For Other Class',
-            'location_id' => Location::firstOrFail()->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan kelas lain.',
             'urgency' => 'sedang',
@@ -235,7 +231,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
             'reporter_phone' => '081234567890',
             'report_type' => 'damage',
             'title' => 'Damage Special For Sarpras',
-            'location_id' => Location::firstOrFail()->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi kerusakan fasilitas.',
             'urgency' => 'tinggi',
@@ -302,7 +297,6 @@ class Tier3_CrossFeatureInteractionTest extends TestCase
             'reporter_phone' => '081234567890',
             'report_type' => 'violation',
             'title' => 'Status Change Test Report',
-            'location_id' => Location::firstOrFail()->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Laporan status change.',
             'urgency' => 'sedang',

@@ -5,9 +5,9 @@ namespace Tests\Feature\E2E;
 use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
+use App\Models\Subject;
 use App\Models\User;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -66,17 +66,16 @@ class Tier2_BoundaryCornerCasesTest extends TestCase
         $this->assertCount(0, $reports);
     }
 
-    public function test_c1_empty_dataset_admin_master_locations_renders_empty_table(): void
+    public function test_c1_empty_dataset_admin_master_renders_empty_table(): void
     {
-        Location::query()->delete();
+        Subject::query()->delete();
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations']));
+            ->get(route('admin.master.index', ['resource' => 'subjects']));
 
         $response->assertOk();
-        $response->assertViewHas('locations');
-        $locations = $response->viewData('locations');
-        $this->assertCount(0, $locations);
+        $response->assertViewHas('items');
+        $this->assertCount(0, $response->viewData('items'));
     }
 
     public function test_c1_empty_dataset_dashboard_report_list_and_zero_stats(): void
@@ -145,20 +144,24 @@ class Tier2_BoundaryCornerCasesTest extends TestCase
         $this->assertNull($report->damageDetail);
     }
 
-    public function test_c2_report_with_null_location_id_renders_safely_in_views(): void
+    /**
+     * Fitur lokasi dihapus, jadi tempat kejadian sekarang hidup di dalam
+     * kronologi. Halaman detail harus tetap menampilkan deskripsinya utuh
+     * tanpa kolom lokasi apa pun.
+     */
+    public function test_c2_report_without_related_class_renders_safely_in_views(): void
     {
         $report = Report::create([
-            'report_number' => 'LAP-NOLOC-'.Str::random(4),
+            'report_number' => 'LAP-NOREL-'.Str::random(4),
             'public_token' => (string) Str::uuid(),
             'access_code_hash' => Hash::make('123456'),
             'reporter_type' => 'siswa',
-            'reporter_name' => 'Pelapor Tanpa Lokasi',
+            'reporter_name' => 'Pelapor Tanpa Kelas Terkait',
             'report_type' => 'violation',
-            'title' => 'Laporan Tanpa ID Lokasi',
-            'location_id' => null,
-            'custom_location' => 'Di Lapangan Luar Sekolah',
+            'title' => 'Laporan Tanpa Kelas Terkait',
+            'related_class_id' => null,
             'incident_date' => now()->toDateString(),
-            'description' => 'Kejadian di luar area gedung sekolah.',
+            'description' => 'Kejadian di lapangan luar sekolah saat jam istirahat.',
             'status' => 'menunggu_verifikasi',
             'urgency' => 'sedang',
         ]);
@@ -167,25 +170,8 @@ class Tier2_BoundaryCornerCasesTest extends TestCase
             ->get(route('reports.show', $report));
 
         $response->assertOk();
-        $response->assertSee('Di Lapangan Luar Sekolah');
-        $this->assertNull($report->location);
-    }
-
-    public function test_c2_location_with_null_school_class_id_renders_in_master_locations(): void
-    {
-        $location = Location::create([
-            'location_name' => 'Kantin Utama Sekolah',
-            'location_type' => 'Fasilitas Umum',
-            'class_id' => null,
-            'is_active' => true,
-        ]);
-
-        $response = $this->actingAs($this->admin)
-            ->get(route('admin.master.index', ['resource' => 'locations']));
-
-        $response->assertOk();
-        $response->assertSee('Kantin Utama Sekolah');
-        $this->assertNull($location->class);
+        $response->assertSee('Kejadian di lapangan luar sekolah saat jam istirahat.');
+        $this->assertNull($report->relatedClass);
     }
 
     public function test_c2_bullying_detail_with_null_alleged_actor_class_id_renders_safely(): void
@@ -258,9 +244,9 @@ class Tier2_BoundaryCornerCasesTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_c3_unauthenticated_guest_redirected_from_admin_master_locations(): void
+    public function test_c3_unauthenticated_guest_redirected_from_admin_master(): void
     {
-        $response = $this->get(route('admin.master.index', ['resource' => 'locations']));
+        $response = $this->get(route('admin.master.index', ['resource' => 'classes']));
 
         $response->assertStatus(302);
         $response->assertRedirect(route('login'));
@@ -332,10 +318,10 @@ class Tier2_BoundaryCornerCasesTest extends TestCase
         $response->assertStatus(403);
     }
 
-    public function test_c4_wali_kelas_user_forbidden_from_admin_master_locations(): void
+    public function test_c4_wali_kelas_user_forbidden_from_admin_master(): void
     {
         $response = $this->actingAs($this->waliKelas)
-            ->get(route('admin.master.index', ['resource' => 'locations']));
+            ->get(route('admin.master.index', ['resource' => 'classes']));
 
         $response->assertStatus(403);
     }

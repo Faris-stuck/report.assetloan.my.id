@@ -8,7 +8,6 @@ use App\Models\SchoolClass;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Routing\Middleware\ThrottleRequests;
-use Illuminate\Routing\Middleware\ThrottleRequestsWithRedis;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -38,10 +37,9 @@ class PublicReportWizardTest extends TestCase
         parent::setUp();
         $this->seed();
 
-        // Rute wizard memakai throttle:public-wizard, dan bootstrap/app.php
-        // memanggil throttleWithRedis() sehingga alias 'throttle' me-resolve ke
-        // varian Redis. Dua-duanya dimatikan agar test tidak menuntut Redis.
-        $this->withoutMiddleware([ThrottleRequests::class, ThrottleRequestsWithRedis::class]);
+        // Rute wizard memakai throttle:public-wizard. Middleware-nya dimatikan
+        // supaya kuota tidak menumpuk antar test di kelas ini.
+        $this->withoutMiddleware([ThrottleRequests::class]);
 
         // QUEUE_CONNECTION=sync menjalankan SendReportWhatsAppNotification inline;
         // tanpa WAHA_API_KEY job itu melempar RuntimeException dan menggagalkan
@@ -99,11 +97,10 @@ class PublicReportWizardTest extends TestCase
         $this->assertSame('menunggu_verifikasi', $report->status);
 
         // Keduanya diturunkan server-side oleh wizardStoreStep(): title dari
-        // item_name, reporter_type dipaksa 'siswa', location_id dinolkan.
-        // Tidak satu pun dikirim oleh formulir publik.
+        // item_name dan reporter_type dipaksa 'siswa'. Tidak satu pun
+        // dikirim oleh formulir publik.
         $this->assertSame(self::ITEM_NAME, $report->title);
         $this->assertSame('siswa', $report->reporter_type);
-        $this->assertNull($report->location_id);
 
         $this->assertDatabaseHas('damage_details', [
             'report_id' => $report->id,

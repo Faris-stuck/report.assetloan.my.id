@@ -18,7 +18,6 @@ class QueryCachingPerformanceTest extends TestCase
         // Verify common query types have TTL configured
         $expectedTypes = [
             'damage_categories',
-            'locations',
             'violation_types',
             'user_profile',
             'report_list',
@@ -42,7 +41,6 @@ class QueryCachingPerformanceTest extends TestCase
         
         // Master data should be 24 hours (86400 seconds)
         $this->assertEquals(86400, $ttl['damage_categories'], 'Damage categories should have 24-hour TTL');
-        $this->assertEquals(86400, $ttl['locations'], 'Locations should have 24-hour TTL');
         $this->assertEquals(86400, $ttl['violation_types'], 'Violation types should have 24-hour TTL');
     }
 

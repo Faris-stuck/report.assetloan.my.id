@@ -43,9 +43,3 @@ storage/app/public/**
 .laporin-production.env*
 
 PHASE_*.md
-
-# vendor/ TIDAK boleh ikut disalin dari host. `composer install --no-dev` di
-# Dockerfile sudah menyiapkan dependensi produksi; kalau vendor/ host ikut
-# masuk, hasil build ditentukan oleh keadaan server (termasuk paket dev yang
-# tidak sengaja terpasang) dan bukan oleh composer.lock.
-vendor

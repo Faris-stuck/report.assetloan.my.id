@@ -33,7 +33,6 @@ class PriorityPersistenceBugTest extends TestCase
             'reporter_class_id' => 1,
             'report_type' => 'damage',
             'title' => 'Kerusakan Aula',
-            'location_id' => 1,
             'incident_date' => '2024-01-15',
             'description' => 'Aula rusak parah',
             'urgency' => 'darurat',  // User selects urgency, NOT priority

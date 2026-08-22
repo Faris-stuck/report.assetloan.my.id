@@ -91,7 +91,7 @@
                     @endif
                 @endforeach
                 @if($user->isSuperadmin())
-                    @foreach(['classes'=>'Kelas','subjects'=>'Mata Pelajaran','staff-units'=>'Unit Staf','locations'=>'Lokasi','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan'] as $resource=>$label)
+                    @foreach(['classes'=>'Kelas','subjects'=>'Mata Pelajaran','staff-units'=>'Unit Staf','violation-types'=>'Jenis Pelanggaran','damage-categories'=>'Kategori Kerusakan','students'=>'Siswa'] as $resource=>$label)
                         <a class="menu-tile" href="{{ route('admin.master.index',$resource) }}">
                             <span class="menu-icon">•</span>
                             <span><strong>{{ $label }}</strong><small class="d-block small-muted">Data pilihan form</small></span>

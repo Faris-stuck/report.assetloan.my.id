@@ -7,7 +7,12 @@ use Illuminate\Validation\Rules\Password;
 
 class ResourceValidator
 {
-    public function rulesFor(string $resource): array
+    /**
+     * @param int|null $ignoreId Primary key to exclude from unique checks when
+     *                           validating an update, otherwise a record would
+     *                           always collide with its own stored value.
+     */
+    public function rulesFor(string $resource, ?int $ignoreId = null): array
     {
         return match ($resource) {
             'classes' => [
@@ -26,12 +31,6 @@ class ResourceValidator
                 'unit_name' => ['required', 'string', 'max:100'],
                 'is_active' => ['sometimes', 'boolean'],
             ],
-            'locations' => [
-                'location_name' => ['required', 'string', 'max:150'],
-                'location_type' => ['nullable', 'string', 'max:80'],
-                'class_id' => ['nullable', Rule::exists('classes', 'id')->where('is_active', true)],
-                'is_active' => ['sometimes', 'boolean'],
-            ],
             'violation-types' => [
                 'violation_name' => ['required', 'string', 'max:150'],
                 'point_reduction' => ['required', 'integer', 'min:1', 'max:100'],
@@ -41,6 +40,15 @@ class ResourceValidator
             'damage-categories' => [
                 'category_name' => ['required', 'string', 'max:120'],
                 'is_active' => ['sometimes', 'boolean'],
+            ],
+            // Tabel students tidak punya kolom is_active; kolom point dibatasi
+            // 0..100 karena KesiswaanProcessor menahan poin di lantai 0.
+            'students' => [
+                'nis' => ['required', 'string', 'max:30', Rule::unique('students', 'nis')->ignore($ignoreId)],
+                'name' => ['required', 'string', 'max:150'],
+                'class_id' => ['required', Rule::exists('classes', 'id')->where('is_active', true)],
+                'parent_phone' => ['nullable', 'string', 'max:30', 'regex:/^[0-9+() .-]+$/'],
+                'point' => ['sometimes', 'integer', 'min:0', 'max:100'],
             ],
             default => abort(404),
         };

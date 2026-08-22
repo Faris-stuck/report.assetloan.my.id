@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\DamageDetail;
 use App\Models\Report;
-use App\Models\Location;
 use App\Models\SchoolClass;
 use App\Services\PublicReport\PublicReportService;
 use Illuminate\Http\Request;
@@ -39,10 +38,6 @@ class PublicReportPriorityBugExplorationTest extends TestCase
             'grade_level' => '10',
             'academic_year' => '2024/2025',
         ]);
-        $location = Location::create([
-            'location_name' => 'Test Location',
-            'location_type' => 'classroom',
-        ]);
 
         // Property-based test: generate all urgency values
         $urgencyValues = ['rendah', 'sedang', 'tinggi', 'darurat'];
@@ -61,7 +56,6 @@ class PublicReportPriorityBugExplorationTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => "Test Damage - {$urgencyValue}",
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => "Test description for urgency {$urgencyValue}",
                 'urgency' => $urgencyValue,
@@ -119,10 +113,6 @@ class PublicReportPriorityBugExplorationTest extends TestCase
             'grade_level' => '10',
             'academic_year' => '2024/2025',
         ]);
-        $location = Location::create([
-            'location_name' => 'Test Location',
-            'location_type' => 'classroom',
-        ]);
         $urgencyValue = 'darurat';
 
         $request = new Request();
@@ -134,7 +124,6 @@ class PublicReportPriorityBugExplorationTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'damage',
             'title' => 'Test Damage Darurat',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Test description for urgency darurat',
             'urgency' => $urgencyValue,

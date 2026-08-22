@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\BullyingDetail;
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\QrCode;
 use App\Models\Report;
 use App\Models\ReportAttachment;
@@ -87,7 +86,6 @@ class FlowAndButtonValidationTest extends TestCase
     public function test_public_violation_report_success_tracking_info_and_confirm_flow(): void
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $response = $this->withSession(['math_captcha_answer' => 8, 'report_submit_token' => 'test-submit-token'])
             ->post(route('public.report.store'), [
@@ -98,7 +96,6 @@ class FlowAndButtonValidationTest extends TestCase
                 'related_class_id' => $class->id,
                 'report_type' => 'violation',
                 'title' => 'Laporan flow pelanggaran',
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Deskripsi lengkap laporan pelanggaran untuk flow tracking.',
                 'urgency' => 'sedang',
@@ -164,7 +161,6 @@ class FlowAndButtonValidationTest extends TestCase
     public function test_public_damage_report_validation_and_creation_flow(): void
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $this->withSession(['math_captcha_answer' => 9, 'report_submit_token' => 'test-submit-token'])
             ->from('/')
@@ -175,7 +171,6 @@ class FlowAndButtonValidationTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => 'Laporan damage invalid',
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Deskripsi lengkap laporan kerusakan invalid.',
                 'urgency' => 'sedang',
@@ -193,7 +188,6 @@ class FlowAndButtonValidationTest extends TestCase
                 'reporter_staff_unit_id' => StaffUnit::firstOrFail()->id,
                 'report_type' => 'damage',
                 'title' => 'Proyektor ruang audit rusak',
-                'custom_location' => 'Ruang Audit QA',
                 'incident_date' => now()->toDateString(),
                 'description' => 'Proyektor tidak menyala saat flow QA dijalankan.',
                 'urgency' => 'tinggi',
@@ -219,7 +213,6 @@ class FlowAndButtonValidationTest extends TestCase
     {
         $admin = $this->user('admin@laporin.local');
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $this->actingAs($admin)->get(route('admin.users.index'))->assertOk()
             ->assertSee('Tambah')
@@ -271,7 +264,7 @@ class FlowAndButtonValidationTest extends TestCase
 
         $this->assertFalse($qr->refresh()->is_active);
 
-        foreach ($this->validMasterPayloads($class) as $resource => [$requiredField, $payload]) {
+        foreach ($this->validMasterPayloads() as $resource => [$requiredField, $payload]) {
             $this->actingAs($admin)->get(route('admin.master.index', $resource))->assertOk()->assertSee('Tambah');
             $this->actingAs($admin)->from(route('admin.master.index', $resource))->post(route('admin.master.store', $resource), [])
                 ->assertRedirect(route('admin.master.index', $resource))
@@ -452,7 +445,6 @@ class FlowAndButtonValidationTest extends TestCase
     private function report(array $overrides = []): Report
     {
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $number = 'LPR'.now()->format('Ym').str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
@@ -465,7 +457,6 @@ class FlowAndButtonValidationTest extends TestCase
             'reporter_class_id' => $class->id,
             'report_type' => 'violation',
             'title' => 'Judul laporan flow QA',
-            'location_id' => $location->id,
             'incident_date' => now()->toDateString(),
             'description' => 'Deskripsi laporan flow QA.',
             'urgency' => 'sedang',
@@ -475,7 +466,7 @@ class FlowAndButtonValidationTest extends TestCase
         ], $overrides));
     }
 
-    private function validMasterPayloads(SchoolClass $class): array
+    private function validMasterPayloads(): array
     {
         return [
             'classes' => ['class_name', [
@@ -492,12 +483,6 @@ class FlowAndButtonValidationTest extends TestCase
             ]],
             'staff-units' => ['unit_name', [
                 'unit_name' => 'Unit QA',
-                'is_active' => '1',
-            ]],
-            'locations' => ['location_name', [
-                'location_name' => 'Ruang QA',
-                'location_type' => 'ruang',
-                'class_id' => $class->id,
                 'is_active' => '1',
             ]],
             'violation-types' => ['violation_name', [

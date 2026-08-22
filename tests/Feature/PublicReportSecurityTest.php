@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\SchoolClass;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,7 +26,6 @@ class PublicReportSecurityTest extends TestCase
         Storage::fake('private');
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         // Create a valid image file
         $validImage = UploadedFile::fake()->image('test.jpg', 100, 100);
@@ -43,7 +41,6 @@ class PublicReportSecurityTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => 'Kerusakan dengan Bukti',
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Kerusakan dengan bukti foto.',
                 'urgency' => 'sedang',
@@ -64,7 +61,6 @@ class PublicReportSecurityTest extends TestCase
         Storage::fake('private');
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $this->withSession([
             'math_captcha_answer' => 10,
@@ -78,7 +74,6 @@ class PublicReportSecurityTest extends TestCase
                 'reporter_class_id' => $class->id,
                 'report_type' => 'damage',
                 'title' => 'Laporan Dengan Data PII',
-                'location_id' => $location->id,
                 'incident_date' => now()->toDateString(),
                 'description' => 'Laporan dengan email dan nomor telepon.',
                 'urgency' => 'sedang',
@@ -105,7 +100,6 @@ class PublicReportSecurityTest extends TestCase
         Storage::fake('private');
 
         $class = SchoolClass::firstOrFail();
-        $location = Location::firstOrFail();
 
         $this->withSession([
             'math_captcha_answer' => 7,

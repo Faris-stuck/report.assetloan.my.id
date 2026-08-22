@@ -7,12 +7,12 @@ use App\Http\Controllers\ReportController;
 use App\Models\BullyingDetail;
 use App\Models\DamageCategory;
 use App\Models\DamageDetail;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\ReportAttachment;
 use App\Models\ReportStatusHistory;
 use App\Models\ReportNote;
 use App\Models\SchoolClass;
+use App\Models\Student;
 use App\Models\User;
 use App\Services\Role\Kesiswaan\KesiswaanService;
 use App\Services\Role\Sarpras\SarprasService;
@@ -28,10 +28,10 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Target 1: AdminService::master('locations')
-     * Verify that fetching locations eager loads 'class' in O(1) queries regardless of location count.
+     * Target 1: AdminService::master('students')
+     * Verify that fetching students eager loads 'class' in O(1) queries regardless of student count.
      */
-    public function test_admin_service_locations_query_count_is_o1(): void
+    public function test_admin_service_students_query_count_is_o1(): void
     {
         $schoolClass = SchoolClass::create([
             'class_name' => 'X-RPL-1',
@@ -42,11 +42,11 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
         ]);
 
         for ($i = 0; $i < 15; $i++) {
-            Location::create([
-                'location_name' => "Lab Computer $i",
-                'location_type' => 'Lab',
+            Student::create([
+                'nis' => sprintf('900%05d', $i),
+                'name' => "Siswa Perf $i",
                 'class_id' => $schoolClass->id,
-                'is_active' => true,
+                'point' => 0,
             ]);
         }
 
@@ -54,7 +54,7 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
         DB::flushQueryLog();
 
         $adminService = app(AdminService::class);
-        $view = $adminService->master('locations');
+        $view = $adminService->master('students');
         $items = $view->getData()['items'];
 
         // Access the eager-loaded relationship on every item to verify no lazy loading queries trigger
@@ -72,7 +72,7 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
 
     /**
      * Target 2: KesiswaanService::index()
-     * Verify that fetching violation reports eager loads bullyingDetail.allegedActorClass, relatedClass, location, attachments in O(1) queries.
+     * Verify that fetching violation reports eager loads bullyingDetail.allegedActorClass, relatedClass, attachments in O(1) queries.
      */
     public function test_kesiswaan_service_violation_reports_query_count_is_o1(): void
     {
@@ -80,11 +80,6 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
             'class_name' => 'X-TKJ-1',
             'grade_level' => '10',
             'academic_year' => '2023/2024',
-            'is_active' => true,
-        ]);
-
-        $location = Location::create([
-            'location_name' => 'Kantin Utama',
             'is_active' => true,
         ]);
 
@@ -102,7 +97,6 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
                 'status' => 'menunggu_verifikasi',
                 'urgency' => 'sedang',
                 'related_class_id' => $class1->id,
-                'location_id' => $location->id,
             ]);
 
             BullyingDetail::create([
@@ -134,12 +128,10 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
         foreach ($reports as $report) {
             $actorClass = $report->bullyingDetail?->allegedActorClass?->class_name;
             $relClass = $report->relatedClass?->class_name;
-            $locName = $report->location?->location_name;
             $attachmentsCount = $report->attachments->count();
 
             $this->assertEquals('X-TKJ-1', $actorClass);
             $this->assertEquals('X-TKJ-1', $relClass);
-            $this->assertEquals('Kantin Utama', $locName);
             $this->assertEquals(1, $attachmentsCount);
         }
 
@@ -147,21 +139,16 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
         DB::disableQueryLog();
 
         // Expect constant number of queries:
-        // 1 (select reports) + 1 (bullyingDetail) + 1 (allegedActorClass) + 1 (relatedClass) + 1 (location) + 1 (attachments) = 6 queries
-        $this->assertLessThanOrEqual(6, count($queries), "Query count for 15 violation reports exceeded O(1) bound. Got: " . count($queries));
+        // 1 (select reports) + 1 (bullyingDetail) + 1 (allegedActorClass) + 1 (relatedClass) + 1 (attachments) = 5 queries
+        $this->assertLessThanOrEqual(5, count($queries), "Query count for 15 violation reports exceeded O(1) bound. Got: " . count($queries));
     }
 
     /**
      * Target 3: SarprasService::index()
-     * Verify that fetching damage reports eager loads damageDetail, location, damageCategory, attachments in O(1) queries.
+     * Verify that fetching damage reports eager loads damageDetail, damageCategory, attachments in O(1) queries.
      */
     public function test_sarpras_service_damage_reports_query_count_is_o1(): void
     {
-        $location = Location::create([
-            'location_name' => 'Ruang Teori 1',
-            'is_active' => true,
-        ]);
-
         $category = DamageCategory::create([
             'category_name' => 'Elektronik',
             'is_active' => true,
@@ -180,7 +167,6 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
                 'description' => 'Deskripsi damage ' . $i,
                 'status' => 'menunggu_verifikasi',
                 'urgency' => 'tinggi',
-                'location_id' => $location->id,
                 'damage_category_id' => $category->id,
             ]);
 
@@ -210,12 +196,10 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
 
         foreach ($reports as $report) {
             $assetName = $report->damageDetail?->item_name;
-            $locName = $report->location?->location_name;
             $catName = $report->damageCategory?->category_name;
             $attachmentsCount = $report->attachments->count();
 
             $this->assertEquals('Proyektor BenQ', $assetName);
-            $this->assertEquals('Ruang Teori 1', $locName);
             $this->assertEquals('Elektronik', $catName);
             $this->assertEquals(1, $attachmentsCount);
         }
@@ -223,8 +207,8 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
 
-        // 1 (select reports) + 1 (damageDetail) + 1 (location) + 1 (damageCategory) + 1 (attachments) = 5 queries
-        $this->assertLessThanOrEqual(5, count($queries), "Query count for 15 damage reports exceeded O(1) bound. Got: " . count($queries));
+        // 1 (select reports) + 1 (damageDetail) + 1 (damageCategory) + 1 (attachments) = 4 queries
+        $this->assertLessThanOrEqual(4, count($queries), "Query count for 15 damage reports exceeded O(1) bound. Got: " . count($queries));
     }
 
     /**
@@ -304,7 +288,7 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
 
     /**
      * Target 5: DashboardController::__invoke()
-     * Verify list eager loading on Dashboard: relatedClass, location, bullyingDetail, damageDetail loaded in O(1) queries.
+     * Verify list eager loading on Dashboard: relatedClass, bullyingDetail, damageDetail loaded in O(1) queries.
      */
     public function test_dashboard_controller_report_list_query_count_is_o1(): void
     {
@@ -312,11 +296,6 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
             'class_name' => 'XII-MM-1',
             'grade_level' => '12',
             'academic_year' => '2023/2024',
-            'is_active' => true,
-        ]);
-
-        $location = Location::create([
-            'location_name' => 'Studio Audio',
             'is_active' => true,
         ]);
 
@@ -336,7 +315,6 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
                 'status' => 'menunggu_verifikasi',
                 'urgency' => 'sedang',
                 'related_class_id' => $class1->id,
-                'location_id' => $location->id,
             ]);
 
             if ($i % 2 === 0) {
@@ -368,21 +346,19 @@ class Milestone1EmpiricalNPlusOneTest extends TestCase
         // Access all relations for dashboard reports list
         foreach ($reports as $report) {
             $relClass = $report->relatedClass?->class_name;
-            $locName = $report->location?->location_name;
             $bullying = $report->bullyingDetail?->alleged_actor_name;
-            $damage = $report->damageDetail?->asset_name;
+            $damage = $report->damageDetail?->item_name;
         }
 
         $queries = DB::getQueryLog();
         DB::disableQueryLog();
 
-        // 1 (select paginated reports) + 1 (relatedClass) + 1 (location) + 1 (bullyingDetail) + 1 (damageDetail) = 5 queries for reports list eager loading
+        // 1 (select paginated reports) + 1 (relatedClass) + 1 (bullyingDetail) + 1 (damageDetail) = 4 queries for reports list eager loading
         // Plus 5 stats queries (aggregate queries, optimized in M2).
         // Total query log for dashboard execution should be fixed/bounded regardless of number of reports!
         // We measure that relations access adds ZERO queries.
         foreach ($reports as $report) {
             $this->assertTrue($report->relationLoaded('relatedClass'));
-            $this->assertTrue($report->relationLoaded('location'));
             $this->assertTrue($report->relationLoaded('bullyingDetail'));
             $this->assertTrue($report->relationLoaded('damageDetail'));
         }

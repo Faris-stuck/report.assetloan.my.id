@@ -40,9 +40,4 @@ class ReportPolicy
         return ($user->isRole('kesiswaan') && $report->report_type === 'violation')
             || ($user->isRole('sarpras') && $report->report_type === 'damage');
     }
-
-    public function updateStatus(User $user, Report $report): bool
-    {
-        return false;
-    }
 }

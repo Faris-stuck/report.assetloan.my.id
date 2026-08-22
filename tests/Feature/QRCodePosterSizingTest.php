@@ -269,9 +269,6 @@ class QRCodePosterSizingTest extends TestCase
             'class_id' =>
                 null,
 
-            'location_id' =>
-                null,
-
             'target_url' =>
                 route(
                     'public.report.qr',

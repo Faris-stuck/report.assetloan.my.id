@@ -19,8 +19,13 @@ class RedisHealth
         ?int $port = null,
         float $timeout = 0.25
     ): bool {
-        $host ??= (string) env('REDIS_HOST', '127.0.0.1');
-        $port ??= (int) env('REDIS_PORT', 6379);
+        // Dibaca dari config, bukan env(): begitu `php artisan config:cache`
+        // dijalankan (dan docker/start.sh selalu menjalankannya) Laravel
+        // melewati LoadEnvironmentVariables, sehingga env() diam-diam
+        // mengembalikan default 127.0.0.1:6379 dan health check menyondel
+        // alamat yang salah.
+        $host ??= (string) config('database.redis.default.host', '127.0.0.1');
+        $port ??= (int) config('database.redis.default.port', 6379);
 
         if ($host === '' || $host === 'null' || $port <= 0) {
             return false;
@@ -59,8 +64,8 @@ class RedisHealth
         }
 
         logger()?->warning('Redis unavailable; falling back to database session and cache storage.', [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
-            'port' => env('REDIS_PORT', 6379),
+            'host' => config('database.redis.default.host', '127.0.0.1'),
+            'port' => config('database.redis.default.port', 6379),
             'session_driver' => config('session.driver'),
             'cache_store' => config('cache.default'),
         ]);

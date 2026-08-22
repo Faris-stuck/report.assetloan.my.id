@@ -22,8 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
             $middleware->trustProxies(at: $trustedProxies, headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
         }
 
-        // Use Redis-backed throttle counters so limits are global across app workers.
-        $middleware->throttleWithRedis();
+        // Throttle memakai ThrottleRequests bawaan, yang menghormati
+        // config('cache.limiter') — sekarang rantai 'failover' (Redis lalu
+        // database). Counter tetap tersimpan di Redis selama Redis hidup,
+        // jadi kuota masih berlaku sama untuk semua worker.
+        //
+        // throttleWithRedis() sengaja TIDAK dipakai: varian itu memanggil
+        // EVAL langsung ke koneksi redis 'default' lewat DurationLimiter dan
+        // mengabaikan config('cache.limiter'), sehingga satu kedipan Redis
+        // membuat semua route ber-throttle — termasuk pengiriman laporan dan
+        // login — menjawab 500. Dengan versi cache, Redis mati berarti
+        // pembatasan turun ke database, bukan layanan yang ikut mati.
 
         $middleware->web(append: [
             SecurityHeaders::class,
@@ -51,39 +60,53 @@ return Application::configure(basePath: dirname(__DIR__))
             return Limit::perMinute(30)->by('public-wizard-device:' . hash_hmac('sha256', (string) $device, config('app.key')));
         });
 
+        /*
+         * PENJAGA BANJIR PERMINTAAN saja (anti-bot/DoS) — BUKAN kuota laporan.
+         *
+         * Kuota bisnis "maksimal 5 laporan per perangkat dalam 2 jam" ditegakkan
+         * di PublicReportController::store() dan hanya dihitung ketika laporan
+         * benar-benar tersimpan.
+         *
+         * Sebelumnya batas 5-per-120-menit dipasang di sini sebagai middleware
+         * route, sehingga SETIAP POST /lapor ikut dihitung — termasuk yang gagal
+         * validasi atau salah CAPTCHA — dan begitu terlampaui pelapor dilempar ke
+         * halaman 429 sehingga situs terasa mati. Batas per-IP juga berbahaya di
+         * sekolah karena semua siswa berbagi satu IP publik.
+         */
         RateLimiter::for(
             'public-reports',
             function (Request $request) {
                 $ip = (string) ($request->ip() ?: 'unknown');
-                $device = (string) ($request->cookie('laporin_device_id') ?: 'unknown');
-                $appKey = (string) config('app.key');
 
-                return [
-                    Limit::perMinutes(120, 5)
-                        ->by('public-report-ip:' . hash_hmac('sha256', $ip, $appKey)),
-                    Limit::perMinutes(120, 5)
-                        ->by('public-report-device:' . hash_hmac('sha256', $device, $appKey)),
-                ];
+                return Limit::perMinute(30)
+                    ->by('public-report-flood:' . hash_hmac('sha256', $ip, (string) config('app.key')));
             }
         );
 
         RateLimiter::for(
             'public-tracking',
             function (Request $request) {
-                return Limit::perMinute(10)
-                    ->by($request->ip() ?? 'unknown');
-            }
-        );
+                $ip = (string) ($request->ip() ?: 'unknown');
+                $device = (string) ($request->cookie('laporin_device_id') ?: $ip);
 
-        RateLimiter::for(
-            'ai-chat',
-            function (Request $request) {
-                $key = $request->user()?->getAuthIdentifier()
-                    ? 'user:'.$request->user()->getAuthIdentifier()
-                    : 'ip:'.($request->ip() ?? 'unknown');
-                return $request->user()
-                    ? Limit::perMinutes(10, 20)->by($key)
-                    : Limit::perMinutes(10, 10)->by($key);
+                return [
+                    /*
+                     * Kuota utama dihitung per perangkat. Sebelumnya batas
+                     * 10/menit hanya memakai IP mentah, sehingga seluruh sekolah
+                     * yang keluar lewat satu IP publik saling menghabiskan kuota
+                     * pelacakan satu sama lain.
+                     */
+                    Limit::perMinute(20)->by(
+                        'public-tracking-device:' . hash_hmac('sha256', $device, (string) config('app.key'))
+                    ),
+                    /*
+                     * Cookie perangkat dikendalikan klien, jadi batas per IP
+                     * tetap dipertahankan sebagai penjaga banjir permintaan.
+                     */
+                    Limit::perMinute(60)->by(
+                        'public-tracking-ip:' . hash_hmac('sha256', $ip, (string) config('app.key'))
+                    ),
+                ];
             }
         );
     })

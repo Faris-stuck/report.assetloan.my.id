@@ -1,6 +1,6 @@
 services:
   app:
-    image: lapapp:20260821-build2
+    image: lapapp:20260821-clean
     container_name: app
     ports:
       - "127.0.0.1:18080:8080"
@@ -25,7 +25,7 @@ services:
   # host supaya polanya sama dengan worker lain dan tidak bergantung pada crontab
   # di luar compose. HANYA BOLEH ADA SATU instance agar tugas tidak dobel.
   scheduler:
-    image: lapapp:20260821-build2
+    image: lapapp:20260821-clean
     container_name: laporin-scheduler
     env_file:
       - /etc/laporin/laporin-production.env
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
 
   worker-notifications:
-    image: lapapp:20260821-build2
+    image: lapapp:20260821-clean
     container_name: laporin-worker-notifications
     env_file:
       - /etc/laporin/laporin-production.env
@@ -69,7 +69,7 @@ services:
     restart: unless-stopped
 
   worker-email:
-    image: lapapp:20260821-build2
+    image: lapapp:20260821-clean
     container_name: laporin-worker-email
     env_file:
       - /etc/laporin/laporin-production.env
@@ -125,7 +125,7 @@ services:
     restart: unless-stopped
 
   worker-whatsapp:
-    image: lapapp:20260821-build2
+    image: lapapp:20260821-clean
     container_name: laporin-worker-whatsapp
     env_file:
       - /etc/laporin/laporin-production.env

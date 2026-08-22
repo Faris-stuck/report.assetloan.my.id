@@ -18,7 +18,7 @@ class KesiswaanService
     public function index(): View
     {
         $query = Report::where('report_type', 'violation')
-            ->with(['bullyingDetail.allegedActorClass', 'relatedClass', 'location', 'attachments']);
+            ->with(['bullyingDetail.allegedActorClass', 'relatedClass', 'attachments']);
 
         // Search across report_number, title, and description
         if ($search = request('search')) {

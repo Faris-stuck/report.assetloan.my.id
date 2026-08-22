@@ -12,6 +12,15 @@
         'selesai' => 'Selesai',
         'ditolak' => 'Ditolak',
     ];
+
+    // "Proses Laporan" mewajibkan student_id dan violation_type_id. Kalau salah
+    // satu master datanya kosong, tombol submit tidak akan pernah bisa dipakai
+    // dan browser hanya menampilkan "Please select an item in the list" tanpa
+    // menjelaskan penyebabnya. Deteksi di sini supaya bisa dijelaskan.
+    $missingMaster = [];
+    if ($students->isEmpty()) { $missingMaster[] = 'data siswa'; }
+    if ($types->isEmpty()) { $missingMaster[] = 'jenis pelanggaran'; }
+    $canProcess = $missingMaster === [];
 @endphp
 <div class="page-header">
     <div>
@@ -96,10 +105,19 @@
                     <div id="process-{{ $r->id }}" class="accordion-collapse collapse show" data-bs-parent="#accordion-kesiswaan-{{ $r->id }}">
                         <div class="accordion-body">
                             <form method="POST" action="{{ route('kesiswaan.process',$r) }}" class="row g-3 align-items-end">@csrf
+                                @unless($canProcess)
+                                    <div class="col-12">
+                                        <div class="alert alert-warning mb-0" role="alert">
+                                            Laporan belum bisa diproses karena {{ implode(' dan ', $missingMaster) }} masih kosong.
+                                            Minta Superadmin melengkapinya lewat menu Data Master terlebih dahulu.
+                                            Laporan ini tetap bisa ditolak bila memang tidak valid.
+                                        </div>
+                                    </div>
+                                @endunless
                                 <div class="col-lg-6"><label class="form-label required" for="student_id_{{ $r->id }}">Siswa yang terbukti</label><select id="student_id_{{ $r->id }}" name="student_id" class="form-select" required><option value="">Pilih siswa</option>@foreach($students as $s)<option value="{{ $s->id }}">{{ $s->name }} - {{ $s->class?->class_name }}</option>@endforeach</select></div>
                                 <div class="col-lg-6"><label class="form-label required" for="violation_type_id_{{ $r->id }}">Jenis pelanggaran</label><select id="violation_type_id_{{ $r->id }}" name="violation_type_id" class="form-select" required><option value="">Pilih jenis</option>@foreach($types as $t)<option value="{{ $t->id }}">{{ $t->violation_name }} (-{{ $t->point_reduction }} poin)</option>@endforeach</select></div>
                                 <div class="col-12"><label class="form-label" for="note_{{ $r->id }}">Catatan pembinaan</label><textarea id="note_{{ $r->id }}" name="note" class="form-control" placeholder="Opsional" maxlength="2000" rows="3"></textarea></div>
-                                <div class="col-12"><button type="submit" class="btn btn-laporin" aria-label="Proses laporan #{{ $r->report_number }}">Proses Laporan</button></div>
+                                <div class="col-12"><button type="submit" class="btn btn-laporin" aria-label="Proses laporan #{{ $r->report_number }}" @disabled(! $canProcess)>Proses Laporan</button></div>
                             </form>
                         </div>
                     </div>

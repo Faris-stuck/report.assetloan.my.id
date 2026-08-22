@@ -7,6 +7,7 @@ use App\Models\ReportNote;
 use App\Models\ReportStatusHistory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
@@ -18,7 +19,7 @@ class TrackingController extends Controller
         return view('public.track');
     }
 
-    public function search(Request $request): View|RedirectResponse
+    public function search(Request $request): Response|RedirectResponse
     {
         $request->merge([
             'report_number' => $this->normalizeReportNumber((string) $request->input('report_number', '')),
@@ -34,14 +35,22 @@ class TrackingController extends Controller
             ->where('report_number', trim($data['report_number']))
             ->first();
 
+        /*
+         * Nomor salah, kode akses salah, dan perangkat tidak cocok sengaja
+         * memakai satu pesan yang sama. Sebelumnya perangkat yang tidak cocok
+         * dijawab dengan pesan tersendiri, sehingga penebak kode akses 6 digit
+         * bisa tahu kapan kodenya sudah benar hanya dari perbedaan pesan.
+         */
+        $invalid = 'Nomor laporan, kode akses, atau perangkat tidak cocok. Laporan hanya dapat dilacak dari perangkat/jaringan yang digunakan saat laporan dibuat.';
+
         if (! $report || ! Hash::check($data['access_code'], $report->access_code_hash)) {
-            return back()->withErrors(['report_number' => 'Nomor laporan atau kode akses tidak valid.']);
+            return back()->withErrors(['report_number' => $invalid])->withInput($request->except('access_code'));
         }
 
         // Tracking access is bound to the current client IP instead of a Laravel session.
         // The report stores only an HMAC hash of the submission IP, never the raw IP.
         if (! $this->deviceMatchesReport($request, $report)) {
-            return back()->withErrors(['report_number' => 'Laporan hanya dapat dilacak dari perangkat/jaringan yang digunakan saat laporan dibuat.']);
+            return back()->withErrors(['report_number' => $invalid])->withInput($request->except('access_code'));
         }
 
         $trackingProof = $report->id.'|'.hash_hmac('sha256', (string) $report->access_code_hash, config('app.key'));
@@ -63,10 +72,8 @@ class TrackingController extends Controller
 
     public function addInfo(Request $request, Report $report): RedirectResponse
     {
-        if (! $this->deviceMatchesReport($request, $report) || ! $this->trackingProofMatchesReport($request, $report)) {
-            return redirect()
-                ->route('track.form')
-                ->withErrors(['access_code' => 'Akses tracking ditolak karena alamat IP perangkat tidak cocok dengan perangkat saat laporan dibuat.']);
+        if ($denied = $this->denyReporterAction($request, $report)) {
+            return $denied;
         }
 
         if (! in_array($report->status, ['memerlukan_informasi', 'dibuka_kembali', 'menunggu_konfirmasi'], true)) {
@@ -103,10 +110,8 @@ class TrackingController extends Controller
 
     public function confirmComplete(Request $request, Report $report): RedirectResponse
     {
-        if (! $this->deviceMatchesReport($request, $report) || ! $this->trackingProofMatchesReport($request, $report)) {
-            return redirect()
-                ->route('track.form')
-                ->withErrors(['access_code' => 'Akses tracking ditolak karena alamat IP perangkat tidak cocok dengan perangkat saat laporan dibuat.']);
+        if ($denied = $this->denyReporterAction($request, $report)) {
+            return $denied;
         }
 
         if ($report->status !== 'menunggu_konfirmasi') {
@@ -125,6 +130,30 @@ class TrackingController extends Controller
 
 
         return back()->with('status', 'Laporan dikonfirmasi selesai.');
+    }
+
+    /**
+     * Penjagaan bersama untuk dua aksi pelapor. Sebelumnya kedua penyebab
+     * digabung dengan OR dan dijawab satu pesan "alamat IP perangkat tidak
+     * cocok", padahal penyebab yang paling sering terjadi adalah bukti
+     * pelacakan yang hangus setelah 15 menit — dan itu bisa dipulihkan
+     * sendiri oleh pelapor dengan mencari ulang laporannya.
+     */
+    private function denyReporterAction(Request $request, Report $report): ?RedirectResponse
+    {
+        if (! $this->deviceMatchesReport($request, $report)) {
+            return redirect()
+                ->route('track.form')
+                ->withErrors(['report_number' => 'Laporan hanya dapat dilacak dan diperbarui dari perangkat/jaringan yang digunakan saat laporan dibuat.']);
+        }
+
+        if (! $this->trackingProofMatchesReport($request, $report)) {
+            return redirect()
+                ->route('track.form')
+                ->withErrors(['report_number' => 'Sesi pelacakan sudah berakhir setelah 15 menit. Masukkan lagi nomor laporan dan kode akses, lalu ulangi aksi Anda.']);
+        }
+
+        return null;
     }
 
     private function trackingProofMatchesReport(Request $request, Report $report): bool

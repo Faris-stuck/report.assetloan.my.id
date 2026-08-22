@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 class WahaService
 {
@@ -13,7 +16,36 @@ class WahaService
         $baseUrl = rtrim((string) config('services.waha.url'), '/');
         $apiKey = (string) config('services.waha.api_key');
         if ($baseUrl === '' || $apiKey === '') throw new RuntimeException('WAHA is not configured. Set WAHA_URL and WAHA_API_KEY.');
-        return Http::baseUrl($baseUrl)->acceptJson()->asJson()->withHeaders(['X-Api-Key' => $apiKey])->connectTimeout(5)->timeout(30)->retry(2, 250);
+
+        return Http::baseUrl($baseUrl)
+            ->acceptJson()
+            ->asJson()
+            ->withHeaders(['X-Api-Key' => $apiKey])
+            ->connectTimeout(5)
+            ->timeout(30)
+            ->retry(2, 250, fn (Throwable $exception): bool => $this->isTransient($exception));
+    }
+
+    /**
+     * Tanpa callback ini Laravel mengulang SEMUA response gagal, termasuk 4xx.
+     * Kondisi seperti "nomor tidak terdaftar", sesi tidak ditemukan (404), atau
+     * payload ditolak (422) bersifat permanen: mengulanginya hanya menggandakan
+     * beban WAHA tanpa pernah mengubah hasil. Job-level retry sudah menangani
+     * gangguan yang benar-benar sementara.
+     */
+    private function isTransient(Throwable $exception): bool
+    {
+        if ($exception instanceof ConnectionException) {
+            return true;
+        }
+
+        if (! $exception instanceof RequestException || $exception->response === null) {
+            return false;
+        }
+
+        $status = $exception->response->status();
+
+        return $status === 429 || $status >= 500;
     }
 
     public function session(string $session): array
@@ -28,31 +60,6 @@ class WahaService
     {
         $response = $this->client()->post('/api/sendText', ['session' => $session ?: config('services.waha.session', 'default'), 'chatId' => $chatId, 'text' => $text]);
         $response->throw(); return $response->json();
-    }
-
-    public function sendImage(
-        string $chatId,
-        string $imageUrl,
-        ?string $caption = null,
-        ?string $session = null
-    ): array {
-        $sessionName = $session ?: config('services.waha.session', 'default');
-        $payload = [
-            'session' => $sessionName,
-            'chatId' => $chatId,
-            'file' => [
-                'url' => $imageUrl,
-            ],
-        ];
-
-        if ($caption !== null && $caption !== '') {
-            $payload['caption'] = $caption;
-        }
-
-        $response = $this->client()->post('/api/sendImage', $payload);
-        $response->throw();
-
-        return $response->json();
     }
 
 

@@ -12,6 +12,7 @@ use App\Observers\ReportObserver;
 use App\Services\Role\Superadmin\AdminService;
 use App\Services\Role\Superadmin\AdminServiceInterface;
 use App\Support\RedisHealth;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -26,6 +27,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         RedisHealth::applyGracefulFallback();
+
+        // The UI ships Bootstrap 5 only; Laravel's default paginator markup is
+        // Tailwind, so without this every ->links() renders unstyled.
+        Paginator::useBootstrapFive();
 
         $defaultConnection = config('database.default');
         $connections = config('database.connections', []);

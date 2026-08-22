@@ -1,238 +1,264 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Feature;
 
+use App\Models\SchoolClass;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Wizard laporan publik kini sepenuhnya dijalankan server: setiap langkah punya
+ * route sendiri (/lapor/langkah/{step}) dan draft disimpan di session, bukan di
+ * sessionStorage browser.
+ *
+ * Versi sebelumnya berkas ini memeriksa markup Alpine (x-model="formData.step1.*",
+ * saveFormState, sessionStorage.getItem('reportFormData')). Semua penanda itu
+ * sudah tidak ada di view, sehingga tesnya lulus/gagal karena keberadaan string
+ * HTML — bukan karena data pelapor benar-benar bertahan. Sekarang yang diuji
+ * adalah perilakunya lewat request HTTP nyata.
+ */
 class FormDataPersistenceBugFixTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function activeClass(): SchoolClass
+    {
+        return SchoolClass::create([
+            'class_name' => 'XII RPL 1',
+            'grade_level' => '12',
+            'major' => 'RPL',
+            'academic_year' => '2026/2027',
+            'is_active' => true,
+        ]);
+    }
+
     /**
-     * Test that the report form view renders successfully
-     * with Alpine.js data persistence initialized
+     * @return array<string, mixed>
      */
-    public function test_public_report_form_renders_with_data_persistence()
+    private function validStepOne(SchoolClass $class, string $name = 'Pelapor Satu'): array
+    {
+        return [
+            'reporter_name' => $name,
+            'reporter_class_id' => $class->id,
+            'reporter_absence_number' => 12,
+            'reporter_phone' => '081234567890',
+            'reporter_email' => 'pelapor@example.test',
+        ];
+    }
+
+    private function submitToken(): string
+    {
+        return (string) session('report_submit_token');
+    }
+
+    public function test_langkah_pertama_terbuka_dan_membuat_sesi_formulir(): void
     {
         $response = $this->get(route('public.report'));
-        
+
         $response->assertStatus(200);
-        $response->assertViewHas('locations');
         $response->assertViewHas('subjects');
         $response->assertViewHas('staffUnits');
-        
-        // Check for Alpine.js form state initialization
-        $response->assertSee('formData', false);
-        $response->assertSee('saveFormState', false);
-        $response->assertSee('clearFormState', false);
-        $response->assertSee('sessionStorage', false);
-    }
-
-    /**
-     * Test that form has 4-step structure with proper data models
-     */
-    public function test_form_has_four_steps_with_data_models()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Check for step markers in HTML
         $response->assertSee('data-step="1"', false);
-        $response->assertSee('data-step="2"', false);
-        $response->assertSee('data-step="3"', false);
-        $response->assertSee('data-step="4"', false);
-        
-        // Check for form field bindings to formData
-        $response->assertSee('x-model="formData.step1', false);
-        $response->assertSee('x-model="formData.step2', false);
-        $response->assertSee('x-model="formData.step3', false);
-        $response->assertSee('x-model="formData.step4', false);
+
+        $this->assertNotSame('', $this->submitToken(), 'Membuka /lapor harus menerbitkan report_submit_token.');
+    }
+
+    public function test_langkah_di_luar_rentang_dikembalikan_ke_awal(): void
+    {
+        $this->get(route('public.report'));
+
+        foreach ([0, 5, 99] as $step) {
+            $this->get(route('public.report.step', $step))
+                ->assertRedirect(route('public.report'));
+        }
+    }
+
+    public function test_langkah_lanjutan_tanpa_sesi_formulir_ditolak_dengan_pesan(): void
+    {
+        $response = $this->get(route('public.report.step', 2));
+
+        $response->assertRedirect(route('public.report'));
+        $response->assertSessionHasErrors('form');
+    }
+
+    public function test_data_langkah_satu_bertahan_saat_kembali_dari_langkah_dua(): void
+    {
+        $class = $this->activeClass();
+        $this->get(route('public.report'));
+
+        $this->post(route('public.report.step.store', 1), $this->validStepOne($class) + [
+            'report_submit_token' => $this->submitToken(),
+        ])->assertRedirect(route('public.report.step', 2));
+
+        // Kembali ke langkah 1: draft harus dimuat ulang ke old input sehingga
+        // pelapor tidak perlu mengetik ulang apa pun.
+        $this->get(route('public.report.step', 1))->assertStatus(200);
+
+        $this->assertSame('Pelapor Satu', old('reporter_name'));
+        $this->assertSame($class->id, (int) old('reporter_class_id'));
+        $this->assertSame('081234567890', old('reporter_phone'));
+    }
+
+    public function test_reporter_type_dipaksa_siswa_di_sisi_server(): void
+    {
+        $class = $this->activeClass();
+        $this->get(route('public.report'));
+
+        // Formulir publik hanya untuk siswa. Nilai kiriman apa pun harus diabaikan.
+        $this->post(route('public.report.step.store', 1), $this->validStepOne($class) + [
+            'report_submit_token' => $this->submitToken(),
+            'reporter_type' => 'staff',
+        ])->assertRedirect(route('public.report.step', 2));
+
+        $draft = session('report_submit_forms')[$this->submitToken()]['wizard_data'] ?? [];
+        $this->assertSame('siswa', $draft['reporter_type'] ?? null);
+    }
+
+    public function test_langkah_gagal_validasi_mengembalikan_input_yang_baru_diketik(): void
+    {
+        $class = $this->activeClass();
+        $this->get(route('public.report'));
+
+        $response = $this->post(route('public.report.step.store', 1), [
+            'report_submit_token' => $this->submitToken(),
+            'reporter_name' => 'Nama Terketik',
+            'reporter_class_id' => $class->id,
+            'reporter_phone' => 'bukan-nomor',
+        ]);
+
+        $response->assertRedirect(route('public.report.step', 1));
+        $response->assertSessionHasErrors('reporter_phone');
+        $this->assertSame('Nama Terketik', old('reporter_name'));
     }
 
     /**
-     * Test that form has single-page submit flow with data preservation
+     * Regresi yang diperbaiki: wizardStep() memanggil session()->flashInput($wizardData).
+     * Ketika submit gagal, withInput() sudah lebih dulu mem-flash apa yang baru
+     * diketik pelapor; menimpanya dengan draft lama berarti suntingan pelapor
+     * hilang tanpa jejak. Input terbaru harus menang per field, sementara field
+     * yang tidak dikirim ulang tetap diambil dari draft.
      */
-    public function test_form_has_step_navigation_buttons()
+    public function test_suntingan_terbaru_menang_atas_draft_lama(): void
     {
-        $response = $this->get(route('public.report'));
-        
+        $class = $this->activeClass();
+        $this->get(route('public.report'));
+        $token = $this->submitToken();
+
+        // Draft tersimpan dengan nama lama.
+        $this->post(route('public.report.step.store', 1), $this->validStepOne($class, 'Nama Lama') + [
+            'report_submit_token' => $token,
+        ])->assertRedirect(route('public.report.step', 2));
+
+        $this->assertSame('Nama Lama', session("report_submit_forms.$token.wizard_data.reporter_name"));
+
+        // Pelapor kembali ke langkah 1, mengubah nama, tapi merusak nomor HP.
+        $this->post(route('public.report.step.store', 1), [
+            'report_submit_token' => $token,
+            'reporter_name' => 'Nama Baru',
+            'reporter_class_id' => $class->id,
+            'reporter_phone' => '1',
+        ])->assertRedirect(route('public.report.step', 1));
+
+        $this->get(route('public.report.step', 1))->assertStatus(200);
+
+        $this->assertSame('Nama Baru', old('reporter_name'), 'Nama yang baru diketik tidak boleh ditimpa draft lama.');
+        // Field yang tidak dikirim ulang tetap harus datang dari draft.
+        $this->assertSame('pelapor@example.test', old('reporter_email'));
+        // Draft tersimpan belum boleh berubah karena langkahnya gagal validasi.
+        $this->assertSame('Nama Lama', session("report_submit_forms.$token.wizard_data.reporter_name"));
+    }
+
+    public function test_langkah_dua_menyimpan_jenis_laporan_lalu_maju_ke_langkah_tiga(): void
+    {
+        $class = $this->activeClass();
+        $this->get(route('public.report'));
+        $token = $this->submitToken();
+
+        $this->post(route('public.report.step.store', 1), $this->validStepOne($class) + [
+            'report_submit_token' => $token,
+        ]);
+
+        $this->post(route('public.report.step.store', 2), [
+            'report_submit_token' => $token,
+            'report_type' => 'violation',
+        ])->assertRedirect(route('public.report.step', 3));
+
+        $this->assertSame('violation', session("report_submit_forms.$token.wizard_data.report_type"));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function reachStepThree(SchoolClass $class): array
+    {
+        $this->get(route('public.report'));
+        $token = $this->submitToken();
+
+        $this->post(route('public.report.step.store', 1), $this->validStepOne($class) + [
+            'report_submit_token' => $token,
+        ]);
+        $this->post(route('public.report.step.store', 2), [
+            'report_submit_token' => $token,
+            'report_type' => 'violation',
+        ]);
+
+        return ['token' => $token];
+    }
+
+    /**
+     * Formulir publik TIDAK menanyakan lokasi. Fitur lokasi dihapus menyeluruh
+     * atas permintaan pemilik sistem, jadi langkah 3 tidak boleh lagi memuat
+     * kontrol lokasi dalam bentuk apa pun. Tempat kejadian ditulis pelapor di
+     * dalam kronologi.
+     */
+    public function test_langkah_tiga_tidak_menanyakan_lokasi(): void
+    {
+        $class = $this->activeClass();
+        $this->reachStepThree($class);
+
+        $response = $this->get(route('public.report.step', 3));
+
         $response->assertStatus(200);
-        
-        // Wizard bertahap (JS inline murni): "Lanjut" memvalidasi langkah berjalan lalu
-        // memunculkan langkah berikutnya; "Kembali" untuk mengulang langkah sebelumnya.
-        $response->assertSee('LaporinWizard', false);
-        $response->assertSee('data-wizard-action="next"', false);
-        $response->assertSee('data-wizard-action="prev"', false);
-        $response->assertSee('saveFormState', false);  // data persistence (Alpine)
+        $response->assertDontSee('name="location_id"', false);
+        $response->assertDontSee('name="custom_location"', false);
+        $response->assertDontSee('Lokasi kejadian', false);
     }
 
     /**
-     * Test that error handling preserves form data
+     * Titik langkah dulunya <button> padahal tidak menavigasi ke mana pun —
+     * implementasi Alpine yang menanganinya sudah dihapus, jadi menekannya tidak
+     * melakukan apa-apa. Sekarang harus berupa indikator, bukan kontrol.
      */
-    public function test_validation_error_preserves_form_data()
+    public function test_titik_langkah_adalah_indikator_bukan_tombol(): void
     {
         $response = $this->get(route('public.report'));
-        
-        // Verify the form includes error display logic (JS murni: data-step-error-text)
-        $response->assertSee('stepError', false);
-        $response->assertSee('data-step-error-text', false);
-        $response->assertSee('alert alert-danger', false);  // Error display
-    }
 
-    /**
-     * Test that form has sessionStorage integration for data persistence
-     */
-    public function test_form_includes_localstorage_integration()
-    {
-        $response = $this->get(route('public.report'));
-        
         $response->assertStatus(200);
-        
-        // Check for sessionStorage methods
-        $response->assertSee("sessionStorage.getItem('reportFormData')", false);
-        $response->assertSee("sessionStorage.setItem('reportFormData'", false);
-        $response->assertSee("sessionStorage.removeItem('reportFormData')", false);
+        $response->assertSee('aria-current="step"', false);
+        $response->assertDontSee('<button type="button" class="step-dot', false);
     }
 
-    /**
-     * Test that form shows single-page guidance text
-     */
-    public function test_form_has_step_hints()
+    public function test_tombol_kirim_punya_target_sentuh_yang_memadai(): void
     {
-        $response = $this->get(route('public.report'));
-        
+        $class = $this->activeClass();
+        $this->get(route('public.report'));
+        $token = $this->submitToken();
+
+        $this->post(route('public.report.step.store', 1), $this->validStepOne($class) + [
+            'report_submit_token' => $token,
+        ]);
+        $this->post(route('public.report.step.store', 2), [
+            'report_submit_token' => $token,
+            'report_type' => 'violation',
+        ]);
+
+        // Langkah 4 memuat tombol kirim; langkah 1-3 tidak.
+        $response = $this->get(route('public.report.step', 4));
+
         $response->assertStatus(200);
-        
-        // Teks panduan wizard langkah-demi-langkah (JS murni)
-        $response->assertSee('data-step-hint', false);
         $response->assertSee('Kirim Laporan', false);
-    }
-
-    /**
-     * Test that form clears sessionStorage on successful submission
-     */
-    public function test_form_clears_localstorage_on_submit()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Check submit button calls clearFormState
-        $response->assertSee('Kirim Laporan', false);
-        $response->assertSee('clearFormState', false);
-    }
-
-    /**
-     * Test that conditional fields are properly bound with x-model
-     */
-    public function test_conditional_fields_have_proper_data_binding()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Check for conditional fields data-reporter-role attributes
-        $response->assertSee('data-reporter-role="siswa"', false);
-        $response->assertSee('data-reporter-role="guru"', false);
-        $response->assertSee('data-reporter-role="staff"', false);
-        $response->assertSee(':disabled="reporter!==\'siswa\'"', false);
-    }
-
-    /**
-     * Test that reporter_type change syncs between component state and formData
-     */
-    public function test_reporter_type_syncs_component_state_and_formdata()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Check that reporter_type is bound to both formData and reactive state
-        $response->assertSee('x-model="formData.step1.reporter_type"', false);
-        $response->assertSee('@change="reporter=formData.step1.reporter_type', false);
-    }
-
-    /**
-     * Test that report_type change syncs between component state and formData
-     */
-    public function test_report_type_syncs_component_state_and_formdata()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Check that report_type is bound to formData
-        $response->assertSee('x-model="formData.step2.report_type"', false);
-        // Check that type component state is updated when formData changes
-        $response->assertSee('@change="type=formData.step2.report_type', false);
-    }
-
-    /**
-     * Test that all step 1 fields are bound to formData
-     */
-    public function test_step1_all_fields_have_formdata_binding()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Step 1 fields should be bound to formData.step1
-        $response->assertSee('x-model="formData.step1.reporter_name"', false);
-        $response->assertSee('x-model="formData.step1.reporter_class_id"', false);
-        $response->assertSee('x-model="formData.step1.reporter_absence_number"', false);
-        $response->assertSee('x-model="formData.step1.reporter_subject_id"', false);
-        $response->assertSee('x-model="formData.step1.reporter_staff_unit_id"', false);
-        $response->assertSee('x-model="formData.step1.reporter_phone"', false);
-        $response->assertSee('x-model="formData.step1.reporter_email"', false);
-    }
-
-    /**
-     * Test that all step 3 fields are bound to formData
-     */
-    public function test_step3_all_fields_have_formdata_binding()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Step 3 fields should be bound to formData.step3
-        $response->assertSee('x-model="formData.step3.title"', false);
-        $response->assertSee('x-model="formData.step3.urgency"', false);
-        $response->assertSee('x-model="formData.step3.related_class_id"', false);
-        $response->assertSee('x-model="formData.step3.alleged_actor_name"', false);
-        $response->assertSee('x-model="formData.step3.description"', false);
-        $response->assertSee('x-model="formData.step3.item_name"', false);
-        $response->assertSee('x-model="formData.step3.location_id"', false);
-        $response->assertSee('x-model="formData.step3.damage_condition"', false);
-    }
-
-    /**
-     * Test that all step 4 fields are bound to formData
-     */
-    public function test_step4_all_fields_have_formdata_binding()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Step 4 fields should be bound to formData.step4
-        $response->assertSee('x-model="formData.step4.consent"', false);
-        $response->assertSee('x-model="formData.step4.captcha"', false);
-    }
-
-    /**
-     * Test that form has proper height/44px minimum for buttons (touch targets)
-     */
-    public function test_buttons_have_minimum_44px_height_for_accessibility()
-    {
-        $response = $this->get(route('public.report'));
-        
-        $response->assertStatus(200);
-        
-        // Check for 44px minimum height / touch target on the submit button
-        $response->assertSee('min-height: 44px', false);
-        $response->assertSee('aria-label="Kirim laporan"', false);
+        $response->assertSee('min-height:44px', false);
     }
 }

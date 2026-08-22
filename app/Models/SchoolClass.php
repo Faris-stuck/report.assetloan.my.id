@@ -17,9 +17,4 @@ class SchoolClass extends Model
     {
         return $this->hasMany(Student::class, 'class_id');
     }
-
-    public function homerooms(): HasMany
-    {
-        return $this->hasMany(HomeroomClass::class, 'class_id');
-    }
 }
